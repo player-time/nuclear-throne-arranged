@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-subbuild/CMakeFiles/sfml-populate"
+		},
+		{
+			"file" : "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-subbuild/CMakeFiles/74359fda0cf4582c9cbb9213d2ce04ba/sfml-populate.rule"
+		},
+		{
+			"file" : "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-subbuild/CMakeFiles/9bddd5f6b30619fed10cd1d1b202944c/sfml-populate-complete.rule"
+		},
+		{
+			"file" : "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-subbuild/CMakeFiles/c06874a68ac7f672ef11798a64236689/sfml-populate-build.rule"
+		},
+		{
+			"file" : "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-subbuild/CMakeFiles/c06874a68ac7f672ef11798a64236689/sfml-populate-configure.rule"
+		},
+		{
+			"file" : "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-subbuild/CMakeFiles/c06874a68ac7f672ef11798a64236689/sfml-populate-download.rule"
+		},
+		{
+			"file" : "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-subbuild/CMakeFiles/c06874a68ac7f672ef11798a64236689/sfml-populate-install.rule"
+		},
+		{
+			"file" : "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-subbuild/CMakeFiles/c06874a68ac7f672ef11798a64236689/sfml-populate-mkdir.rule"
+		},
+		{
+			"file" : "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-subbuild/CMakeFiles/c06874a68ac7f672ef11798a64236689/sfml-populate-patch.rule"
+		},
+		{
+			"file" : "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-subbuild/CMakeFiles/c06874a68ac7f672ef11798a64236689/sfml-populate-test.rule"
+		},
+		{
+			"file" : "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-subbuild/CMakeFiles/c06874a68ac7f672ef11798a64236689/sfml-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"sfml-populate"
+		],
+		"name" : "sfml-populate"
+	}
+}

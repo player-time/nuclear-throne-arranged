@@ -1,0 +1,497 @@
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineSystem.cmake:205 (message)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      The system is: Windows - 10.0.19045 - AMD64
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler:  
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      MSBuild version 17.3.1+2badb37d1 for .NET Framework
+      Build started 11/29/2024 00:07:13.
+      Project "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\3.29.2\\CompilerIdCXX\\CompilerIdCXX.vcxproj" on node 1 (default targets).
+      PrepareForBuild:
+        Creating directory "Debug\\".
+        Creating directory "Debug\\CompilerIdCXX.tlog\\".
+      InitializeBuildStatus:
+        Creating "Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild" because "AlwaysCreate" was specified.
+      ClCompile:
+        C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.33.31629\\bin\\HostX64\\x64\\CL.exe /c /nologo /W0 /WX- /diagnostics:column /Od /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\\\" /Fd"Debug\\vc143.pdb" /external:W0 /Gd /TP /FC /errorReport:queue CMakeCXXCompilerId.cpp
+        CMakeCXXCompilerId.cpp
+      Link:
+        C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.33.31629\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:".\\CompilerIdCXX.exe" /INCREMENTAL:NO /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:".\\CompilerIdCXX.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:".\\CompilerIdCXX.lib" /MACHINE:X64 Debug\\CMakeCXXCompilerId.obj
+        CompilerIdCXX.vcxproj -> C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\3.29.2\\CompilerIdCXX\\CompilerIdCXX.exe
+      PostBuildEvent:
+        for %%i in (cl.exe) do @echo CMAKE_CXX_COMPILER=%%~$PATH:i
+        :VCEnd
+        CMAKE_CXX_COMPILER=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.33.31629\\bin\\Hostx64\\x64\\cl.exe
+      FinalizeBuildStatus:
+        Deleting file "Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild".
+        Touching "Debug\\CompilerIdCXX.tlog\\CompilerIdCXX.lastbuildstate".
+      Done Building Project "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\3.29.2\\CompilerIdCXX\\CompilerIdCXX.vcxproj" (default targets).
+      
+      Build succeeded.
+          0 Warning(s)
+          0 Error(s)
+      
+      Time Elapsed 00:00:00.57
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.exe"
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.vcxproj"
+      
+      The CXX compiler identification is MSVC, found in:
+        C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/3.29.2/CompilerIdCXX/CompilerIdCXX.exe
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerABI.cmake:64 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Detecting CXX compiler ABI info"
+    directories:
+      source: "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-bn7zsf"
+      binary: "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-bn7zsf"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /EHsc"
+      CMAKE_CXX_FLAGS_DEBUG: "/Ob0 /Od /RTC1"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+    buildResult:
+      variable: "CMAKE_CXX_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-bn7zsf'
+        
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_d782a.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        MSBuild version 17.3.1+2badb37d1 for .NET Framework
+        Build started 11/29/2024 00:07:14.
+        Project "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-bn7zsf\\cmTC_d782a.vcxproj" on node 1 (default targets).
+        PrepareForBuild:
+          Creating directory "cmTC_d782a.dir\\Debug\\".
+          Creating directory "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-bn7zsf\\Debug\\".
+          Creating directory "cmTC_d782a.dir\\Debug\\cmTC_d782a.tlog\\".
+        InitializeBuildStatus:
+          Creating "cmTC_d782a.dir\\Debug\\cmTC_d782a.tlog\\unsuccessfulbuild" because "AlwaysCreate" was specified.
+        ClCompile:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.33.31629\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_d782a.dir\\Debug\\\\" /Fd"cmTC_d782a.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-3.29\\Modules\\CMakeCXXCompilerABI.cpp"
+          Microsoft (R) C/C++ Optimizing Compiler Version 19.33.31629 for x64
+          CMakeCXXCompilerABI.cpp
+          Copyright (C) Microsoft Corporation.  All rights reserved.
+          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_d782a.dir\\Debug\\\\" /Fd"cmTC_d782a.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-3.29\\Modules\\CMakeCXXCompilerABI.cpp"
+        Link:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.33.31629\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-bn7zsf\\Debug\\cmTC_d782a.exe" /INCREMENTAL /ILK:"cmTC_d782a.dir\\Debug\\cmTC_d782a.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-bn7zsf/Debug/cmTC_d782a.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-bn7zsf/Debug/cmTC_d782a.lib" /MACHINE:X64  /machine:x64 cmTC_d782a.dir\\Debug\\CMakeCXXCompilerABI.obj
+          cmTC_d782a.vcxproj -> C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-bn7zsf\\Debug\\cmTC_d782a.exe
+        FinalizeBuildStatus:
+          Deleting file "cmTC_d782a.dir\\Debug\\cmTC_d782a.tlog\\unsuccessfulbuild".
+          Touching "cmTC_d782a.dir\\Debug\\cmTC_d782a.tlog\\cmTC_d782a.lastbuildstate".
+        Done Building Project "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-bn7zsf\\cmTC_d782a.vcxproj" (default targets).
+        
+        Build succeeded.
+            0 Warning(s)
+            0 Error(s)
+        
+        Time Elapsed 00:00:00.42
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerABI.cmake:170 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Parsed CXX implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(\\.[a-z]+)?|link\\.exe|lld-link(\\.exe)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(ld[0-9]*(\\.[a-z]+)?|link\\.exe|lld-link(\\.exe)?))("|,| |$)]
+        linker tool for 'CXX': C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.33.31629/bin/HostX64/x64/link.exe
+        implicit libs: []
+        implicit objs: []
+        implicit dirs: []
+        implicit fwks: []
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/Internal/CMakeDetermineLinkerId.cmake:40 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerABI.cmake:207 (cmake_determine_linker_id)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Running the CXX compiler's linker: "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.33.31629/bin/HostX64/x64/link.exe" "-v"
+      Microsoft (R) Incremental Linker Version 14.33.31629.0
+      Copyright (C) Microsoft Corporation.  All rights reserved.
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "build/_deps/sfml-src/CMakeLists.txt:31 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+      Compiler:  
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      MSBuild version 17.3.1+2badb37d1 for .NET Framework
+      Build started 11/29/2024 00:07:25.
+      Project "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\3.29.2\\CompilerIdC\\CompilerIdC.vcxproj" on node 1 (default targets).
+      PrepareForBuild:
+        Creating directory "Debug\\".
+        Creating directory "Debug\\CompilerIdC.tlog\\".
+      InitializeBuildStatus:
+        Creating "Debug\\CompilerIdC.tlog\\unsuccessfulbuild" because "AlwaysCreate" was specified.
+      ClCompile:
+        C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.33.31629\\bin\\HostX64\\x64\\CL.exe /c /nologo /W0 /WX- /diagnostics:column /Od /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\\\" /Fd"Debug\\vc143.pdb" /external:W0 /Gd /TC /FC /errorReport:queue CMakeCCompilerId.c
+        CMakeCCompilerId.c
+      Link:
+        C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.33.31629\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:".\\CompilerIdC.exe" /INCREMENTAL:NO /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:".\\CompilerIdC.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:".\\CompilerIdC.lib" /MACHINE:X64 Debug\\CMakeCCompilerId.obj
+        CompilerIdC.vcxproj -> C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\3.29.2\\CompilerIdC\\CompilerIdC.exe
+      PostBuildEvent:
+        for %%i in (cl.exe) do @echo CMAKE_C_COMPILER=%%~$PATH:i
+        :VCEnd
+        CMAKE_C_COMPILER=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.33.31629\\bin\\Hostx64\\x64\\cl.exe
+      FinalizeBuildStatus:
+        Deleting file "Debug\\CompilerIdC.tlog\\unsuccessfulbuild".
+        Touching "Debug\\CompilerIdC.tlog\\CompilerIdC.lastbuildstate".
+      Done Building Project "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\3.29.2\\CompilerIdC\\CompilerIdC.vcxproj" (default targets).
+      
+      Build succeeded.
+          0 Warning(s)
+          0 Error(s)
+      
+      Time Elapsed 00:00:00.42
+      
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CompilerIdC.exe"
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CompilerIdC.vcxproj"
+      
+      The C compiler identification is MSVC, found in:
+        C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/3.29.2/CompilerIdC/CompilerIdC.exe
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerABI.cmake:64 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "build/_deps/sfml-src/CMakeLists.txt:31 (project)"
+    checks:
+      - "Detecting C compiler ABI info"
+    directories:
+      source: "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-ulxdio"
+      binary: "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-ulxdio"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS"
+      CMAKE_C_FLAGS_DEBUG: "/Ob0 /Od /RTC1"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "13.0"
+      CMAKE_USER_MAKE_RULES_OVERRIDE: "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-src/cmake/CompilerOptionsOverride.cmake"
+    buildResult:
+      variable: "CMAKE_C_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-ulxdio'
+        
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_29a02.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        MSBuild version 17.3.1+2badb37d1 for .NET Framework
+        Build started 11/29/2024 00:07:25.
+        Project "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-ulxdio\\cmTC_29a02.vcxproj" on node 1 (default targets).
+        PrepareForBuild:
+          Creating directory "cmTC_29a02.dir\\Debug\\".
+          Creating directory "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-ulxdio\\Debug\\".
+          Creating directory "cmTC_29a02.dir\\Debug\\cmTC_29a02.tlog\\".
+        InitializeBuildStatus:
+          Creating "cmTC_29a02.dir\\Debug\\cmTC_29a02.tlog\\unsuccessfulbuild" because "AlwaysCreate" was specified.
+        ClCompile:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.33.31629\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_29a02.dir\\Debug\\\\" /Fd"cmTC_29a02.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-3.29\\Modules\\CMakeCCompilerABI.c"
+          Microsoft (R) C/C++ Optimizing Compiler Version 19.33.31629 for x64
+          CMakeCCompilerABI.c
+          Copyright (C) Microsoft Corporation.  All rights reserved.
+          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_29a02.dir\\Debug\\\\" /Fd"cmTC_29a02.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-3.29\\Modules\\CMakeCCompilerABI.c"
+        Link:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.33.31629\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-ulxdio\\Debug\\cmTC_29a02.exe" /INCREMENTAL /ILK:"cmTC_29a02.dir\\Debug\\cmTC_29a02.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-ulxdio/Debug/cmTC_29a02.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-ulxdio/Debug/cmTC_29a02.lib" /MACHINE:X64  /machine:x64 cmTC_29a02.dir\\Debug\\CMakeCCompilerABI.obj
+          cmTC_29a02.vcxproj -> C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-ulxdio\\Debug\\cmTC_29a02.exe
+        FinalizeBuildStatus:
+          Deleting file "cmTC_29a02.dir\\Debug\\cmTC_29a02.tlog\\unsuccessfulbuild".
+          Touching "cmTC_29a02.dir\\Debug\\cmTC_29a02.tlog\\cmTC_29a02.lastbuildstate".
+        Done Building Project "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-ulxdio\\cmTC_29a02.vcxproj" (default targets).
+        
+        Build succeeded.
+            0 Warning(s)
+            0 Error(s)
+        
+        Time Elapsed 00:00:00.43
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerABI.cmake:170 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "build/_deps/sfml-src/CMakeLists.txt:31 (project)"
+    message: |
+      Parsed C implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(\\.[a-z]+)?|link\\.exe|lld-link(\\.exe)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(ld[0-9]*(\\.[a-z]+)?|link\\.exe|lld-link(\\.exe)?))("|,| |$)]
+        linker tool for 'C': C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.33.31629/bin/HostX64/x64/link.exe
+        implicit libs: []
+        implicit objs: []
+        implicit dirs: []
+        implicit fwks: []
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/Internal/CMakeDetermineLinkerId.cmake:40 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeDetermineCompilerABI.cmake:207 (cmake_determine_linker_id)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "build/_deps/sfml-src/CMakeLists.txt:31 (project)"
+    message: |
+      Running the C compiler's linker: "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.33.31629/bin/HostX64/x64/link.exe" "-v"
+      Microsoft (R) Incremental Linker Version 14.33.31629.0
+      Copyright (C) Microsoft Corporation.  All rights reserved.
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CheckIncludeFile.cmake:90 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CheckTypeSize.cmake:250 (check_include_file)"
+      - "build/_deps/sfml-src/cmake/Config.cmake:10 (check_type_size)"
+      - "build/_deps/sfml-src/CMakeLists.txt:34 (include)"
+    checks:
+      - "Looking for sys/types.h"
+    directories:
+      source: "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-o67ull"
+      binary: "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-o67ull"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS"
+      CMAKE_C_FLAGS_DEBUG: "/Ob0 /Od /RTC1"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "13.0"
+      CMAKE_USER_MAKE_RULES_OVERRIDE: "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-src/cmake/CompilerOptionsOverride.cmake"
+    buildResult:
+      variable: "HAVE_SYS_TYPES_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-o67ull'
+        
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_8160e.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        MSBuild version 17.3.1+2badb37d1 for .NET Framework
+        Build started 11/29/2024 00:07:26.
+        Project "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-o67ull\\cmTC_8160e.vcxproj" on node 1 (default targets).
+        PrepareForBuild:
+          Creating directory "cmTC_8160e.dir\\Debug\\".
+          Creating directory "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-o67ull\\Debug\\".
+          Creating directory "cmTC_8160e.dir\\Debug\\cmTC_8160e.tlog\\".
+        InitializeBuildStatus:
+          Creating "cmTC_8160e.dir\\Debug\\cmTC_8160e.tlog\\unsuccessfulbuild" because "AlwaysCreate" was specified.
+        ClCompile:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.33.31629\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_8160e.dir\\Debug\\\\" /Fd"cmTC_8160e.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-o67ull\\CheckIncludeFile.c"
+          Microsoft (R) C/C++ Optimizing Compiler Version 19.33.31629 for x64
+          CheckIncludeFile.c
+          Copyright (C) Microsoft Corporation.  All rights reserved.
+          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_8160e.dir\\Debug\\\\" /Fd"cmTC_8160e.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-o67ull\\CheckIncludeFile.c"
+        Link:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.33.31629\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-o67ull\\Debug\\cmTC_8160e.exe" /INCREMENTAL /ILK:"cmTC_8160e.dir\\Debug\\cmTC_8160e.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-o67ull/Debug/cmTC_8160e.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-o67ull/Debug/cmTC_8160e.lib" /MACHINE:X64  /machine:x64 cmTC_8160e.dir\\Debug\\CheckIncludeFile.obj
+          cmTC_8160e.vcxproj -> C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-o67ull\\Debug\\cmTC_8160e.exe
+        FinalizeBuildStatus:
+          Deleting file "cmTC_8160e.dir\\Debug\\cmTC_8160e.tlog\\unsuccessfulbuild".
+          Touching "cmTC_8160e.dir\\Debug\\cmTC_8160e.tlog\\cmTC_8160e.lastbuildstate".
+        Done Building Project "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-o67ull\\cmTC_8160e.vcxproj" (default targets).
+        
+        Build succeeded.
+            0 Warning(s)
+            0 Error(s)
+        
+        Time Elapsed 00:00:00.43
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CheckIncludeFile.cmake:90 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CheckTypeSize.cmake:251 (check_include_file)"
+      - "build/_deps/sfml-src/cmake/Config.cmake:10 (check_type_size)"
+      - "build/_deps/sfml-src/CMakeLists.txt:34 (include)"
+    checks:
+      - "Looking for stdint.h"
+    directories:
+      source: "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-e2qbl2"
+      binary: "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-e2qbl2"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS"
+      CMAKE_C_FLAGS_DEBUG: "/Ob0 /Od /RTC1"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "13.0"
+      CMAKE_USER_MAKE_RULES_OVERRIDE: "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-src/cmake/CompilerOptionsOverride.cmake"
+    buildResult:
+      variable: "HAVE_STDINT_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-e2qbl2'
+        
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_6f172.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        MSBuild version 17.3.1+2badb37d1 for .NET Framework
+        Build started 11/29/2024 00:07:26.
+        Project "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-e2qbl2\\cmTC_6f172.vcxproj" on node 1 (default targets).
+        PrepareForBuild:
+          Creating directory "cmTC_6f172.dir\\Debug\\".
+          Creating directory "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-e2qbl2\\Debug\\".
+          Creating directory "cmTC_6f172.dir\\Debug\\cmTC_6f172.tlog\\".
+        InitializeBuildStatus:
+          Creating "cmTC_6f172.dir\\Debug\\cmTC_6f172.tlog\\unsuccessfulbuild" because "AlwaysCreate" was specified.
+        ClCompile:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.33.31629\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_6f172.dir\\Debug\\\\" /Fd"cmTC_6f172.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-e2qbl2\\CheckIncludeFile.c"
+          Microsoft (R) C/C++ Optimizing Compiler Version 19.33.31629 for x64
+          CheckIncludeFile.c
+          Copyright (C) Microsoft Corporation.  All rights reserved.
+          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_6f172.dir\\Debug\\\\" /Fd"cmTC_6f172.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-e2qbl2\\CheckIncludeFile.c"
+        Link:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.33.31629\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-e2qbl2\\Debug\\cmTC_6f172.exe" /INCREMENTAL /ILK:"cmTC_6f172.dir\\Debug\\cmTC_6f172.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-e2qbl2/Debug/cmTC_6f172.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-e2qbl2/Debug/cmTC_6f172.lib" /MACHINE:X64  /machine:x64 cmTC_6f172.dir\\Debug\\CheckIncludeFile.obj
+          cmTC_6f172.vcxproj -> C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-e2qbl2\\Debug\\cmTC_6f172.exe
+        FinalizeBuildStatus:
+          Deleting file "cmTC_6f172.dir\\Debug\\cmTC_6f172.tlog\\unsuccessfulbuild".
+          Touching "cmTC_6f172.dir\\Debug\\cmTC_6f172.tlog\\cmTC_6f172.lastbuildstate".
+        Done Building Project "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-e2qbl2\\cmTC_6f172.vcxproj" (default targets).
+        
+        Build succeeded.
+            0 Warning(s)
+            0 Error(s)
+        
+        Time Elapsed 00:00:00.42
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CheckIncludeFile.cmake:90 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CheckTypeSize.cmake:252 (check_include_file)"
+      - "build/_deps/sfml-src/cmake/Config.cmake:10 (check_type_size)"
+      - "build/_deps/sfml-src/CMakeLists.txt:34 (include)"
+    checks:
+      - "Looking for stddef.h"
+    directories:
+      source: "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-w8uj8g"
+      binary: "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-w8uj8g"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS"
+      CMAKE_C_FLAGS_DEBUG: "/Ob0 /Od /RTC1"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "13.0"
+      CMAKE_USER_MAKE_RULES_OVERRIDE: "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-src/cmake/CompilerOptionsOverride.cmake"
+    buildResult:
+      variable: "HAVE_STDDEF_H"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-w8uj8g'
+        
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_fb04b.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        MSBuild version 17.3.1+2badb37d1 for .NET Framework
+        Build started 11/29/2024 00:07:27.
+        Project "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-w8uj8g\\cmTC_fb04b.vcxproj" on node 1 (default targets).
+        PrepareForBuild:
+          Creating directory "cmTC_fb04b.dir\\Debug\\".
+          Creating directory "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-w8uj8g\\Debug\\".
+          Creating directory "cmTC_fb04b.dir\\Debug\\cmTC_fb04b.tlog\\".
+        InitializeBuildStatus:
+          Creating "cmTC_fb04b.dir\\Debug\\cmTC_fb04b.tlog\\unsuccessfulbuild" because "AlwaysCreate" was specified.
+        ClCompile:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.33.31629\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_fb04b.dir\\Debug\\\\" /Fd"cmTC_fb04b.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-w8uj8g\\CheckIncludeFile.c"
+          Microsoft (R) C/C++ Optimizing Compiler Version 19.33.31629 for x64
+          CheckIncludeFile.c
+          Copyright (C) Microsoft Corporation.  All rights reserved.
+          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_fb04b.dir\\Debug\\\\" /Fd"cmTC_fb04b.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-w8uj8g\\CheckIncludeFile.c"
+        Link:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.33.31629\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-w8uj8g\\Debug\\cmTC_fb04b.exe" /INCREMENTAL /ILK:"cmTC_fb04b.dir\\Debug\\cmTC_fb04b.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-w8uj8g/Debug/cmTC_fb04b.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-w8uj8g/Debug/cmTC_fb04b.lib" /MACHINE:X64  /machine:x64 cmTC_fb04b.dir\\Debug\\CheckIncludeFile.obj
+          cmTC_fb04b.vcxproj -> C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-w8uj8g\\Debug\\cmTC_fb04b.exe
+        FinalizeBuildStatus:
+          Deleting file "cmTC_fb04b.dir\\Debug\\cmTC_fb04b.tlog\\unsuccessfulbuild".
+          Touching "cmTC_fb04b.dir\\Debug\\cmTC_fb04b.tlog\\cmTC_fb04b.lastbuildstate".
+        Done Building Project "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-w8uj8g\\cmTC_fb04b.vcxproj" (default targets).
+        
+        Build succeeded.
+            0 Warning(s)
+            0 Error(s)
+        
+        Time Elapsed 00:00:00.42
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CheckTypeSize.cmake:146 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-3.29/Modules/CheckTypeSize.cmake:271 (__check_type_size_impl)"
+      - "build/_deps/sfml-src/cmake/Config.cmake:10 (check_type_size)"
+      - "build/_deps/sfml-src/CMakeLists.txt:34 (include)"
+    checks:
+      - "Check size of void*"
+    directories:
+      source: "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-d3m8xr"
+      binary: "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-d3m8xr"
+    cmakeVariables:
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS"
+      CMAKE_C_FLAGS_DEBUG: "/Ob0 /Od /RTC1"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "13.0"
+      CMAKE_USER_MAKE_RULES_OVERRIDE: "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-src/cmake/CompilerOptionsOverride.cmake"
+    buildResult:
+      variable: "HAVE_SIZEOF_VOID_PTR"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-d3m8xr'
+        
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_f2f4e.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        MSBuild version 17.3.1+2badb37d1 for .NET Framework
+        Build started 11/29/2024 00:07:27.
+        Project "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-d3m8xr\\cmTC_f2f4e.vcxproj" on node 1 (default targets).
+        PrepareForBuild:
+          Creating directory "cmTC_f2f4e.dir\\Debug\\".
+          Creating directory "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-d3m8xr\\Debug\\".
+          Creating directory "cmTC_f2f4e.dir\\Debug\\cmTC_f2f4e.tlog\\".
+        InitializeBuildStatus:
+          Creating "cmTC_f2f4e.dir\\Debug\\cmTC_f2f4e.tlog\\unsuccessfulbuild" because "AlwaysCreate" was specified.
+        ClCompile:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.33.31629\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_f2f4e.dir\\Debug\\\\" /Fd"cmTC_f2f4e.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-d3m8xr\\SIZEOF_VOID_PTR.c"
+          Microsoft (R) C/C++ Optimizing Compiler Version 19.33.31629 for x64
+          SIZEOF_VOID_PTR.c
+          Copyright (C) Microsoft Corporation.  All rights reserved.
+          cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_f2f4e.dir\\Debug\\\\" /Fd"cmTC_f2f4e.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-d3m8xr\\SIZEOF_VOID_PTR.c"
+        Link:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.33.31629\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-d3m8xr\\Debug\\cmTC_f2f4e.exe" /INCREMENTAL /ILK:"cmTC_f2f4e.dir\\Debug\\cmTC_f2f4e.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-d3m8xr/Debug/cmTC_f2f4e.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/CMakeScratch/TryCompile-d3m8xr/Debug/cmTC_f2f4e.lib" /MACHINE:X64  /machine:x64 cmTC_f2f4e.dir\\Debug\\SIZEOF_VOID_PTR.obj
+          cmTC_f2f4e.vcxproj -> C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-d3m8xr\\Debug\\cmTC_f2f4e.exe
+        FinalizeBuildStatus:
+          Deleting file "cmTC_f2f4e.dir\\Debug\\cmTC_f2f4e.tlog\\unsuccessfulbuild".
+          Touching "cmTC_f2f4e.dir\\Debug\\cmTC_f2f4e.tlog\\cmTC_f2f4e.lastbuildstate".
+        Done Building Project "C:\\Users\\svt16\\Desktop\\Nuclear Throne Arranged\\cmake-sfml-project\\build\\CMakeFiles\\CMakeScratch\\TryCompile-d3m8xr\\cmTC_f2f4e.vcxproj" (default targets).
+        
+        Build succeeded.
+            0 Warning(s)
+            0 Error(s)
+        
+        Time Elapsed 00:00:00.40
+        
+      exitCode: 0
+...
