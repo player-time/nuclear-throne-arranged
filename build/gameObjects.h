@@ -59,15 +59,23 @@ enum objectID {nothing,
 enum sound {
 	snd_shoot_1_ID,
 	snd_horror_portal_ID,
+
 	snd_bandit_hurt_ID,
 	snd_bandit_die_ID,
+	snd_idpd_freak_hurt_ID,
+	snd_idpd_freak_die_ID,
+
 	snd_rad_pickup_ID,
+
 	snd_horror_beam_start_ID,
 	snd_horror_beam_hold_ID,
+
 	snd_hit_wall_ID,
 	snd_wall_break_rock_ID,
+
 	snd_IDPD_explosion_ID,
 	snd_plasma_hit_ID,
+
 	snd_ultra_shovel_ID,
 	snd_plasma_huge_ID,
 	snd_plasma_split_ID,
@@ -85,8 +93,10 @@ enum subWallType{upLeft, up, upRight, right, downRight, down, downLeft, left, mi
 enum character{ fish, crystal, eyes, melting, plant, YV, steroids, robot, chicken, rebel, horror, rogue, frog, skeleton };
 
 //for circular hitboxes
-enum hitboxes{ 
-	bandit_hitbox = 6, enemy_bullet_hitbox = 3, plasma_hitbox = 5,
+enum hitboxes {
+	player_hitbox = 4,
+	bandit_hitbox = 8, enemy_bullet_hitbox = 3, plasma_hitbox = 5,
+	idpd_freak_hitbox = 7,
 	wall_hitbox = 8,
 };
  
@@ -107,9 +117,14 @@ struct gameObject{
 	objectID my_id = nothing;
 	int image_index = 0;	//doesnt necicarily mean what sprite should be used so for explosions 0 1 2 are the first frame and 3 4 are the second frame of animation
 	int next_hurt = 0;
+	int next_melee = 0;
 	int rad_drop = 0;
 	int my_hp = 0;
 	int team = 0;		//0 = none 1 = player 2 = enemy 3 = idpd
+	int size = 0;
+
+	enum sound hurt_ID;
+	enum sound die_ID;
 
 	int alarm1 = 0;
 	int alarm2 = 0;

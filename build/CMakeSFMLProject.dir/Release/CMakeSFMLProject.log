@@ -2,5 +2,5 @@
   gameObjects.cpp
   main.cpp
   Generating Code...
-C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\main.cpp(598): warning C4715: 'wep_get_origin': not all control paths return a value
+C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\main.cpp(621): warning C4715: 'wep_get_origin': not all control paths return a value
   CMakeSFMLProject.vcxproj -> C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\bin\Release\CMakeSFMLProject.exe
