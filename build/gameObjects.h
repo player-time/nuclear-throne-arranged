@@ -123,6 +123,8 @@ struct gameObject{
 	int team = 0;		//0 = none 1 = player 2 = enemy 3 = idpd
 	int size = 0;
 
+	enum hitboxes my_hitbox;
+
 	enum sound hurt_ID;
 	enum sound die_ID;
 
