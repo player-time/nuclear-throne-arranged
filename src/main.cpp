@@ -94,6 +94,11 @@ int rotateable_effects_medium_max = 6000;
 std::vector<sf::Sprite> rotateable_effects_large;
 int rotateable_effects_large_max = 4000;
 
+//text ingame
+std::vector<sf::Text> popup_texts;
+int popup_texts_max = 200;
+int popup_text_index = 0;
+
 static float degreestoradians = 57.2957795f;
 
 sf::Vector2f offset8 = { -4, -4 };
@@ -140,6 +145,14 @@ int player_bolts = 55;
 int player_shells = 55;
 int player_explosives = 55;
 int player_energy = 55;
+
+int player_bullets_max = 255;
+int player_bolts_max = 55;
+int player_shells_max = 55;
+int player_explosives_max = 55;
+int player_energy_max = 55;
+
+float global_ammo_mult = 1.0f;  //ammo mult deteremined by the player ammo and weapons
 
 int player_max_rads = 60;
 int player_hp = 8;
@@ -220,8 +233,8 @@ int mouse_offset_window_center_x = 0;
 int mouse_offset_window_center_y = 0;
 
 //mutations
-int plutonium_hunger = 150;       //set to 150 when mutation got 90 when not
-int plutonium_hunger_ammo = 70;
+int plutonium_hunger = 80;       //set to 140 when mutation got 80 when not
+int plutonium_hunger_ammo = 30;
 int impact_wrists = 0;
 float long_arms = 1.0f;         //0.0f if no long arms, 1.0f if long arms
 float trigger_fingers = 0.6f;
@@ -242,6 +255,20 @@ std::vector<int> play_sounds_this_frame_count;
 
 //generation
 bool want_gen = true;
+
+void draw_text_NT(sf::Text text, sf::RenderTexture &renderer) {
+    text.setColor(sf::Color::Black);
+    text.setPosition(text.getPosition() + sf::Vector2f{ 1, 0 });
+    renderer.draw(text);
+    text.setPosition(text.getPosition() + sf::Vector2f{ 0, 1 });
+    renderer.draw(text);
+    text.setPosition(text.getPosition() + sf::Vector2f{ -1, 0 });
+    renderer.draw(text);
+
+    text.setPosition(text.getPosition() + sf::Vector2f{ 0, -1 });
+    text.setColor(sf::Color::White);
+    renderer.draw(text);
+}
 
 float random_360_radians() {    //dont use in multithreaded for more randomness
     return static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (360.0f / degreestoradians)));
@@ -271,7 +298,7 @@ void play_sound_relative_to_player(sound sound_id, float x, float y) {
     play_sounds_this_frame_count[sound_id]++;
 }
 
-void play_sound_random_pitch(sf::Sound _sound, float variance, int i) {
+void play_sound_random_pitch(sf::Sound &_sound, float variance, int i) {
     float pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2.0f*variance))) - variance;
     _sound.setPitch(1 + pitch_offset);
     _sound.setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
@@ -288,7 +315,135 @@ void corpse_step(int i) {
     allObjects[i].image_index++;
 }
 
-void create_object(float x, float y, float xspd, float yspd, objectID obj_id, float direction, int image_index) {
+void reset_popup_texts() {
+    for (int i = 0; i < popup_texts_max; i++) {
+        popup_texts[i].setString("");
+    }
+}
+
+void create_popuptext(std::string string, sf::Vector2f pos) {
+    if (popup_text_index >= popup_texts_max) {
+        popup_text_index = 0;
+    }
+    popup_texts[popup_text_index].setPosition(round(pos.x), round(pos.y));
+    popup_texts[popup_text_index].setLineSpacing(50);     //alarm
+    popup_texts[popup_text_index].setString(string);
+    popup_text_index++;
+}
+
+void pickup_ammo() {
+    int wep_choice = 0;
+    if (rand() % 2) {
+        wep_choice = wep;
+    }
+    else {
+        wep_choice = bwep;
+    }
+    if (wep_choice < melee_weps) {     //melee
+        int choice = rand() % 5;
+        switch (choice) {
+        default:    //case 0:
+            player_bullets += 32;
+            if (player_bullets > player_bullets_max) {
+                player_bullets = player_bullets_max;
+                create_popuptext("MAX BULLETS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            else {
+                create_popuptext("+32 BULLETS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            break;
+        case 1:
+            player_energy += 10;
+            if (player_energy > player_energy_max) {
+                player_energy = player_energy_max;
+                create_popuptext("MAX ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            else {
+                create_popuptext("+10 ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            break;
+        case 2:
+            player_shells += 8;
+            if (player_shells > player_shells_max) {
+                player_shells = player_shells_max;
+                create_popuptext("MAX SHELLS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            else {
+                create_popuptext("+8 SHELLS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            break;
+        case 3:
+            player_bolts += 7;
+            if (player_bolts > player_bolts_max) {
+                player_bolts = player_bolts_max;
+                create_popuptext("MAX BOLTS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            else {
+                create_popuptext("+7 BOLTS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            break;
+        case 4:
+            player_explosives += 6;
+            if (player_explosives > player_explosives_max) {
+                player_explosives = player_explosives_max;
+                create_popuptext("MAX EXPLOSIVES", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            else {
+                create_popuptext("+6 EXPLOSIVES", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            break;
+        }
+    }
+    else if (wep < energy_weps) {    //energy weapons
+        player_energy += 10;
+        if (player_energy > player_energy_max) {
+            player_energy = player_energy_max;
+            create_popuptext("MAX ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
+        }
+        else {
+            create_popuptext("+10 ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
+        }
+    }
+}
+
+void calculate_ammo_drop_mult() {
+    global_ammo_mult = 0.0f;
+    //wep
+    if (wep < melee_weps) { //melee
+        global_ammo_mult += 0.15f;
+    }
+    else if (wep < energy_weps) {
+        if (player_energy < player_energy_max * 0.2f) {
+            global_ammo_mult += 0.8f;
+        }
+        else if (player_energy < player_energy_max * 0.6f) {
+            global_ammo_mult += 0.5f;
+        }
+        else {
+            global_ammo_mult += 0.15f;
+        }
+    }
+
+    //bwep
+    if (bwep < melee_weps) { //melee
+        global_ammo_mult += 0.15f;
+    }
+    else if (bwep < energy_weps) {
+        if (player_energy < player_energy_max * 0.2f) {
+            global_ammo_mult += 0.8f;
+        }
+        else if (player_energy < player_energy_max * 0.6f) {
+            global_ammo_mult += 0.5f;
+        }
+        else {
+            global_ammo_mult += 0.15f;
+        }
+    }
+    //rabit paw
+}
+
+//returns object index
+int create_object(float x, float y, float xspd, float yspd, objectID obj_id, float direction, int image_index) {
     int I = current_create_start;
     float tmpdir = 0.0f;
     for (int i = I; i < max_objects; i++) {
@@ -306,9 +461,6 @@ void create_object(float x, float y, float xspd, float yspd, objectID obj_id, fl
                 allObjects[i].my_id = obj_id;
                 allObjects[i].position = { x, y };
                 allObjects[i].speed = { xspd, yspd };
-
-                allObjects[i].position += allObjects[i].speed;
-
                 allObjects[i].direction = direction * degreestoradians + 180.0f;
                 allObjects[i].image_index = 0;
                 allObjects[i].team = 2;     //enemy team
@@ -576,9 +728,11 @@ void create_object(float x, float y, float xspd, float yspd, objectID obj_id, fl
                     allObjects[i].image_index = rand() % 3;
                 }
                 break;
+            default:
+                break;
             }
             current_create_start = i + 1;       //helps alot with high object counts
-            return;
+            return i;
         }
     }
 }
@@ -919,7 +1073,9 @@ int create_floor(int x, int y, bool Btile) {
                           y * 16 + 4 + (rand() % 8), 0, 0, detail, 0.0f, 0);
         }
     }
+
     game_area[x][y].my_grid_type = floor_tile;
+
     if (x > right_physics) {
         right_physics = x;
     }
@@ -1159,6 +1315,8 @@ void enemy_die(int ENEMY, int PROJ, enum sound DIE_SOUND) {
     allObjects[ENEMY].image_index = 0;
     allObjects[ENEMY].friction = 0.4f;
 
+    int current_object = 0;
+
     //create rads
     float tempSpdx = 0.0f;
     float tempSpdy = 0.0f;
@@ -1180,6 +1338,11 @@ void enemy_die(int ENEMY, int PROJ, enum sound DIE_SOUND) {
         //convert into corpse
         allObjects[ENEMY].my_id = bandit_corpse;
 
+        //ammo drop
+        if (random(100) < 16 * global_ammo_mult) {
+            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, ammo_pack, 0, 0);
+        }
+
         //debug start
         for (int i = 0; i < 10; i++) {
             tmpdir = random_360_radians();
@@ -1191,13 +1354,23 @@ void enemy_die(int ENEMY, int PROJ, enum sound DIE_SOUND) {
                 tempSpdx,
                 tempSpdy, bullet2, tmpdir + 180.0f / degreestoradians, 0);
         }
-        if (rand() % 110 == 0) {
-            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, tmpSpd * 2, 0, idpd_nade, tmpdir, 0);
-            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, ammo_pack, 0, 0);
-        }
         //debug end
         break;
     case idpd_freak:
+
+        //ammo drop
+        if (random(100) < 60 * global_ammo_mult) {
+            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, ammo_pack, 0, 0);
+        }
+
+        if (rand() % 4 == 0) {
+            for (int i = 0; i < 3; i++) {
+                tmpdir = allObjects[ENEMY].direction;
+                current_object = create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 4, 0, idpd_nade, tmpdir, 0);
+                motion_add_dir(random_360_radians(), 4, current_object);
+            }
+        }
+
         //convert into corpse
         allObjects[ENEMY].my_id = idpd_freak_corpse;
         break;
@@ -1652,6 +1825,7 @@ void ultra_slash_collision(int currOBJ, int i, int j) {
                         allObjects[O].speeddir = 12.0f;
                         allObjects[O].alarm2 = 4;
                         allObjects[O].friction = 0.0f;
+                        allObjects[O].team = -1;    //reflected
                         create_object(allObjects[O].position.x, allObjects[O].position.y, 0, 0, deflect, allObjects[currOBJ].direction * degreestoradians, 0);
                     }
 
@@ -1713,11 +1887,11 @@ void idpd_explosion_collision(int currOBJ, int i, int j) {
                     break;
                 case idpd_nade:
                     if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (2 + 48))) {
-                        detonate_IDPD_nade(O, -1);
+                        detonate_IDPD_nade(O, 0);
                     }
                     break;
                 case bandit:
-                    if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (bandit_hitbox + 48))) {
+                    if ((allObjects[currOBJ].team != allObjects[O].team) && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (bandit_hitbox + 48))) {
                         allObjects[O].my_hp -= 8;
                         tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
                         allObjects[currOBJ].speed.x = cos(tmpdir) * 12;
@@ -1732,7 +1906,7 @@ void idpd_explosion_collision(int currOBJ, int i, int j) {
                     }
                     break;
                 case idpd_freak:
-                    if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (idpd_freak_hitbox + 48))) {
+                    if ((allObjects[currOBJ].team != allObjects[O].team) && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (idpd_freak_hitbox + 48))) {
                         allObjects[O].my_hp -= 8;
                         tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
                         allObjects[currOBJ].speed.x = cos(tmpdir) * 12;
@@ -1803,7 +1977,7 @@ void add_object_indexs_to_2Dvector(int start, int end) {
     }
 }
 
-void fire_weapom(int index, float direction) {
+void fire_weapon(int index, float direction) {
     float Xspd = 0.0f;
     float Yspd = 0.0f;
     float Xoff = 0.0f;
@@ -1844,7 +2018,8 @@ void fire_weapom(int index, float direction) {
         }
         break;
     case 11:
-        if (LMB_pressed && wep_reload < 0.0f) {
+        if (LMB_pressed && wep_reload < 0.0f && player_energy - 24 >= 0) {
+            player_energy -= 24;
             LMB_pressed = false;
             wep_kick = 7;
             motion_add_dir(direction, -16, 0);
@@ -2013,7 +2188,10 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
             }
             allObjects[i].alarm1--;
             if (allObjects[i].alarm1 < 0) {
-                allObjects[i].my_id = nothing;
+                allObjects[i].my_id = ammo_pack_destroy;
+                allObjects[i].size = 1;     //disappear sprite vs. picked up sprite is 2
+                allObjects[i].image_index = 0;
+                break;
             }
             diffx = allObjects[i].position.x - allObjects[0].position.x;
             diffy = allObjects[i].position.y - allObjects[0].position.y;
@@ -2028,6 +2206,12 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
             }
 
             allObjects[i].position += allObjects[i].speed;
+            break;
+        case ammo_pack_destroy:
+            allObjects[i].image_index++;
+            if (allObjects[i].image_index > 12) {
+                allObjects[i].my_id = nothing;
+            }
             break;
         case bandit:
             allObjects[i].speeddir -= allObjects[i].friction;
@@ -2153,7 +2337,9 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
                     }
                 }
             }
+            //shoot
             if (allObjects[i].alarm2 >= 0 && allObjects[i].alarm2 < 8) {
+                play_sound_relative_to_player(snd_grunt_fire_ID, allObjects[i].position.x, allObjects[i].position.y);
                 if (allObjects[i].alarm2 == 7) {
                     allObjects[i].gun_angle = angle_to_player_radians(allObjects[i].position) + (random_180_radians() / 2) - (45 / degreestoradians);
                 }
@@ -2367,6 +2553,12 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
                 allObjects[i].my_id = nothing;
             }
             break;
+        case popup_text:
+            allObjects[i].alarm1--;
+            if (allObjects[i].alarm1 > 10) {
+                allObjects[i].position.y -= 2;
+            }
+            break;
         default:
             break;
         }
@@ -2375,6 +2567,12 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
 void reset_rotateable_sprites(std::vector<sf::Sprite> &sprites, int largest_index) {
     for (int i = 0; i < largest_index; i++) {
         sprites[i].setColor({ 0,0,0,0 });
+    }
+}
+
+void reset_popup_texts(std::vector<sf::Text>& texts, int largest_index) {
+    for (int i = 0; i < largest_index; i++) {
+        texts[i].setString("");
     }
 }
 
@@ -2562,8 +2760,11 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                         break;
                                     case objectID::ammo_pack:
                                         if (abs(allObjects[O].position.x - allObjects[0].position.x) < 8 && abs(allObjects[O].position.y - allObjects[0].position.y) < 8) {
-                                            allObjects[O].my_id = nothing;
+                                            allObjects[O].my_id = ammo_pack_destroy;     //disappear sprite vs. picked up sprite is 2
+                                            allObjects[O].size = 2;
+                                            allObjects[O].image_index = 0;
                                             //player pick up ammo
+                                            pickup_ammo();
                                         }
                                         break;
                                     case objectID::bandit:
@@ -2629,7 +2830,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                     case idpd_nade:
                                         if (is_within_circle(allObjects[currOBJ].position, allObjects[O].position, 6)) {
                                             destroy_horror_bullet(currOBJ);
-                                            detonate_IDPD_nade(O, -1);
+                                            detonate_IDPD_nade(O, 0);
                                         }
                                         break;
                                     default:
@@ -2772,6 +2973,8 @@ void generate_level() {
     }
     vector2D_reset(top_physics, bottom_physics, left_physics, right_physics);
 
+    reset_popup_texts();
+
     level_generator level_generators[255];
     int generators_active = 0;
 
@@ -2879,6 +3082,17 @@ void generate_level() {
                 }
             }
         }
+        //check if any details are on b-tiles
+        for (int i = 0; i < 1000; i++) {
+            if (allObjects[i].my_id == detail) {
+                for (int j = 0; j < max_floors; j++) {                                                                                                                                         //is b-tile
+                    if (abs(allObjects[i].position.x - allFloors[j].getPosition().x - 16) < 19 && abs(allObjects[i].position.y - allFloors[j].getPosition().y - 16) < 19 && allFloors[j].getOrigin().y > 3) {
+                        allObjects[i].my_id = nothing;
+                    }
+                }
+            }
+        }
+
         //generate enemies
         int tmp_num_of_enemies_to_spawn = 1;
         int enemy_choice = 0;
@@ -2899,10 +3113,15 @@ void generate_level() {
                         }
                         enemy_choice = rand() % 9;
                         for (int r = 0; r < tmp_num_of_enemies_to_spawn; r++) {
-                            if (enemy_choice < 10) { //bandit
+                            if (enemy_choice < 1) { //bandit
                                 float rand_off_x = random_360_radians() - 3.14f;
                                 float rand_off_y = random_360_radians() - 3.14f;
                                 create_object(i * 16 + 8 + rand_off_x, j * 16 + 8 + rand_off_y, 0, 0, idpd_freak, 0, 0);
+                            }
+                            else {
+                                float rand_off_x = random_360_radians() - 3.14f;
+                                float rand_off_y = random_360_radians() - 3.14f;
+                                create_object(i * 16 + 8 + rand_off_x, j * 16 + 8 + rand_off_y, 0, 0, bandit, 0, 0);
                             }
                         }
                     }
@@ -2938,6 +3157,8 @@ int main()
     //sounds
     play_sounds_this_frame_pos.reserve(255);
     play_sounds_this_frame_count.reserve(255);
+
+    //SOUND_START
 
     sf::Sound snd_shoot_1;
     sf::SoundBuffer snd_shoot_1_buff;
@@ -3154,6 +3375,33 @@ int main()
     snd_IDPD_nade_almost.setBuffer(snd_IDPD_nade_almost_buff);
     snd_IDPD_nade_almost.setAttenuation(0.01f);
     snd_IDPD_nade_almost.setVolume(100.0f);
+
+    sf::Sound snd_IDPD_freak_hurt;
+    sf::SoundBuffer snd_IDPD_freak_hurt_buff;
+    if (!snd_IDPD_freak_hurt_buff.loadFromFile("snd/IDPD_freak_hurt.wav")) {
+        return -1;
+    }
+    snd_IDPD_freak_hurt.setBuffer(snd_IDPD_freak_hurt_buff);
+    snd_IDPD_freak_hurt.setAttenuation(0.01f);
+    snd_IDPD_freak_hurt.setVolume(100.0f);
+
+    sf::Sound snd_IDPD_freak_die;
+    sf::SoundBuffer snd_IDPD_freak_die_buff;
+    if (!snd_IDPD_freak_die_buff.loadFromFile("snd/IDPD_freak_die.wav")) {
+        return -1;
+    }
+    snd_IDPD_freak_die.setBuffer(snd_IDPD_freak_die_buff);
+    snd_IDPD_freak_die.setAttenuation(0.01f);
+    snd_IDPD_freak_die.setVolume(100.0f);
+
+    sf::Sound snd_grunt_fire;
+    sf::SoundBuffer snd_grunt_fire_buff;
+    if (!snd_grunt_fire_buff.loadFromFile("snd/grunt_fire.wav")) {
+        return -1;
+    }
+    snd_grunt_fire.setBuffer(snd_grunt_fire_buff);
+    snd_grunt_fire.setAttenuation(0.01f);
+    snd_grunt_fire.setVolume(100.0f);
 
 
     //music
@@ -3828,6 +4076,13 @@ int main()
         temp.setTexture(allBigEffectSprites);
         rotateable_effects_large.push_back(temp);
     }
+    for (int i = 0; i < popup_texts_max; i++) {
+        sf::Text temp;
+        temp.setString("");
+        temp.setFont(font);
+        temp.setCharacterSize(8);
+        popup_texts.push_back(temp);
+    }
 
     window.setVerticalSyncEnabled(false);
     window.setMouseCursorGrabbed(true);
@@ -4000,17 +4255,17 @@ int main()
         tx.setString("x: " + std::to_string(allObjects[0].position.x));
         tx.setCharacterSize(8);
         tx.setFont(font);
-        tx.setColor(sf::Color::Black);
+        tx.setColor(sf::Color::White);
         tx.setPosition({ 2, 12 });
         ty.setString("y: " + std::to_string(allObjects[0].position.y));
         ty.setCharacterSize(8);
         ty.setFont(font);
-        ty.setColor(sf::Color::Black);
+        ty.setColor(sf::Color::White);
         ty.setPosition({2, 2});
         ts.setString("LOOPS: " + std::to_string(LOOPS));
         ts.setCharacterSize(8);
         ts.setFont(font);
-        ts.setColor(sf::Color::Black);
+        ts.setColor(sf::Color::White);
         ts.setPosition({ 2, 22 });
 
         int curr_objcount_real = 0;
@@ -4026,7 +4281,7 @@ int main()
         tO.setString("objects: " + std::to_string(curr_objcount_real));
         tO.setCharacterSize(8);
         tO.setFont(font);
-        tO.setColor(sf::Color::Black);
+        tO.setColor(sf::Color::White);
         tO.setPosition({ 2, 42 });
 
         int curr_tile_count = 0;
@@ -4044,7 +4299,7 @@ int main()
         tO0.setString("tiles: " + std::to_string(curr_tile_count));
         tO0.setCharacterSize(8);
         tO0.setFont(font);
-        tO0.setColor(sf::Color::Black);
+        tO0.setColor(sf::Color::White);
         tO0.setPosition({ 2, 62 });
 
         if (FRAME_ADVANCE == 2 && GAME_PAUSED) {
@@ -4222,8 +4477,9 @@ int main()
             }
 
             if (player_held_LMB) {      //player shooting logic
-                fire_weapom(wep, direction_to_mouse);
+                fire_weapon(wep, direction_to_mouse);
             }
+            calculate_ammo_drop_mult(); //calculate ammo mult after firing
             if (player_held_RMB) {    //player active logic
                 switch (player_character) {
                 case horror:        //unnerfed beam
@@ -4328,11 +4584,7 @@ int main()
                 if (play_sounds_this_frame_count[i]) {
                     switch (i) {
                     case snd_shoot_1_ID:
-                        //play_sound_random_pitch(snd_shoot_1, 0.1f, i);
-                        pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.2f))) - 0.1f;
-                        snd_shoot_1.setPitch(1 + pitch_offset);
-                        snd_shoot_1.setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                        snd_shoot_1.play();
+                        play_sound_random_pitch(snd_shoot_1, 0.1f, i);
                         break;
                     case snd_horror_portal_ID:
                         pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.2f))) - 0.1f;
@@ -4343,16 +4595,10 @@ int main()
                         snd_horror_portal_pan.play();
                         break;
                     case snd_bandit_hurt_ID:
-                        pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.2f))) - 0.1f;
-                        snd_bandit_hurt.setPitch(1 + pitch_offset);
-                        snd_bandit_hurt.setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                        snd_bandit_hurt.play();
+                        play_sound_random_pitch(snd_bandit_hurt, 0.1f, i);
                         break;
                     case snd_bandit_die_ID:
-                        pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.2f))) - 0.1f;
-                        snd_bandit_die.setPitch(1 + pitch_offset);
-                        snd_bandit_die.setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                        snd_bandit_die.play();
+                        play_sound_random_pitch(snd_bandit_die, 0.1f, i);
                         break;
                     case snd_rad_pickup_ID:
                         pitch_offset = (1.0f + ((float(player_rads) / float(player_level * 60)) / 4.0f));
@@ -4366,27 +4612,16 @@ int main()
                         snd_horror_beam_hold.setVolume(70.0f);
                         break;
                     case snd_hit_wall_ID:
-                        pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.2f))) - 0.1f;
-                        snd_hit_wall.setPitch(1 + pitch_offset);
-                        snd_hit_wall.setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                        snd_hit_wall.play();
+                        play_sound_random_pitch(snd_hit_wall, 0.1f, i);
                         break;
                     case snd_wall_break_rock_ID:
-                        pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.2f))) - 0.1f;
-                        snd_wall_break_rock.setPitch(1 + pitch_offset);
-                        snd_wall_break_rock.setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                        snd_wall_break_rock.play();
+                        play_sound_random_pitch(snd_wall_break_rock, 0.1f, i);
                         break;
                     case snd_IDPD_explosion_ID:
-                        pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.2f))) - 0.1f;
-                        snd_IDPD_explosion.setPitch(1 + pitch_offset);
-                        snd_IDPD_explosion.setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                        snd_IDPD_explosion.play();
+                        play_sound_random_pitch(snd_IDPD_explosion, 0.1f, i);
                         break;
                     case snd_plasma_hit_ID:
-                        pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.3f))) - 0.15f;
-                        snd_plasma_hit.setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                        snd_plasma_hit.play();
+                        play_sound_random_pitch(snd_plasma_hit, 0.15f, i);
                         break;
                     case snd_ultra_shovel_ID:
                         pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.2f))) - 0.1f;
@@ -4405,16 +4640,11 @@ int main()
                         }
                         break;
                     case snd_plasma_split_ID:
-                        pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.3f))) - 0.15f;
                         if (laser_brain < 1.1f) {
-                            snd_plasma_split.setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                            snd_plasma_split.setPitch(1 + pitch_offset);
-                            snd_plasma_split.play();
+                            play_sound_random_pitch(snd_plasma_split, 0.15f, i);
                         }
                         else {
-                            snd_plasma_split_upgrade.setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                            snd_plasma_split_upgrade.setPitch(1 + pitch_offset);
-                            snd_plasma_split_upgrade.play();
+                            play_sound_random_pitch(snd_plasma_split_upgrade, 0.15f, i);
                         }
                         break;
                     case snd_hammer_swap_ID:
@@ -4424,28 +4654,25 @@ int main()
                         snd_energy_swap.play();
                         break;
                     case snd_explosion_ID:
-                        pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.2f))) - 0.1f;
-                        snd_explosion.setPitch(1 + pitch_offset);
-                        snd_explosion.setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                        snd_explosion.play();
+                        play_sound_random_pitch(snd_explosion, 0.1f, i);
                         break;
                     case snd_nade_hit_wall_ID:
-                        pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.2f))) - 0.1f;
-                        snd_nade_hit_wall.setPitch(1 + pitch_offset);
-                        snd_nade_hit_wall.setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                        snd_nade_hit_wall.play();
+                        play_sound_random_pitch(snd_nade_hit_wall, 0.1f, i);
                         break;
                     case snd_IDPD_nade_load_ID:
-                        pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.2f))) - 0.1f;
-                        snd_IDPD_nade_load.setPitch(1 + pitch_offset);
-                        snd_IDPD_nade_load.setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                        snd_IDPD_nade_load.play();
+                        play_sound_random_pitch(snd_IDPD_nade_load, 0.1f, i);
                         break;
                     case snd_IDPD_nade_almost_ID:
-                        pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.2f))) - 0.1f;
-                        snd_IDPD_nade_almost.setPitch(1 + pitch_offset);
-                        snd_IDPD_nade_almost.setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                        snd_IDPD_nade_almost.play();
+                        play_sound_random_pitch(snd_IDPD_nade_almost, 0.1f, i);
+                        break;
+                    case snd_idpd_freak_hurt_ID:
+                        play_sound_random_pitch(snd_IDPD_freak_hurt, 0.1f, i);
+                        break;
+                    case snd_idpd_freak_die_ID:
+                        play_sound_random_pitch(snd_IDPD_freak_die, 0.1f, i);
+                        break;
+                    case snd_grunt_fire_ID:
+                        play_sound_random_pitch(snd_grunt_fire, 0.1f, i);
                         break;
                     default:
                         break;
@@ -4464,6 +4691,17 @@ int main()
                     }
                 }
             }
+
+            for (int b = 0; b < popup_texts_max; b++) {
+                if (popup_texts[b].getLineSpacing() > 20) {
+                    popup_texts[b].setPosition(popup_texts[b].getPosition() + sf::Vector2f{ 0, -2 });
+                }
+                if (popup_texts[b].getLineSpacing() < 0) {
+                    popup_texts[b].setString("");
+                }
+                popup_texts[b].setLineSpacing(popup_texts[b].getLineSpacing() - 1);
+            }
+
 
             c.setPosition(allObjects[0].position - cameraPos);
             c.setOrigin({ 3, 3 });
@@ -5019,6 +5257,9 @@ int main()
                     case ammo_pack:
                         if (allObjects[idx].alarm1 > 60 || int(allObjects[idx].alarm1 / 2) % 2) {
                             choice = int(allObjects[idx].image_index * 0.4f);
+                            if (choice > 6) {
+                                choice = 0;
+                            }
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setColor({ 255, 255, 255, 255 });
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setPosition(allObjects[idx].position - cameraPos);
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setRotation(0);
@@ -5026,6 +5267,16 @@ int main()
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setTextureRect(sf::IntRect{ 16 * choice, 48, 16, 16 });
                             rotateableEffectsMediumIndex++;
                         }
+                        break;
+                    case ammo_pack_destroy:
+                        choice = int(allObjects[idx].image_index * 0.4f);
+
+                        rotateable_effects_medium[rotateableEffectsMediumIndex].setColor({ 255, 255, 255, 255 });
+                        rotateable_effects_medium[rotateableEffectsMediumIndex].setPosition(allObjects[idx].position - cameraPos);
+                        rotateable_effects_medium[rotateableEffectsMediumIndex].setRotation(0);
+                        rotateable_effects_medium[rotateableEffectsMediumIndex].setScale(1, 1);
+                        rotateable_effects_medium[rotateableEffectsMediumIndex].setTextureRect(sf::IntRect{ 16 * choice, allObjects[idx].size * 16, 16, 16});
+                        rotateableEffectsMediumIndex++;
                         break;
                     case plasma_particle:
                         choice = int(allObjects[idx].image_index / 10.0f);
@@ -5105,10 +5356,12 @@ int main()
                         if (allObjects[idx].gun_angle < -180.0f / degreestoradians) {
                             allObjects[idx].gun_angle += 180.0f / degreestoradians;
                         }
+                        
                         if (allObjects[idx].gun_angle <= 0) {
+                            sf::Vector2f gun_offset = { cos(allObjects[idx].gun_angle) * 3, sin(allObjects[idx].gun_angle) * 3 };
                             rotateable_sprites_guns[rotateableSpriteGunIndex].setTexture(idpd_freak_guntex);
                             rotateable_sprites_guns[rotateableSpriteGunIndex].setColor({ 255, 255, 255, 255 });
-                            rotateable_sprites_guns[rotateableSpriteGunIndex].setPosition(allObjects[idx].position - cameraPos);
+                            rotateable_sprites_guns[rotateableSpriteGunIndex].setPosition(allObjects[idx].position + gun_offset - cameraPos);
                             rotateable_sprites_guns[rotateableSpriteGunIndex].setOrigin({ 16,16 });
                             rotateable_sprites_guns[rotateableSpriteGunIndex].setRotation(allObjects[idx].gun_angle * degreestoradians);
                             if (abs(allObjects[idx].gun_angle) > 90.0f / degreestoradians) {
@@ -5121,8 +5374,9 @@ int main()
                         }
                         else {
                             rotateable_sprites_guns_top[rotateableSpriteGunTopIndex].setTexture(idpd_freak_guntex);
+                            sf::Vector2f gun_offset = { cos(allObjects[idx].gun_angle) * 3, sin(allObjects[idx].gun_angle) * 3 };
                             rotateable_sprites_guns_top[rotateableSpriteGunTopIndex].setColor({ 255, 255, 255, 255 });
-                            rotateable_sprites_guns_top[rotateableSpriteGunTopIndex].setPosition(allObjects[idx].position - cameraPos);
+                            rotateable_sprites_guns_top[rotateableSpriteGunTopIndex].setPosition(allObjects[idx].position + gun_offset - cameraPos);
                             rotateable_sprites_guns_top[rotateableSpriteGunTopIndex].setOrigin({ 16,16 });
                             rotateable_sprites_guns_top[rotateableSpriteGunTopIndex].setRotation(allObjects[idx].gun_angle* degreestoradians);
                             if (abs(allObjects[idx].gun_angle) > 90.0f / degreestoradians) {
@@ -5140,7 +5394,7 @@ int main()
 
                         if (allObjects[idx].next_hurt > current_frame) {
                             choice2 = 2;
-                            choice = int((allObjects[idx].next_hurt - current_frame) * 0.4f);
+                            choice = int(-(allObjects[idx].next_hurt - current_frame - 6) * 0.4f);
                         }
                         else {
                             if (abs(allObjects[idx].speed.x) < 0.01f && abs(allObjects[idx].speed.y) < 0.01f) {
@@ -5439,7 +5693,7 @@ int main()
         
         tC.setString("fps: " + std::to_string(fps));
         tC.setCharacterSize(8);
-        tC.setColor(sf::Color::Black);
+        tC.setColor(sf::Color::White);
         tC.setFont(font);
         tC.setPosition({ 2, 32 });
 
@@ -5449,7 +5703,7 @@ int main()
         tspr.setString("rads: " + std::to_string(player_rads));
         tspr.setCharacterSize(8);
         tspr.setFont(font);
-        tspr.setColor(sf::Color::Black);
+        tspr.setColor(sf::Color::White);
         tspr.setPosition({ 2, 52 });
 
         sf::Text debug1;
@@ -5462,10 +5716,10 @@ int main()
                 }
             }
         }
-        debug1.setString("rotateableSpriteBulletIndex: " + std::to_string(rotateableSpriteBulletIndex));
+        debug1.setString("player_energy: " + std::to_string(player_energy));
         debug1.setCharacterSize(8);
         debug1.setFont(font);
-        debug1.setColor(sf::Color::Black);
+        debug1.setColor(sf::Color::White);
         debug1.setPosition({ 2, 72 });
 
         sf::Text debug2;
@@ -5473,7 +5727,7 @@ int main()
         debug2.setString("bwep_reload: " + std::to_string(bwep_reload));
         debug2.setCharacterSize(8);
         debug2.setFont(font);
-        debug2.setColor(sf::Color::Black);
+        debug2.setColor(sf::Color::White);
         debug2.setPosition({ 2, 92 });
 
 
@@ -5660,34 +5914,7 @@ int main()
             reset_rotateable_sprites(rotateable_effects_small, rotateableEffectsSmallIndex);
 
 
-            ////enemies////
-            //bandit
-            //guns
-            //rotateable guns
-            for (sf::Sprite spr : rotateable_sprites_guns) {
-                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
-                    break;
-                }
-                buffer_over.draw(spr);
-            }
-            reset_rotateable_sprites(rotateable_sprites_guns, rotateableSpriteGunIndex);
-
-            for (sf::Sprite spr : all_enemy_sprites) {
-                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
-                    break;
-                }
-                buffer_over.draw(spr);
-            }
-
-            reset_rotateable_sprites(all_enemy_sprites, allEnemySpritesIndex);
-
-            for (sf::Sprite spr : rotateable_sprites_guns_top) {
-                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
-                    break;
-                }
-                buffer_over.draw(spr);
-            }
-            reset_rotateable_sprites(rotateable_sprites_guns_top, rotateableSpriteGunTopIndex);
+            
 
 
 
@@ -5742,6 +5969,35 @@ int main()
             buffer_over.draw(batcher_bullet1, Renderer);
 
             reset_rotateable_sprites(bullet_1_batchable, bullet_1_batchableIndex);
+
+            ////enemies////
+            //bandit
+            //guns
+            //rotateable guns
+            for (sf::Sprite spr : rotateable_sprites_guns) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_over.draw(spr);
+            }
+            reset_rotateable_sprites(rotateable_sprites_guns, rotateableSpriteGunIndex);
+
+            for (sf::Sprite spr : all_enemy_sprites) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_over.draw(spr);
+            }
+
+            reset_rotateable_sprites(all_enemy_sprites, allEnemySpritesIndex);
+
+            for (sf::Sprite spr : rotateable_sprites_guns_top) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_over.draw(spr);
+            }
+            reset_rotateable_sprites(rotateable_sprites_guns_top, rotateableSpriteGunTopIndex);
             
 
             if (mouse_offset_window_center_y <= 0) {
@@ -5885,16 +6141,25 @@ int main()
         //buffer_over.draw(c);
         bool debug_text_show = 1;
         if (debug_text_show) {
-            buffer_over.draw(tx);
-            buffer_over.draw(ty);
-            buffer_over.draw(ts);
-            buffer_over.draw(tC);
-            buffer_over.draw(tO);
-            buffer_over.draw(tO0);
-            buffer_over.draw(tspr);
-            buffer_over.draw(debug1);
-            buffer_over.draw(debug2);
+            draw_text_NT(tx, buffer_over);
+            draw_text_NT(ty, buffer_over);
+            draw_text_NT(ts, buffer_over);
+            draw_text_NT(tC, buffer_over);
+            draw_text_NT(tO, buffer_over);
+            draw_text_NT(tO0, buffer_over);
+            draw_text_NT(tspr, buffer_over);
+            draw_text_NT(debug1, buffer_over);
+            draw_text_NT(debug2, buffer_over);
         }
+
+        for (sf::Text tex : popup_texts) {
+            if (tex.getLineSpacing() > 20 || int(tex.getLineSpacing()) % 4 < 2) {
+                tex.setPosition(tex.getPosition() - cameraPos);
+                draw_text_NT(tex, buffer_over);
+                tex.setPosition(tex.getPosition() + cameraPos);
+            }
+        }
+
         if (!naitive_cursor_active) {
             buffer_over.draw(cursor_sprite);
         }

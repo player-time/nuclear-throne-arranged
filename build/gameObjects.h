@@ -15,9 +15,12 @@ enum objectID {nothing,
 
 	player, 
 
+	popup_text,
+
 	rad, rad_destroy,
 
 	ammo_pack, health_pack,
+	ammo_pack_destroy, health_pack_destroy,
 
 	bandit, bandit_corpse, 
 	scorpion, scorpion_corpse,
@@ -65,6 +68,8 @@ enum sound {
 	snd_idpd_freak_hurt_ID,
 	snd_idpd_freak_die_ID,
 
+	snd_grunt_fire_ID,
+
 	snd_rad_pickup_ID,
 
 	snd_horror_beam_start_ID,
@@ -91,6 +96,11 @@ enum gridType { out_of_bounds, wall, exlpo_tile, boarder , floor_tile }; //, sec
 enum subWallType{upLeft, up, upRight, right, downRight, down, downLeft, left, middle };	//which sprite to use for a wall
 
 enum character{ fish, crystal, eyes, melting, plant, YV, steroids, robot, chicken, rebel, horror, rogue, frog, skeleton };
+
+enum weapon_types {		//cutoffs for weapon types
+	melee_weps = 11,
+	energy_weps = 41,
+};
 
 //for circular hitboxes
 enum hitboxes {
