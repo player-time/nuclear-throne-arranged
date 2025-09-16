@@ -1,5 +1,6 @@
 #pragma once
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 
 #include <SFML/System/Vector2.hpp>
 
@@ -63,8 +64,10 @@ enum objectID {
 };
 
 enum sound {
+	snd_music_ID,
+
 	snd_shoot_1_ID,
-	snd_horror_portal_ID,
+	snd_horror_portal_ID, snd_horror_portal_pan_ID,
 
 	snd_bandit_hurt_ID,
 	snd_bandit_die_ID,
@@ -84,15 +87,28 @@ enum sound {
 	snd_IDPD_explosion_ID,
 	snd_plasma_hit_ID,
 
+	snd_player_hurt_ID,
+	snd_horror_hurt_ID,
+
+	snd_pickup_disappear_ID,
+	snd_ammo_pickup_ID,
+	snd_hp_pickup_ID,
+
+	snd_empty_ID,
+
+	snd_melee_flip_ID,
+	snd_plasma_reload_ID,
+	snd_plasma_reload_upgrade_ID,
+	
 	snd_ultra_shovel_ID,
-	snd_plasma_huge_ID,
-	snd_plasma_split_ID,
+	snd_plasma_huge_ID, snd_plasma_huge_upgrade_ID,
+	snd_plasma_split_ID, snd_plasma_split_upgrade_ID,
 	snd_hammer_swap_ID,
 	snd_energy_swap_ID,
-	snd_explosion_ID = 30,
-	snd_nade_hit_wall_ID = 31,
-	snd_IDPD_nade_load_ID = 32,
-	snd_IDPD_nade_almost_ID = 33,
+	snd_explosion_ID,
+	snd_nade_hit_wall_ID,
+	snd_IDPD_nade_load_ID,
+	snd_IDPD_nade_almost_ID,
 };
 
 enum gridType { out_of_bounds, wall, exlpo_tile, boarder , floor_tile }; //, secret_wall, secret_explotile, vault_wall, vault_explotile};
@@ -199,4 +215,11 @@ struct level_generator {
 	int spdy;
 	bool active = false;
 	bool Btile = false;
+};
+
+struct sound_sound_buffer {
+	sf::Music music;
+	sf::Sound sound;
+	sf::SoundBuffer sound_buffer;
+	float pitch_variance;
 };

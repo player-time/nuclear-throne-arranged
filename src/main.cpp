@@ -155,8 +155,8 @@ int player_energy_max = 55;
 float global_ammo_mult = 1.0f;  //ammo mult deteremined by the player ammo and weapons
 
 int player_max_rads = 60;
-int player_hp = 8;
-int player_max_hp = 8;
+int player_hp = 12;
+int player_max_hp = 12;
 float player_max_speed = 4.0f;      //max should be less than 5.0f or else walls can be cliped through
 bool is_Bskin = false;
 
@@ -205,6 +205,8 @@ int wep_shine_frame = 0;
 float wep_angle = (rand() % 2 * 2 - 1) * 120.0f; //this is the offset used for melee
 float wep_kick = 0.0f;
 int swapmove = 0;
+bool reloaded = true;
+bool breloaded = true;
 
 //check if key has been released
 bool P_released = true;
@@ -300,6 +302,23 @@ void play_sound_relative_to_player(sound sound_id, float x, float y) {
     play_sounds_this_frame_count[sound_id]++;
 }
 
+void play_sound_on_player(sound sound_id) {
+    play_sounds_this_frame_pos[sound_id].x = 0;
+    play_sounds_this_frame_pos[sound_id].y = 0;
+    play_sounds_this_frame_count[sound_id]++;
+}
+
+int add_new_sound(enum sound sound_id, std::string filename_path, sound_sound_buffer all_sounds[], float pitch_variance, float attenuation = 1.0f, float volume = 100.0f) {
+    if (!all_sounds[sound_id].sound_buffer.loadFromFile(filename_path)) {
+        return -1;
+    }
+    all_sounds[sound_id].sound.setBuffer(all_sounds[sound_id].sound_buffer);
+    all_sounds[sound_id].sound.setAttenuation(attenuation);
+    all_sounds[sound_id].sound.setVolume(volume);
+    all_sounds[sound_id].pitch_variance = pitch_variance;
+    return 1;
+}
+
 void play_sound_random_pitch(sf::Sound &_sound, float variance, int i) {
     float pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2.0f*variance))) - variance;
     _sound.setPitch(1 + pitch_offset);
@@ -327,13 +346,14 @@ void create_popuptext(std::string string, sf::Vector2f pos) {
     if (popup_text_index >= popup_texts_max) {
         popup_text_index = 0;
     }
-    popup_texts[popup_text_index].setPosition(round(pos.x), round(pos.y));
+    popup_texts[popup_text_index].setPosition(round(pos.x) - string.length() * 4, round(pos.y));
     popup_texts[popup_text_index].setLineSpacing(50);     //alarm
     popup_texts[popup_text_index].setString(string);
     popup_text_index++;
 }
 
 void pickup_ammo() {
+    play_sound_relative_to_player(snd_ammo_pickup_ID, allObjects[0].position.x, allObjects[0].position.y);
     int wep_choice = 0;
     if (rand() % 2) {
         wep_choice = wep;
@@ -342,6 +362,7 @@ void pickup_ammo() {
         wep_choice = bwep;
     }
     if (wep_choice < melee_weps) {     //melee
+
         int choice = rand() % 5;
         switch (choice) {
         default:    //case 0:
@@ -561,6 +582,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 
                 allObjects[i].alarm1 = 20 + rand() % 10;
                 allObjects[i].alarm2 = 0;
+                allObjects[i].alarm3 = 0;
 
                 allObjects[i].next_hurt = 0;
                 allObjects[i].my_hp = round(30 * (1 + (LOOPS * 0.05f)));
@@ -739,6 +761,11 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].image_index = rand() % 3;
                 }
                 break;
+            case heal_FX:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].position = { x, y };
+                allObjects[i].image_index = 0;
+                break;
             default:
                 break;
             }
@@ -749,6 +776,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 }
 
 void pickup_health() {
+    play_sound_relative_to_player(snd_hp_pickup_ID, allObjects[0].position.x, allObjects[0].position.y);
     player_hp += 2 + second_stomach;
     if (player_hp >= player_max_hp) {
         player_hp = player_max_hp;
@@ -812,13 +840,30 @@ bool has_line_of_sight(float x, float y) {
     return true;
 }
 
+void get_wep_reload_sound(int wep) {
+    switch (wep) {
+    case 11: //SPC
+        if (laser_brain < 1.1f) {
+            play_sound_on_player(snd_plasma_reload_ID);
+        }
+        else {
+            play_sound_on_player(snd_plasma_reload_upgrade_ID);
+        }
+        break;
+    default:
+        break;
+    }
+}
+
 sf::Vector2f wep_get_origin(int wep_id){
     switch (wep_id) {
     case 0: //ushov
-        return sf::Vector2f( 5, 6 );
+        return sf::Vector2f( 5, 7 );
         break;
     case 11:    //SPC
         return sf::Vector2f( 3, 6 );
+        break;
+    default:
         break;
     }
 }
@@ -830,6 +875,8 @@ void play_swap_sound(int wep_id) {
         break;
     case 11:    //SPC
         play_sounds_this_frame_count[snd_energy_swap_ID] = 1;
+        break;
+    default:
         break;
     }
 }
@@ -2029,6 +2076,8 @@ void fire_weapon(int index, float direction) {
         if (LMB_pressed && wep_reload < 0.0f) {
             LMB_pressed = false;
             if (player_rads > 13) {
+                reloaded = false;
+
                 wep_kick = -6;
                 wep_angle *= -1;
                 play_sounds_this_frame_count[snd_ultra_shovel_ID] = 1;
@@ -2061,6 +2110,8 @@ void fire_weapon(int index, float direction) {
         break;
     case 11:
         if (LMB_pressed && wep_reload < 0.0f && player_energy - 24 >= 0) {
+            reloaded = false;
+
             player_energy -= 24;
             LMB_pressed = false;
             wep_kick = 7;
@@ -2070,6 +2121,12 @@ void fire_weapon(int index, float direction) {
             Xspd = cos(direction) * 6.0f;
             Yspd = sin(direction) * 6.0f;
             create_object(allObjects[0].position.x + Xspd / 2, allObjects[0].position.y + Yspd / 2, Xspd, Yspd, plasma_huge, direction, 0);
+        }
+        if (LMB_pressed && wep_reload < 0.0f && player_energy - 24 < 0) {
+            play_sound_on_player(snd_empty_ID);
+            create_popuptext("NOT ENOUGH ENERGY", allObjects[0].position);
+            LMB_pressed = false;
+            wep_kick = 3;
         }
         break;
     default:
@@ -2230,6 +2287,7 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
             }
             allObjects[i].alarm1--;
             if (allObjects[i].alarm1 < 0) {
+                play_sound_relative_to_player(snd_pickup_disappear_ID, allObjects[i].position.x, allObjects[i].position.y);
                 allObjects[i].my_id = ammo_pack_destroy;
                 allObjects[i].size = 1;     //disappear sprite vs. picked up sprite is 2
                 allObjects[i].image_index = 0;
@@ -2252,6 +2310,16 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
         case ammo_pack_destroy:
             allObjects[i].image_index++;
             if (allObjects[i].image_index > 12) {
+                allObjects[i].my_id = nothing;
+            }
+            break;
+        case heal_FX:
+            allObjects[i].image_index++;
+            allObjects[i].position.y -= 2;
+            if (allObjects[i].image_index == 8) {   //make up for sprite modification
+                allObjects[i].position.y -= 2;
+            }
+            if (allObjects[i].image_index > 17) {
                 allObjects[i].my_id = nothing;
             }
             break;
@@ -2345,6 +2413,7 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
 
             allObjects[i].alarm1--;
             allObjects[i].alarm2--;
+            allObjects[i].alarm3--;
             
             allObjects[i].facing_right = allObjects[i].speed.x > 0;
 
@@ -2835,12 +2904,21 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                             tmpdir = atan2f(diffy, diffx) + 180.0f / degreestoradians;
 
                                             motion_add_dir(tmpdir, 1.0f, currOBJ);  //the bigger the enemy the more it pushes: speed = size * 0.5
+                                            if (allObjects[O].alarm3 < 0 && allObjects[currOBJ].next_hurt < current_frame) { //melee cooldown
+                                                play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
+                                                allObjects[O].alarm3 = 25;
+                                                player_hp -= 5;
+                                                allObjects[currOBJ].next_hurt = current_frame + 6;
+                                                allObjects[currOBJ].image_index = 0;
+                                                motion_add_dir(tmpdir, 4.0f, currOBJ);
+                                            }
                                         }
                                         break;
                                     case objectID::bullet1:
                                         if (is_within_circle(allObjects[currOBJ].position, allObjects[O].position, enemy_bullet_hitbox + player_hitbox)) {
                                             destroy_bullet_1(O);
                                             if (allObjects[currOBJ].next_hurt < current_frame) {
+                                                play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
                                                 player_hp -= 3;
                                                 allObjects[currOBJ].next_hurt = current_frame + 6;
                                                 allObjects[currOBJ].image_index = 0;
@@ -2852,6 +2930,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                         if (is_within_circle(allObjects[currOBJ].position, allObjects[O].position, enemy_bullet_hitbox + player_hitbox)) {
                                             destroy_bullet_2(O);
                                             if (allObjects[currOBJ].next_hurt < current_frame) {
+                                                play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
                                                 player_hp -= 2;
                                                 allObjects[currOBJ].next_hurt = current_frame + 6;
                                                 allObjects[currOBJ].image_index = 0;
@@ -2863,6 +2942,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                         if (is_within_circle(allObjects[currOBJ].position, allObjects[O].position, enemy_bullet_hitbox + player_hitbox)) {
                                             destroy_idpd_bullet(O);
                                             if (allObjects[currOBJ].next_hurt < current_frame) {
+                                                play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
                                                 player_hp -= 3;
                                                 allObjects[currOBJ].next_hurt = current_frame + 6;
                                                 allObjects[currOBJ].image_index = 0;
@@ -2872,6 +2952,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                         break;
                                     case objectID::idpd_explosion:
                                         if ((allObjects[O]. image_index == 3 || allObjects[O].image_index == 4) && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, 48 + player_hitbox)) {
+                                            play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
                                             player_hp -= 8;
                                             allObjects[currOBJ].next_hurt = current_frame + 6;
                                             allObjects[currOBJ].image_index = 0;
@@ -3270,258 +3351,82 @@ int main()
     play_sounds_this_frame_count.reserve(255);
 
     //SOUND_START
+    const int all_sounds_max = 1000;
+    sound_sound_buffer all_sounds[all_sounds_max];
 
-    sf::Sound snd_shoot_1;
-    sf::SoundBuffer snd_shoot_1_buff;
+    add_new_sound(snd_shoot_1_ID, "snd/shoot_1.wav", all_sounds, 0.1f, 0.015f);
 
-    sf::Sound snd_horror_portal;
-    sf::SoundBuffer snd_horror_portal_buff;
-    sf::Sound snd_horror_portal_pan;
-    sf::SoundBuffer snd_horror_portal_pan_buff;
+    add_new_sound(snd_horror_portal_ID, "snd/horror_portal.wav", all_sounds, 0.1f);
 
-    sf::Sound snd_bandit_hurt;
-    sf::SoundBuffer snd_bandit_hurt_buff;
-    sf::Sound snd_bandit_die;
-    sf::SoundBuffer snd_bandit_die_buff;
+    add_new_sound(snd_horror_portal_pan_ID, "snd/horror_portal_pan.wav", all_sounds, 0.1f, 0.005f);
 
-    sf::Sound snd_rad_pickup;
-    sf::SoundBuffer snd_rad_pickup_buff;
+    add_new_sound(snd_bandit_hurt_ID, "snd/bandit_hurt.wav", all_sounds, 0.1f, 0.04f);
 
-    sf::Sound snd_horror_beam_start;
-    sf::SoundBuffer snd_horror_beam_start_buff;
-    sf::Sound snd_horror_beam_hold;
-    sf::SoundBuffer snd_horror_beam_hold_buff;
+    add_new_sound(snd_bandit_die_ID, "snd/bandit_die.wav", all_sounds, 0.1f, 0.04f);
 
-    sf::Sound snd_hit_wall;
-    sf::SoundBuffer snd_hit_wall_buff;
+    add_new_sound(snd_rad_pickup_ID, "snd/rad_pickup.wav", all_sounds, 0.02f, 0.00f, 70.0f);
 
-    sf::Sound snd_wall_break_rock;
-    sf::SoundBuffer snd_wall_break_rock_buff;
+    add_new_sound(snd_horror_beam_start_ID, "snd/horror_beam_start.wav", all_sounds, 0.02f, 0.0f, 70.0f);
 
-    sf::Sound snd_IDPD_explosion;
-    sf::SoundBuffer snd_IDPD_explosion_buff;
+    add_new_sound(snd_horror_beam_hold_ID, "snd/horror_beam_hold.wav", all_sounds, 0.00f, 0.0f, 70.0f);
 
-    sf::Sound snd_plasma_hit;
-    sf::SoundBuffer snd_plasma_hit_buff;
+    add_new_sound(snd_hit_wall_ID, "snd/hit_wall.wav", all_sounds, 0.1f, 0.02f);
 
-    sf::Sound snd_ultra_shovel;
-    sf::SoundBuffer snd_ultra_shovel_buff;
+    add_new_sound(snd_wall_break_rock_ID, "snd/wall_break_rock.wav", all_sounds, 0.1f, 0.005f);
 
-    sf::Sound snd_plasma_huge;
-    sf::SoundBuffer snd_plasma_huge_buff;
+    add_new_sound(snd_IDPD_explosion_ID, "snd/IDPD_explosion.wav", all_sounds, 0.1f, 0.01f);
 
-    sf::Sound snd_plasma_huge_upgrade;
-    sf::SoundBuffer snd_plasma_huge_upgrade_buff;
+    add_new_sound(snd_explosion_ID, "snd/explosion.wav", all_sounds, 0.1f, 0.005f);
 
-    sf::Sound snd_plasma_split;
-    sf::SoundBuffer snd_plasma_split_buff;
+    add_new_sound(snd_plasma_hit_ID, "snd/plasma_hit.wav", all_sounds, 0.15f, 0.02f);
 
-    sf::Sound snd_plasma_split_upgrade;
-    sf::SoundBuffer snd_plasma_split_upgrade_buff;
+    add_new_sound(snd_ultra_shovel_ID, "snd/ultra_shovel.wav", all_sounds, 0.1f, 0.0f);
 
-    sf::Sound snd_hammer_swap;
-    sf::SoundBuffer snd_hammer_swap_buff;
+    add_new_sound(snd_plasma_huge_ID, "snd/plasma_huge.wav", all_sounds, 0.15f, 0.0f);
 
-    sf::Sound snd_energy_swap;
-    sf::SoundBuffer snd_energy_swap_buff;
+    add_new_sound(snd_plasma_huge_upgrade_ID, "snd/plasma_huge_upgrade.wav", all_sounds, 0.15f, 0.0f);
 
-    sf::Sound snd_explosion;
-    sf::SoundBuffer snd_explosion_buff;
-    
-    if (!snd_shoot_1_buff.loadFromFile("snd/shoot_1.wav")) {
-        return -1;
-    }
-    snd_shoot_1.setBuffer(snd_shoot_1_buff);
-    snd_shoot_1.setAttenuation(0.015f);
-    snd_shoot_1.setVolume(100.0f);
+    add_new_sound(snd_plasma_split_ID, "snd/plasma_split.wav", all_sounds, 0.15f, 0.01f);
 
-    if (!snd_horror_portal_buff.loadFromFile("snd/horror_portal.wav")) {
-        return -1;
-    }
-    snd_horror_portal.setBuffer(snd_horror_portal_buff);
+    add_new_sound(snd_plasma_split_upgrade_ID, "snd/plasma_split_upgrade.wav", all_sounds, 0.15f, 0.01f);
 
-    if (!snd_horror_portal_pan_buff.loadFromFile("snd/horror_portal_pan.wav")) {
-        return -1;
-    }
-    snd_horror_portal_pan.setBuffer(snd_horror_portal_pan_buff);
-    snd_horror_portal_pan.setAttenuation(0.005f);
+    add_new_sound(snd_hammer_swap_ID, "snd/hammer_swap.wav", all_sounds, 0.005f, 0.0f);
 
-    if (!snd_bandit_hurt_buff.loadFromFile("snd/bandit_hurt.wav")) {
-        return -1;
-    }
-    snd_bandit_hurt.setBuffer(snd_bandit_hurt_buff);
-    snd_bandit_hurt.setAttenuation(0.04f);
-    snd_bandit_hurt.setVolume(100.0f);
+    add_new_sound(snd_energy_swap_ID, "snd/energy_swap.wav", all_sounds, 0.005f, 0.0f);
 
-    if (!snd_bandit_die_buff.loadFromFile("snd/bandit_die.wav")) {
-        return -1;
-    }
-    snd_bandit_die.setBuffer(snd_bandit_die_buff);
-    snd_bandit_die.setAttenuation(0.04f);
-    snd_bandit_die.setVolume(100.0f);
+    add_new_sound(snd_nade_hit_wall_ID, "snd/nade_hit_wall.wav", all_sounds, 0.1f, 0.01f);
 
-    if (!snd_rad_pickup_buff.loadFromFile("snd/rad_pickup.wav")) {
-        return -1;
-    }
-    snd_rad_pickup.setBuffer(snd_rad_pickup_buff);
-    snd_rad_pickup.setVolume(70.0f);
+    add_new_sound(snd_IDPD_nade_load_ID, "snd/IDPD_nade_load.wav", all_sounds, 0.1f, 0.01f);
 
-    if (!snd_horror_beam_start_buff.loadFromFile("snd/horror_beam_start.wav")) {
-        return -1;
-    }
-    snd_horror_beam_start.setBuffer(snd_horror_beam_start_buff);
-    snd_horror_beam_start.setVolume(70.0f);
+    add_new_sound(snd_IDPD_nade_almost_ID, "snd/IDPD_nade_almost.wav", all_sounds, 0.1f, 0.01f);
 
-    if (!snd_horror_beam_hold_buff.loadFromFile("snd/horror_beam_hold.wav")) {
-        return -1;
-    }
-    snd_horror_beam_hold.setBuffer(snd_horror_beam_hold_buff);
+    add_new_sound(snd_idpd_freak_hurt_ID, "snd/IDPD_freak_hurt.wav", all_sounds, 0.1f, 0.01f);
 
-    //walls
-    if (!snd_hit_wall_buff.loadFromFile("snd/hit_wall.wav")) {
-        return -1;
-    }
-    snd_hit_wall.setBuffer(snd_hit_wall_buff);
-    snd_hit_wall.setAttenuation(0.02f);
-    snd_hit_wall.setVolume(100.0f);
+    add_new_sound(snd_idpd_freak_die_ID, "snd/IDPD_freak_die.wav", all_sounds, 0.1f, 0.01f);
 
-    if (!snd_wall_break_rock_buff.loadFromFile("snd/wall_break_rock.wav")) {
-        return -1;
-    }
-    snd_wall_break_rock.setBuffer(snd_wall_break_rock_buff);
-    snd_wall_break_rock.setAttenuation(0.005f);
-    snd_wall_break_rock.setVolume(100.0f);
+    add_new_sound(snd_grunt_fire_ID, "snd/grunt_fire.wav", all_sounds, 0.1f, 0.01f);
 
-    //explosions
-    if (!snd_IDPD_explosion_buff.loadFromFile("snd/IDPD_explosion.wav")) {
-        return -1;
-    }
-    snd_IDPD_explosion.setBuffer(snd_IDPD_explosion_buff);
-    snd_IDPD_explosion.setAttenuation(0.01f);
-    snd_IDPD_explosion.setVolume(100.0f);
+    add_new_sound(snd_horror_hurt_ID, "snd/horror_hurt.wav", all_sounds, 0.07f, 0.00f);
 
-    if (!snd_explosion_buff.loadFromFile("snd/explosion.wav")) {
-        return -1;
-    }
-    snd_explosion.setBuffer(snd_explosion_buff);
-    snd_explosion.setAttenuation(0.005f);
-    snd_explosion.setVolume(100.0f);
-    
-    //plasma
-    if (!snd_plasma_hit_buff.loadFromFile("snd/plasma_hit.wav")) {
-        return -1;
-    }
-    snd_plasma_hit.setBuffer(snd_plasma_hit_buff);
-    snd_plasma_hit.setAttenuation(0.02f);
-    snd_plasma_hit.setVolume(100.0f);
+    add_new_sound(snd_pickup_disappear_ID, "snd/pickup_disappear.wav", all_sounds, 0.1f, 0.01f);
 
-    //ushov
-    if (!snd_ultra_shovel_buff.loadFromFile("snd/ultra_shovel.wav")) {
-        return -1;
-    }
-    snd_ultra_shovel.setBuffer(snd_ultra_shovel_buff);
-    snd_ultra_shovel.setVolume(100.0f);
+    add_new_sound(snd_ammo_pickup_ID, "snd/ammo_pickup.wav", all_sounds, 0.07f, 0.01f);
 
-    if (!snd_plasma_huge_buff.loadFromFile("snd/plasma_huge.wav")) {
-        return -1;
-    }
-    snd_plasma_huge.setBuffer(snd_plasma_huge_buff);
-    snd_plasma_huge.setVolume(100.0f);
+    add_new_sound(snd_hp_pickup_ID, "snd/hp_pickup.wav", all_sounds, 0.07f, 0.01f);
 
-    if (!snd_plasma_huge_upgrade_buff.loadFromFile("snd/plasma_huge_upgrade.wav")) {
-        return -1;
-    }
-    snd_plasma_huge_upgrade.setBuffer(snd_plasma_huge_upgrade_buff);
-    snd_plasma_huge_upgrade.setVolume(100.0f);
+    add_new_sound(snd_empty_ID, "snd/empty.wav", all_sounds, 0.02f, 0.00f, 90.0f);
 
-    if (!snd_plasma_split_buff.loadFromFile("snd/plasma_split.wav")) {
-        return -1;
-    }
-    snd_plasma_split.setBuffer(snd_plasma_split_buff);
-    snd_plasma_split.setAttenuation(0.01f);
-    snd_plasma_split.setVolume(100.0f);
+    add_new_sound(snd_music_ID, "mus/mus1.ogg", all_sounds, 0.0f, 0.0f, 0.0f);
 
-    if (!snd_plasma_split_upgrade_buff.loadFromFile("snd/plasma_split_upgrade.wav")) {
-        return -1;
-    }
-    snd_plasma_split_upgrade.setBuffer(snd_plasma_split_upgrade_buff);
-    snd_plasma_split_upgrade.setAttenuation(0.01f);
-    snd_plasma_split_upgrade.setVolume(100.0f);
+    add_new_sound(snd_melee_flip_ID, "snd/melee_flip.wav", all_sounds, 0.07f, 0.0f, 50.0f);
 
-    if (!snd_hammer_swap_buff.loadFromFile("snd/hammer_swap.wav")) {
-        return -1;
-    }
-    snd_hammer_swap.setBuffer(snd_hammer_swap_buff);
-    snd_hammer_swap.setVolume(100.0f);
+    add_new_sound(snd_plasma_reload_ID, "snd/plasma_reload.wav", all_sounds, 0.07f, 0.0f, 90.0f);
 
-    if (!snd_energy_swap_buff.loadFromFile("snd/energy_swap.wav")) {
-        return -1;
-    }
-    snd_energy_swap.setBuffer(snd_energy_swap_buff);
-    snd_energy_swap.setVolume(100.0f);
-
-    sf::Sound snd_nade_hit_wall;
-    sf::SoundBuffer snd_nade_hit_wall_buff;
-    if (!snd_nade_hit_wall_buff.loadFromFile("snd/nade_hit_wall.wav")) {
-        return -1;
-    }
-    snd_nade_hit_wall.setBuffer(snd_nade_hit_wall_buff);
-    snd_nade_hit_wall.setAttenuation(0.01f);
-    snd_nade_hit_wall.setVolume(100.0f);
-
-    sf::Sound snd_IDPD_nade_load;
-    sf::SoundBuffer snd_IDPD_nade_load_buff;
-    if (!snd_IDPD_nade_load_buff.loadFromFile("snd/IDPD_nade_load.wav")) {
-        return -1;
-    }
-    snd_IDPD_nade_load.setBuffer(snd_IDPD_nade_load_buff);
-    snd_IDPD_nade_load.setAttenuation(0.01f);
-    snd_IDPD_nade_load.setVolume(100.0f);
-
-    sf::Sound snd_IDPD_nade_almost;
-    sf::SoundBuffer snd_IDPD_nade_almost_buff;
-    if (!snd_IDPD_nade_almost_buff.loadFromFile("snd/IDPD_nade_almost.wav")) {
-        return -1;
-    }
-    snd_IDPD_nade_almost.setBuffer(snd_IDPD_nade_almost_buff);
-    snd_IDPD_nade_almost.setAttenuation(0.01f);
-    snd_IDPD_nade_almost.setVolume(100.0f);
-
-    sf::Sound snd_IDPD_freak_hurt;
-    sf::SoundBuffer snd_IDPD_freak_hurt_buff;
-    if (!snd_IDPD_freak_hurt_buff.loadFromFile("snd/IDPD_freak_hurt.wav")) {
-        return -1;
-    }
-    snd_IDPD_freak_hurt.setBuffer(snd_IDPD_freak_hurt_buff);
-    snd_IDPD_freak_hurt.setAttenuation(0.01f);
-    snd_IDPD_freak_hurt.setVolume(100.0f);
-
-    sf::Sound snd_IDPD_freak_die;
-    sf::SoundBuffer snd_IDPD_freak_die_buff;
-    if (!snd_IDPD_freak_die_buff.loadFromFile("snd/IDPD_freak_die.wav")) {
-        return -1;
-    }
-    snd_IDPD_freak_die.setBuffer(snd_IDPD_freak_die_buff);
-    snd_IDPD_freak_die.setAttenuation(0.01f);
-    snd_IDPD_freak_die.setVolume(100.0f);
-
-    sf::Sound snd_grunt_fire;
-    sf::SoundBuffer snd_grunt_fire_buff;
-    if (!snd_grunt_fire_buff.loadFromFile("snd/grunt_fire.wav")) {
-        return -1;
-    }
-    snd_grunt_fire.setBuffer(snd_grunt_fire_buff);
-    snd_grunt_fire.setAttenuation(0.01f);
-    snd_grunt_fire.setVolume(100.0f);
-
+    add_new_sound(snd_plasma_reload_upgrade_ID, "snd/plasma_reload_upgrade.wav", all_sounds, 0.07f, 0.0f, 90.0f);
 
     //music
-    sf::Music mus1;
-    mus1.openFromFile("mus/mus1.ogg");
-    mus1.setVolume(50.0f);
-    //mus1.play();
-    mus1.setLoop(true);
-
+    //all_sounds[snd_music_ID].sound.play();
+    all_sounds[snd_music_ID].sound.setLoop(true);
     
 
     auto window = sf::RenderWindow({ (u_int)window_size_x, (u_int)window_size_y }, "Nuclear Throne Arranged", 4U);
@@ -4594,9 +4499,23 @@ int main()
 
                 wep_kick = 0;
                 swapmove = 1;
+
+                int tmpreloaded = reloaded;
+                reloaded = breloaded;
+                breloaded = tmpreloaded;
             }
 
             wep_reload -= reload_speed * (1 + stress * (1 - player_hp / player_max_hp));
+
+            if (wep_reload < 0.0f && !reloaded) {
+                reloaded = true;
+                if (wep < 11) {
+                    play_sound_on_player(snd_melee_flip_ID);
+                }
+                else {
+                    get_wep_reload_sound(wep);
+                }
+            }
 
             if (wep_kick > 0) {
                 wep_kick--;
@@ -4655,9 +4574,9 @@ int main()
             }
             switch (player_character) {
             case horror:
-                if (!snd_horror_beam_hold.getLoop()) {
-                    snd_horror_beam_hold.play();
-                    snd_horror_beam_hold.setLoop(true);
+                if (!all_sounds[snd_horror_beam_hold_ID].sound.getLoop()) {
+                    all_sounds[snd_horror_beam_hold_ID].sound.play();
+                    all_sounds[snd_horror_beam_hold_ID].sound.setLoop(true);
                 }
                 if (ultra_picked == 2) {    //anomaly
                     int totalhp = 0;
@@ -4689,7 +4608,6 @@ int main()
                                 break;
                             }
                         }
-                        play_sounds_this_frame_count[snd_horror_portal_ID] = true;
                     }
                 }
                 break;
@@ -4712,98 +4630,39 @@ int main()
             for (int i = 0; i < 255; i++) {
                 if (play_sounds_this_frame_count[i]) {
                     switch (i) {
-                    case snd_shoot_1_ID:
-                        play_sound_random_pitch(snd_shoot_1, 0.1f, i);
-                        break;
-                    case snd_horror_portal_ID:
-                        pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.2f))) - 0.1f;
-                        snd_horror_portal.setPitch(1 + pitch_offset);
-                        snd_horror_portal.play();
-                        snd_horror_portal_pan.setPitch(1 + pitch_offset);
-                        snd_horror_portal_pan.setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                        snd_horror_portal_pan.play();
-                        break;
-                    case snd_bandit_hurt_ID:
-                        play_sound_random_pitch(snd_bandit_hurt, 0.1f, i);
-                        break;
-                    case snd_bandit_die_ID:
-                        play_sound_random_pitch(snd_bandit_die, 0.1f, i);
+                    default:
+                        play_sound_random_pitch(all_sounds[i].sound, all_sounds[i].pitch_variance, i);
                         break;
                     case snd_rad_pickup_ID:
                         pitch_offset = (1.0f + ((float(player_rads) / float(player_level * 60)) / 4.0f));
-                        snd_rad_pickup.setPitch(pitch_offset);
-                        snd_rad_pickup.play();
-                        break;
-                    case snd_horror_beam_start_ID:
-                        snd_horror_beam_start.play();
+                        all_sounds[i].sound.setPitch(pitch_offset);
+                        all_sounds[i].sound.play();
                         break;
                     case snd_horror_beam_hold_ID:
-                        snd_horror_beam_hold.setVolume(70.0f);
-                        break;
-                    case snd_hit_wall_ID:
-                        play_sound_random_pitch(snd_hit_wall, 0.1f, i);
-                        break;
-                    case snd_wall_break_rock_ID:
-                        play_sound_random_pitch(snd_wall_break_rock, 0.1f, i);
-                        break;
-                    case snd_IDPD_explosion_ID:
-                        play_sound_random_pitch(snd_IDPD_explosion, 0.1f, i);
-                        break;
-                    case snd_plasma_hit_ID:
-                        play_sound_random_pitch(snd_plasma_hit, 0.15f, i);
-                        break;
-                    case snd_ultra_shovel_ID:
-                        pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.2f))) - 0.1f;
-                        snd_ultra_shovel.setPitch(1 + pitch_offset);
-                        snd_ultra_shovel.play();
+                        all_sounds[snd_horror_beam_hold_ID].sound.setVolume(70.0f);
                         break;
                     case snd_plasma_huge_ID:
-                        pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.3f))) - 0.15f;
                         if (laser_brain < 1.1f) {
-                            snd_plasma_huge.setPitch(1 + pitch_offset);
-                            snd_plasma_huge.play();
+                            play_sound_random_pitch(all_sounds[i].sound, all_sounds[i].pitch_variance, i);
                         }
                         else {
-                            snd_plasma_huge_upgrade.setPitch(1 + pitch_offset);
-                            snd_plasma_huge_upgrade.play();
+                            play_sound_random_pitch(all_sounds[snd_plasma_huge_upgrade_ID].sound, all_sounds[snd_plasma_huge_upgrade_ID].pitch_variance, snd_plasma_huge_upgrade_ID);
                         }
                         break;
                     case snd_plasma_split_ID:
                         if (laser_brain < 1.1f) {
-                            play_sound_random_pitch(snd_plasma_split, 0.15f, i);
+                            play_sound_random_pitch(all_sounds[i].sound, all_sounds[i].pitch_variance, i);
                         }
                         else {
-                            play_sound_random_pitch(snd_plasma_split_upgrade, 0.15f, i);
+                            play_sound_random_pitch(all_sounds[snd_plasma_split_upgrade_ID].sound, all_sounds[snd_plasma_split_upgrade_ID].pitch_variance, snd_plasma_split_upgrade_ID);
                         }
                         break;
-                    case snd_hammer_swap_ID:
-                        snd_hammer_swap.play();
-                        break;
-                    case snd_energy_swap_ID:
-                        snd_energy_swap.play();
-                        break;
-                    case snd_explosion_ID:
-                        play_sound_random_pitch(snd_explosion, 0.1f, i);
-                        break;
-                    case snd_nade_hit_wall_ID:
-                        play_sound_random_pitch(snd_nade_hit_wall, 0.1f, i);
-                        break;
-                    case snd_IDPD_nade_load_ID:
-                        play_sound_random_pitch(snd_IDPD_nade_load, 0.1f, i);
-                        break;
-                    case snd_IDPD_nade_almost_ID:
-                        play_sound_random_pitch(snd_IDPD_nade_almost, 0.1f, i);
-                        break;
-                    case snd_idpd_freak_hurt_ID:
-                        play_sound_random_pitch(snd_IDPD_freak_hurt, 0.1f, i);
-                        break;
-                    case snd_idpd_freak_die_ID:
-                        play_sound_random_pitch(snd_IDPD_freak_die, 0.1f, i);
-                        break;
-                    case snd_grunt_fire_ID:
-                        play_sound_random_pitch(snd_grunt_fire, 0.1f, i);
-                        break;
-                    default:
+                    case snd_player_hurt_ID:
+                        switch(player_character){
+                        case horror:
+                            play_sound_random_pitch(all_sounds[snd_horror_hurt_ID].sound, all_sounds[snd_horror_hurt_ID].pitch_variance, snd_horror_hurt_ID);
+                            break;
+                        }
                         break;
                     }
                     play_sounds_this_frame_count[i] = 0;
@@ -4812,8 +4671,8 @@ int main()
                 }
                 else {
                     switch (i) {
-                    case 6:
-                        snd_horror_beam_hold.setVolume(0.0f);
+                    case snd_horror_beam_hold_ID:
+                        all_sounds[snd_horror_beam_hold_ID].sound.setVolume(0.0f);
                         break;
                     default:
                         break;
@@ -5171,7 +5030,7 @@ int main()
 
                         wep_sprite.setPosition(allObjects[idx].position - cameraPos + sf::Vector2f(cos(tmp_wep_angle) * -wep_kick, sin(tmp_wep_angle) * -wep_kick));
                         wep_sprite.setTextureRect(sf::IntRect{ 36 * wep_shine_frame, 36 * wep, 36, 36 });
-                        wep_sprite.setScale(1, player_is_facing_right);
+                        wep_sprite.setScale(1, player_is_facing_right * (reloaded * 2 - 1));
                         wep_sprite.setRotation(tmp_wep_angle * degreestoradians);
                         wep_sprite.setOrigin(wep_get_origin(wep));
 
@@ -5420,6 +5279,16 @@ int main()
                         rotateable_effects_medium[rotateableEffectsMediumIndex].setRotation(0);
                         rotateable_effects_medium[rotateableEffectsMediumIndex].setScale(1, 1);
                         rotateable_effects_medium[rotateableEffectsMediumIndex].setTextureRect(sf::IntRect{ 16 * choice, allObjects[idx].size * 16, 16, 16});
+                        rotateableEffectsMediumIndex++;
+                        break;
+                    case heal_FX:
+                        choice = int(allObjects[idx].image_index * 0.4f);
+
+                        rotateable_effects_medium[rotateableEffectsMediumIndex].setColor({ 255, 255, 255, 255 });
+                        rotateable_effects_medium[rotateableEffectsMediumIndex].setPosition(allObjects[idx].position - cameraPos);
+                        rotateable_effects_medium[rotateableEffectsMediumIndex].setRotation(0);
+                        rotateable_effects_medium[rotateableEffectsMediumIndex].setScale(1, 1);
+                        rotateable_effects_medium[rotateableEffectsMediumIndex].setTextureRect(sf::IntRect{ 16 * choice, 5 * 16, 16, 16 });
                         rotateableEffectsMediumIndex++;
                         break;
                     case plasma_particle:
@@ -6144,10 +6013,12 @@ int main()
             reset_rotateable_sprites(rotateable_sprites_guns_top, rotateableSpriteGunTopIndex);
             
 
+            buffer_over.draw(bwep_sprite);
+
             if (mouse_offset_window_center_y <= 0) {
                 buffer_over.draw(wep_sprite);
             }
-            buffer_over.draw(bwep_sprite);
+            
             //player
             buffer_over.draw(player_sprite);
 
