@@ -3,8 +3,9 @@
 
 #include <SFML/System/Vector2.hpp>
 
-enum objectID {nothing, 
-	bullet1, bullet1_destroy, 
+enum objectID {
+	nothing,
+	bullet1, bullet1_destroy,
 	bullet2, bullet2_destroy,
 
 	idpd_bullet, idpd_bullet_destroy,
@@ -13,14 +14,16 @@ enum objectID {nothing,
 	idpd_nade, idpd_nade_remove,
 	idpd_portal_charge,
 
-	player, 
+	player,
+
+	throne_2,
 
 	popup_text,
 
 	rad, rad_destroy,
 
 	ammo_pack, health_pack,
-	ammo_pack_destroy, health_pack_destroy,
+	ammo_pack_destroy, heal_FX,
 
 	bandit, bandit_corpse, 
 	scorpion, scorpion_corpse,
