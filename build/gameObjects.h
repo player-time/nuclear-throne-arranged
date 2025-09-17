@@ -30,7 +30,7 @@ enum objectID {
 	scorpion, scorpion_corpse,
 	gold_scorpion, gold_scorpion_corpse,
 
-	idpd_freak, idpd_freak_corpse,
+	idpd_freak, idpd_freak_corpse, idpd_freak_revive,
 
 	player_bullet, player_bullet_destroy,
 	player_bouncer_bullet, player_bouncer_bullet_destroy,
@@ -43,6 +43,8 @@ enum objectID {
 	ultra_slash,
 
 	horror_bullet, horror_bullet_destroy,
+
+	portal_clear,
 
 	//effects
 	debris,
@@ -71,8 +73,12 @@ enum sound {
 
 	snd_bandit_hurt_ID,
 	snd_bandit_die_ID,
+
 	snd_idpd_freak_hurt_ID,
 	snd_idpd_freak_die_ID,
+	snd_idpd_freak_enter_ID,
+	snd_idpd_freak_revive_ID,
+	snd_idpd_freak_revive_area_ID,
 
 	snd_grunt_fire_ID,
 

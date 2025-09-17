@@ -94,6 +94,9 @@ int rotateable_effects_medium_max = 6000;
 std::vector<sf::Sprite> rotateable_effects_large;
 int rotateable_effects_large_max = 4000;
 
+std::vector<sf::Sprite> variable_textures;
+int variable_textures_max = 400;
+
 //text ingame
 std::vector<sf::Text> popup_texts;
 int popup_texts_max = 100;
@@ -235,8 +238,8 @@ int mouse_offset_window_center_x = 0;
 int mouse_offset_window_center_y = 0;
 
 //mutations
-int plutonium_hunger = 80;       //set to 140 when mutation got 80 when not
-int plutonium_hunger_ammo = 30;
+int plutonium_hunger = 120;       //set to 120 when mutation got 80 when not    nerfed from 140
+int plutonium_hunger_ammo = 60;  //set to 60 when mutation got 30 when not      nerfed from 70
 int impact_wrists = 0;
 float long_arms = 1.0f;         //0.0f if no long arms, 1.0f if long arms
 float trigger_fingers = 0.6f;
@@ -465,13 +468,23 @@ void calculate_ammo_drop_mult() {
     //rabit paw
 }
 
+bool inline is_within_circle(sf::Vector2f pos1, sf::Vector2f pos2, float distance) {
+    return (distance * distance) > ((pos1.x - pos2.x) * (pos1.x - pos2.x)) + ((pos1.y - pos2.y) * (pos1.y - pos2.y));
+}
+
 //returns object index
 int create_object(float x, float y, float xspd, float yspd, objectID obj_id, float direction, int image_index) {
+    int _i = int(x / 16);
+    int _j = int(y / 16);
     int I = current_create_start;
     float tmpdir = 0.0f;
     for (int i = I; i < max_objects; i++) {
         if (allObjects[i].my_id == nothing) {
             switch (obj_id) {
+            case portal_clear:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].position = { x, y };
+                break;
             case bullet1:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].position = { x, y };
@@ -596,6 +609,12 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].die_ID = snd_idpd_freak_die_ID;
 
                 allObjects[i].my_hitbox = idpd_freak_hitbox;
+
+                play_sound_relative_to_player(snd_idpd_freak_enter_ID, x, y);
+                //clear nearby walls
+
+                create_object(x, y, 0, 0, portal_clear, 0, 0);
+
                 break;
             case player_bullet:
                 allObjects[i].my_id = obj_id;
@@ -1347,10 +1366,6 @@ sf::VertexArray create_vertex_array(sf::Texture texture, int size) {
     return tempVA;
 }
 
-bool inline is_within_circle(sf::Vector2f pos1, sf::Vector2f pos2, float distance) {
-    return (distance * distance) > ((pos1.x - pos2.x) * (pos1.x - pos2.x)) + ((pos1.y - pos2.y) * (pos1.y - pos2.y));
-}
-
 bool is_within_melee_slash(sf::Vector2f melee_pos, sf::Vector2f otherpos, int other_size, float melee_angle) {
     //4 circles the should make up an acurate recreation of the original hitbox
     if (is_within_circle(melee_pos, otherpos, (other_size + 24))) {
@@ -1462,6 +1477,7 @@ void enemy_die(int ENEMY, int PROJ, enum sound DIE_SOUND) {
 
         //convert into corpse
         allObjects[ENEMY].my_id = idpd_freak_corpse;
+        allObjects[ENEMY].alarm1 = 800; //revive time
         break;
     default:
         break;
@@ -2208,12 +2224,28 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
     float tempSpeed = 0.0f;
     float diffx = 0.0f;
     float diffy = 0.0f;
+
+    int _i = 0;
+    int _j = 0;
     std::random_device rd;
     // Initialize random number generator
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, RAND_MAX);
     for (int i = start; i < end; i++) {
         switch (allObjects[i].my_id) {
+        case portal_clear:
+            _i = int(allObjects[i].position.x / 16);
+            _j = int(allObjects[i].position.y / 16);
+            for (int w = -2; w < 3; w++) {
+                for (int h = -2; h < 3; h++) {
+                    //destroy wall
+                    if (game_area[_i + w][_j + h].my_grid_type == wall && is_within_circle(sf::Vector2f(((_i + w) * 16) + 8, ((_j + h) * 16) + 8), allObjects[i].position, (wall_hitbox + 32))) {
+                        create_explo_tile(_i + w, _j + h);
+                    }
+                }
+            }
+            allObjects[i].my_id = nothing;
+            break;
         case bullet1:
             allObjects[i].image_index++;
             allObjects[i].position += allObjects[i].speed;
@@ -2470,7 +2502,23 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
 
             break;
         case idpd_freak_corpse:
+            allObjects[i].alarm1--;
+            if (allObjects[i].alarm1 < 0) {
+                create_object(allObjects[i].position.x, allObjects[i].position.y, 0, 0, idpd_freak, random_360_radians(), 0);
+                allObjects[i].my_id = idpd_freak_revive;
+                play_sound_relative_to_player(snd_idpd_freak_revive_ID, allObjects[i].position.x, allObjects[i].position.y);
+                allObjects[i].image_index = 0;
+            }
+            if (allObjects[i].alarm1 == 15) {
+                play_sound_relative_to_player(snd_idpd_freak_revive_area_ID, allObjects[i].position.x, allObjects[i].position.y);
+            }
             corpse_step(i);
+            break;
+        case idpd_freak_revive:
+            allObjects[i].image_index++;
+            if (allObjects[i].image_index > 29) {
+                allObjects[i].my_id = nothing;
+            }
             break;
         case player_bullet:
             allObjects[i].position += allObjects[i].speed;
@@ -3424,6 +3472,12 @@ int main()
 
     add_new_sound(snd_plasma_reload_upgrade_ID, "snd/plasma_reload_upgrade.wav", all_sounds, 0.07f, 0.0f, 90.0f);
 
+    add_new_sound(snd_idpd_freak_enter_ID, "snd/idpd_freak_enter.wav", all_sounds, 0.15f, 0.01f);
+
+    add_new_sound(snd_idpd_freak_revive_ID, "snd/idpd_freak_revive.wav", all_sounds, 0.05f, 0.01f);
+
+    add_new_sound(snd_idpd_freak_revive_area_ID, "snd/idpd_freak_revive_area.wav", all_sounds, 0.05f, 0.01f);
+
     //music
     //all_sounds[snd_music_ID].sound.play();
     all_sounds[snd_music_ID].sound.setLoop(true);
@@ -3918,6 +3972,12 @@ int main()
         sf::Texture ultra_slash_tex_3;
         ultra_slash_tex_3.loadFromFile("res/player/projectiles/melee/ultra_slash_3.png");
 
+        sf::Texture idpd_freak_revive_area_tex;
+        idpd_freak_revive_area_tex.loadFromFile("res/enemies/sprPopoReviveArea.png");
+
+        sf::Texture idpd_freak_revive_tex;
+        idpd_freak_revive_tex.loadFromFile("res/enemies/sprPopoRevive.png");
+
         //batcher_bullet1 for rotateable sprites
         SimpleSpriteBatcher batcher_bullet1;
         batcher_bullet1.texture = &bullet1_2tex;
@@ -4109,6 +4169,11 @@ int main()
         temp.setOrigin({ 12,12 });
         temp.setTexture(allBigEffectSprites);
         rotateable_effects_large.push_back(temp);
+    }
+    for (int i = 0; i < variable_textures_max; i++) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        variable_textures.push_back(temp);
     }
     for (int i = 0; i < popup_texts_max; i++) {
         sf::Text temp;
@@ -4847,6 +4912,8 @@ int main()
         int underEffectsSmallIndex = 0;
 
         int rotateableEffectsSmallBloomIndex = 0;
+
+        int variableTexturesIndex = 0;
         //int rotateableEffectsSmallNoRotBloomIndex = 0;
 
         int bullet_1_batchableIndex = 0;
@@ -5455,7 +5522,30 @@ int main()
 
                         all_enemy_corpses[allEnemyCorpsesIndex].setTextureRect(sf::IntRect{ 32 * choice, 32 * choice2, 32, 32 });
                         allEnemyCorpsesIndex++;
+                        
+                        if (allObjects[idx].alarm1 < 15) {
+                            choice = int((14 - allObjects[idx].alarm1) * 0.4f);
+                            variable_textures[variableTexturesIndex].setTexture(idpd_freak_revive_area_tex);
+                            variable_textures[variableTexturesIndex].setColor({ 255, 255, 255, 255 });
+                            variable_textures[variableTexturesIndex].setPosition(allObjects[idx].position - cameraPos);
+                            variable_textures[variableTexturesIndex].setRotation(0);
+                            variable_textures[variableTexturesIndex].setTextureRect(sf::IntRect{ 35 * choice, 0, 35, 40 });
+                            variable_textures[variableTexturesIndex].setOrigin(18, 20);
+                            variable_textures[variableTexturesIndex].setScale(1, 1);
+                            variableTexturesIndex++;
+                        }
 
+                        break;
+                    case idpd_freak_revive:
+                        choice = int(allObjects[idx].image_index * 0.4f);
+                        variable_textures[variableTexturesIndex].setTexture(idpd_freak_revive_tex);
+                        variable_textures[variableTexturesIndex].setColor({ 255, 255, 255, 255 });
+                        variable_textures[variableTexturesIndex].setPosition(allObjects[idx].position - cameraPos);
+                        variable_textures[variableTexturesIndex].setRotation(0);
+                        variable_textures[variableTexturesIndex].setTextureRect(sf::IntRect{ 48 * choice, 0, 48, 48 });
+                        variable_textures[variableTexturesIndex].setOrigin(24, 40);
+                        variable_textures[variableTexturesIndex].setScale(1, 1);
+                        variableTexturesIndex++;
                         break;
                     case player_bullet:
                         if (allObjects[idx].image_index == 1) {
@@ -5927,11 +6017,6 @@ int main()
             reset_rotateable_sprites(rotateable_effects_small, rotateableEffectsSmallIndex);
 
 
-            
-
-
-
-
             //bloom small effects
             for (sf::Sprite spr : rotateable_effects_small_bloom) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -5941,6 +6026,14 @@ int main()
             }
             //wait for after drawing blooms
             //reset_rotateable_sprites(rotateable_effects_small_bloom, rotateableEffectsSmallBloomIndex);
+
+            for (sf::Sprite spr : variable_textures) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_over.draw(spr);
+            }
+            reset_rotateable_sprites(variable_textures, variableTexturesIndex);
 
             //bullets / bullet destroys
             Renderer.texture = &bullet1_1tex;
