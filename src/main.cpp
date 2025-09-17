@@ -94,8 +94,12 @@ int rotateable_effects_medium_max = 6000;
 std::vector<sf::Sprite> rotateable_effects_large;
 int rotateable_effects_large_max = 4000;
 
+sf::Sprite portal_sprite;
+
 std::vector<sf::Sprite> variable_textures;
 int variable_textures_max = 400;
+
+
 
 //text ingame
 std::vector<sf::Text> popup_texts;
@@ -122,6 +126,15 @@ int LOOPS = 0;
 int area = 1;
 int sub_area = 1;
 
+int enemy_count = 0;
+int enemy_count_start = 0;  //enemy count at start of level
+int lowest_corpse_lifetime = 65535;
+int lowest_corpse_lifetime_ID = 0;
+bool created_portal = false;
+bool create_portal = false;
+int corpse_delay = 50;
+sf::Vector2f portal_camera_offset = { 0, 0 };
+sf::Vector2f create_portal_POS = { 24016, 24016 };
 
 unsigned int MAXFPS = 30;
 
@@ -143,6 +156,8 @@ std::vector<std::vector<gridTile>> game_area(gridSize, std::vector<gridTile>(gri
 int player_level = 1;
 int player_rads = 99999;
 
+bool player_invincible = false;
+
 int player_bullets = 255;
 int player_bolts = 55;
 int player_shells = 55;
@@ -157,11 +172,15 @@ int player_energy_max = 55;
 
 float global_ammo_mult = 1.0f;  //ammo mult deteremined by the player ammo and weapons
 
+float player_friction_mult = 1.0f;
+
 int player_max_rads = 60;
 int player_hp = 12;
 int player_max_hp = 12;
 float player_max_speed = 4.0f;      //max should be less than 5.0f or else walls can be cliped through
 bool is_Bskin = false;
+
+int portal_wait_time = 30;
 
 int player_is_facing_right = 1;
 
@@ -337,6 +356,28 @@ void corpse_step(int i) {
         allObjects[i].position += allObjects[i].speed;
     }
     allObjects[i].image_index++;
+
+    if (enemy_count == 0) {
+        if (allObjects[i].image_index < lowest_corpse_lifetime) {
+            lowest_corpse_lifetime = allObjects[i].image_index;
+            lowest_corpse_lifetime_ID = i;
+        }
+        if (lowest_corpse_lifetime_ID == i && !created_portal && allObjects[i].speeddir <= 0) {
+            allObjects[i].alarm3--;
+        }
+        else {
+            allObjects[i].alarm3 = corpse_delay;
+        }
+    }
+    else {
+        allObjects[i].alarm3 = corpse_delay;
+    }
+    if (allObjects[i].alarm3 < 0) {
+        create_portal = true;
+        create_portal_POS = allObjects[i].position;
+    }
+
+    return;
 }
 
 void reset_popup_texts() {
@@ -481,6 +522,13 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
     for (int i = I; i < max_objects; i++) {
         if (allObjects[i].my_id == nothing) {
             switch (obj_id) {
+            case portal:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].position = { x, y };
+                allObjects[i].image_index = 0;
+                allObjects[i].alarm1 = 0;
+                allObjects[i].alarm2 = 0;
+                break;
             case portal_clear:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].position = { x, y };
@@ -564,6 +612,9 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].die_ID = snd_bandit_die_ID;
 
                 allObjects[i].my_hitbox = bandit_hitbox;
+
+                enemy_count++;
+
                 break;
             case scorpion:
                 allObjects[i].my_id = obj_id;
@@ -582,6 +633,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].my_hp = round(15 * (1 + (LOOPS * 0.05f)));
 
                 allObjects[i].size = 2;
+
+                enemy_count++;
                 break;
             case idpd_freak:
                 allObjects[i].my_id = obj_id;
@@ -614,6 +667,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 //clear nearby walls
 
                 create_object(x, y, 0, 0, portal_clear, 0, 0);
+
+                enemy_count++;
 
                 break;
             case player_bullet:
@@ -1487,6 +1542,9 @@ void enemy_die(int ENEMY, int PROJ, enum sound DIE_SOUND) {
     wep_reload *= trigger_fingers;
     bwep_reload *= trigger_fingers;
 
+    enemy_count--;
+    allObjects[ENEMY].alarm3 = corpse_delay;  //delay when killin last enemy
+
     play_sound_relative_to_player(DIE_SOUND, allObjects[ENEMY].position.x, allObjects[ENEMY].position.y);
 }
 
@@ -2224,6 +2282,8 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
     float tempSpeed = 0.0f;
     float diffx = 0.0f;
     float diffy = 0.0f;
+     
+    lowest_corpse_lifetime = 65535;
 
     int _i = 0;
     int _j = 0;
@@ -2233,6 +2293,48 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
     std::uniform_int_distribution<> dis(0, RAND_MAX);
     for (int i = start; i < end; i++) {
         switch (allObjects[i].my_id) {
+        case portal:
+            portal_camera_offset =  {(allObjects[i].position.x - allObjects[0].position.x) / 16, (allObjects[i].position.y - allObjects[0].position.y) / 16 };
+            allObjects[i].image_index++;
+            if (allObjects[i].alarm1 == 1) {
+                allObjects[i].alarm2--;
+            }
+            if (allObjects[i].alarm1 == 1 && allObjects[i].alarm2 < 0) {
+                allObjects[0].scale = 0;   //make player invisible
+                player_friction_mult = 10.0f;
+                allObjects[i].image_index = 0;
+                allObjects[i].alarm1 = 2;
+            }
+            if (allObjects[i].alarm1 == 2 && allObjects[i].image_index > 21) {
+                //go to next level
+                want_gen = true;
+            }
+            if (has_line_of_sight(allObjects[i].position.x, allObjects[i].position.y) || is_within_circle(allObjects[i].position, allObjects[0].position, 16)) {
+                if (is_within_circle(allObjects[i].position, allObjects[0].position, 32)) {
+                    player_invincible = true;
+                }
+                if (is_within_circle(allObjects[i].position, allObjects[0].position, 48) || (allObjects[i].alarm1 != 0)) {
+                    tmpdir = atan2f(allObjects[i].position.y - allObjects[0].position.y, allObjects[i].position.x - allObjects[0].position.x);
+                    motion_add_dir(tmpdir, 3, 0);
+                    allObjects[0].image_index = 3;
+                    allObjects[0].gun_angle += 30;
+
+                    if (allObjects[0].alarm1 == 0) {
+                        allObjects[0].alarm1 = 1;   //cant move
+                    }
+                    
+                    player_invincible = true;
+                    allObjects[0].next_hurt = current_frame + 6;
+                }
+                else {
+                    allObjects[0].gun_angle = 0;
+                }
+                if (is_within_circle(allObjects[i].position, allObjects[0].position, 96)) {
+                    tmpdir = atan2f(allObjects[i].position.y - allObjects[0].position.y, allObjects[i].position.x - allObjects[0].position.x);
+                    motion_add_dir(tmpdir, 2, 0);
+                }
+            }
+            break;
         case portal_clear:
             _i = int(allObjects[i].position.x / 16);
             _j = int(allObjects[i].position.y / 16);
@@ -2502,7 +2604,9 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
 
             break;
         case idpd_freak_corpse:
-            allObjects[i].alarm1--;
+            if (!created_portal) {
+                allObjects[i].alarm1--;
+            }
             if (allObjects[i].alarm1 < 0) {
                 create_object(allObjects[i].position.x, allObjects[i].position.y, 0, 0, idpd_freak, random_360_radians(), 0);
                 allObjects[i].my_id = idpd_freak_revive;
@@ -2908,6 +3012,12 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                             for (int h = -5; h < 6; h++) {
                                 for (int O : game_area[i + w][j + h].object_indexes) {
                                     switch (allObjects[O].my_id) {
+                                    case objectID::portal:
+                                        if (allObjects[O].alarm1 == 0 && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, portal_hitbox + player_hitbox)) {
+                                            allObjects[O].alarm1 = 1;
+                                            allObjects[O].alarm2 = portal_wait_time;
+                                        }
+                                        break;
                                     case objectID::rad:
                                         if (abs(allObjects[O].position.x - allObjects[0].position.x) < 8 && abs(allObjects[O].position.y - allObjects[0].position.y) < 8) {
                                             allObjects[O].my_id = rad_destroy;
@@ -2965,7 +3075,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                     case objectID::bullet1:
                                         if (is_within_circle(allObjects[currOBJ].position, allObjects[O].position, enemy_bullet_hitbox + player_hitbox)) {
                                             destroy_bullet_1(O);
-                                            if (allObjects[currOBJ].next_hurt < current_frame) {
+                                            if (allObjects[currOBJ].next_hurt < current_frame && !player_invincible) {
                                                 play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
                                                 player_hp -= 3;
                                                 allObjects[currOBJ].next_hurt = current_frame + 6;
@@ -2977,7 +3087,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                     case objectID::bullet2:
                                         if (is_within_circle(allObjects[currOBJ].position, allObjects[O].position, enemy_bullet_hitbox + player_hitbox)) {
                                             destroy_bullet_2(O);
-                                            if (allObjects[currOBJ].next_hurt < current_frame) {
+                                            if (allObjects[currOBJ].next_hurt < current_frame && !player_invincible) {
                                                 play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
                                                 player_hp -= 2;
                                                 allObjects[currOBJ].next_hurt = current_frame + 6;
@@ -2989,7 +3099,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                     case objectID::idpd_bullet:
                                         if (is_within_circle(allObjects[currOBJ].position, allObjects[O].position, enemy_bullet_hitbox + player_hitbox)) {
                                             destroy_idpd_bullet(O);
-                                            if (allObjects[currOBJ].next_hurt < current_frame) {
+                                            if (allObjects[currOBJ].next_hurt < current_frame && !player_invincible) {
                                                 play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
                                                 player_hp -= 3;
                                                 allObjects[currOBJ].next_hurt = current_frame + 6;
@@ -2999,7 +3109,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                         }
                                         break;
                                     case objectID::idpd_explosion:
-                                        if ((allObjects[O]. image_index == 3 || allObjects[O].image_index == 4) && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, 48 + player_hitbox)) {
+                                        if (!player_invincible && (allObjects[O]. image_index == 3 || allObjects[O].image_index == 4) && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, 48 + player_hitbox)) {
                                             play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
                                             player_hp -= 8;
                                             allObjects[currOBJ].next_hurt = current_frame + 6;
@@ -3209,6 +3319,16 @@ void generate_level() {
     allFloors[gen_curr_floor_index].setPosition(24000, 24000);
     gen_curr_floor_index++;
 
+    enemy_count = 0;
+    created_portal = false; //can create portal again
+    create_portal = false;
+    lowest_corpse_lifetime_ID = 0;
+    allObjects[0].scale = 1;
+    player_friction_mult = 1.0f;
+    allObjects[0].alarm1 = 0;
+    player_invincible = false;
+
+    portal_sprite.setPosition(-100, -100);
 
     allObjects[0].position = { 24016.0f, 24016.0f };
     int initial_goal = 480;
@@ -3369,6 +3489,7 @@ void generate_level() {
         if (sub_area == 3) {
 
         }
+
         //clear out area around player
         for (int i = 1499; i < 1503; i++) {
             for (int j = 1499; j < 1503; j++) {
@@ -3379,6 +3500,9 @@ void generate_level() {
             }
         }
     }
+    enemy_count_start = enemy_count;
+
+    return;
 }
 
 
@@ -3556,6 +3680,11 @@ int main()
         hp_text.setCharacterSize(8);
         hp_text.setFont(font);
         hp_text.setPosition(40, 7);
+
+        sf::Texture portalDisappearTex;
+        portalDisappearTex.loadFromFile("res/sprPortalDisappear.png");
+        sf::Texture portalIdleTex;
+        portalIdleTex.loadFromFile("res/sprPortal.png");
 
         sf::Texture allSmallEffectSprites;
         allSmallEffectSprites.loadFromFile("res/allSmallEffects.png");
@@ -4183,6 +4312,8 @@ int main()
         popup_texts.push_back(temp);
     }
 
+    portal_sprite.setOrigin(16, 16);
+
     window.setVerticalSyncEnabled(false);
     window.setMouseCursorGrabbed(true);
 
@@ -4429,6 +4560,9 @@ int main()
             int horizontal_player_move = player_move_right - player_move_left;
             int vertical_player_move = player_move_down - player_move_up;
             float player_acceleration = 2.5f;
+            if (allObjects[0].alarm1 > 0) {
+                player_acceleration = 0;
+            }
             float dirto_add = 0.0f;
             if (horizontal_player_move || vertical_player_move) {
 
@@ -4481,7 +4615,7 @@ int main()
             else {
                 friction_player = allObjects[0].friction;
             }
-            allObjects[0].speeddir -= friction_player;
+            allObjects[0].speeddir -= friction_player * player_friction_mult;
 
             if (allObjects[0].speeddir < 0) {
                 allObjects[0].speeddir = 0;
@@ -4501,8 +4635,9 @@ int main()
             mouse_offset_window_center_x = (mousepos.x - window_size_x / (window_scale * 2)) / (6 - weapon_camera_type);
             mouse_offset_window_center_y = (mousepos.y - window_size_y / (window_scale * 2)) / (6 - weapon_camera_type);
 
-            camera_want_x = floor(allObjects[0].position.x + cameraOffset.x + mouse_offset_window_center_x);
-            camera_want_y = floor(allObjects[0].position.y + cameraOffset.y + mouse_offset_window_center_y);
+            camera_want_x = floor(allObjects[0].position.x + cameraOffset.x + mouse_offset_window_center_x + portal_camera_offset.x);
+            camera_want_y = floor(allObjects[0].position.y + cameraOffset.y + mouse_offset_window_center_y + portal_camera_offset.y);
+            portal_camera_offset = {0, 0};
 
             cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x);
             cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y);
@@ -4689,6 +4824,12 @@ int main()
             int left_physics_adjusted = left_physics - extra_physics;
             int right_physics_adjusted = right_physics + extra_physics;
             do_object_collision(left_physics_adjusted, right_physics_adjusted, 0);
+            //portal
+            if (create_portal && !created_portal) {
+                created_portal = true;
+                create_object(create_portal_POS.x, create_portal_POS.y, 0, 0, portal, 0, 0);
+                create_object(create_portal_POS.x, create_portal_POS.y, 0, 0, portal_clear, 0, 0);
+            }
 
             //play sounds
             float pitch_offset = 0.0f;
@@ -5074,8 +5215,10 @@ int main()
                         //crosshair
                         cursor_sprite.setPosition(sf::Vector2f(mousepos));
 
-                        add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24, draw_shadow24s);
-                        shadow24_ArrayIndex++;      //shadow
+                        if (allObjects[0].scale > 0.1f) {
+                            add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24, draw_shadow24s);
+                            shadow24_ArrayIndex++;      //shadow
+                        }
 
                         choice2 = 0;
                         if (allObjects[0].speeddir > 0.0f) {
@@ -5084,10 +5227,24 @@ int main()
                         if (allObjects[0].next_hurt >= current_frame) {
                             choice2 = 2;
                         }
+                        if (allObjects[idx].gun_angle > 360) {
+                            allObjects[idx].gun_angle -= 360;
+                        }
+                        if (allObjects[idx].gun_angle < 360) {
+                            allObjects[idx].gun_angle += 360;
+                        }
+
+                        if (allObjects[0].alarm1 == 0) {
+                            allObjects[idx].gun_angle = 0;
+                        }
+
                         choice = int(allObjects[0].image_index * 0.4f);
                         player_sprite.setPosition(allObjects[idx].position - cameraPos);
+                        player_sprite.setRotation(allObjects[idx].gun_angle);   //rotation
                         player_sprite.setTextureRect(sf::IntRect{ 48 * choice, 48 * choice2, 48, 48 });
-                        player_sprite.setScale(player_is_facing_right, 1);
+                        player_sprite.setScale(player_is_facing_right * allObjects[0].scale, 1 * allObjects[0].scale);
+
+                        allObjects[0].alarm1 = 0;
 
                         tmp_wep_angle = direction_to_mouse;
 
@@ -5097,15 +5254,28 @@ int main()
 
                         wep_sprite.setPosition(allObjects[idx].position - cameraPos + sf::Vector2f(cos(tmp_wep_angle) * -wep_kick, sin(tmp_wep_angle) * -wep_kick));
                         wep_sprite.setTextureRect(sf::IntRect{ 36 * wep_shine_frame, 36 * wep, 36, 36 });
-                        wep_sprite.setScale(1, player_is_facing_right * (reloaded * 2 - 1));
+                        wep_sprite.setScale(1 * allObjects[0].scale, (player_is_facing_right * (reloaded * 2 - 1)) * allObjects[0].scale);
                         wep_sprite.setRotation(tmp_wep_angle * degreestoradians);
                         wep_sprite.setOrigin(wep_get_origin(wep));
 
                         bwep_sprite.setPosition(allObjects[idx].position - cameraPos + sf::Vector2f(-2 * player_is_facing_right, swapmove));
                         bwep_sprite.setTextureRect(sf::IntRect{ 0, 36 * bwep, 36, 36 });
-                        bwep_sprite.setScale(1, player_is_facing_right);
+                        bwep_sprite.setScale(1 * allObjects[0].scale, player_is_facing_right * allObjects[0].scale);
                         bwep_sprite.setRotation(-90 - 15 * player_is_facing_right);
                         bwep_sprite.setOrigin(wep_get_origin(bwep));
+                        break;
+                    case portal:
+                        choice = int(allObjects[idx].image_index * 0.4f) % 4;
+                        if (allObjects[idx].alarm1 == 2) {
+                            portal_sprite.setTexture(portalDisappearTex);
+                            choice = int(allObjects[idx].image_index * 0.4f) % 9;
+                        }
+                        else {
+                            portal_sprite.setTexture(portalIdleTex);
+                            choice = int(allObjects[idx].image_index * 0.4f) % 4;
+                        }
+                        portal_sprite.setPosition(allObjects[idx].position - cameraPos);
+                        portal_sprite.setTextureRect({ choice * 32, 0, 32, 32 });
                         break;
                     case bullet1:       //bullets
                         if (allObjects[idx].image_index == 0) {
@@ -5819,7 +5989,7 @@ int main()
                 }
             }
         }
-        debug1.setString("player_energy: " + std::to_string(player_energy));
+        debug1.setString("create_portal: " + std::to_string(create_portal));
         debug1.setCharacterSize(8);
         debug1.setFont(font);
         debug1.setColor(sf::Color::White);
@@ -5827,7 +5997,7 @@ int main()
 
         sf::Text debug2;
 
-        debug2.setString("bwep_reload: " + std::to_string(bwep_reload));
+        debug2.setString("created_portal: " + std::to_string(created_portal));
         debug2.setCharacterSize(8);
         debug2.setFont(font);
         debug2.setColor(sf::Color::White);
@@ -6106,16 +6276,20 @@ int main()
             reset_rotateable_sprites(rotateable_sprites_guns_top, rotateableSpriteGunTopIndex);
             
 
+            //portal
+            buffer_over.draw(portal_sprite);
+
+
             buffer_over.draw(bwep_sprite);
 
-            if (mouse_offset_window_center_y <= 0) {
+            if (direction_to_mouse - (180 / degreestoradians) > 0) {
                 buffer_over.draw(wep_sprite);
             }
             
             //player
             buffer_over.draw(player_sprite);
 
-            if (mouse_offset_window_center_y > 0) {
+            if (direction_to_mouse - (180 / degreestoradians) <= 0) {
                 buffer_over.draw(wep_sprite);
             }
             

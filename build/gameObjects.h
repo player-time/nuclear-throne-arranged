@@ -45,6 +45,7 @@ enum objectID {
 	horror_bullet, horror_bullet_destroy,
 
 	portal_clear,
+	portal,
 
 	//effects
 	debris,
@@ -133,6 +134,7 @@ enum hitboxes {
 	bandit_hitbox = 8, enemy_bullet_hitbox = 3, plasma_hitbox = 5,
 	idpd_freak_hitbox = 7,
 	wall_hitbox = 8,
+	portal_hitbox = 16,
 };
  
 struct gameObject{
