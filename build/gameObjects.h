@@ -14,6 +14,7 @@ enum objectID {
 	idpd_explosion,
 	idpd_nade, idpd_nade_remove,
 	idpd_portal_charge,
+	idpd_spawn,
 
 	player,
 
@@ -46,6 +47,7 @@ enum objectID {
 
 	portal_clear,
 	portal,
+	portal_lightning,
 
 	//effects
 	debris,
@@ -68,6 +70,10 @@ enum objectID {
 
 enum sound {
 	snd_music_ID,
+
+	snd_portal_open_ID,
+	snd_portal_loop_ID,
+	snd_portal_close_ID,
 
 	snd_shoot_1_ID,
 	snd_horror_portal_ID, snd_horror_portal_pan_ID,
@@ -209,6 +215,12 @@ struct gridTile {
 	std::vector<int> object_indexes;
 	gridType my_grid_type = out_of_bounds;
 	//bool has_line_of_sight = false;
+};
+
+struct wallTile {
+	sf::Texture texture;
+	sf::VertexArray vertex_array;
+	int array_index = 0;
 };
 
 struct coordPair {

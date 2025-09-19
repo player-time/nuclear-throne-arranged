@@ -96,9 +96,27 @@ int rotateable_effects_large_max = 4000;
 
 sf::Sprite portal_sprite;
 
+
 std::vector<sf::Sprite> variable_textures;
 int variable_textures_max = 400;
 
+int wall_textures_max = 600;
+std::vector<sf::Sprite> wall_textures;
+
+int wall_boarder_textures_max = 600;
+std::vector<sf::Sprite> wall_boarder_textures;
+
+int floor_textures_max = 130;
+std::vector<sf::Sprite> floor_textures;
+
+int floor_textures_B_max = 100;
+std::vector<sf::Sprite> floor_textures_B;
+
+int wall_textures_bot_max = 160;
+std::vector<sf::Sprite> wall_textures_bot;
+
+int explo_tiles_tex_max = 600;
+std::vector<sf::Sprite> explo_tiles_tex;
 
 
 //text ingame
@@ -123,8 +141,10 @@ int current_create_start = 1;
 int current_frame = 0;      //used for stuff like i-frames, reset this each area
 int LOOPS = 0;
 //game logic stuff
-int area = 1;
+int area = 0;
 int sub_area = 1;
+
+int idpd_spawn_count = 0;
 
 int enemy_count = 0;
 int enemy_count_start = 0;  //enemy count at start of level
@@ -330,6 +350,12 @@ void play_sound_on_player(sound sound_id) {
     play_sounds_this_frame_count[sound_id]++;
 }
 
+void stop_looping_sound(sound sound_id) {
+    play_sounds_this_frame_pos[sound_id].x = 0;
+    play_sounds_this_frame_pos[sound_id].y = 0;
+    play_sounds_this_frame_count[sound_id] = -1;
+}
+
 int add_new_sound(enum sound sound_id, std::string filename_path, sound_sound_buffer all_sounds[], float pitch_variance, float attenuation = 1.0f, float volume = 100.0f) {
     if (!all_sounds[sound_id].sound_buffer.loadFromFile(filename_path)) {
         return -1;
@@ -528,6 +554,15 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].image_index = 0;
                 allObjects[i].alarm1 = 0;
                 allObjects[i].alarm2 = 0;
+                play_sound_on_player(snd_portal_open_ID);
+                play_sound_on_player(snd_portal_loop_ID);
+                break;
+            case portal_lightning:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].position = { x, y };
+                allObjects[i].image_index = 0;
+                allObjects[i].alarm1 = rand() % 5;
+                allObjects[i].speed = { xspd, yspd };
                 break;
             case portal_clear:
                 allObjects[i].my_id = obj_id;
@@ -670,6 +705,13 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 
                 enemy_count++;
 
+                break;
+            case idpd_spawn:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].position = { x, y };
+                allObjects[i].alarm1 = 40 + idpd_spawn_count * 3;
+                allObjects[i].alarm2 = 52 + idpd_spawn_count * 3;
+                idpd_spawn_count++;
                 break;
             case player_bullet:
                 allObjects[i].my_id = obj_id;
@@ -2296,6 +2338,9 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
         case portal:
             portal_camera_offset =  {(allObjects[i].position.x - allObjects[0].position.x) / 16, (allObjects[i].position.y - allObjects[0].position.y) / 16 };
             allObjects[i].image_index++;
+            if (allObjects[i].alarm1 == 0 && allObjects[i].image_index < 5) {
+                clear_all_bullets();
+            }
             if (allObjects[i].alarm1 == 1) {
                 allObjects[i].alarm2--;
             }
@@ -2308,6 +2353,7 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
             if (allObjects[i].alarm1 == 2 && allObjects[i].image_index > 21) {
                 //go to next level
                 want_gen = true;
+                stop_looping_sound(snd_portal_loop_ID);
             }
             if (has_line_of_sight(allObjects[i].position.x, allObjects[i].position.y) || is_within_circle(allObjects[i].position, allObjects[0].position, 16)) {
                 if (is_within_circle(allObjects[i].position, allObjects[0].position, 32)) {
@@ -2316,6 +2362,11 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
                 if (is_within_circle(allObjects[i].position, allObjects[0].position, 48) || (allObjects[i].alarm1 != 0)) {
                     tmpdir = atan2f(allObjects[i].position.y - allObjects[0].position.y, allObjects[i].position.x - allObjects[0].position.x);
                     motion_add_dir(tmpdir, 3, 0);
+                    if (allObjects[i].alarm1 != 2) {
+                        allObjects[0].position.x += cos(tmpdir) * 3;
+                        allObjects[0].position.y += sin(tmpdir) * 3;
+                    }
+
                     allObjects[0].image_index = 3;
                     allObjects[0].gun_angle += 30;
 
@@ -2334,6 +2385,19 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
                     motion_add_dir(tmpdir, 2, 0);
                 }
             }
+            if (rand() % 20 == 0) {
+                tmpdir = random_360_radians();
+                tempSpeedX = cos(tmpdir) * 2;
+                tempSpeedY = sin(tmpdir) * 2;
+                create_object(allObjects[i].position.x, allObjects[i].position.y, tempSpeedX, tempSpeedY, portal_lightning, 0, 0);
+            }
+            break;
+        case portal_lightning:
+            allObjects[i].image_index++;
+            if (allObjects[i].image_index > 12) {
+                allObjects[i].my_id = nothing;
+            }
+            allObjects[i].position += allObjects[i].speed;
             break;
         case portal_clear:
             _i = int(allObjects[i].position.x / 16);
@@ -2623,6 +2687,11 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
             if (allObjects[i].image_index > 29) {
                 allObjects[i].my_id = nothing;
             }
+            break;
+        case idpd_spawn:
+            allObjects[i].alarm1--;
+            allObjects[i].alarm2--;
+
             break;
         case player_bullet:
             allObjects[i].position += allObjects[i].speed;
@@ -3016,6 +3085,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                         if (allObjects[O].alarm1 == 0 && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, portal_hitbox + player_hitbox)) {
                                             allObjects[O].alarm1 = 1;
                                             allObjects[O].alarm2 = portal_wait_time;
+                                            play_sound_on_player(snd_portal_close_ID);
                                         }
                                         break;
                                     case objectID::rad:
@@ -3240,7 +3310,7 @@ int generate_2x2_tile(int x, int y, int nub_chance, bool Btile) {  //x, y is the
             }
         }
     }
-    if (adjacent_nub) {
+    if (adjacent_nub || nub_chance == 0) {
         removedwalls += game_area[x][y].my_grid_type == wall;
         create_floor(x, y, Btile);
 
@@ -3328,11 +3398,13 @@ void generate_level() {
     allObjects[0].alarm1 = 0;
     player_invincible = false;
 
-    portal_sprite.setPosition(-100, -100);
+    idpd_spawn_count = 0;
+
+    portal_sprite.setPosition(-1000, -1000);
 
     allObjects[0].position = { 24016.0f, 24016.0f };
-    int initial_goal = 480;
-    int goal = initial_goal;
+    int initial_goal = 0;
+    int goal = 0;
     int safe_dist = 0;
     top_physics = 1500;
     bottom_physics = 1501;
@@ -3363,7 +3435,113 @@ void generate_level() {
     else {
         level_generators[0].spdy = (rand() % 2) * 2 - 1;
     }
+    if (area == 0) {    //throne 2
+
+        initial_goal = 240;
+        goal = initial_goal;
+        while (goal > 0) {
+            for (int i = 0; i < 254; i++) {
+                if (level_generators[i].active) {
+                    if (goal < initial_goal - safe_dist) {
+                        if (rand() % (19 + generators_active) > 22) {
+                            level_generators[i].active = false;
+                            generators_active--;
+                        }
+                        if (rand() % 4 == 0) {
+                            for (int b = 0; b < 254; b++) {
+                                if (level_generators[b].active == false) {
+                                    level_generators[b].active = true;
+                                    level_generators[b].Btile = 0;  //never b-tile
+                                    level_generators[b].x = level_generators[i].x;
+                                    level_generators[b].y = level_generators[i].y;
+                                    level_generators[b].spdx = rand() % 2;
+                                    if (level_generators[b].spdx == 1) {
+                                        level_generators[b].spdx = (rand() % 2) * 2 - 1;
+                                        level_generators[b].spdy = 0;
+                                    }
+                                    else {
+                                        level_generators[b].spdy = (rand() % 2) * 2 - 1;
+                                    }
+                                    generators_active++;
+                                    break;
+                                }
+                            }
+                        }
+                        //turn = choose(0, 0, 0, 0, 0, 0, 0, 0, 0, 90, -90, 90, -90, 180);
+                        int choice = rand() % 6;
+                        if (choice < 1) {
+                            //turn = 0;
+                        }
+                        else if (choice < 5) {
+                            //turn = (rand() % 2) * 2 - 1;
+                            //turn *= 90;
+                            if (level_generators[i].spdx != 0) {
+                                level_generators[i].spdx = 0;
+                                level_generators[i].spdy = (rand() % 2) * 2 - 1;
+                            }
+                            else {
+                                level_generators[i].spdy = 0;
+                                level_generators[i].spdx = (rand() % 2) * 2 - 1;
+                            }
+                        }
+                        else {
+                            //turn = 180;
+                            level_generators[i].spdx *= -1;
+                            level_generators[i].spdy *= -1;
+                        }
+                    }
+
+                    level_generators[i].x += level_generators[i].spdx * 2;
+                    level_generators[i].y += level_generators[i].spdy * 2;
+                    //only generate 1 tile at a time
+                    goal -= generate_2x2_tile(level_generators[i].x, level_generators[i].y, 0, level_generators[i].Btile);
+                }
+            }
+        }
+        //check if any details are on b-tiles
+        for (int i = 0; i < 500; i++) {
+            if (allObjects[i].my_id == detail) {
+                for (int j = 0; j < max_floors; j++) {                                                                                                                                         //is b-tile
+                    if (abs(allObjects[i].position.x - allFloors[j].getPosition().x - 16) < 19 && abs(allObjects[i].position.y - allFloors[j].getPosition().y - 16) < 19 && allFloors[j].getOrigin().y > 3) {
+                        allObjects[i].my_id = nothing;
+                    }
+                }
+            }
+        }
+
+        //generate enemies
+        int tmp_num_of_enemies_to_spawn = LOOPS * 3;
+        int enemies_spawned = 0;
+        if (sub_area == 1) {
+            while (tmp_num_of_enemies_to_spawn > enemies_spawned) {
+                for (int i = left_physics; i <= right_physics; i++) {
+                    for (int j = top_physics; j <= bottom_physics; j++) {
+                        if (game_area[i][j].my_grid_type == floor_tile && !is_within_circle(sf::Vector2f(24016, 24016), sf::Vector2f(i * 16 + 8, j * 16 + 8), 100)) {
+                            if (tmp_num_of_enemies_to_spawn > enemies_spawned) {
+                                enemies_spawned++;
+                                float rand_off_x = random_360_radians() - 3.14f;
+                                float rand_off_y = random_360_radians() - 3.14f;
+                                create_object(i * 16 + 8 + rand_off_x, j * 16 + 8 + rand_off_y, 0, 0, idpd_spawn, 0, 0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        //clear out area around player
+        for (int i = 1499; i < 1503; i++) {
+            for (int j = 1499; j < 1503; j++) {
+                if (game_area[i][j].my_grid_type == wall) {
+                    create_explo_tile(i, j);
+                    //create debris too
+                }
+            }
+        }
+    }
     if (area == 1) {
+        initial_goal = 480;
+        goal = initial_goal;
         while (goal > 0) {
             for (int i = 0; i < 254; i++) {
                 if (level_generators[i].active) {
@@ -3602,6 +3780,14 @@ int main()
 
     add_new_sound(snd_idpd_freak_revive_area_ID, "snd/idpd_freak_revive_area.wav", all_sounds, 0.05f, 0.01f);
 
+    add_new_sound(snd_portal_open_ID, "snd/portal_open.wav", all_sounds, 0.01f, 0.01f);
+
+    add_new_sound(snd_portal_close_ID, "snd/portal_close.wav", all_sounds, 0.01f, 0.01f);
+
+    add_new_sound(snd_portal_loop_ID, "snd/portal_loop.wav", all_sounds, 0.0f, 0.0f, 0.0f);
+    all_sounds[snd_portal_loop_ID].sound.play();
+    all_sounds[snd_portal_loop_ID].sound.setLoop(true);
+
     //music
     //all_sounds[snd_music_ID].sound.play();
     all_sounds[snd_music_ID].sound.setLoop(true);
@@ -3685,6 +3871,9 @@ int main()
         portalDisappearTex.loadFromFile("res/sprPortalDisappear.png");
         sf::Texture portalIdleTex;
         portalIdleTex.loadFromFile("res/sprPortal.png");
+        
+        sf::Texture portalLightning;
+        portalLightning.loadFromFile("res/sprPortalLightning.png");
 
         sf::Texture allSmallEffectSprites;
         allSmallEffectSprites.loadFromFile("res/allSmallEffects.png");
@@ -3693,118 +3882,32 @@ int main()
         sf::Texture allBigEffectSprites;
         allBigEffectSprites.loadFromFile("res/allBigEffects.png");
 
-        //middleWall1
-        sf::Texture middleWall1;
-        middleWall1.loadFromFile("res/sprWall1Top_1.png");
-        sf::VertexArray draw_middlewall1s = create_vertex_array(middleWall1, 164);     //4 * 164, where 164 is the max amount of walls that can be drawn, could be lower since only 1/4 of the walls should be a specific sprite
+        sf::Texture allWallTops;
+        allWallTops.loadFromFile("res/allWallTops.png");
 
-        //middleWall2
-        sf::Texture middleWall2;
-        middleWall2.loadFromFile("res/sprWall1Top_2.png");
-        sf::VertexArray draw_middlewall2s = create_vertex_array(middleWall2, 164);     //4 * 164, where 164 is the max amount of walls that can be drawn
+        sf::Texture allWallBots;
+        allWallBots.loadFromFile("res/allWallBots.png");
 
-        //middleWall3
-        sf::Texture middleWall3;
-        middleWall3.loadFromFile("res/sprWall1Top_3.png");
-        sf::VertexArray draw_middlewall3s = create_vertex_array(middleWall3, 164);     //4 * 164, where 164 is the max amount of walls that can be drawn
+        sf::Texture allWallBoarders;
+        allWallBoarders.loadFromFile("res/allWallBoarders.png");
 
-        //middleWall4
-        sf::Texture middleWall4;
-        middleWall4.loadFromFile("res/sprWall1Top_4.png");
-        sf::VertexArray draw_middlewall4s = create_vertex_array(middleWall4, 164);     //4 * 164, where 164 is the max amount of walls that can be drawn
+        sf::Texture allFloors_tex;
+        allFloors_tex.loadFromFile("res/allFloors.png");
 
+        sf::Texture allFloorsBs_tex;
+        allFloorsBs_tex.loadFromFile("res/allFloorsBs.png");
+        
+        sf::Texture allExploTiles;
+        allExploTiles.loadFromFile("res/allExploTiles.png");
 
-        //botWall1
-        sf::Texture botWall1;
-        botWall1.loadFromFile("res/sprWall1Bot_1.png");
-        sf::VertexArray draw_botwall1s = create_vertex_array(botWall1, 40);
-
-        //botWall2
-        sf::Texture botWall2;
-        botWall2.loadFromFile("res/sprWall1Bot_2.png");
-        sf::VertexArray draw_botwall2s = create_vertex_array(botWall2, 40);
-
-        //botWall3
-        sf::Texture botWall3;
-        botWall3.loadFromFile("res/sprWall1Bot_3.png");
-        sf::VertexArray draw_botwall3s = create_vertex_array(botWall3, 40);
-
-        //botWall4
-        sf::Texture botWall4;
-        botWall4.loadFromFile("res/sprWall1Bot_4.png");
-        sf::VertexArray draw_botwall4s = create_vertex_array(botWall4, 40);
-
-
-        sf::Texture boarderWall;
+        /*sf::Texture boarderWall;
         boarderWall.loadFromFile("res/sprWall1Boarder.png");
-        sf::VertexArray draw_boarderWalls = create_vertex_array(boarderWall, 600);
+        sf::VertexArray draw_boarderWalls = create_vertex_array(boarderWall, 600);*/
 
         //wall1 shadow
         sf::Texture Wall1shadow;
         Wall1shadow.loadFromFile("res/sprWall1shadow.png");
         sf::VertexArray draw_Wall1shadows = create_vertex_array(Wall1shadow, 600);
-
-        //floorTile1
-        sf::Texture floorTile1;
-        floorTile1.loadFromFile("res/sprFloor1_1.png");
-        sf::VertexArray draw_floorTile1s = create_vertex_array(floorTile1, 200);
-
-        //floorTile2
-        sf::Texture floorTile2;
-        floorTile2.loadFromFile("res/sprFloor1_2.png");
-        sf::VertexArray draw_floorTile2s = create_vertex_array(floorTile2, 40);
-
-        //floorTile3
-        sf::Texture floorTile3;
-        floorTile3.loadFromFile("res/sprFloor1_3.png");
-        sf::VertexArray draw_floorTile3s = create_vertex_array(floorTile3, 40);
-
-        //floorTile4
-        sf::Texture floorTile4;
-        floorTile4.loadFromFile("res/sprFloor1_4.png");
-        sf::VertexArray draw_floorTile4s = create_vertex_array(floorTile4, 20);
-
-        //floorTile1B
-        sf::Texture floorTile1B;
-        floorTile1B.loadFromFile("res/sprFloor1_1B.png");
-        sf::VertexArray draw_floorTile1Bs = create_vertex_array(floorTile1B, 200);
-
-        //floorTile2B
-        sf::Texture floorTile2B;
-        floorTile2B.loadFromFile("res/sprFloor1_2B.png");
-        sf::VertexArray draw_floorTile2Bs = create_vertex_array(floorTile2B, 40);
-
-        //floorTile3B
-        sf::Texture floorTile3B;
-        floorTile3B.loadFromFile("res/sprFloor1_3B.png");
-        sf::VertexArray draw_floorTile3Bs = create_vertex_array(floorTile3B, 40);
-
-        //floorTile4B
-        sf::Texture floorTile4B;
-        floorTile4B.loadFromFile("res/sprFloor1_4B.png");
-        sf::VertexArray draw_floorTile4Bs = create_vertex_array(floorTile4B, 20);
-
-
-        //exploTile1
-        sf::Texture exploTile1;
-        exploTile1.loadFromFile("res/sprExploTile1.png");
-        sf::VertexArray draw_exploTile1s = create_vertex_array(exploTile1, 320);     
-
-        //exploTile2
-        sf::Texture exploTile2;
-        exploTile2.loadFromFile("res/sprExploTile2.png");
-        sf::VertexArray draw_exploTile2s = create_vertex_array(exploTile2, 320);     
-
-        //exploTile3
-        sf::Texture exploTile3;
-        exploTile3.loadFromFile("res/sprExploTile3.png");
-        sf::VertexArray draw_exploTile3s = create_vertex_array(exploTile3, 320);    
-
-        //exploTile4
-        sf::Texture exploTile4;
-        exploTile4.loadFromFile("res/sprExploTile4.png");
-        sf::VertexArray draw_exploTile4s = create_vertex_array(exploTile4, 320);     
-
 
 
         //floorTile1 under
@@ -3818,7 +3921,15 @@ int main()
         //explotile under
         sf::Texture exploTile1_under;
         exploTile1_under.loadFromFile("res/sprExploTile1_under.png");
-        sf::VertexArray draw_exploTile1_unders = create_vertex_array(exploTile1_under, 50);
+        sf::VertexArray draw_exploTile1_unders = create_vertex_array(exploTile1_under, 150);
+
+        sf::Texture exploTile0_under;
+        exploTile0_under.loadFromFile("res/sprExploTile0_under.png");
+        sf::VertexArray draw_exploTile0_unders = create_vertex_array(exploTile0_under, 150);
+        //floorTile0 under
+        sf::Texture floorTile0_under;
+        floorTile0_under.loadFromFile("res/sprFloor0_1_under.png");
+        sf::VertexArray draw_floorTile0_unders = create_vertex_array(floorTile0_under, 100);
 
 
         //bullet1_destroy1
@@ -4304,6 +4415,47 @@ int main()
         temp.setColor({ 0, 0, 0, 0 });
         variable_textures.push_back(temp);
     }
+    for (int i = 0; i < wall_textures_max; i++) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        temp.setOrigin({ 0,0 });
+        temp.setTexture(allWallTops);
+        wall_textures.push_back(temp);
+    }
+    for (int i = 0; i < wall_textures_bot_max; i++) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        temp.setOrigin({ 0,0 });
+        temp.setTexture(allWallBots);
+        wall_textures_bot.push_back(temp);
+    }
+    for (int i = 0; i < wall_boarder_textures_max; i++) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        temp.setOrigin({ 4,4 });
+        temp.setTexture(allWallBoarders);
+        wall_boarder_textures.push_back(temp);
+    }
+    for (int i = 0; i < floor_textures_max; i++) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        temp.setOrigin({ 0,0 });
+        temp.setTexture(allFloors_tex);
+        floor_textures.push_back(temp);
+    }
+    for (int i = 0; i < floor_textures_B_max; i++) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        temp.setTexture(allFloors_tex);
+        floor_textures_B.push_back(temp);
+    }
+    for (int i = 0; i < explo_tiles_tex_max; i++) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        temp.setOrigin({ 0,0 });
+        temp.setTexture(allExploTiles);
+        explo_tiles_tex.push_back(temp);
+    }
     for (int i = 0; i < popup_texts_max; i++) {
         sf::Text temp;
         temp.setString("");
@@ -4320,6 +4472,8 @@ int main()
     //window.setMouseCursorVisible(false);
 
     allObjects[0].friction = 0.45f;
+
+    seed = rand();
 
     while (window.isOpen()){
         for (auto event = sf::Event(); window.pollEvent(event);){
@@ -4728,6 +4882,8 @@ int main()
                 fire_weapon(wep, direction_to_mouse);
             }
             calculate_ammo_drop_mult(); //calculate ammo mult after firing
+
+            play_sounds_this_frame_count[snd_horror_beam_hold_ID] = -1;
             if (player_held_RMB) {    //player active logic
                 switch (player_character) {
                 case horror:        //unnerfed beam
@@ -4739,13 +4895,10 @@ int main()
                             tmpdir = random_360_radians();
                             create_object(allObjects[0].position.x + (cos(tmpdir) * horror_beam_strength + 1), allObjects[0].position.y + (sin(tmpdir) * horror_beam_strength + 1), xspd, yspd, horror_bullet, direction_to_mouse, 0);
                             player_rads--;
-                            play_sounds_this_frame_count[snd_horror_beam_hold_ID] = true;
+                            play_sounds_this_frame_count[snd_horror_beam_hold_ID] = 1;
                             if (horror_beam_strength == 1.0f) {
-                                play_sounds_this_frame_count[snd_horror_beam_start_ID] = true;
+                                play_sounds_this_frame_count[snd_horror_beam_start_ID] = 1;
                             }
-                        }
-                        else {
-                            break;
                         }
                     }
 
@@ -4777,6 +4930,7 @@ int main()
                 if (!all_sounds[snd_horror_beam_hold_ID].sound.getLoop()) {
                     all_sounds[snd_horror_beam_hold_ID].sound.play();
                     all_sounds[snd_horror_beam_hold_ID].sound.setLoop(true);
+                    all_sounds[snd_horror_beam_hold_ID].sound.setVolume(0.0f);
                 }
                 if (ultra_picked == 2) {    //anomaly
                     int totalhp = 0;
@@ -4834,7 +4988,7 @@ int main()
             //play sounds
             float pitch_offset = 0.0f;
             for (int i = 0; i < 255; i++) {
-                if (play_sounds_this_frame_count[i]) {
+                if (play_sounds_this_frame_count[i] > 0) {
                     switch (i) {
                     default:
                         play_sound_random_pitch(all_sounds[i].sound, all_sounds[i].pitch_variance, i);
@@ -4846,6 +5000,11 @@ int main()
                         break;
                     case snd_horror_beam_hold_ID:
                         all_sounds[snd_horror_beam_hold_ID].sound.setVolume(70.0f);
+                        break;
+                    case snd_portal_loop_ID:
+                        
+                        all_sounds[snd_portal_loop_ID].sound.setPlayingOffset(sf::milliseconds(0));
+                        all_sounds[snd_portal_loop_ID].sound.setVolume(80.0f);
                         break;
                     case snd_plasma_huge_ID:
                         if (laser_brain < 1.1f) {
@@ -4875,14 +5034,20 @@ int main()
                     play_sounds_this_frame_pos[i].x = 0;
                     play_sounds_this_frame_pos[i].y = 0;
                 }
-                else {
+                else if (play_sounds_this_frame_count[i] < 0) {
                     switch (i) {
                     case snd_horror_beam_hold_ID:
                         all_sounds[snd_horror_beam_hold_ID].sound.setVolume(0.0f);
                         break;
+                    case snd_portal_loop_ID:
+                        all_sounds[snd_portal_loop_ID].sound.setVolume(0.0f);
+                        break;
                     default:
                         break;
                     }
+                    play_sounds_this_frame_count[i] = 0;
+                    play_sounds_this_frame_pos[i].x = 0;
+                    play_sounds_this_frame_pos[i].y = 0;
                 }
             }
 
@@ -4964,59 +5129,15 @@ int main()
         int allEnemySpritesIndex = 0;
         int allEnemyCorpsesIndex = 0;
 
-        int wall1ArrayIndex = 0;
-        int wall2ArrayIndex = 0;
-        int wall3ArrayIndex = 0;
-        int wall4ArrayIndex = 0;
-
-        int wall1BOTArrayIndex = 0;
-        int wall2BOTArrayIndex = 0;
-        int wall3BOTArrayIndex = 0;
-        int wall4BOTArrayIndex = 0;
-
         int wallBoardeArrayIndex = 0;
 
         int wallShadowArrayIndex = 0;
 
-        int floor1ArrayIndex = 0;
-        int floor2ArrayIndex = 0;
-        int floor3ArrayIndex = 0;
-        int floor4ArrayIndex = 0;
-        int floor5ArrayIndex = 0;
-        int floor6ArrayIndex = 0;
-        int floor7ArrayIndex = 0;
-        int floor8ArrayIndex = 0;
-
-        int floor1BArrayIndex = 0;
-        int floor2BArrayIndex = 0;
-        int floor3BArrayIndex = 0;
-        int floor4BArrayIndex = 0;
-
-        int exploTile1ArrayIndex = 0;
-        int exploTile2ArrayIndex = 0;
-        int exploTile3ArrayIndex = 0;
-        int exploTile4ArrayIndex = 0;
-
         int floor1_under_ArrayIndex = 0;
         int floor1B_under_ArrayIndex = 0;
         int exploTile1_under_ArrayIndex = 0;
-
-        int bullet1_destroy1ArrayIndex = 0;
-        int bullet1_destroy2ArrayIndex = 0;
-        int bullet1_destroy3ArrayIndex = 0;
-        int bullet1_destroy4ArrayIndex = 0;
-
-        int bullet1_destroy1bloomArrayIndex = 0;
-        int bullet1_destroy2bloomArrayIndex = 0;
-        int bullet1_destroy3bloomArrayIndex = 0;
-
-        int enemy_bullet2_destroy1ArrayIndex = 0;
-        int enemy_bullet2_destroy2ArrayIndex = 0;
-        int enemy_bullet2_destroy3ArrayIndex = 0;
-
-        int enemy_bullet2_destroy1bloomArrayIndex = 0;
-        int enemy_bullet2_destroy2bloomArrayIndex = 0;
-        int enemy_bullet2_destroy3bloomArrayIndex = 0;
+        int exploTile0_under_ArrayIndex = 0;
+        int floor0_under_ArrayIndex = 0;
 
         int bullet1_1ArrayIndex = 0;
         int bullet1_2BIGArrayIndex = 0;
@@ -5026,13 +5147,6 @@ int main()
         int shadow48_ArrayIndex = 0;
 
         int playerbullet1_bloomArrayIndex = 0;
-
-        int horror_beam_destroyA1_ArrayIndex = 0;
-        int horror_beam_destroyA2_ArrayIndex = 0;
-        int horror_beam_destroyA3_ArrayIndex = 0;
-        int horror_beam_destroyA1bloom_ArrayIndex = 0;
-        int horror_beam_destroyA2bloom_ArrayIndex = 0;
-        int horror_beam_destroyA3bloom_ArrayIndex = 0;
 
         int rotateableSpriteBulletIndex = 0;
         int rotateableSpriteBulletHugeIndex = 0;
@@ -5062,57 +5176,48 @@ int main()
 
         int IDPD_explosionIndex = 0;
 
+        int wall_texturesArrayIndex = 0;
+        int wall_textures_botArrayIndex = 0;
+
+        int floor_texturesArrayIndex = 0;
+        int floor_textures_BArrayIndex = 0;
+
+        int explo_tiles_texArrayIndex = 0;
+
         for (int i = 0; i < max_floors; i++) {
             currDrawPosition = allFloors[i].getPosition() - cameraPos;
             //currDrawPosition = {100, 100};
             if (abs(currDrawPosition.x - 160) < 200 && abs(currDrawPosition.y - 120) < 160) {
                 int choice = allFloors[i].getOrigin().y;
-                switch (choice) {
-                case 0:
-                    add_sprite_32(floor1ArrayIndex, currDrawPosition, draw_floorTile1s);
-                    floor1ArrayIndex++;
-                    break;
-                case 1:
-                    add_sprite_32(floor2ArrayIndex, currDrawPosition, draw_floorTile2s);
-                    floor2ArrayIndex++;
-                    break;
-                case 2:
-                    add_sprite_32(floor3ArrayIndex, currDrawPosition, draw_floorTile3s);
-                    floor3ArrayIndex++;
-                    break;
-                case 3:
-                    add_sprite_32(floor4ArrayIndex, currDrawPosition, draw_floorTile4s);
-                    floor4ArrayIndex++;
-                    break;
-                    //B tiles
-                case 4:
-                    add_sprite_36(floor1BArrayIndex, currDrawPosition - sf::Vector2f(2, 2), draw_floorTile1Bs);
-                    floor1BArrayIndex++;
-                    break;
-                case 5:
-                    add_sprite_36(floor2BArrayIndex, currDrawPosition - sf::Vector2f(2, 2), draw_floorTile2Bs);
-                    floor2BArrayIndex++;
-                    break;
-                case 6:
-                    add_sprite_36(floor3BArrayIndex, currDrawPosition - sf::Vector2f(2, 2), draw_floorTile3Bs);
-                    floor3BArrayIndex++;
-                    break;
-                case 7:
-                    add_sprite_36(floor4BArrayIndex, currDrawPosition - sf::Vector2f(2, 2), draw_floorTile4Bs);
-                    floor4BArrayIndex++;
-                    break;
-                default:
-                    add_sprite_32(floor1ArrayIndex, currDrawPosition, draw_floorTile1s);
-                    floor1ArrayIndex++;
-                    break;
+
+                if (area == 1) {
+                    if (choice > 3) {
+                        add_sprite_32(floor1B_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 32), draw_floorTile1B_unders);
+                        floor1B_under_ArrayIndex++;
+
+                        floor_textures_B[floor_textures_BArrayIndex].setColor({ 255, 255, 255, 255 });
+                        floor_textures_B[floor_textures_BArrayIndex].setPosition(currDrawPosition);
+                        floor_textures_B[floor_textures_BArrayIndex].setTextureRect(sf::IntRect{ 36 * choice, 0, 36, 36 });
+                        floor_textures_BArrayIndex++;
+                    }
+                    else {
+                        add_sprite_32(floor1_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 32), draw_floorTile1_unders);
+                        floor1_under_ArrayIndex++;
+
+                        floor_textures[floor_texturesArrayIndex].setColor({ 255, 255, 255, 255 });
+                        floor_textures[floor_texturesArrayIndex].setPosition(currDrawPosition);
+                        floor_textures[floor_texturesArrayIndex].setTextureRect(sf::IntRect{ 32 * choice, 32 * area, 32, 32 });
+                        floor_texturesArrayIndex++;
+                    }
                 }
-                if (choice > 3) {
-                    add_sprite_32(floor1B_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 32), draw_floorTile1B_unders);
-                    floor1B_under_ArrayIndex++;
-                }
-                else {
-                    add_sprite_32(floor1_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 32), draw_floorTile1_unders);
-                    floor1_under_ArrayIndex++;
+                if (area == 0) {
+                    add_sprite_32(floor0_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 32), draw_floorTile0_unders);
+                    floor0_under_ArrayIndex++;
+
+                    floor_textures[floor_texturesArrayIndex].setColor({ 255, 255, 255, 255 });
+                    floor_textures[floor_texturesArrayIndex].setPosition(currDrawPosition);
+                    floor_textures[floor_texturesArrayIndex].setTextureRect(sf::IntRect{ 32 * choice, 32 * area, 32, 32 });
+                    floor_texturesArrayIndex++;
                 }
             }
         }
@@ -5121,55 +5226,55 @@ int main()
             for (int j = cameraBoundsTop; j < cameraBoundsBottom; j++) {
                 if (game_area[i][j].my_grid_type == wall) {         //drawing walls, will have to make this draw different things based on the surrounding walls
                     currDrawPosition = { i * 16 - cameraPos.x, j * 16 - cameraPos.y };
-                    int choice = (i + j) % 4;
+                    //int choice = (int(i * (2.3 * abs(j - i) + 1)) + int(j * (1.3 * abs(j - i) + 7)));
+                    uint32_t rand_choice = i * 3000 + j + seed;
+                    rand_choice ^= (rand_choice << 13);
+                    rand_choice ^= (rand_choice >> 17);
+                    rand_choice ^= (rand_choice << 5);
+                    rand_choice ^= (rand_choice << 11);
+                    rand_choice ^= (rand_choice >> 7);
+                    rand_choice ^= (rand_choice << 9);
+                    int choice = int(rand_choice % 100);
+                    if (choice > 75) {
+                        choice = 0;
+                    }
+                    if (choice > 70) {
+                        choice = 1;
+                    }
+                    if (choice > 60) {
+                        choice = 2;
+                    }
+                    if (choice > 24) {
+                        choice = 4;
+                    }
+                    if (choice > 16) {
+                        choice = 5;
+                    }
+                    if (choice > 7) {
+                        choice = 6;
+                    }
                     //boarder of wall
-                    add_sprite_24(wallBoardeArrayIndex, currDrawPosition - sf::Vector2f(4, 12), draw_boarderWalls);
+                   
+                    wall_boarder_textures[wallBoardeArrayIndex].setColor({ 255, 255, 255, 255 });
+                    wall_boarder_textures[wallBoardeArrayIndex].setPosition(currDrawPosition - sf::Vector2f{ 0, 8 });
+                    wall_boarder_textures[wallBoardeArrayIndex].setTextureRect(sf::IntRect{ 24 * area, 24 * 0, 24, 24 });
                     wallBoardeArrayIndex++;
+
 
                     add_sprite_24(wallShadowArrayIndex, currDrawPosition - sf::Vector2f(4, -8), draw_Wall1shadows);
                     wallShadowArrayIndex++;
 
-                    switch (choice) {
-                    case 0:
-                        add_sprite_16(wall1ArrayIndex, currDrawPosition - sf::Vector2f(0, 8), draw_middlewall1s);
-                        wall1ArrayIndex++;
-                        break;
-                    case 1:
-                        add_sprite_16(wall2ArrayIndex, currDrawPosition - sf::Vector2f(0, 8), draw_middlewall2s);
-                        wall2ArrayIndex++;
-                        break;
-                    case 2:
-                        add_sprite_16(wall3ArrayIndex, currDrawPosition - sf::Vector2f(0, 8), draw_middlewall3s);
-                        wall3ArrayIndex++;
-                        break;
-                    case 3:
-                        add_sprite_16(wall4ArrayIndex, currDrawPosition - sf::Vector2f(0, 8), draw_middlewall4s);
-                        wall4ArrayIndex++;
-                        break;
-                    }
+                    wall_textures[wall_texturesArrayIndex].setColor({ 255, 255, 255, 255 });
+                    wall_textures[wall_texturesArrayIndex].setPosition(currDrawPosition - sf::Vector2f{0, 8});
+                    wall_textures[wall_texturesArrayIndex].setTextureRect(sf::IntRect{ 16 * choice, 16 * area, 16, 16 });
+                    wall_texturesArrayIndex++;
+
                     if (game_area[i][j + 1].my_grid_type != wall) {     //if there isnt a wall undernearth a bottom wall needs to be drawn
-                        switch (choice) {
-                        case 0:
-                            add_sprite_16(wall1BOTArrayIndex, currDrawPosition, draw_botwall1s);
-                            wall1BOTArrayIndex++;
-                            break;
-                        case 1:
-                            add_sprite_16(wall2BOTArrayIndex, currDrawPosition, draw_botwall2s);
-                            wall2BOTArrayIndex++;
-                            break;
-                        case 2:
-                            add_sprite_16(wall3BOTArrayIndex, currDrawPosition, draw_botwall3s);
-                            wall3BOTArrayIndex++;
-                            break;
-                        case 3:
-                            add_sprite_16(wall4BOTArrayIndex, currDrawPosition, draw_botwall4s);
-                            wall4BOTArrayIndex++;
-                            break;
-                        }
-                        if (game_area[i][j + 1].my_grid_type == exlpo_tile) {
-                            add_sprite_16(exploTile1_under_ArrayIndex, currDrawPosition, draw_exploTile1_unders);
-                            exploTile1_under_ArrayIndex++;
-                        }
+                        int choice = (i + j) % 4;
+                        wall_textures_bot[wall_textures_botArrayIndex].setColor({ 255, 255, 255, 255 });
+                        wall_textures_bot[wall_textures_botArrayIndex].setPosition(currDrawPosition);
+                        wall_textures_bot[wall_textures_botArrayIndex].setTextureRect(sf::IntRect{ 16 * choice, 16 * area, 16, 16 });
+                        wall_textures_botArrayIndex++;
                     }
                 }
                 else if (game_area[i][j].my_grid_type == boarder) {
@@ -5178,23 +5283,19 @@ int main()
                 else if (game_area[i][j].my_grid_type == exlpo_tile) {
                     currDrawPosition = { i * 16 - cameraPos.x, j * 16 - cameraPos.y };
                     int choice = (int(i * (2.3 * abs(j - i) + 1)) + int(j * (1.3 * abs(j - i) + 7))) % 4;
-                    switch (choice) {
-                    case 0:
-                        add_sprite_18(exploTile1ArrayIndex, currDrawPosition - sf::Vector2f{ 1, 1 }, draw_exploTile1s);
-                        exploTile1ArrayIndex++;
-                        break;
-                    case 1:
-                        add_sprite_18(exploTile2ArrayIndex, currDrawPosition - sf::Vector2f{ 1, 1 }, draw_exploTile2s);
-                        exploTile2ArrayIndex++;
-                        break;
-                    case 2:
-                        add_sprite_18(exploTile3ArrayIndex, currDrawPosition - sf::Vector2f{ 1, 1 }, draw_exploTile3s);
-                        exploTile3ArrayIndex++;
-                        break;
-                    case 3:
-                        add_sprite_18(exploTile4ArrayIndex, currDrawPosition - sf::Vector2f{ 1, 1 }, draw_exploTile4s);
-                        exploTile4ArrayIndex++;
-                        break;
+                    
+                    explo_tiles_tex[explo_tiles_texArrayIndex].setColor({ 255, 255, 255, 255 });
+                    explo_tiles_tex[explo_tiles_texArrayIndex].setPosition(currDrawPosition - sf::Vector2f{1, 1});
+                    explo_tiles_tex[explo_tiles_texArrayIndex].setTextureRect(sf::IntRect{ 18 * choice, 18 * area, 18, 18 });
+                    explo_tiles_texArrayIndex++;
+                    
+                    if (area == 1) {
+                        add_sprite_16(exploTile1_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 16), draw_exploTile1_unders);
+                        exploTile1_under_ArrayIndex++;
+                    }
+                    if (area == 0) {
+                        add_sprite_16(exploTile0_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 16), draw_exploTile0_unders);
+                        exploTile0_under_ArrayIndex++;
                     }
                 }
                 else if (game_area[i][j].my_grid_type == floor_tile ) {
@@ -5254,7 +5355,12 @@ int main()
 
                         wep_sprite.setPosition(allObjects[idx].position - cameraPos + sf::Vector2f(cos(tmp_wep_angle) * -wep_kick, sin(tmp_wep_angle) * -wep_kick));
                         wep_sprite.setTextureRect(sf::IntRect{ 36 * wep_shine_frame, 36 * wep, 36, 36 });
-                        wep_sprite.setScale(1 * allObjects[0].scale, (player_is_facing_right * (reloaded * 2 - 1)) * allObjects[0].scale);
+                        if (wep < 11) {
+                            wep_sprite.setScale(1 * allObjects[0].scale, (player_is_facing_right * (reloaded * 2 - 1)) * allObjects[0].scale);
+                        }
+                        else {
+                            wep_sprite.setScale(1 * allObjects[0].scale, player_is_facing_right * allObjects[0].scale);
+                        }
                         wep_sprite.setRotation(tmp_wep_angle * degreestoradians);
                         wep_sprite.setOrigin(wep_get_origin(wep));
 
@@ -5276,6 +5382,18 @@ int main()
                         }
                         portal_sprite.setPosition(allObjects[idx].position - cameraPos);
                         portal_sprite.setTextureRect({ choice * 32, 0, 32, 32 });
+                        break;
+                    case portal_lightning:
+                        choice = int(allObjects[idx].image_index * 0.4f);
+                        choice2 = allObjects[idx].alarm1;
+                        variable_textures[variableTexturesIndex].setTexture(portalLightning);
+                        variable_textures[variableTexturesIndex].setColor({ 255, 255, 255, 255 });
+                        variable_textures[variableTexturesIndex].setPosition(allObjects[idx].position - cameraPos);
+                        variable_textures[variableTexturesIndex].setRotation(0);
+                        variable_textures[variableTexturesIndex].setTextureRect(sf::IntRect{ 32 * choice, 32 * choice2, 32, 32 });
+                        variable_textures[variableTexturesIndex].setOrigin(16, 16);
+                        variable_textures[variableTexturesIndex].setScale(1, 1);
+                        variableTexturesIndex++;
                         break;
                     case bullet1:       //bullets
                         if (allObjects[idx].image_index == 0) {
@@ -6013,41 +6131,18 @@ int main()
         sf::RenderStates RendererBloom;
         RendererBloom.blendMode = sf::BlendAdd;
 
-        if(area == 1){
+        if (area >= 0) {
 
             clear_extra_vertex_array(draw_bullet1_1s, bullet1_1ArrayIndex);
             clear_extra_vertex_array(draw_bullet1_2BIGs, bullet1_2BIGArrayIndex);
 
-            clear_extra_vertex_array(draw_middlewall1s, wall1ArrayIndex);
-            clear_extra_vertex_array(draw_middlewall2s, wall2ArrayIndex);
-            clear_extra_vertex_array(draw_middlewall3s, wall3ArrayIndex);
-            clear_extra_vertex_array(draw_middlewall4s, wall4ArrayIndex);
-
-            clear_extra_vertex_array(draw_boarderWalls, wallBoardeArrayIndex);
-
             clear_extra_vertex_array(draw_Wall1shadows, wallShadowArrayIndex);
 
-            clear_extra_vertex_array(draw_botwall1s, wall1BOTArrayIndex);
-            clear_extra_vertex_array(draw_botwall2s, wall2BOTArrayIndex);
-            clear_extra_vertex_array(draw_botwall3s, wall3BOTArrayIndex);
-            clear_extra_vertex_array(draw_botwall4s, wall4BOTArrayIndex);
-
-            clear_extra_vertex_array(draw_floorTile1s, floor1ArrayIndex);
-            clear_extra_vertex_array(draw_floorTile2s, floor2ArrayIndex);
-            clear_extra_vertex_array(draw_floorTile3s, floor3ArrayIndex);
-            clear_extra_vertex_array(draw_floorTile4s, floor4ArrayIndex);
-
-            clear_extra_vertex_array(draw_floorTile1Bs, floor1BArrayIndex);
-            clear_extra_vertex_array(draw_floorTile2Bs, floor2BArrayIndex);
-            clear_extra_vertex_array(draw_floorTile3Bs, floor3BArrayIndex);
-            clear_extra_vertex_array(draw_floorTile4Bs, floor4BArrayIndex);
-
-            clear_extra_vertex_array(draw_exploTile1s, exploTile1ArrayIndex);
-            clear_extra_vertex_array(draw_exploTile2s, exploTile2ArrayIndex);
-            clear_extra_vertex_array(draw_exploTile3s, exploTile3ArrayIndex);
-            clear_extra_vertex_array(draw_exploTile4s, exploTile4ArrayIndex);
-
             clear_extra_vertex_array(draw_exploTile1_unders, exploTile1_under_ArrayIndex);
+            clear_extra_vertex_array(draw_exploTile0_unders, exploTile0_under_ArrayIndex);
+
+            clear_extra_vertex_array(draw_floorTile0_unders, floor0_under_ArrayIndex);
+
             clear_extra_vertex_array(draw_floorTile1B_unders, floor1B_under_ArrayIndex);
             clear_extra_vertex_array(draw_floorTile1_unders, floor1_under_ArrayIndex);
 
@@ -6056,51 +6151,42 @@ int main()
 
             Renderer.texture = &exploTile1_under;
             buffer_under.draw(draw_exploTile1_unders, Renderer);
+            Renderer.texture = &exploTile0_under;
+            buffer_under.draw(draw_exploTile0_unders, Renderer);
 
             Renderer.texture = &floorTile1B_under;
             buffer_under.draw(draw_floorTile1B_unders, Renderer);
 
             Renderer.texture = &floorTile1_under;
             buffer_under.draw(draw_floorTile1_unders, Renderer);
+            Renderer.texture = &floorTile0_under;
+            buffer_under.draw(draw_floorTile0_unders, Renderer);
 
             //floors, drawn underneath explo tiles
-            Renderer.texture = &floorTile1;
-            buffer_under.draw(draw_floorTile1s, Renderer);
+            for (sf::Sprite spr : floor_textures) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_under.draw(spr);
+            }
+            reset_rotateable_sprites(floor_textures, floor_texturesArrayIndex);
 
-            Renderer.texture = &floorTile2;
-            buffer_under.draw(draw_floorTile2s, Renderer);
-
-            Renderer.texture = &floorTile3;
-            buffer_under.draw(draw_floorTile3s, Renderer);
-
-            Renderer.texture = &floorTile4;
-            buffer_under.draw(draw_floorTile4s, Renderer);
-
-            Renderer.texture = &floorTile1B;
-            buffer_under.draw(draw_floorTile1Bs, Renderer);
-
-            Renderer.texture = &floorTile2B;
-            buffer_under.draw(draw_floorTile2Bs, Renderer);
-
-            Renderer.texture = &floorTile3B;
-            buffer_under.draw(draw_floorTile3Bs, Renderer);
-
-            Renderer.texture = &floorTile4B;
-            buffer_under.draw(draw_floorTile4Bs, Renderer);
-
+            for (sf::Sprite spr : floor_textures_B) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_under.draw(spr);
+            }
+            reset_rotateable_sprites(floor_textures_B, floor_textures_BArrayIndex);
 
             //explo tiles
-            Renderer.texture = &exploTile1;
-            buffer_under.draw(draw_exploTile1s, Renderer);
-
-            Renderer.texture = &exploTile2;
-            buffer_under.draw(draw_exploTile2s, Renderer);
-
-            Renderer.texture = &exploTile3;
-            buffer_under.draw(draw_exploTile3s, Renderer);
-
-            Renderer.texture = &exploTile4;
-            buffer_under.draw(draw_exploTile4s, Renderer);
+            for (sf::Sprite spr : explo_tiles_tex) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_under.draw(spr);
+            }
+            reset_rotateable_sprites(explo_tiles_tex, explo_tiles_texArrayIndex);
 
             //details
             //debris
@@ -6128,7 +6214,7 @@ int main()
             sf::Sprite combinedunder(buffer_under.getTexture());
             //window.draw(combinedunder);
             buffer_over.draw(combinedunder);
-            
+
 
             //shadows now drawn
 
@@ -6147,17 +6233,13 @@ int main()
             buffer_over.draw(combinedshadows);
 
             //walls
-            Renderer.texture = &botWall1;
-            buffer_over.draw(draw_botwall1s, Renderer);
-
-            Renderer.texture = &botWall2;
-            buffer_over.draw(draw_botwall2s, Renderer);
-
-            Renderer.texture = &botWall3;
-            buffer_over.draw(draw_botwall3s, Renderer);
-
-            Renderer.texture = &botWall4;
-            buffer_over.draw(draw_botwall4s, Renderer);
+            for (sf::Sprite spr : wall_textures_bot) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_over.draw(spr);
+            }
+            reset_rotateable_sprites(wall_textures_bot, wall_textures_botArrayIndex);
 
             //dust
             for (sf::Sprite spr : rotateable_effects_medium) {
@@ -6274,7 +6356,7 @@ int main()
                 buffer_over.draw(spr);
             }
             reset_rotateable_sprites(rotateable_sprites_guns_top, rotateableSpriteGunTopIndex);
-            
+
 
             //portal
             buffer_over.draw(portal_sprite);
@@ -6285,14 +6367,14 @@ int main()
             if (direction_to_mouse - (180 / degreestoradians) > 0) {
                 buffer_over.draw(wep_sprite);
             }
-            
+
             //player
             buffer_over.draw(player_sprite);
 
             if (direction_to_mouse - (180 / degreestoradians) <= 0) {
                 buffer_over.draw(wep_sprite);
             }
-            
+
             //plasma impact
             for (sf::Sprite spr : plasma_impact_sprites) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -6312,6 +6394,11 @@ int main()
 
             //  !!! BLOOM START !!!  //
 
+            portal_sprite.setScale(2, 2);
+            portal_sprite.setColor({ 255, 255, 255, 25 });
+            buffer_over.draw(portal_sprite, RendererBloom);
+            portal_sprite.setScale(1, 1);
+            portal_sprite.setColor({ 255, 255, 255, 255 });
 
             for (sf::Sprite spr : idpd_explosions_sprites) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -6396,20 +6483,21 @@ int main()
             //buffer_over.draw(c);
 
             //wall boarder under wall tops
-            Renderer.texture = &boarderWall;
-            buffer_over.draw(draw_boarderWalls, Renderer);
+            for (sf::Sprite spr : wall_boarder_textures) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_over.draw(spr);
+            }
+            reset_rotateable_sprites(wall_boarder_textures, wallBoardeArrayIndex);
 
-            Renderer.texture = &middleWall1;
-            buffer_over.draw(draw_middlewall1s, Renderer);
-
-            Renderer.texture = &middleWall2;
-            buffer_over.draw(draw_middlewall2s, Renderer);
-
-            Renderer.texture = &middleWall3;
-            buffer_over.draw(draw_middlewall3s, Renderer);
-
-            Renderer.texture = &middleWall4;
-            buffer_over.draw(draw_middlewall4s, Renderer);
+            for (sf::Sprite spr : wall_textures) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_over.draw(spr);
+            }
+            reset_rotateable_sprites(wall_textures, wall_texturesArrayIndex);
 
             for (sf::Text tex : popup_texts) {
                 if (tex.getLineSpacing() > 20 || int(tex.getLineSpacing()) % 4 < 2) {
@@ -6428,7 +6516,7 @@ int main()
             //window.draw(buffer_overSprite);
 
         }
-        else if(area == 2){
+        if(area == 2){
 
         }
         draw_text_NT(hp_text, buffer_over);
