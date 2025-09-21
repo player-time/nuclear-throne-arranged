@@ -78,10 +78,10 @@ int rotateable_sprites_guns_top_max = 500 * draw_mult;
 
 //small effects 8x8 unrotateable
 std::vector<sf::Sprite> rotateable_effects_small_bloom;
-int rotateable_effects_small_bloom_max = 7500;
+int rotateable_effects_small_bloom_max = 5500;
 //small effects 8x8
 std::vector<sf::Sprite> rotateable_effects_small;
-int rotateable_effects_small_max = 2000;
+int rotateable_effects_small_max = 3000;
 //small effects 8x8 underneath
 std::vector<sf::Sprite> under_effects_small;
 int under_effects_small_max = 500;
@@ -96,9 +96,15 @@ int rotateable_effects_large_max = 4000;
 
 sf::Sprite portal_sprite;
 
+sf::Sprite T2_sprite;
+bool t2_draw_in_front = true;
 
 std::vector<sf::Sprite> variable_textures;
 int variable_textures_max = 400;
+
+
+std::vector<sf::Sprite> variable_textures_bloom;
+int variable_textures_bloom_max = 400;
 
 int wall_textures_max = 600;
 std::vector<sf::Sprite> wall_textures;
@@ -112,12 +118,21 @@ std::vector<sf::Sprite> floor_textures;
 int floor_textures_B_max = 100;
 std::vector<sf::Sprite> floor_textures_B;
 
-int wall_textures_bot_max = 160;
+int wall_textures_bot_max = 260;
 std::vector<sf::Sprite> wall_textures_bot;
 
 int explo_tiles_tex_max = 600;
 std::vector<sf::Sprite> explo_tiles_tex;
 
+
+
+int T2_explo_tiles_tex_max = 600;
+std::vector<sf::Sprite> T2_explo_tiles_tex;
+
+int T2_floor_tiles_tex_max = 100;
+std::vector<sf::Sprite> T2_floor_tiles_tex;
+
+sf::Vector2f cameraPos = { 24000.0f, 24000.0f };
 
 //text ingame
 std::vector<sf::Text> popup_texts;
@@ -299,6 +314,91 @@ character player_character = horror;
 std::vector<sf::Vector3f> play_sounds_this_frame_pos;
 std::vector<int> play_sounds_this_frame_count;
 
+
+
+//portal spiral stuff
+
+int all_portal_spirals_start = 0;   //determines which portal spiral is drawn first
+int all_portal_spirals_count = 0;
+portal_spiral all_portal_spirals[1000];
+
+//center of screen
+const float center_of_screen_X = 160.0f;
+const float center_of_screen_Y = 120.0f;
+
+float portal_spiral_X = center_of_screen_X;
+float portal_spiral_Y = center_of_screen_Y;
+
+float portal_spiral_player_X = 160.0f;
+float portal_spiral_player_Y = 120.0f;
+
+float portal_spiral_angle = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1000.0f)));
+
+bool portal_spiral_active = 0;
+
+int portal_spiral_type = 1;
+int portal_spiral_time = 0;
+int portal_spiral_wave = 0;
+
+float random(float max_value) {    //dont use in multithreaded for more randomness
+    return static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (max_value)));
+}
+
+void create_portal_spiral() {
+    all_portal_spirals_start++;
+    all_portal_spirals_count++;
+    if (all_portal_spirals_start > 999) {
+        all_portal_spirals_start = 0;
+    }
+    all_portal_spirals[all_portal_spirals_start].grow = 0;
+    all_portal_spirals[all_portal_spirals_start].langle = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (360.0f)));
+    all_portal_spirals[all_portal_spirals_start].lanim = -static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (300.0f)));
+    all_portal_spirals[all_portal_spirals_start].lsound = 0;
+    all_portal_spirals[all_portal_spirals_start].image_scale = 0.0f;
+    all_portal_spirals[all_portal_spirals_start].image_angle = portal_spiral_angle;
+    all_portal_spirals[all_portal_spirals_start].active = true;
+
+    all_portal_spirals[all_portal_spirals_start].position = {portal_spiral_X, portal_spiral_Y};
+}
+
+void portal_spiral_step() {
+    for (int i = 0; i < 1000; i++) {
+        if (all_portal_spirals[i].active == true) {
+            all_portal_spirals[i].grow += 0.0002;
+            all_portal_spirals[i].image_scale += all_portal_spirals[i].grow;
+            all_portal_spirals[i].grow = (all_portal_spirals[i].grow + 1) * (1 + 0.0005f * all_portal_spirals[i].image_scale) - 1;
+            /*if (!instance_exists(SpiralCont))
+            {
+                grow *= 1.5
+                    UberCont.lisWallsUpdate = 1
+            }*/
+            if (all_portal_spirals[i].image_scale > 2 && (all_portal_spirals[i].lanim < 0 || all_portal_spirals[i].lanim > 6)) {
+                all_portal_spirals_count--;
+                all_portal_spirals[i].active = false;
+                all_portal_spirals[i].image_scale = 0;
+                all_portal_spirals[i].grow = 0;
+            }
+            all_portal_spirals[i].lanim += (0.2 + random(0.3));
+        }
+    }
+}
+
+void spiral_cont_step() {
+    portal_spiral_angle += (8 + (sin(portal_spiral_angle / 300)));
+    portal_spiral_time++;
+
+    portal_spiral_X = center_of_screen_X + (sin(portal_spiral_angle / 921)) * (sin(portal_spiral_angle / 500)) * 80;
+    portal_spiral_Y = center_of_screen_Y + (cos(portal_spiral_angle / 583)) * (sin(portal_spiral_angle / 500)) * 50;
+
+    portal_spiral_wave++;
+    if (portal_spiral_wave == 1) {
+        portal_spiral_wave = 0;
+
+        create_portal_spiral();
+    }
+}
+
+
 //generation
 bool want_gen = true;
 
@@ -328,10 +428,6 @@ float random_180_radians() {    //dont use in multithreaded for more randomness
 }
 float random_180_degrees() {    //dont use in multithreaded for more randomness
     return static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (180.0f)));
-}
-
-float random(float max_value) {    //dont use in multithreaded for more randomness
-    return static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (max_value)));
 }
 
 float angle_to_player_radians(sf::Vector2f position) {
@@ -383,7 +479,7 @@ void corpse_step(int i) {
     }
     allObjects[i].image_index++;
 
-    if (enemy_count == 0) {
+    if (enemy_count + idpd_spawn_count == 0) {
         if (allObjects[i].image_index < lowest_corpse_lifetime) {
             lowest_corpse_lifetime = allObjects[i].image_index;
             lowest_corpse_lifetime_ID = i;
@@ -539,6 +635,24 @@ bool inline is_within_circle(sf::Vector2f pos1, sf::Vector2f pos2, float distanc
     return (distance * distance) > ((pos1.x - pos2.x) * (pos1.x - pos2.x)) + ((pos1.y - pos2.y) * (pos1.y - pos2.y));
 }
 
+void make_T2_arena() {
+    top_physics -= 20;
+    bottom_physics += 20;
+    left_physics -= 20;
+    right_physics += 20;
+
+    for (int i = left_physics-1; i < right_physics+1; i++) {
+        for (int j = top_physics-1; j < bottom_physics+1; j++) {
+            if (game_area[i][j].my_grid_type == wall && (i == left_physics || i == right_physics) || (j == bottom_physics || j == top_physics)) {
+                game_area[i][j].my_grid_type = T2_boarder;
+            }
+            else if (game_area[i][j].my_grid_type == wall) {
+                game_area[i][j].my_grid_type = void_tile;
+            }
+        }
+    }
+}
+
 //returns object index
 int create_object(float x, float y, float xspd, float yspd, objectID obj_id, float direction, int image_index) {
     int _i = int(x / 16);
@@ -548,6 +662,15 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
     for (int i = I; i < max_objects; i++) {
         if (allObjects[i].my_id == nothing) {
             switch (obj_id) {
+            case throne_2:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].position = { x, y };
+                allObjects[i].image_index = 0;
+                allObjects[i].alarm1 = 67;
+                allObjects[i].alarm2 = 0;
+                allObjects[i].alarm3 = 0;
+                t2_draw_in_front = true;
+                break;
             case portal:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].position = { x, y };
@@ -711,6 +834,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].position = { x, y };
                 allObjects[i].alarm1 = 40 + idpd_spawn_count * 3;
                 allObjects[i].alarm2 = 52 + idpd_spawn_count * 3;
+                allObjects[i].alarm3 = 5;
+                allObjects[i].image_index = 0;
                 idpd_spawn_count++;
                 break;
             case player_bullet:
@@ -1503,6 +1628,9 @@ void enemy_die(int ENEMY, int PROJ, enum sound DIE_SOUND) {
         allObjects[ENEMY].speed = allObjects[PROJ].speed;
         motion_add_XY_speed(allObjects[PROJ].speed.x, allObjects[PROJ].speed.y, ENEMY);   //knockback
     }
+    else {
+        motion_add_dir(random_360_radians(), random(4.0f), ENEMY);
+    }
     allObjects[ENEMY].image_index = 0;
     allObjects[ENEMY].friction = 0.4f;
 
@@ -1517,7 +1645,7 @@ void enemy_die(int ENEMY, int PROJ, enum sound DIE_SOUND) {
         create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, tempSpdx, tempSpdy, rad, 0.0f, 0);
     }
 
-    if (allObjects[ENEMY].speed.x == 0.0f && allObjects[ENEMY].speed.y == 0.0f) {
+    if (abs(allObjects[ENEMY].speed.x) < 1.0f && abs(allObjects[ENEMY].speed.y) < 1.0f) {
         allObjects[ENEMY].direction = random_360_radians();
     }
 
@@ -2324,6 +2452,8 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
     float tempSpeed = 0.0f;
     float diffx = 0.0f;
     float diffy = 0.0f;
+
+    int choice = 0;
      
     lowest_corpse_lifetime = 65535;
 
@@ -2335,6 +2465,35 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
     std::uniform_int_distribution<> dis(0, RAND_MAX);
     for (int i = start; i < end; i++) {
         switch (allObjects[i].my_id) {
+        case throne_2:
+            allObjects[i].image_index++;
+            allObjects[i].alarm1--;
+            allObjects[i].alarm2--;
+            allObjects[i].alarm3--;
+            if (allObjects[i].alarm1 == 0) {
+                allObjects[i].image_index = 0;
+                //make all walls invisibe and not collide with bullets
+                make_T2_arena();
+            }
+            //draw always
+            choice = int(allObjects[i].image_index * 0.4f);
+            if (allObjects[i].alarm1 > 0) {
+                t2_draw_in_front = true;
+                //T2_sprite.setTexture(throne2Appear);
+            }
+            else {
+                //T2_sprite.setTexture(throne2Idle);
+                choice = int(allObjects[i].image_index * 0.4f) % 8;
+                t2_draw_in_front = false;
+            }
+            T2_sprite.setColor({ 255, 255, 255, 255 });
+            T2_sprite.setPosition(allObjects[i].position - cameraPos);
+            T2_sprite.setRotation(0);
+            T2_sprite.setTextureRect(sf::IntRect{ 250 * choice, 0, 250, 250 });
+            T2_sprite.setOrigin(125, 125);
+            T2_sprite.setScale(1, 1);
+            //
+            break;
         case portal:
             portal_camera_offset =  {(allObjects[i].position.x - allObjects[0].position.x) / 16, (allObjects[i].position.y - allObjects[0].position.y) / 16 };
             allObjects[i].image_index++;
@@ -2691,6 +2850,24 @@ void do_object_logic(int start, int end) {    //logic done on each obect every f
         case idpd_spawn:
             allObjects[i].alarm1--;
             allObjects[i].alarm2--;
+            allObjects[i].alarm3--;
+            allObjects[i].image_index++;
+            if (allObjects[i].alarm2 == 12) {
+                allObjects[i].image_index = 0;
+            }
+            if (allObjects[i].alarm2 == 0) {
+                create_object(allObjects[i].position.x, allObjects[i].position.y, 0, 0, idpd_freak, random_360_radians(), 0);
+            }
+            if (allObjects[i].alarm1 < -34) {
+                allObjects[i].my_id = nothing;
+                idpd_spawn_count--;
+            }
+            //create portal charges
+            tempSpeedX = random(1) + 2;
+            diffx = rand() % 96 - 48;
+            diffy = rand() % 96 - 48;
+            tmpdir = atan2f(diffy, diffx);
+            create_object(allObjects[i].position.x + diffx, allObjects[i].position.y + diffy, cos(tmpdir) * -tempSpeedX, sin(tmpdir) * -tempSpeedX, idpd_portal_charge, (sqrt((diffx * diffx) + (diffy * diffy)) / tempSpeedX) + 1, rand() % 4);
 
             break;
         case player_bullet:
@@ -2930,6 +3107,32 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
             bool bouncedV = false;
             int parsedObjects = 0; //maybe use this
             switch (game_area[i][j].my_grid_type) {
+            case T2_boarder:
+                //simply remove any object that gets this far out
+                for (int O : game_area[i][j].object_indexes) {
+                    allObjects[O].my_id = nothing;
+                }
+                break;
+            case void_tile:
+                //only need to do collisions with freaks and player
+                for (int w = -1; w < 2; w++) {      //each wall checks around it for possible collisions with objects that are supposed to be bigger than a single point
+                    for (int h = -1; h < 2; h++) {
+                        for (int O : game_area[i + w][j + h].object_indexes) {      //walls collisions and bounce
+                            switch (allObjects[O].my_id) {
+                            case objectID::player:
+                                collide_wall(O, i, j, h, w, 5);
+                                break;
+                            case idpd_freak:
+                                object_bounce_wall(O, h, w, idpd_freak_hitbox, idpd_freak_hitbox, i, j);
+                                break;
+                            default:
+                                break;
+                            }
+
+                        }
+                    }
+                }
+                break;
             case wall:
                 for (int w = -1; w < 2; w++) {      //each wall checks around it for possible collisions with objects that are supposed to be bigger than a single point
                     for (int h = -1; h < 2; h++) {
@@ -3401,6 +3604,7 @@ void generate_level() {
     idpd_spawn_count = 0;
 
     portal_sprite.setPosition(-1000, -1000);
+    T2_sprite.setPosition(-1000, -1000);
 
     allObjects[0].position = { 24016.0f, 24016.0f };
     int initial_goal = 0;
@@ -3516,11 +3720,11 @@ void generate_level() {
             while (tmp_num_of_enemies_to_spawn > enemies_spawned) {
                 for (int i = left_physics; i <= right_physics; i++) {
                     for (int j = top_physics; j <= bottom_physics; j++) {
-                        if (game_area[i][j].my_grid_type == floor_tile && !is_within_circle(sf::Vector2f(24016, 24016), sf::Vector2f(i * 16 + 8, j * 16 + 8), 100)) {
-                            if (tmp_num_of_enemies_to_spawn > enemies_spawned) {
+                        if (game_area[i][j].my_grid_type == floor_tile && !is_within_circle(sf::Vector2f(24016, 24016), sf::Vector2f(i * 16 + 8, j * 16 + 8), 80) && is_within_circle(sf::Vector2f(24016, 24016), sf::Vector2f(i * 16 + 8, j * 16 + 8), 120)) {
+                            if (tmp_num_of_enemies_to_spawn > enemies_spawned && rand() % 4 == 0) {
                                 enemies_spawned++;
-                                float rand_off_x = random_360_radians() - 3.14f;
-                                float rand_off_y = random_360_radians() - 3.14f;
+                                float rand_off_x = 0;
+                                float rand_off_y = 0;
                                 create_object(i * 16 + 8 + rand_off_x, j * 16 + 8 + rand_off_y, 0, 0, idpd_spawn, 0, 0);
                             }
                         }
@@ -3818,7 +4022,7 @@ int main()
     sf::Sprite buffer_overSprite(buffer_over.getTexture());
 
     gameObject player;
-    sf::Vector2f cameraPos = { 24000.0f, 24000.0f };
+    
     int cameraBoundsTop = 0;
     int cameraBoundsBottom = 10;
     int cameraBoundsLeft = 0;
@@ -3844,6 +4048,13 @@ int main()
     //load sprites
         sf::Texture allEnemySprites;
         allEnemySprites.loadFromFile("res/enemies/all_enemies.png");
+
+        //bosses
+        sf::Texture throne2Appear;
+        throne2Appear.loadFromFile("res/T2/sprNothing2Appear.png");
+
+        sf::Texture throne2Idle;
+        throne2Idle.loadFromFile("res/T2/sprNothing2Idle.png");
 
         sf::Sprite hp_bar_spr;
         sf::Sprite health_bar_spr;
@@ -3900,9 +4111,27 @@ int main()
         sf::Texture allExploTiles;
         allExploTiles.loadFromFile("res/allExploTiles.png");
 
+
+        sf::Texture Floor_T2_Tiles;
+        Floor_T2_Tiles.loadFromFile("res/T2/T2_floor_unders.png");
+
+        sf::Texture Explo_T2_Tiles;
+        Explo_T2_Tiles.loadFromFile("res/T2/T2_explo_unders.png");
+
         /*sf::Texture boarderWall;
         boarderWall.loadFromFile("res/sprWall1Boarder.png");
         sf::VertexArray draw_boarderWalls = create_vertex_array(boarderWall, 600);*/
+
+        sf::Texture idpdPortalClose;
+        idpdPortalClose.loadFromFile("res/sprIDPDPortalClose.png");
+
+
+        sf::Texture portal_spiral_tex;
+        portal_spiral_tex.loadFromFile("res/portal_spiral.png");
+
+        sf::Sprite portal_spiral_spr;
+        portal_spiral_spr.setTexture(portal_spiral_tex);
+        portal_spiral_spr.setOrigin(320, 320);
 
         //wall1 shadow
         sf::Texture Wall1shadow;
@@ -3921,11 +4150,11 @@ int main()
         //explotile under
         sf::Texture exploTile1_under;
         exploTile1_under.loadFromFile("res/sprExploTile1_under.png");
-        sf::VertexArray draw_exploTile1_unders = create_vertex_array(exploTile1_under, 150);
+        sf::VertexArray draw_exploTile1_unders = create_vertex_array(exploTile1_under, 600);
 
         sf::Texture exploTile0_under;
         exploTile0_under.loadFromFile("res/sprExploTile0_under.png");
-        sf::VertexArray draw_exploTile0_unders = create_vertex_array(exploTile0_under, 150);
+        sf::VertexArray draw_exploTile0_unders = create_vertex_array(exploTile0_under, 600);
         //floorTile0 under
         sf::Texture floorTile0_under;
         floorTile0_under.loadFromFile("res/sprFloor0_1_under.png");
@@ -4415,6 +4644,12 @@ int main()
         temp.setColor({ 0, 0, 0, 0 });
         variable_textures.push_back(temp);
     }
+    for (int i = 0; i < variable_textures_bloom_max; i++) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        variable_textures_bloom.push_back(temp);
+    }
+    //walls
     for (int i = 0; i < wall_textures_max; i++) {
         sf::Sprite temp;
         temp.setColor({ 0, 0, 0, 0 });
@@ -4455,6 +4690,21 @@ int main()
         temp.setOrigin({ 0,0 });
         temp.setTexture(allExploTiles);
         explo_tiles_tex.push_back(temp);
+    }
+    //throne 2
+    for (int i = 0; i < T2_explo_tiles_tex_max; i++) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        temp.setOrigin({ 0,0 });
+        temp.setTexture(Explo_T2_Tiles);
+        T2_explo_tiles_tex.push_back(temp);
+    }
+    for (int i = 0; i < T2_floor_tiles_tex_max; i++) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        temp.setOrigin({ 0,0 });
+        temp.setTexture(Floor_T2_Tiles);
+        T2_floor_tiles_tex.push_back(temp);
     }
     for (int i = 0; i < popup_texts_max; i++) {
         sf::Text temp;
@@ -4947,7 +5197,7 @@ int main()
                         }
                     }
                     if (totalhp <= 140 && totalhp) {
-                        clear_all_bullets();
+                        //clear_all_bullets();
                         for (int i = 1; i < max_objects; i++) {
                             switch (allObjects[i].my_id) {
                             case bandit:
@@ -4981,8 +5231,13 @@ int main()
             //portal
             if (create_portal && !created_portal) {
                 created_portal = true;
-                create_object(create_portal_POS.x, create_portal_POS.y, 0, 0, portal, 0, 0);
-                create_object(create_portal_POS.x, create_portal_POS.y, 0, 0, portal_clear, 0, 0);
+                if (area != 0) {
+                    create_object(create_portal_POS.x, create_portal_POS.y, 0, 0, portal, 0, 0);
+                    create_object(create_portal_POS.x, create_portal_POS.y, 0, 0, portal_clear, 0, 0);
+                }
+                else {
+                    create_object(create_portal_POS.x, create_portal_POS.y, 0, 0, throne_2, 0, 0);
+                }
             }
 
             //play sounds
@@ -5126,6 +5381,15 @@ int main()
 
         sf::Vector2f currDrawPosition;
 
+        //t2 stuff
+
+        if (t2_draw_in_front == true) {
+            T2_sprite.setTexture(throne2Appear);
+        }
+        else {
+            T2_sprite.setTexture(throne2Idle);
+        }
+
         int allEnemySpritesIndex = 0;
         int allEnemyCorpsesIndex = 0;
 
@@ -5169,6 +5433,8 @@ int main()
         int rotateableEffectsSmallBloomIndex = 0;
 
         int variableTexturesIndex = 0;
+
+        int variableTexturesBloomIndex = 0;
         //int rotateableEffectsSmallNoRotBloomIndex = 0;
 
         int bullet_1_batchableIndex = 0;
@@ -5183,6 +5449,9 @@ int main()
         int floor_textures_BArrayIndex = 0;
 
         int explo_tiles_texArrayIndex = 0;
+
+        int T2_explo_tiles_texArrayIndex = 0;
+        int T2_floor_tiles_texArrayIndex = 0;
 
         for (int i = 0; i < max_floors; i++) {
             currDrawPosition = allFloors[i].getPosition() - cameraPos;
@@ -5218,10 +5487,15 @@ int main()
                     floor_textures[floor_texturesArrayIndex].setPosition(currDrawPosition);
                     floor_textures[floor_texturesArrayIndex].setTextureRect(sf::IntRect{ 32 * choice, 32 * area, 32, 32 });
                     floor_texturesArrayIndex++;
+
+                    T2_floor_tiles_tex[T2_floor_tiles_texArrayIndex].setColor({ 255, 255, 255, 255 });
+                    T2_floor_tiles_tex[T2_floor_tiles_texArrayIndex].setPosition(currDrawPosition - sf::Vector2f{ 16 , 16 });
+                    T2_floor_tiles_tex[T2_floor_tiles_texArrayIndex].setTextureRect(sf::IntRect{ 64 * choice, 0, 64, 96 });
+                    T2_floor_tiles_texArrayIndex++;
                 }
             }
         }
-
+        
         for (int i = cameraBoundsLeft; i < cameraBoundsRight; i++) {
             for (int j = cameraBoundsTop; j < cameraBoundsBottom; j++) {
                 if (game_area[i][j].my_grid_type == wall) {         //drawing walls, will have to make this draw different things based on the surrounding walls
@@ -5288,6 +5562,12 @@ int main()
                     explo_tiles_tex[explo_tiles_texArrayIndex].setPosition(currDrawPosition - sf::Vector2f{1, 1});
                     explo_tiles_tex[explo_tiles_texArrayIndex].setTextureRect(sf::IntRect{ 18 * choice, 18 * area, 18, 18 });
                     explo_tiles_texArrayIndex++;
+                    if (area == 0) {
+                        T2_explo_tiles_tex[T2_explo_tiles_texArrayIndex].setColor({ 255, 255, 255, 255 });
+                        T2_explo_tiles_tex[T2_explo_tiles_texArrayIndex].setPosition(currDrawPosition - sf::Vector2f{ 1 + 7 , 1 + 7 });
+                        T2_explo_tiles_tex[T2_explo_tiles_texArrayIndex].setTextureRect(sf::IntRect{ 32 * choice, 0, 32, 48 });
+                        T2_explo_tiles_texArrayIndex++;
+                    }
                     
                     if (area == 1) {
                         add_sprite_16(exploTile1_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 16), draw_exploTile1_unders);
@@ -5369,6 +5649,23 @@ int main()
                         bwep_sprite.setScale(1 * allObjects[0].scale, player_is_facing_right * allObjects[0].scale);
                         bwep_sprite.setRotation(-90 - 15 * player_is_facing_right);
                         bwep_sprite.setOrigin(wep_get_origin(bwep));
+                        break;
+                    case throne_2:
+                        /*choice = int(allObjects[idx].image_index * 0.4f);
+                        if (allObjects[idx].alarm1 > 0) {
+                            T2_sprite.setTexture(throne2Appear);
+                        }
+                        else {
+                            T2_sprite.setTexture(throne2Idle);
+                            choice = int(allObjects[idx].image_index * 0.4f) % 8;
+                            t2_draw_in_front = false;
+                        }
+                        T2_sprite.setColor({ 255, 255, 255, 255 });
+                        T2_sprite.setPosition(allObjects[idx].position - cameraPos);
+                        T2_sprite.setRotation(0);
+                        T2_sprite.setTextureRect(sf::IntRect{ 250 * choice, 0, 250, 250 });
+                        T2_sprite.setOrigin(125, 125);
+                        T2_sprite.setScale(1, 1);*/
                         break;
                     case portal:
                         choice = int(allObjects[idx].image_index * 0.4f) % 4;
@@ -5532,12 +5829,45 @@ int main()
                         rotateableSpriteBulletHugeIndex++;
                         break;
                     case idpd_portal_charge:
-
+                        choice = int(allObjects[idx].image_index * 0.4f);
                         rotateable_effects_small[rotateableEffectsSmallIndex].setColor({ 255, 255, 255, 255 });
                         rotateable_effects_small[rotateableEffectsSmallIndex].setPosition(allObjects[idx].position - cameraPos);
                         rotateable_effects_small[rotateableEffectsSmallIndex].setRotation(0.0f);
                         rotateable_effects_small[rotateableEffectsSmallIndex].setTextureRect(sf::IntRect{ allObjects[idx].image_index * 8, 40, 8, 8});
                         rotateableEffectsSmallIndex++;
+                        break;
+                    case idpd_spawn:
+
+                        if (allObjects[idx].alarm3 > 0) {  //portal start
+                            choice = int(allObjects[idx].image_index * 0.4f);
+                            rotateable_effects_small_bloom[rotateableEffectsSmallBloomIndex].setColor({ 255, 255, 255, 255 });
+                            rotateable_effects_small_bloom[rotateableEffectsSmallBloomIndex].setPosition(allObjects[idx].position - cameraPos);
+                            rotateable_effects_small_bloom[rotateableEffectsSmallBloomIndex].setRotation(0.0f);
+                            rotateable_effects_small_bloom[rotateableEffectsSmallBloomIndex].setTextureRect(sf::IntRect{ choice * 8, 104, 8, 8 });
+                            rotateableEffectsSmallBloomIndex++;
+                        }
+                        else if (allObjects[idx].alarm2 >= 13) {
+                            choice = int(allObjects[idx].image_index * 0.4f) % 4;
+                            rotateable_effects_small_bloom[rotateableEffectsSmallBloomIndex].setColor({ 255, 255, 255, 255 });
+                            rotateable_effects_small_bloom[rotateableEffectsSmallBloomIndex].setPosition(allObjects[idx].position - cameraPos);
+                            rotateable_effects_small_bloom[rotateableEffectsSmallBloomIndex].setRotation(0.0f);
+                            rotateable_effects_small_bloom[rotateableEffectsSmallBloomIndex].setTextureRect(sf::IntRect{ choice * 8, 40, 8, 8 });
+                            rotateableEffectsSmallBloomIndex++;
+                        }
+
+                        else {
+                            choice = int(allObjects[idx].image_index * 0.4f);
+                            variable_textures_bloom[variableTexturesBloomIndex].setTexture(idpdPortalClose);
+                            variable_textures_bloom[variableTexturesBloomIndex].setColor({ 255, 255, 255, 255 });
+                            variable_textures_bloom[variableTexturesBloomIndex].setPosition(allObjects[idx].position - cameraPos);
+                            variable_textures_bloom[variableTexturesBloomIndex].setRotation(0);
+                            variable_textures_bloom[variableTexturesBloomIndex].setTextureRect(sf::IntRect{ 32 * choice, 0, 32, 32 });
+                            variable_textures_bloom[variableTexturesBloomIndex].setOrigin(16, 16);
+                            variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
+                            variableTexturesBloomIndex++;
+                        }
+
+
                         break;
                     case ultra_slash:
                         choice = int(allObjects[idx].image_index * 0.4f);
@@ -6107,7 +6437,7 @@ int main()
                 }
             }
         }
-        debug1.setString("create_portal: " + std::to_string(create_portal));
+        debug1.setString("exploTile0_under_ArrayIndex: " + std::to_string(all_portal_spirals[0].image_scale));
         debug1.setCharacterSize(8);
         debug1.setFont(font);
         debug1.setColor(sf::Color::White);
@@ -6149,6 +6479,45 @@ int main()
             clear_extra_vertex_array(draw_shadow24s, shadow24_ArrayIndex);
             clear_extra_vertex_array(draw_shadow48s, shadow48_ArrayIndex);
 
+            //portal spirals in background
+
+            spiral_cont_step();
+            portal_spiral_step();
+
+            int portals_amount_left = all_portal_spirals_count;
+            int portals_sprital_position = all_portal_spirals_start;
+
+            while (portals_amount_left > 0) {
+                portal_spiral_spr.setPosition(all_portal_spirals[portals_sprital_position].position);
+                portal_spiral_spr.setRotation(all_portal_spirals[portals_sprital_position].image_angle + 45);
+                portal_spiral_spr.setScale(all_portal_spirals[portals_sprital_position].image_scale, all_portal_spirals[portals_sprital_position].image_scale);
+                buffer_under.draw(portal_spiral_spr);
+                portals_amount_left--;
+                portals_sprital_position--;
+                if (portals_sprital_position < 0) {
+                    portals_sprital_position = 999;
+                }
+            }
+
+            //throne 2 floors underneath floors
+
+            //explo tiles
+            for (sf::Sprite spr : T2_explo_tiles_tex) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_under.draw(spr);
+            }
+            reset_rotateable_sprites(T2_explo_tiles_tex, T2_explo_tiles_texArrayIndex);
+            //floor tiles
+            for (sf::Sprite spr : T2_floor_tiles_tex) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_under.draw(spr);
+            }
+            reset_rotateable_sprites(T2_floor_tiles_tex, T2_floor_tiles_texArrayIndex);
+
             Renderer.texture = &exploTile1_under;
             buffer_under.draw(draw_exploTile1_unders, Renderer);
             Renderer.texture = &exploTile0_under;
@@ -6161,6 +6530,8 @@ int main()
             buffer_under.draw(draw_floorTile1_unders, Renderer);
             Renderer.texture = &floorTile0_under;
             buffer_under.draw(draw_floorTile0_unders, Renderer);
+
+           
 
             //floors, drawn underneath explo tiles
             for (sf::Sprite spr : floor_textures) {
@@ -6279,6 +6650,13 @@ int main()
             //wait for after drawing blooms
             //reset_rotateable_sprites(rotateable_effects_small_bloom, rotateableEffectsSmallBloomIndex);
 
+            for (sf::Sprite spr : variable_textures_bloom) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_over.draw(spr);
+            }
+
             for (sf::Sprite spr : variable_textures) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
                     break;
@@ -6358,6 +6736,10 @@ int main()
             reset_rotateable_sprites(rotateable_sprites_guns_top, rotateableSpriteGunTopIndex);
 
 
+            if (!t2_draw_in_front) {
+                buffer_over.draw(T2_sprite);
+            }
+
             //portal
             buffer_over.draw(portal_sprite);
 
@@ -6393,6 +6775,19 @@ int main()
 
 
             //  !!! BLOOM START !!!  //
+
+
+            for (sf::Sprite spr : variable_textures_bloom) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                spr.setScale(2, 2);
+                spr.setColor({ 255, 255, 255, 25 });
+                buffer_over.draw(spr, RendererBloom);
+                spr.setScale(1, 1);
+            }
+            reset_rotateable_sprites(variable_textures_bloom, variableTexturesBloomIndex);
+
 
             portal_sprite.setScale(2, 2);
             portal_sprite.setColor({ 255, 255, 255, 25 });
@@ -6499,6 +6894,10 @@ int main()
             }
             reset_rotateable_sprites(wall_textures, wall_texturesArrayIndex);
 
+            if (t2_draw_in_front) {
+                buffer_over.draw(T2_sprite);
+            }
+
             for (sf::Text tex : popup_texts) {
                 if (tex.getLineSpacing() > 20 || int(tex.getLineSpacing()) % 4 < 2) {
                     tex.setPosition(tex.getPosition() - cameraPos);
@@ -6519,9 +6918,11 @@ int main()
         if(area == 2){
 
         }
+
         draw_text_NT(hp_text, buffer_over);
         //buffer_over.draw(c);
-        bool debug_text_show = 0;
+        bool debug_text_show = 1;
+
         if (debug_text_show) {
             draw_text_NT(tx, buffer_over);
             draw_text_NT(ty, buffer_over);
@@ -6533,8 +6934,6 @@ int main()
             draw_text_NT(debug1, buffer_over);
             draw_text_NT(debug2, buffer_over);
         }
-
-        
 
         if (!naitive_cursor_active) {
             buffer_over.draw(cursor_sprite);

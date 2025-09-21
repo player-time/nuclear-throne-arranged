@@ -4,6 +4,7 @@
 
 #include <SFML/System/Vector2.hpp>
 
+
 enum objectID {
 	nothing,
 	bullet1, bullet1_destroy,
@@ -124,7 +125,7 @@ enum sound {
 	snd_IDPD_nade_almost_ID,
 };
 
-enum gridType { out_of_bounds, wall, exlpo_tile, boarder , floor_tile }; //, secret_wall, secret_explotile, vault_wall, vault_explotile};
+enum gridType { out_of_bounds, wall, exlpo_tile, boarder , floor_tile, void_tile, T2_boarder }; //, secret_wall, secret_explotile, vault_wall, vault_explotile};
 enum subWallType{upLeft, up, upRight, right, downRight, down, downLeft, left, middle };	//which sprite to use for a wall
 
 enum character{ fish, crystal, eyes, melting, plant, YV, steroids, robot, chicken, rebel, horror, rogue, frog, skeleton };
@@ -242,4 +243,17 @@ struct sound_sound_buffer {
 	sf::Sound sound;
 	sf::SoundBuffer sound_buffer;
 	float pitch_variance;
+};
+
+struct portal_spiral {
+	sf::Vector2f position = {0, 0};
+	float grow = 0.0f;
+	float langle = 0.0f;
+	float lanim = 0.0f;
+	int lsound = 0;
+
+	float image_scale = 0.0f;
+	float image_angle = 0.0f;
+
+	bool active = false;
 };
