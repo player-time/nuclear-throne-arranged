@@ -9,6 +9,10 @@ enum objectID {
 	nothing,
 	bullet1, bullet1_destroy,
 	bullet2, bullet2_destroy,
+	guardian_bullet, guardian_bullet_destroy,
+	large_guardian_bullet, large_guardian_bullet_destroy,
+	T2_bullet,
+
 
 	idpd_bullet, idpd_bullet_destroy,
 
@@ -19,7 +23,7 @@ enum objectID {
 
 	player,
 
-	throne_2,
+	throne_2, throne_2_death,
 
 	popup_text,
 
@@ -69,12 +73,16 @@ enum objectID {
 
 };
 
+
 enum sound {
 	snd_music_ID,
 
 	snd_portal_open_ID,
 	snd_portal_loop_ID,
 	snd_portal_close_ID,
+
+	snd_throne_2_hurt_ID,
+	snd_throne_2_die_ID,
 
 	snd_shoot_1_ID,
 	snd_horror_portal_ID, snd_horror_portal_pan_ID,
@@ -135,13 +143,26 @@ enum weapon_types {		//cutoffs for weapon types
 	energy_weps = 41,
 };
 
+enum what_team {
+	no_team = 0,
+	player_team = 1,
+	enemy_team = 2,
+	idpd_team = 3,
+};
+
 //for circular hitboxes
 enum hitboxes {
+	no_hitbox = 0,
 	player_hitbox = 4,
-	bandit_hitbox = 8, enemy_bullet_hitbox = 3, plasma_hitbox = 5,
+	bandit_hitbox = 8, enemy_bullet_hitbox = 3, plasma_hitbox = 5, guardian_bullet_hitbox = 4,
+	plasma_impact_hitbox = 32,
+	idpd_explosion_hitbox = 48,
+	idpd_nade_hitbox = 2,
 	idpd_freak_hitbox = 7,
 	wall_hitbox = 8,
 	portal_hitbox = 16,
+	portal_clear_hitbox = 32,
+	ammo_hitbox = 4,
 };
  
 struct gameObject{
@@ -159,13 +180,16 @@ struct gameObject{
 	float growspeed = 0.0f;
 
 	objectID my_id = nothing;
+
 	int image_index = 0;	//doesnt necicarily mean what sprite should be used so for explosions 0 1 2 are the first frame and 3 4 are the second frame of animation
 	int next_hurt = 0;
 	int next_melee = 0;
 	int rad_drop = 0;
 	int my_hp = 0;
-	int team = 0;		//0 = none 1 = player 2 = enemy 3 = idpd
+	int team = 0;
 	int size = 0;
+
+	int damage = 0;
 
 	enum hitboxes my_hitbox;
 
