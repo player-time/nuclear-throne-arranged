@@ -199,7 +199,7 @@ bool global_stop_music = false;
 
 //player stuff
 int player_level = 1;
-int player_rads = 99999;
+int player_rads = 0;
 
 int player_invincible = 0;
 
@@ -4814,13 +4814,29 @@ int main()
         sf::Texture throne2Dead;
         throne2Dead.loadFromFile("res/T2/sprNothing2Death.png");
 
+        sf::Sprite player_level_spr;
+        sf::Sprite xp_bar_spr;
         sf::Sprite hp_bar_spr;
         sf::Sprite health_bar_spr;
 
+        sf::Texture player_level_tex;
+        player_level_tex.loadFromFile("res/sprPlayerLevel.png");
+        sf::Texture xp_bar;
+        xp_bar.loadFromFile("res/sprExpBar.png");
         sf::Texture hp_bar;
         hp_bar.loadFromFile("res/player/hp_bar.png");
         sf::Texture health_bar;
         health_bar.loadFromFile("res/player/health_bar.png");
+
+        player_level_spr.setTexture(player_level_tex);
+        player_level_spr.setOrigin(0, 0);
+        player_level_spr.setPosition(7, 12);
+        player_level_spr.setTextureRect({ 0, 0, 8, 8 });
+
+        xp_bar_spr.setTexture(xp_bar);
+        xp_bar_spr.setOrigin(0, 0);
+        xp_bar_spr.setPosition(4, 4);
+        xp_bar_spr.setTextureRect({0, 0, 14, 24});
 
         hp_bar_spr.setTexture(hp_bar);
         hp_bar_spr.setOrigin(0, 0);
@@ -6484,6 +6500,7 @@ int main()
 
                         //strong spirit
                         strong_spirit_sprite.setPosition(player_sprite.getPosition() + sf::Vector2f(0, sin(player_wave / 10)));
+                        strong_spirit_sprite.setScale(allObjects[0].scale, allObjects[0].scale);
 
                         allObjects[0].alarm1 = 0;
 
@@ -7923,7 +7940,17 @@ int main()
                     tex.setPosition(tex.getPosition() + cameraPos);
                 }
             }
+            //rads
+            choice = int(16 * player_rads / (player_level * 60 + 600 * (meltdown - 1)));
+            if (choice > 16) {
+                choice = 16;
+            }
+            choice *= 14;
+            xp_bar_spr.setTextureRect({ choice, 0, 14, 24 });
+            player_level_spr.setTextureRect({ (player_level - 1) * 8, 0, 8, 8 });
 
+            buffer_over.draw(xp_bar_spr);
+            buffer_over.draw(player_level_spr);
             buffer_over.draw(hp_bar_spr);
             buffer_over.draw(health_bar_spr);
             draw_text_NT(hp_text, buffer_over);
