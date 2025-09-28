@@ -16,6 +16,7 @@ enum objectID {
 
 	idpd_bullet, idpd_bullet_destroy,
 
+	scorch,
 	idpd_explosion,
 	idpd_nade, idpd_nade_remove,
 	idpd_portal_charge,
@@ -31,6 +32,8 @@ enum objectID {
 
 	ammo_pack, health_pack,
 	ammo_pack_destroy, heal_FX,
+	lust_FX,
+	laser_brain_FX,
 
 	bandit, bandit_corpse, 
 	scorpion, scorpion_corpse,
@@ -77,6 +80,9 @@ enum objectID {
 enum sound {
 	snd_music_ID,
 
+	snd_lose_strong_spirit_ID,
+	snd_gain_strong_spirit_ID,
+
 	snd_portal_open_ID,
 	snd_portal_loop_ID,
 	snd_portal_close_ID,
@@ -86,6 +92,14 @@ enum sound {
 
 	snd_shoot_1_ID,
 	snd_horror_portal_ID, snd_horror_portal_pan_ID,
+
+	snd_big_ball_fire_ID,
+	snd_big_ball_explode_ID,
+
+	snd_throne_2_appear_ID,
+	snd_throne_2_laser_ID, snd_throne_2_laser_fire_ID,
+	snd_throne_2_half_hp_ID,
+	snd_explo_guardian_fire_ID,
 
 	snd_bandit_hurt_ID,
 	snd_bandit_die_ID,
@@ -115,6 +129,7 @@ enum sound {
 	snd_pickup_disappear_ID,
 	snd_ammo_pickup_ID,
 	snd_hp_pickup_ID,
+	snd_lust_proc_ID,
 
 	snd_empty_ID,
 
