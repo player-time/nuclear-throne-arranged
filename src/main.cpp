@@ -64,8 +64,8 @@ std::vector<sf::Sprite> rotateable_sprites_bullets_big_bloom;
 int rotateable_sprites_bullets_big_bloom_max = 1000;
 
 //explosions
-std::vector<sf::Sprite> idpd_explosions_sprites;
-int idpd_explosions_sprites_max = 100;
+std::vector<sf::Sprite> explosions_sprites;
+int explosions_sprites_max = 300;
 
 std::vector<sf::Sprite> plasma_impact_sprites;
 int plasma_impact_sprites_max = 1800;
@@ -158,7 +158,7 @@ static int max_objects = 262144 / 4;
 int current_create_start = 1;
 //int curr_objcount = 1;   this is now redundant as threads break it   //important to keep this equal to the amount of objects active so increase when "adding" object and decrease when "removing" an object (setting it to "nothing" type) starts at one for the player object
 int current_frame = 0;      //used for stuff like i-frames, reset this each area
-int LOOPS = 14;
+int LOOPS = 0;
 //game logic stuff
 int area = 0;
 int sub_area = 1;
@@ -199,7 +199,7 @@ bool global_stop_music = false;
 
 //player stuff
 int player_level = 1;
-int player_rads = 0;
+int player_rads = 9999;
 
 int player_invincible = 0;
 
@@ -685,6 +685,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
     int _j = int(y / 16);
     int I = current_create_start;
     float tmpdir = 0.0f;
+    float tmpspd = 0.0f;
     for (int i = I; i < max_objects; i++) {
         if (allObjects[i].my_id == nothing) {
             switch (obj_id) {
@@ -1096,6 +1097,34 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].image_index = 0;
                 allObjects[i].team = enemy_team;     //enemy team
                 play_sound_relative_to_player(snd_explosion_ID, x, y);
+                break;
+            case explosion:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].my_hitbox = explosion_hitbox;
+                allObjects[i].damage = 5;
+                allObjects[i].alarm3 = 0;   //alarm3 determines the type of explosion out of the three
+                if (image_index == 1) {         //small explosion
+                    allObjects[i].alarm3 = 1;
+                    allObjects[i].my_hitbox = small_explosion_hitbox;
+                }
+                else if (image_index == 2) {    //green explosion
+                    allObjects[i].damage = 12;
+                    allObjects[i].alarm3 = 2;
+                }
+
+                allObjects[i].position = { x, y };
+                allObjects[i].image_index = -1;
+                allObjects[i].team = no_team;     //enemy team
+                play_sound_relative_to_player(snd_explosion_ID, x, y);
+
+                for (int i = 0; i < 8; i++) {
+                    tmpspd = 1.0f + random(2.0f);
+                    create_object(x, y, tmpspd, tmpspd, smoke, 0, 0);    //smoke
+                }
+                for (int i = 0; i < 17; i++) {
+                    tmpspd = 5.0f + random(1.0f);
+                    create_object(x, y, tmpspd, tmpspd, dust, 0, 0);    //dust
+                }
                 break;
             case idpd_nade:
                 allObjects[i].my_id = obj_id;
@@ -1581,8 +1610,8 @@ void destroy_projectile(int object_index) {
         //allObjects[object_index].image_index = 0;
         allObjects[object_index].rotation = 0.0f;   //image_index
         allObjects[object_index].speed = { 0, 0 };
-        allObjects[object_index].speeddir = 1.8f;
-        motion_add_dir(random_360_radians(), 1, object_index);
+        allObjects[object_index].speeddir = 0.0f;
+        motion_add_dir(random_360_radians(), 1.4f, object_index);
         allObjects[object_index].direction = random_360_degrees();
         allObjects[object_index].friction = 0.3f + random(0.4f);
         break;
@@ -1593,7 +1622,7 @@ void destroy_projectile(int object_index) {
         //allObjects[object_index].image_index = 0;
         allObjects[object_index].rotation = 0.0f;   //image_index
         allObjects[object_index].speed = { 0, 0 };
-        allObjects[object_index].speeddir = 1.0f;
+        allObjects[object_index].speeddir = 0.0f;
         allObjects[object_index].direction = random_360_degrees();
         allObjects[object_index].friction = 0.3f + random(0.4f);
         tmpdir = random_360_radians();
@@ -1967,6 +1996,7 @@ void enemy_die(int ENEMY, int PROJ) {
         allObjects[ENEMY].my_id = throne_2_death;
         allObjects[ENEMY].alarm1 = 80;
         killed_throne_2 = true;
+        play_sound_on_player(snd_throne_2_dead_start_ID);
         break;
     case bandit:
         //convert into corpse
@@ -2243,9 +2273,21 @@ void player_collision(int i, int j, int currOBJ) {
                         }
                         break;
                     case objectID::idpd_explosion:
-                        if (player_invincible == 0 && (allObjects[O].image_index == 3 || allObjects[O].image_index == 4) && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, 48 + player_hitbox)) {
+                        if (player_invincible == 0 && (allObjects[O].image_index == 3 || allObjects[O].image_index == 4) && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox + player_hitbox)) {
                             play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
                             player_hp -= 8;
+                            allObjects[currOBJ].next_hurt = current_frame + 6;
+                            allObjects[currOBJ].image_index = 0;
+                            tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
+                            allObjects[O].speed.x = cos(tmpdir) * 12;
+                            allObjects[O].speed.y = sin(tmpdir) * 12;
+                            motion_add_XY_speed(allObjects[O].speed.x, allObjects[O].speed.y, currOBJ);
+                        }
+                        break;
+                    case objectID::explosion:
+                        if (player_invincible == 0 && (allObjects[O].image_index == 3 || allObjects[O].image_index == 4) && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox + player_hitbox)) {
+                            play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
+                            player_hp -= allObjects[O].damage;
                             allObjects[currOBJ].next_hurt = current_frame + 6;
                             allObjects[currOBJ].image_index = 0;
                             tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
@@ -2680,129 +2722,228 @@ void ultra_slash_collision(int currOBJ, int i, int j) {
     }
 }
 
+void explosion_collision(int currOBJ, int i, int j) {
+    float tmpdir = 0.0f;
+    float tmpdist = 0.0f;
+    for (int w = -7; w < 8; w++) {
+        for (int h = -7; h < 8; h++) {
+            //destroy wall
+            if (game_area[i + w][j + h].my_grid_type == wall && is_within_circle(sf::Vector2f(((i + w) * 16) + 8, ((j + h) * 16) + 8), allObjects[currOBJ].position, (wall_hitbox + allObjects[currOBJ].my_hitbox))) {
+                create_explo_tile(i + w, j + h);
+            }
+            for (int Other : game_area[i + w][j + h].object_indexes) {
+                if (Other != currOBJ) {
+                    switch (allObjects[Other].my_id) {
+                    case idpd_explosion:
+                        if ((allObjects[Other].image_index == 3 || allObjects[Other].image_index == 4) &&
+                            is_within_circle(allObjects[Other].position, allObjects[currOBJ].position, (allObjects[currOBJ].my_hitbox + allObjects[Other].my_hitbox))) {
+
+                            tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[Other].position.y, allObjects[currOBJ].position.x - allObjects[Other].position.x);
+                            allObjects[currOBJ].position.x += cos(tmpdir) * 6;
+                            allObjects[currOBJ].position.y += sin(tmpdir) * 6;
+                            //moving both should have more predictable results
+                            //not broken like the official version
+                        }
+                        break;
+                    case explosion:
+                        if ((allObjects[Other].image_index == 3 || allObjects[Other].image_index == 4) &&
+                            is_within_circle(allObjects[Other].position, allObjects[currOBJ].position, (allObjects[currOBJ].my_hitbox + allObjects[Other].my_hitbox))) {
+
+                            if (allObjects[Other].alarm3 != 1 && allObjects[currOBJ].alarm3 == 1) { //if currOBJ is small and Other is not
+                                tmpdist = 14.0f;
+                            }
+                            else if (allObjects[Other].alarm3 == 1 && allObjects[currOBJ].alarm3 != 1) {    //oppisite if prev
+                                tmpdist = 1.0f;
+                            }
+                            else {
+                                tmpdist = 6.0f;
+                            }
+
+                            tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[Other].position.y, allObjects[currOBJ].position.x - allObjects[Other].position.x);
+                            allObjects[currOBJ].position.x += cos(tmpdir) * tmpdist;
+                            allObjects[currOBJ].position.y += sin(tmpdir) * tmpdist;
+
+                            //not broken like the official version
+                        }
+                        break;
+                    case throne_2:
+                        if (allObjects[Other].alarm1 < 0 && allObjects[currOBJ].team != enemy_team && is_within_throne_2(allObjects[Other].position, allObjects[currOBJ].position, allObjects[currOBJ].my_hitbox)) {
+                            allObjects[Other].my_hp -= allObjects[currOBJ].damage;
+                            if (allObjects[Other].my_hp > 0) {
+                                enemy_hurt(Other, currOBJ);
+                            }
+                            else {  //dead
+                                enemy_die(Other, currOBJ);
+                            }
+                        }
+                        break;
+                    case idpd_nade:
+                        if (is_within_circle(allObjects[Other].position, allObjects[currOBJ].position, (idpd_nade_hitbox + allObjects[currOBJ].my_hitbox))) {
+                            destroy_projectile(Other);
+                        }
+                        break;
+                    case bandit:
+                        if ((allObjects[currOBJ].team != allObjects[Other].team) && is_within_circle(allObjects[Other].position, allObjects[currOBJ].position, (bandit_hitbox + allObjects[currOBJ].my_hitbox))) {
+                            allObjects[Other].my_hp -= allObjects[Other].damage;
+                            tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[Other].position.y, allObjects[currOBJ].position.x - allObjects[Other].position.x);
+                            allObjects[currOBJ].speed.x = cos(tmpdir) * 12;
+                            allObjects[currOBJ].speed.y = sin(tmpdir) * 12; //this is so the enemy_hurt() function works
+                            if (allObjects[Other].my_hp > 0) {
+                                enemy_hurt(Other, currOBJ);
+                            }
+                            else {  //dead
+                                enemy_die(Other, currOBJ);
+                            }
+                        }
+                        break;
+                    case idpd_freak:
+                        if ((allObjects[currOBJ].team != allObjects[Other].team) && is_within_circle(allObjects[Other].position, allObjects[currOBJ].position, (idpd_freak_hitbox + allObjects[currOBJ].my_hitbox))) {
+                            allObjects[Other].my_hp -= allObjects[currOBJ].damage;
+                            tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[Other].position.y, allObjects[currOBJ].position.x - allObjects[Other].position.x);
+                            allObjects[currOBJ].speed.x = cos(tmpdir) * 12;
+                            allObjects[currOBJ].speed.y = sin(tmpdir) * 12; //this is so the enemy_hurt() function works
+                            if (allObjects[Other].my_hp > 0) {
+                                enemy_hurt(Other, currOBJ);
+                            }
+                            else {  //dead
+                                enemy_die(Other, currOBJ);
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
 void idpd_explosion_collision(int currOBJ, int i, int j) {
     float tmpdir = 0.0f;
     for (int w = -7; w < 8; w++) {
         for (int h = -7; h < 8; h++) {
             //destroy wall
-            if (game_area[i + w][j + h].my_grid_type == wall && is_within_circle(sf::Vector2f(((i + w) * 16) + 8, ((j + h) * 16) + 8), allObjects[currOBJ].position, (wall_hitbox + 48))) {
+            if (game_area[i + w][j + h].my_grid_type == wall && is_within_circle(sf::Vector2f(((i + w) * 16) + 8, ((j + h) * 16) + 8), allObjects[currOBJ].position, (wall_hitbox + idpd_explosion_hitbox))) {
                 create_explo_tile(i + w, j + h);
             }
             for (int O : game_area[i + w][j + h].object_indexes) {
-                switch (allObjects[O].my_id) {
-                case idpd_explosion:
-                    if ((allObjects[O].image_index == 3 || allObjects[O].image_index == 4) &&
-                        is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (48 + 48))) {
+                if (O != currOBJ) {
+                    switch (allObjects[O].my_id) {
+                    case idpd_explosion:
+                        if ((allObjects[O].image_index == 3 || allObjects[O].image_index == 4) &&
+                            is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (idpd_explosion_hitbox + idpd_explosion_hitbox))) {
 
-                        tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
-                        allObjects[currOBJ].position.x += cos(tmpdir) * 4;
-                        allObjects[currOBJ].position.y += sin(tmpdir) * 4;
+                            tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
+                            allObjects[currOBJ].position.x += cos(tmpdir) * 4;
+                            allObjects[currOBJ].position.y += sin(tmpdir) * 4;
 
-                        allObjects[O].position.x -= cos(tmpdir) * 4;
-                        allObjects[O].position.y -= sin(tmpdir) * 4;
-                        //moving both should have more predictable results
-                        //not broken like the official version
-                    }
-                    break;
-                case throne_2:
-                    if (allObjects[O].alarm1 < 0 && allObjects[O].team != enemy_team && is_within_throne_2(allObjects[O].position, allObjects[currOBJ].position, idpd_explosion_hitbox)){
-                        allObjects[O].my_hp -= 8;
-                        if (allObjects[O].my_hp > 0) {
-                            enemy_hurt(O, currOBJ);
+                            allObjects[O].position.x -= cos(tmpdir) * 4;
+                            allObjects[O].position.y -= sin(tmpdir) * 4;
+                            //moving both should have more predictable results
+                            //not broken like the official version
                         }
-                        else {  //dead
-                            enemy_die(O, currOBJ);
+                        break;
+                    case throne_2:
+                        if (allObjects[O].alarm1 < 0 && allObjects[currOBJ].team != enemy_team && is_within_throne_2(allObjects[O].position, allObjects[currOBJ].position, idpd_explosion_hitbox)) {
+                            allObjects[O].my_hp -= 8;
+                            if (allObjects[O].my_hp > 0) {
+                                enemy_hurt(O, currOBJ);
+                            }
+                            else {  //dead
+                                enemy_die(O, currOBJ);
+                            }
                         }
-                    }
-                    break;
-                case idpd_nade:
-                    if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (2 + idpd_explosion_hitbox))) {
-                        destroy_projectile(O);
-                    }
-                    break;
-                case bandit:
-                    if ((allObjects[currOBJ].team != allObjects[O].team) && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (bandit_hitbox + idpd_explosion_hitbox))) {
-                        allObjects[O].my_hp -= 8;
-                        tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
-                        allObjects[currOBJ].speed.x = cos(tmpdir) * 12;
-                        allObjects[currOBJ].speed.y = sin(tmpdir) * 12; //this is so the enemy_hurt() function works
-                        if (allObjects[O].my_hp > 0) {
-                            enemy_hurt(O, currOBJ);
+                        break;
+                    case idpd_nade:
+                        if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (idpd_nade_hitbox + idpd_explosion_hitbox))) {
+                            destroy_projectile(O);
                         }
-                        else {  //dead
-                            enemy_die(O, currOBJ);
-                        }
+                        break;
+                    case bandit:
+                        if ((allObjects[currOBJ].team != allObjects[O].team) && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (bandit_hitbox + idpd_explosion_hitbox))) {
+                            allObjects[O].my_hp -= 8;
+                            tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
+                            allObjects[currOBJ].speed.x = cos(tmpdir) * 12;
+                            allObjects[currOBJ].speed.y = sin(tmpdir) * 12; //this is so the enemy_hurt() function works
+                            if (allObjects[O].my_hp > 0) {
+                                enemy_hurt(O, currOBJ);
+                            }
+                            else {  //dead
+                                enemy_die(O, currOBJ);
+                            }
 
-                    }
-                    break;
-                case idpd_freak:
-                    if ((allObjects[currOBJ].team != allObjects[O].team) && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (idpd_freak_hitbox + idpd_explosion_hitbox))) {
-                        allObjects[O].my_hp -= 8;
-                        tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
-                        allObjects[currOBJ].speed.x = cos(tmpdir) * 12;
-                        allObjects[currOBJ].speed.y = sin(tmpdir) * 12; //this is so the enemy_hurt() function works
-                        if (allObjects[O].my_hp > 0) {
-                            enemy_hurt(O, currOBJ);
                         }
-                        else {  //dead
-                            enemy_die(O, currOBJ);
-                        }
+                        break;
+                    case idpd_freak:
+                        if ((allObjects[currOBJ].team != allObjects[O].team) && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (idpd_freak_hitbox + idpd_explosion_hitbox))) {
+                            allObjects[O].my_hp -= 8;
+                            tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
+                            allObjects[currOBJ].speed.x = cos(tmpdir) * 12;
+                            allObjects[currOBJ].speed.y = sin(tmpdir) * 12; //this is so the enemy_hurt() function works
+                            if (allObjects[O].my_hp > 0) {
+                                enemy_hurt(O, currOBJ);
+                            }
+                            else {  //dead
+                                enemy_die(O, currOBJ);
+                            }
 
+                        }
+                        break;
+                    case plasma_huge:
+                        if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (allObjects[O].scale * plasma_hitbox + idpd_explosion_hitbox))) {
+                            plasma_huge_destroy(O, i + w, j + h);
+                        }
+                        break;
+                    case plasma_big:
+                        if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (allObjects[O].scale * plasma_hitbox + idpd_explosion_hitbox))) {
+                            plasma_big_destroy(O, i + w, j + h);
+                        }
+                        break;
+                    case plasma:
+                        if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (allObjects[O].scale * plasma_hitbox + idpd_explosion_hitbox))) {
+                            //turn into plasma explosion
+                            destroy_projectile(O);
+                        }
+                        break;
+                    case bullet1:
+                        if (allObjects[O].team != allObjects[O].team && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (enemy_bullet_hitbox + idpd_explosion_hitbox))) {
+                            destroy_projectile(O);
+                        }
+                        break;
+                    case idpd_bullet:
+                        if (allObjects[O].team != allObjects[O].team && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (enemy_bullet_hitbox + idpd_explosion_hitbox))) {
+                            destroy_projectile(O);
+                        }
+                        break;
+                    case guardian_bullet:
+                        if (allObjects[O].team != allObjects[O].team && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (guardian_bullet_hitbox + idpd_explosion_hitbox))) {
+                            destroy_projectile(O);
+                        }
+                        break;
+                    case large_guardian_bullet:
+                        if (allObjects[O].team != allObjects[O].team && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (guardian_bullet_hitbox + idpd_explosion_hitbox))) {
+                            destroy_projectile(O);
+                        }
+                        break;
+                    case T2_bullet:
+                        if (allObjects[O].team != allObjects[O].team && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (enemy_bullet_hitbox + idpd_explosion_hitbox))) {
+                            destroy_projectile(O);
+                        }
+                        break;
+                    case bullet2:
+                        if (allObjects[O].team != allObjects[O].team && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (enemy_bullet_hitbox + idpd_explosion_hitbox))) {
+                            destroy_projectile(O);
+                        }
+                        break;
+                    case horror_bullet:
+                        if (allObjects[O].team != allObjects[O].team && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (enemy_bullet_hitbox + idpd_explosion_hitbox))) {
+                            destroy_projectile(O);
+                        }
+                        break;
+                    default:
+                        break;
                     }
-                    break;
-                case plasma_huge:
-                    if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (allObjects[O].scale * plasma_hitbox + idpd_explosion_hitbox))) {
-                        plasma_huge_destroy(O, i + w, j + h);
-                    }
-                    break;
-                case plasma_big:
-                    if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (allObjects[O].scale * plasma_hitbox + idpd_explosion_hitbox))) {
-                        plasma_big_destroy(O, i + w, j + h);
-                    }
-                    break;
-                case plasma:
-                    if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (allObjects[O].scale * plasma_hitbox + idpd_explosion_hitbox))) {
-                        //turn into plasma explosion
-                        destroy_projectile(O);
-                    }
-                    break;
-                case bullet1:
-                    if (allObjects[O].team != allObjects[O].team && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (enemy_bullet_hitbox + idpd_explosion_hitbox))) {
-                        destroy_projectile(O);
-                    }
-                    break;
-                case idpd_bullet:
-                    if (allObjects[O].team != allObjects[O].team && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (enemy_bullet_hitbox + idpd_explosion_hitbox))) {
-                        destroy_projectile(O);
-                    }
-                    break;
-                case guardian_bullet:
-                    if (allObjects[O].team != allObjects[O].team && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (guardian_bullet_hitbox + idpd_explosion_hitbox))) {
-                        destroy_projectile(O);
-                    }
-                    break;
-                case large_guardian_bullet:
-                    if (allObjects[O].team != allObjects[O].team && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (guardian_bullet_hitbox + idpd_explosion_hitbox))) {
-                        destroy_projectile(O);
-                    }
-                    break;
-                case T2_bullet:
-                    if (allObjects[O].team != allObjects[O].team && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (enemy_bullet_hitbox + idpd_explosion_hitbox))) {
-                        destroy_projectile(O);
-                    }
-                    break;
-                case bullet2:
-                    if (allObjects[O].team != allObjects[O].team && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (enemy_bullet_hitbox + idpd_explosion_hitbox))) {
-                        destroy_projectile(O);
-                    }
-                    break;
-                case horror_bullet:
-                    if (allObjects[O].team != allObjects[O].team && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (enemy_bullet_hitbox + idpd_explosion_hitbox))) {
-                        destroy_projectile(O);
-                    }
-                    break;
-                default:
-                    break;
                 }
             }
         }
@@ -2837,7 +2978,7 @@ void throne_2_collision(int currOBJ, int i, int j) {
                     }
                     break;
                 case idpd_bullet:
-                    if (is_within_throne_2(allObjects[currOBJ].position, allObjects[O].position, enemy_bullet_hitbox)) {
+                    if (allObjects[O].team != enemy_team && is_within_throne_2(allObjects[currOBJ].position, allObjects[O].position, enemy_bullet_hitbox)) {
                         destroy_projectile(O);
                         allObjects[currOBJ].my_hp -= allObjects[O].damage;
                         if (allObjects[currOBJ].my_hp > 0) {
@@ -2876,7 +3017,7 @@ void fire_weapon(int index, float direction) {
     float Yoff = 0.0f;
     switch (index) {
     case 0:     //ultra shovel
-        if (LMB_pressed && wep_reload < 0.0f) {
+        if (LMB_pressed && wep_reload <= 0.0f) {
             LMB_pressed = false;
             if (player_rads > 13) {
                 reloaded = false;
@@ -2885,7 +3026,7 @@ void fire_weapon(int index, float direction) {
                 wep_angle *= -1;
                 play_sounds_this_frame_count[snd_ultra_shovel_ID] = 1;
                 player_rads -= 14;
-                wep_reload = 15.0f;
+                wep_reload += 15.0f;
                 motion_add_dir(direction, 8, 0);
 
                 Xspd = (3 + long_arms * 3.0f);
@@ -2912,7 +3053,7 @@ void fire_weapon(int index, float direction) {
         }
         break;
     case 11:
-        if (LMB_pressed && wep_reload < 0.0f && player_energy - 24 >= 0) {
+        if (LMB_pressed && wep_reload <= 0.0f && player_energy - 24 >= 0) {
             reloaded = false;
 
             player_energy -= 24;
@@ -2920,7 +3061,7 @@ void fire_weapon(int index, float direction) {
             wep_kick = 7;
             motion_add_dir(direction, -16, 0);
             play_sounds_this_frame_count[snd_plasma_huge_ID] = 1;
-            wep_reload = 260.0f;
+            wep_reload += 260.0f;
             Xspd = cos(direction) * 6.0f;
             Yspd = sin(direction) * 6.0f;
             create_object(allObjects[0].position.x + Xspd / 2, allObjects[0].position.y + Yspd / 2, Xspd, Yspd, plasma_huge, direction, 0);
@@ -3072,6 +3213,19 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                     tempSpeedX = cos(tmpdir) * tempSpeed;
                     tempSpeedY = sin(tmpdir) * tempSpeed;
                     create_object(allObjects[i].position.x, allObjects[i].position.y, tempSpeedX, tempSpeedY, rad, 0.0f, 0);
+                }
+                for (int b = 0; b < 30; b++) {
+                    create_object(allObjects[i].position.x + random(128) - 64, allObjects[i].position.y + random(100) - 50, 0, 0, explosion, 0, 2);
+                }
+                play_sound_on_player(snd_throne_2_dead_end_ID);
+                play_sound_on_player(snd_throne_2_explode_ID);
+            }
+            if (rand() % 3 == 0 && allObjects[i].alarm1 > 5) {
+                if (rand() % 3 == 0) {
+                    create_object(allObjects[i].position.x + random(200) - 100, allObjects[i].position.y + random(200) - 100, 0, 0, explosion, 0, 2);
+                }
+                else {
+                    create_object(allObjects[i].position.x + random(200) - 100, allObjects[i].position.y + random(200) - 100, 0, 0, explosion, 0, 1);
                 }
             }
 
@@ -3443,7 +3597,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             }
             diffx = allObjects[i].position.x - allObjects[0].position.x;
             diffy = allObjects[i].position.y - allObjects[0].position.y;
-            if (sqrt(pow(diffx, 2) + pow(diffy, 2)) < plutonium_hunger_ammo) {
+            if (sqrt(pow(diffx, 2) + pow(diffy, 2)) < plutonium_hunger_ammo || created_portal) {
                 tmpdir = atan2(diffy, diffx);
                 allObjects[i].speed.x = cos(tmpdir) * -6;
                 allObjects[i].speed.y = sin(tmpdir) * -6;
@@ -3765,6 +3919,12 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                 allObjects[i].my_id = nothing;
             }
             break;
+        case explosion:
+            allObjects[i].image_index++;
+            if (allObjects[i].image_index > 22) {
+                allObjects[i].my_id = nothing;
+            }
+            break;
         case idpd_nade:
             allObjects[i].alarm1++;
             allObjects[i].alarm2++;
@@ -3966,6 +4126,11 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                     idpd_explosion_collision(O, i, j);
                                 }
                                 break;
+                            case explosion:
+                                if ((allObjects[O].image_index == 3 || allObjects[O].image_index == 4) && w == 0 && h == 0) {
+                                    explosion_collision(O, i, j);
+                                }
+                                break;
                             case horror_bullet:
                                 horror_bullet_collision(O, i, j);
                                 break;
@@ -4096,6 +4261,11 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                             idpd_explosion_collision(currOBJ, i, j);
                         }
                         break;
+                    case objectID::explosion:
+                        if (allObjects[currOBJ].image_index == 3 || allObjects[currOBJ].image_index == 4) {
+                            explosion_collision(currOBJ, i, j);
+                        }
+                        break;
                     case objectID::ultra_slash:
                         if (allObjects[currOBJ].image_index < 5) {
                             ultra_slash_collision(currOBJ,i, j);
@@ -4181,6 +4351,11 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                     case idpd_explosion:
                         if (allObjects[currOBJ].image_index == 3 || allObjects[currOBJ].image_index == 4) {
                             idpd_explosion_collision(currOBJ, i, j);
+                        }
+                        break;
+                    case explosion:
+                        if (allObjects[currOBJ].image_index == 3 || allObjects[currOBJ].image_index == 4) {
+                            explosion_collision(currOBJ, i, j);
                         }
                         break;
                     case debris:
@@ -4727,7 +4902,14 @@ int main()
     
     add_new_sound(snd_explo_guardian_fire_ID, "snd/explo_guardian_fire.wav", all_sounds, 0.01f, 0.01f);
 
+    add_new_sound(snd_throne_2_dead_start_ID, "snd/throne_2_dead_start.wav", all_sounds, 0.01f, 0.0f);
+
+    add_new_sound(snd_throne_2_dead_end_ID, "snd/throne_2_dead_end.wav", all_sounds, 0.01f, 0.0f);
+
+    add_new_sound(snd_throne_2_explode_ID, "snd/throne_2_explode.wav", all_sounds, 0.01f, 0.0f);
+
     add_new_sound(snd_big_ball_explode_ID, "snd/big_ball_explode.wav", all_sounds, 0.01f, 0.0f);
+
 
     add_new_sound(snd_gain_strong_spirit_ID, "snd/gain_strong_spirit.wav", all_sounds, 0.01f, 0.0f);
 
@@ -4898,6 +5080,8 @@ int main()
 
         sf::Texture Floor_T2_Tiles;
         Floor_T2_Tiles.loadFromFile("res/T2/T2_floor_unders.png");
+        sf::Texture Floor_T2_Tiles_2;
+        Floor_T2_Tiles_2.loadFromFile("res/T2/T2_floor_unders_2.png");
 
         sf::Texture Explo_T2_Tiles;
         Explo_T2_Tiles.loadFromFile("res/T2/T2_explo_unders.png");
@@ -5198,8 +5382,8 @@ int main()
         sf::Texture scorch_tex;
         scorch_tex.loadFromFile("res/explosions/sprScorch.png");
 
-        sf::Texture idpd_explosion_tex;
-        idpd_explosion_tex.loadFromFile("res/explosions/sprPopoExplo_strip.png");
+        sf::Texture explosion_tex;
+        explosion_tex.loadFromFile("res/explosions/sprExplo_strip.png");
 
         sf::Texture plasma_impact_tex;
         plasma_impact_tex.loadFromFile("res/player/projectiles/plasma/sprPlasmaImpact_strip.png");
@@ -5360,12 +5544,12 @@ int main()
         rotateable_sprites_bullets_big_bloom.push_back(temp);
     }
     
-    for (int i = 0; i < idpd_explosions_sprites_max; i++) {
+    for (int i = 0; i < explosions_sprites_max; i++) {
         sf::Sprite temp;
         temp.setColor({ 0, 0, 0, 0 });
         temp.setOrigin({ 48,48 });
-        temp.setTexture(idpd_explosion_tex);
-        idpd_explosions_sprites.push_back(temp);
+        temp.setTexture(explosion_tex);
+        explosions_sprites.push_back(temp);
     }
 
     for (int i = 0; i < plasma_impact_sprites_max; i++) {
@@ -5499,7 +5683,7 @@ int main()
         sf::Sprite temp;
         temp.setColor({ 0, 0, 0, 0 });
         temp.setOrigin({ 0,0 });
-        temp.setTexture(Floor_T2_Tiles);
+        temp.setTexture(Floor_T2_Tiles_2);
         T2_floor_tiles_tex.push_back(temp);
     }
     for (int i = 0; i < popup_texts_max; i++) {
@@ -5897,8 +6081,9 @@ int main()
                 reloaded = breloaded;
                 breloaded = tmpreloaded;
             }
-
-            wep_reload -= reload_speed * (1 + stress * (1 - player_hp / player_max_hp));
+            if (wep_reload >= 0.0f) {
+                wep_reload -= reload_speed * (1 + stress * (1 - player_hp / player_max_hp));
+            }
 
             if (wep_reload < 0.0f && !reloaded) {
                 reloaded = true;
@@ -6309,7 +6494,7 @@ int main()
         int bullet_1_batchableIndex = 0;
         int bullet_2_batchableIndex = 0;
 
-        int IDPD_explosionIndex = 0;
+        int explosionIndex = 0;
 
         int wall_texturesArrayIndex = 0;
         int wall_textures_botArrayIndex = 0;
@@ -6770,10 +6955,29 @@ int main()
                         break;
                     case idpd_explosion:
                         choice = int(allObjects[idx].image_index * 0.4f);
-                        idpd_explosions_sprites[IDPD_explosionIndex].setColor({ 255, 255, 255, 255 });
-                        idpd_explosions_sprites[IDPD_explosionIndex].setPosition(allObjects[idx].position - cameraPos);
-                        idpd_explosions_sprites[IDPD_explosionIndex].setTextureRect(sf::IntRect{ 96 * choice, 0, 96, 96 });
-                        IDPD_explosionIndex++;
+                        explosions_sprites[explosionIndex].setOrigin(48, 48);
+                        explosions_sprites[explosionIndex].setColor({ 255, 255, 255, 255 });
+                        explosions_sprites[explosionIndex].setPosition(allObjects[idx].position - cameraPos);
+                        explosions_sprites[explosionIndex].setTextureRect(sf::IntRect{ 96 * choice, 0, 96, 96 });
+                        explosionIndex++;
+                        break;
+                    case explosion:
+                        choice = int(allObjects[idx].image_index * 0.4f);
+                        explosions_sprites[explosionIndex].setColor({ 255, 255, 255, 255 });
+                        explosions_sprites[explosionIndex].setPosition(allObjects[idx].position - cameraPos);
+                        if (allObjects[idx].alarm3 == 0) {      //normal
+                            explosions_sprites[explosionIndex].setOrigin(24, 24);
+                            explosions_sprites[explosionIndex].setTextureRect(sf::IntRect{ 48 * choice, 96, 48, 48 });
+                        }
+                        else if (allObjects[idx].alarm3 == 1) { //small
+                            explosions_sprites[explosionIndex].setOrigin(12, 12);
+                            explosions_sprites[explosionIndex].setTextureRect(sf::IntRect{ 24 * choice, 192, 24, 24 });
+                        }
+                        else {      //green
+                            explosions_sprites[explosionIndex].setOrigin(24, 24);
+                            explosions_sprites[explosionIndex].setTextureRect(sf::IntRect{ 48 * choice, 144, 48, 48 });
+                        }
+                        explosionIndex++;
                         break;
 
                     case plasma_impact:
@@ -7519,6 +7723,22 @@ int main()
 
             //throne 2 floors underneath floors
 
+            //floor tiles
+            for (sf::Sprite spr : T2_floor_tiles_tex) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_under.draw(spr);
+            }
+            for (sf::Sprite spr : T2_floor_tiles_tex) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                spr.setTexture(Floor_T2_Tiles);
+                buffer_under.draw(spr);
+            }
+            reset_rotateable_sprites(T2_floor_tiles_tex, T2_floor_tiles_texArrayIndex);
+
             //explo tiles
             for (sf::Sprite spr : T2_explo_tiles_tex) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -7527,14 +7747,6 @@ int main()
                 buffer_under.draw(spr);
             }
             reset_rotateable_sprites(T2_explo_tiles_tex, T2_explo_tiles_texArrayIndex);
-            //floor tiles
-            for (sf::Sprite spr : T2_floor_tiles_tex) {
-                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
-                    break;
-                }
-                buffer_under.draw(spr);
-            }
-            reset_rotateable_sprites(T2_floor_tiles_tex, T2_floor_tiles_texArrayIndex);
 
             Renderer.texture = &exploTile1_under;
             buffer_under.draw(draw_exploTile1_unders, Renderer);
@@ -7796,7 +8008,7 @@ int main()
             }
 
             //idpd explosions
-            for (sf::Sprite spr : idpd_explosions_sprites) {
+            for (sf::Sprite spr : explosions_sprites) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
                     break;
                 }
@@ -7825,7 +8037,7 @@ int main()
             portal_sprite.setScale(1, 1);
             portal_sprite.setColor({ 255, 255, 255, 255 });
 
-            for (sf::Sprite spr : idpd_explosions_sprites) {
+            for (sf::Sprite spr : explosions_sprites) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
                     break;
                 }
@@ -7835,7 +8047,7 @@ int main()
                 spr.setScale(1, 1);
                 //spr.setColor({ 255, 255, 255, 255 });
             }
-            reset_rotateable_sprites(idpd_explosions_sprites, IDPD_explosionIndex);
+            reset_rotateable_sprites(explosions_sprites, explosionIndex);
 
 
             for (sf::Sprite spr : plasma_impact_sprites) {

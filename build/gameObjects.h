@@ -22,6 +22,8 @@ enum objectID {
 	idpd_portal_charge,
 	idpd_spawn,
 
+	explosion,
+
 	player,
 
 	throne_2, throne_2_death,
@@ -101,6 +103,10 @@ enum sound {
 	snd_throne_2_half_hp_ID,
 	snd_explo_guardian_fire_ID,
 
+	snd_throne_2_dead_start_ID,
+	snd_throne_2_dead_end_ID,
+	snd_throne_2_explode_ID,
+
 	snd_bandit_hurt_ID,
 	snd_bandit_die_ID,
 
@@ -165,13 +171,15 @@ enum what_team {
 	idpd_team = 3,
 };
 
-//for circular hitboxes
+//for circular hitboxes, radius
 enum hitboxes {
 	no_hitbox = 0,
 	player_hitbox = 4,
 	bandit_hitbox = 8, enemy_bullet_hitbox = 3, plasma_hitbox = 5, guardian_bullet_hitbox = 4,
 	plasma_impact_hitbox = 32,
 	idpd_explosion_hitbox = 48,
+	explosion_hitbox = 24,
+	small_explosion_hitbox = 12,
 	idpd_nade_hitbox = 2,
 	idpd_freak_hitbox = 7,
 	wall_hitbox = 8,
