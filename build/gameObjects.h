@@ -12,7 +12,7 @@ enum objectID {
 	guardian_bullet, guardian_bullet_destroy,
 	large_guardian_bullet, large_guardian_bullet_destroy,
 	T2_bullet,
-
+	throne_beam_charge_particle,
 
 	idpd_bullet, idpd_bullet_destroy,
 
@@ -59,6 +59,9 @@ enum objectID {
 	portal,
 	portal_lightning,
 
+	prop,
+	prop_dead,
+
 	//effects
 	debris,
 	dust,
@@ -78,8 +81,61 @@ enum objectID {
 
 };
 
+enum prop_ID {
+	//area 0
+	cactus_0_1,
+	cactus_0_2,
+	cactus_0_3,
+	bones_0_1,
+
+	//area 1
+	cactus_1_1,
+	cactus_1_2,
+	cactus_1_3,
+	cactus_1_1b,
+	cactus_1_2b,
+	cactus_1_3b,
+	barrel_1_1,
+	bones_1_1,
+	skull_1_1,
+
+	//area 2
+	pipe_2_1,
+	toxic_barrel_2_1,
+
+	//area 3
+	tires_3_1,
+	car_3_1,
+	
+	//area 4
+	egg_4_1,
+	crystal_4_1,
+	crystal_4_2,
+	crystal_4_3,
+
+	//area 5
+	fire_hydrant_5_1,
+	icicle_5_1,
+	news_stand_5_1,
+	vending_machine_5_1,
+	snowman_5_1,
+	car_5_1,
+	street_light_5_1,
+
+	//area 6
+	terminal_6_1,
+	mutant_tube_6_1,
+	tube_6_1,
+	server_6_1,
+
+	//area 7
+	small_generator_7_1,
+	nuclear_pillar_7_1,
+};
 
 enum sound {
+	snd_none_ID,
+
 	snd_music_ID,
 
 	snd_lose_strong_spirit_ID,
@@ -149,6 +205,7 @@ enum sound {
 	snd_hammer_swap_ID,
 	snd_energy_swap_ID,
 	snd_explosion_ID,
+	snd_explosion_s_ID,
 	snd_nade_hit_wall_ID,
 	snd_IDPD_nade_load_ID,
 	snd_IDPD_nade_almost_ID,
@@ -186,6 +243,8 @@ enum hitboxes {
 	portal_hitbox = 16,
 	portal_clear_hitbox = 32,
 	ammo_hitbox = 4,
+
+	small_prop_hitbox = 4,
 };
  
 struct gameObject{
