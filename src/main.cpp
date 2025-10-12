@@ -146,7 +146,7 @@ std::vector<sf::Text> popup_texts;
 int popup_texts_max = 100;
 int popup_text_index = 0;
 
-static float degreestoradians = 57.2957795f;
+//static float degreestoradians = 57.2957795f;
 
 sf::Vector2f offset8 = { -4, -4 };
 sf::Vector2f offset16 = {-8, -8};
@@ -366,9 +366,7 @@ int portal_spiral_type = 1;
 int portal_spiral_time = 0;
 int portal_spiral_wave = 0;
 
-float random(float max_value) {    //dont use in multithreaded for more randomness
-    return static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (max_value)));
-}
+
 
 void create_portal_spiral() {
     all_portal_spirals_start++;
@@ -404,7 +402,7 @@ void portal_spiral_step() {
                 all_portal_spirals[i].image_scale = 0;
                 all_portal_spirals[i].grow = 0;
             }
-            all_portal_spirals[i].lanim += (0.2 + random(0.3));
+            all_portal_spirals[i].lanim += (0.2 + random_float(0.3));
         }
     }
 }
@@ -440,20 +438,6 @@ void draw_text_NT(sf::Text text, sf::RenderTexture &renderer) {
     text.setPosition(text.getPosition() + sf::Vector2f{ 0, -1 });
     text.setColor(sf::Color::White);
     renderer.draw(text);
-}
-
-float random_360_radians() {    //dont use in multithreaded for more randomness
-    return static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (360.0f / degreestoradians)));
-}
-float random_360_degrees() {    //dont use in multithreaded for more randomness
-    return static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (360.0f)));
-}
-
-float random_180_radians() {    //dont use in multithreaded for more randomness
-    return static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (180.0f / degreestoradians)));
-}
-float random_180_degrees() {    //dont use in multithreaded for more randomness
-    return static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (180.0f)));
 }
 
 float angle_to_player_radians(sf::Vector2f position) {
@@ -660,10 +644,6 @@ void calculate_ammo_drop_mult() {
     //rabit paw
 }
 
-bool inline is_within_circle(sf::Vector2f pos1, sf::Vector2f pos2, float distance) {
-    return (distance * distance) > ((pos1.x - pos2.x) * (pos1.x - pos2.x)) + ((pos1.y - pos2.y) * (pos1.y - pos2.y));
-}
-
 void make_T2_arena() {
     top_physics -= 50;
     bottom_physics += 50;
@@ -706,6 +686,10 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].die_ID = snd_none_ID;
                 allObjects[i].rad_drop = 0;
 
+                allObjects[i].damage = 1;   //number of idle animation frames
+
+                allObjects[i].rad_drop = 0;
+
                 switch (image_index) {
                 case cactus_0_1:
                 case cactus_0_2:
@@ -716,23 +700,269 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 case cactus_1_1b:
                 case cactus_1_2b:
                 case cactus_1_3b:
-
-                case bones_0_1:
-                case bones_1_1:
-                    allObjects[i].rad_drop = 0;
+                    allObjects[i].alarm1 = 24; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 24; //size of the sprite on the sprite sheet Y
                     allObjects[i].my_hp = 2;
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = small_prop_hitbox;
-
+                    allObjects[i].damage = 1;   //number of idle animation frames
                     break;
-                default:
+                case pipe_2_1:
+                    allObjects[i].alarm1 = 24; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 24; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 1;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = small_prop_hitbox;
+                    allObjects[i].damage = 1;   //number of idle animation frames
+                    break;
+                case toxic_barrel_2_1:
+                    allObjects[i].alarm1 = 24; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 24; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 1;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = small_prop_hitbox;
+                    allObjects[i].damage = 1;   //number of idle animation frames
+                    break;
+                case tires_3_1:
+                    allObjects[i].alarm1 = 24; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 24; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 6;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = small_prop_hitbox;
+                    allObjects[i].damage = 1;   //number of idle animation frames
+                    break;
+                case crystal_4_1:
+                case crystal_4_2:
+                case crystal_4_3:
+                    allObjects[i].alarm1 = 24; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 24; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 2;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = small_prop_hitbox;
+                    allObjects[i].damage = 1;   //number of idle animation frames
+                    break;
+                case fire_hydrant_5_1:
+                    allObjects[i].alarm1 = 24; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 24; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 5;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = small_prop_hitbox;
+                    allObjects[i].damage = 1;   //number of idle animation frames
+                    break;
+                case icicle_5_1:
+                    allObjects[i].alarm1 = 24; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 24; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 5;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = small_prop_hitbox;
+                    allObjects[i].damage = 1;   //number of idle animation frames
+                    break;
 
+
+                case barrel_1_1:
+                    allObjects[i].alarm1 = 24; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 24; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 1;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = small_prop_hitbox;
+                    allObjects[i].damage = 4;   //number of idle animation frames
+                    break;
+
+
+                case bones_0_1:
+                case bones_1_1:
+                    allObjects[i].alarm1 = 32; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 32; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 2;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = small_prop_hitbox;
+                    allObjects[i].damage = 1;   //number of idle animation frames
+                    break;
+
+
+                case skull_1_1:
+                    allObjects[i].alarm1 = 48; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 48; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 50;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = medium_prop_hitbox ;
+                    allObjects[i].damage = 1;   //number of idle animation frames
+                    break;
+
+
+                case car_3_1:
+                case car_5_1:
+                    allObjects[i].alarm1 = 32; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 32; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 20;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = medium_prop_hitbox;
+                    allObjects[i].damage = 1;   //number of idle animation frames
+                    break;
+
+                case vending_machine_5_1:
+                    allObjects[i].alarm1 = 32; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 32; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 24;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = medium_prop_hitbox;
+                    allObjects[i].damage = 1;   //number of idle animation frames
+                    break;
+
+                case snowman_5_1:
+                    allObjects[i].alarm1 = 32; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 32; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 10;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = medium_prop_hitbox;
+                    allObjects[i].damage = 1;   //number of idle animation frames
+                    break;
+
+                case news_stand_5_1:
+                    allObjects[i].alarm1 = 24; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 28; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 10;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = medium_prop_hitbox;
+                    allObjects[i].damage = 1;   //number of idle animation frames
+                    break;
+
+
+                case egg_4_1:
+                    allObjects[i].alarm1 = 24; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 24; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 8;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = small_prop_hitbox;
+                    allObjects[i].damage = 8;   //number of idle animation frames
+                    break;
+
+
+                case street_light_5_1:
+                    allObjects[i].alarm1 = 24; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 48; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 5 ;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = medium_prop_hitbox;
+                    allObjects[i].damage = 1;   //number of idle animation frames
+                    break;
+
+                case terminal_6_1:
+                    allObjects[i].alarm1 = 24; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 24; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 10;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = small_prop_hitbox;
+                    allObjects[i].damage = 6;   //number of idle animation frames
+                    break;
+
+
+                case mutant_tube_6_1:
+                    allObjects[i].alarm1 = 32; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 32; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 24;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = medium_prop_hitbox;
+                    allObjects[i].damage = 4;   //number of idle animation frames
+                    break;
+
+
+                case tube_6_1:
+                    allObjects[i].alarm1 = 32; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 32; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 2;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = medium_prop_hitbox;
+                    allObjects[i].damage = 1;   //number of idle animation frames
+                    break;
+
+
+                case server_6_1:
+                    allObjects[i].alarm1 = 32; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 32; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 10;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = medium_prop_hitbox;
+                    allObjects[i].damage = 2;   //number of idle animation frames
+                    break;
+
+
+                case small_generator_7_1:
+                    allObjects[i].alarm1 = 32; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 32; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 40;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = medium_prop_hitbox;
+                    allObjects[i].damage = 11;   //number of idle animation frames
+                    break;
+
+
+                case nuclear_pillar_7_1:
+                    allObjects[i].alarm1 = 48; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 48; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 70;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = medium_prop_hitbox;
+                    allObjects[i].damage = 11;   //number of idle animation frames
+                    break;
+
+                default:
+                    allObjects[i].damage = 1;   //number of idle animation frames
                     allObjects[i].my_hp = 1;
                     allObjects[i].size = 0;
                     allObjects[i].my_hitbox = small_prop_hitbox;
 
                     break;
                 }
+                
+                switch (allObjects[i].alarm2) {
+                case cactus_0_1:allObjects[i].alarm3 = 0;               break;            //y-offset on sprite sheetbreak;
+                case cactus_0_2:allObjects[i].alarm3 = 24;              break;
+                case cactus_0_3:allObjects[i].alarm3 = 48;              break;
+                case bones_0_1: allObjects[i].alarm3 = 72;              break;
+
+                case cactus_1_1:allObjects[i].alarm3 = 104;             break;
+                case cactus_1_2:allObjects[i].alarm3 = 128;             break;
+                case cactus_1_3:allObjects[i].alarm3 = 152;             break;
+                case cactus_1_1b:allObjects[i].alarm3 = 176;            break;
+                case cactus_1_2b:allObjects[i].alarm3 = 200;            break;
+                case cactus_1_3b:allObjects[i].alarm3 = 224;            break;
+                case barrel_1_1: allObjects[i].alarm3 = 248;            break;
+                case bones_1_1:  allObjects[i].alarm3 = 272;            break;
+                case skull_1_1:  allObjects[i].alarm3 = 304;            break;
+
+                case pipe_2_1:   allObjects[i].alarm3 = 352;            break;
+                case toxic_barrel_2_1:allObjects[i].alarm3 = 376;       break;
+
+                case tires_3_1:allObjects[i].alarm3 = 400;              break;
+                case car_3_1:  allObjects[i].alarm3 = 424;              break;
+
+                case egg_4_1:  allObjects[i].alarm3 = 456;              break;
+                case crystal_4_1:allObjects[i].alarm3 = 480;            break;
+                case crystal_4_2:allObjects[i].alarm3 = 504;            break;
+                case crystal_4_3:allObjects[i].alarm3 = 528;            break;
+
+                case fire_hydrant_5_1:allObjects[i].alarm3 = 552;       break;
+                case icicle_5_1:      allObjects[i].alarm3 = 576;       break;
+                case news_stand_5_1:  allObjects[i].alarm3 = 600;       break;
+                case vending_machine_5_1:allObjects[i].alarm3 = 628;    break;
+                case snowman_5_1:        allObjects[i].alarm3 = 660;    break;
+                case car_5_1:            allObjects[i].alarm3 = 692;    break;
+                case street_light_5_1:   allObjects[i].alarm3 = 724;    break;
+
+                case terminal_6_1:   allObjects[i].alarm3 = 772;        break;
+                case mutant_tube_6_1:allObjects[i].alarm3 = 796;        break;
+                case tube_6_1:       allObjects[i].alarm3 = 828;        break;
+                case server_6_1:     allObjects[i].alarm3 = 860;        break;
+
+                case small_generator_7_1:allObjects[i].alarm3 = 892;    break;
+                case nuclear_pillar_7_1: allObjects[i].alarm3 = 924;    break;
+                default:
+                    allObjects[i].alarm3 = 0;
+                    break;
+                }
+
+
 
                 allObjects[i].position = { x, y };
                 break;
@@ -765,7 +995,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 
                 allObjects[i].alarm1 = 67;
                 allObjects[i].alarm2 = 0;
-                allObjects[i].alarm3 = 0;
+                allObjects[i].alarm3 = 100;
 
                 allObjects[i].hurt_ID = snd_throne_2_hurt_ID;
                 allObjects[i].die_ID = snd_throne_2_die_ID;
@@ -1170,11 +1400,11 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 
 
                 for (int i = 0; i < 8; i++) {
-                    tmpspd = 1.0f + random(2.0f);
+                    tmpspd = 1.0f + random_float(2.0f);
                     create_object(x, y, tmpspd, tmpspd, smoke, 0, 0);    //smoke
                 }
                 for (int i = 0; i < 17; i++) {
-                    tmpspd = 5.0f + random(1.0f);
+                    tmpspd = 5.0f + random_float(1.0f);
                     create_object(x, y, tmpspd, tmpspd, dust, 0, 0);    //dust
                 }
                 break;
@@ -1189,7 +1419,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].alarm1 = 0;
                 allObjects[i].alarm2 = 0;
                 allObjects[i].friction = 0.0f;
-                allObjects[i].rotation = random_360_degrees(); //the random angle that the nade is drawn at
+                allObjects[i].rotation = random_360_degrees(); //the random_float angle that the nade is drawn at
                 break;
             case idpd_portal_charge:
                 allObjects[i].my_id = obj_id;
@@ -1658,8 +1888,8 @@ void destroy_projectile(int object_index) {
         break;
     case T2_bullet:
         allObjects[object_index].my_id = nothing;
-        if (random(100) < 100 * global_ammo_mult) {
-            if (random(player_max_hp) > player_hp && rand() % 3 != 0) {
+        if (random_float(100) < 100 * global_ammo_mult) {
+            if (random_float(player_max_hp) > player_hp && rand() % 3 != 0) {
                 create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, 0, 0, health_pack, 0, 0);
             }
             else {
@@ -1675,7 +1905,7 @@ void destroy_projectile(int object_index) {
         allObjects[object_index].speeddir = 0.0f;
         motion_add_dir(random_360_radians(), 1.4f, object_index);
         allObjects[object_index].direction = random_360_degrees();
-        allObjects[object_index].friction = 0.3f + random(0.4f);
+        allObjects[object_index].friction = 0.3f + random_float(0.4f);
         break;
     case large_guardian_bullet:
         play_sound_on_player(snd_big_ball_explode_ID);
@@ -1686,7 +1916,7 @@ void destroy_projectile(int object_index) {
         allObjects[object_index].speed = { 0, 0 };
         allObjects[object_index].speeddir = 0.0f;
         allObjects[object_index].direction = random_360_degrees();
-        allObjects[object_index].friction = 0.3f + random(0.4f);
+        allObjects[object_index].friction = 0.3f + random_float(0.4f);
         tmpdir = random_360_radians();
         tmpspd = 2.0f;
         for (int b = 0; b < 4; b++) {
@@ -1699,8 +1929,8 @@ void destroy_projectile(int object_index) {
             tmpspd += 0.5f;
         }
 
-        if (random(100) < 100 * global_ammo_mult) {
-            if (random(player_max_hp) > player_hp && rand() % 3 != 0) {
+        if (random_float(100) < 100 * global_ammo_mult) {
+            if (random_float(player_max_hp) > player_hp && rand() % 3 != 0) {
                 create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, 0, 0, health_pack, 0, 0);
             }
             else {
@@ -1717,11 +1947,11 @@ void destroy_projectile(int object_index) {
         create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, 0, 0, scorch, 0, 0);
         tmpspd = 0.0f;
         for (int i = 0; i < 8; i++) {
-            tmpspd = 1.0f + random(2.0f);
+            tmpspd = 1.0f + random_float(2.0f);
             create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspd, tmpspd, smoke, 0, 0);    //smoke
         }
         for (int i = 0; i < 17; i++) {
-            tmpspd = 5.0f + random(1.0f);
+            tmpspd = 5.0f + random_float(1.0f);
             create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspd, tmpspd, dust, 0, 0);    //dust
         }
         play_sound_relative_to_player(snd_explosion_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
@@ -1756,10 +1986,6 @@ int create_floor(int x, int y, bool Btile) {
         if (!Btile && rand() % 32 == 0) {
             create_object(x * 16 + 4 + (rand() % 8),
                           y * 16 + 4 + (rand() % 8), 0, 0, detail, 0.0f, 0);
-        }
-        if ((!Btile && rand() % 12 == 0 || (area == 0 && rand() % 7 == 0)) && rand() % 4 == 0) {
-            create_object(x * 16 + 4 + (rand() % 8),
-                          y * 16 + 4 + (rand() % 8), 0, 0, prop, 0.0f, rand() % 3);
         }
     }
 
@@ -2024,7 +2250,7 @@ void enemy_die(int ENEMY, int PROJ) {
         motion_add_XY_speed(allObjects[PROJ].speed.x, allObjects[PROJ].speed.y, ENEMY);   //knockback
     }
     else {
-        motion_add_dir(random_360_radians(), random(4.0f), ENEMY);
+        motion_add_dir(random_360_radians(), random_float(4.0f), ENEMY);
     }
     allObjects[ENEMY].image_index = 0;
     allObjects[ENEMY].friction = 0.4f;
@@ -2074,6 +2300,7 @@ void enemy_die(int ENEMY, int PROJ) {
         allObjects[ENEMY].alarm1 = 80;
         killed_throne_2 = true;
         play_sound_on_player(snd_throne_2_dead_start_ID);
+        allObjects[ENEMY].alarm3 = corpse_delay;  //delay when killin last enemy
         break;
     case bandit:
         //bloodlust
@@ -2089,8 +2316,8 @@ void enemy_die(int ENEMY, int PROJ) {
         allObjects[ENEMY].my_id = bandit_corpse;
 
         //ammo drop
-        if (random(100) < 16 * global_ammo_mult) {
-            if (random(player_max_hp) > player_hp && rand() % 3 != 0) {
+        if (random_float(100) < 16 * global_ammo_mult) {
+            if (random_float(player_max_hp) > player_hp && rand() % 3 != 0) {
                 create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, health_pack, 0, 0);
             }
             else {
@@ -2101,7 +2328,7 @@ void enemy_die(int ENEMY, int PROJ) {
         //debug start
         for (int i = 0; i < 10; i++) {
             tmpdir = random_360_radians();
-            tmpSpd = random(2.0f) + 3.0f;
+            tmpSpd = random_float(2.0f) + 3.0f;
             tempSpdx = cos(tmpdir) * tmpSpd;
             tempSpdy = sin(tmpdir) * tmpSpd;
             create_object(allObjects[ENEMY].position.x,
@@ -2110,6 +2337,7 @@ void enemy_die(int ENEMY, int PROJ) {
                 tempSpdy, bullet2, tmpdir + 180.0f / degreestoradians, 0);
         }
         //debug end
+        allObjects[ENEMY].alarm3 = corpse_delay;  //delay when killin last enemy
         break;
     case idpd_freak:
         //bloodlust
@@ -2122,8 +2350,8 @@ void enemy_die(int ENEMY, int PROJ) {
 
         enemy_count--;
         //ammo drop
-        if (random(100) < 60 * global_ammo_mult) {
-            if (random(player_max_hp) > player_hp && rand() % 3 != 0) {
+        if (random_float(100) < 60 * global_ammo_mult) {
+            if (random_float(player_max_hp) > player_hp && rand() % 3 != 0) {
                 create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, health_pack, 0, 0);
             }
             else {
@@ -2142,12 +2370,13 @@ void enemy_die(int ENEMY, int PROJ) {
         //convert into corpse
         allObjects[ENEMY].my_id = idpd_freak_corpse;
         allObjects[ENEMY].alarm1 = 800; //revive time
+        allObjects[ENEMY].alarm3 = corpse_delay;  //delay when killin last enemy
         break;
     default:
         break;
     }
 
-    allObjects[ENEMY].alarm3 = corpse_delay;  //delay when killin last enemy
+    
 
     play_sound_relative_to_player(allObjects[ENEMY].die_ID, allObjects[ENEMY].position.x, allObjects[ENEMY].position.y);
 }
@@ -2283,20 +2512,10 @@ void player_collision(int i, int j, int currOBJ) {
             for (int O : game_area[i + w][j + h].object_indexes) {
                     switch (allObjects[O].my_id) {
                     case bullet2:
-                        bullet_collide_player(O, currOBJ);
-                        break;
                     case bullet1:
-                        bullet_collide_player(O, currOBJ);
-                        break;
                     case idpd_bullet:
-                        bullet_collide_player(O, currOBJ);
-                        break;
                     case guardian_bullet:
-                        bullet_collide_player(O, currOBJ);
-                        break;
                     case large_guardian_bullet:
-                        bullet_collide_player(O, currOBJ);
-                        break;
                     case T2_bullet:
                         bullet_collide_player(O, currOBJ);
                         break;
@@ -3038,7 +3257,7 @@ void T2_bullet_step(int i) {
     }
     else if (allObjects[i].speeddir <= 2.0f) {
         float rand_dir = random_360_radians();
-        tempSpeed = random(32) + 20;
+        tempSpeed = random_float(32) + 20;
 
         offX = cos(rand_dir) * tempSpeed;
         offY = sin(rand_dir) * tempSpeed;
@@ -3308,7 +3527,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
     int _i = 0;
     int _j = 0;
     std::random_device rd;
-    // Initialize random number generator
+    // Initialize random_float number generator
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, RAND_MAX);
     for (int i = start; i < end; i++) {
@@ -3322,6 +3541,10 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
 
             allObjects[i].position += allObjects[i].speed;
 
+            if (allObjects[i].alarm1 > 75) {
+                clear_all_bullets();
+            }
+
             if (allObjects[i].alarm1 < 0) {
                 //explode into portal
                 allObjects[i].my_id = nothing;
@@ -3331,21 +3554,21 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
 
                 //create rads
                 for (int b = allObjects[i].rad_drop; b > 0; b--) {
-                    tempSpeed = random(15.0f);
+                    tempSpeed = random_float(15.0f);
                     tmpdir = random_360_radians();
                     tempSpeedX = cos(tmpdir) * tempSpeed;
                     tempSpeedY = sin(tmpdir) * tempSpeed;
                     create_object(allObjects[i].position.x, allObjects[i].position.y, tempSpeedX, tempSpeedY, rad, 0.0f, 0);
                 }
                 for (int b = 0; b < 30; b++) {
-                    create_object(allObjects[i].position.x + random(128) - 64, allObjects[i].position.y + random(100) - 50, 0, 0, explosion, 0, 2);
+                    create_object(allObjects[i].position.x + random_float(128) - 64, allObjects[i].position.y + random_float(100) - 50, 0, 0, explosion, 0, 2);
                 }
                 play_sound_on_player(snd_throne_2_dead_end_ID);
                 play_sound_on_player(snd_throne_2_explode_ID);
             }
             if (rand() % 3 == 0 && allObjects[i].alarm1 > 5) {
                 tmpdir = random_360_radians();
-                tempSpeed = random(100);
+                tempSpeed = random_float(100);
                 diffx = cos(tmpdir) * tempSpeed * 0.85f;
                 diffy = sin(tmpdir) * tempSpeed;
                 if (rand() % 3 == 0) {
@@ -3400,8 +3623,8 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                     if (allObjects[i].team == 1) {  //attack 1
                         allObjects[i].alarm3 = 10;
                         allObjects[i].size++; //number of shots
-                        tmpdir = direction_to_player(i) + (((30 + random(10)) / degreestoradians) * allObjects[i].walk_frames);  //what side that swaps every shot
-                        tempSpeed = 5 + random(1);
+                        tmpdir = direction_to_player(i) + (((30 + random_float(10)) / degreestoradians) * allObjects[i].walk_frames);  //what side that swaps every shot
+                        tempSpeed = 5 + random_float(1);
                         tempSpeedX = cos(tmpdir) * tempSpeed; 
                         tempSpeedY = sin(tmpdir) * tempSpeed;
 
@@ -3450,7 +3673,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                     if (allObjects[i].team == 3 && allObjects[i].alarm3 < 0) {  //attack 3
                         tmpdir = random_360_radians();
                         for (int b = 0; b < 4 + LOOPS; b++) {
-                            tempSpeed = 4 + random(6);
+                            tempSpeed = 4 + random_float(6);
                             tempSpeedX = cos(tmpdir) * tempSpeed;
                             tempSpeedY = sin(tmpdir) * tempSpeed;
 
@@ -3470,7 +3693,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                 if (allObjects[i].alarm2 < 0) {
                     allObjects[i].alarm2 = 30;
 
-                    allObjects[i].walk_direction = direction_to_player(i) + ((50.0f + random(20.0f)) * (allObjects[i].facing_right * 2 - 1)) / degreestoradians;
+                    allObjects[i].walk_direction = direction_to_player(i) + ((50.0f + random_float(20.0f)) * (allObjects[i].facing_right * 2 - 1)) / degreestoradians;
                     if (rand() % 10 == 0) {
                         allObjects[i].facing_right = !allObjects[i].facing_right;
                     }
@@ -3633,7 +3856,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             else {
                 allObjects[i].alarm1--;
                 if (allObjects[i].alarm1 == 0) {
-                    allObjects[i].direction = direction_to_player(i) + (random(60) - 30) / degreestoradians;
+                    allObjects[i].direction = direction_to_player(i) + (random_float(60) - 30) / degreestoradians;
                     play_sound_relative_to_player(snd_throne_2_laser_fire_ID, allObjects[i].position.x, allObjects[i].position.y);
                 }
                 //do after object logic
@@ -3777,8 +4000,12 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             }
             break;
         case prop:
-        case prop_dead:
             allObjects[i].image_index++;
+            break;
+        case prop_dead:
+            if (allObjects[i].image_index < 8) {
+                allObjects[i].image_index++;
+            }
             break;
         case bandit:
             allObjects[i].speeddir -= allObjects[i].friction;
@@ -3912,14 +4139,14 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                 if (allObjects[i].alarm2 == 7) {
                     allObjects[i].gun_angle = angle_to_player_radians(allObjects[i].position) + (random_180_radians() / 2) - (45 / degreestoradians);
                 }
-                tmpdir = allObjects[i].gun_angle + (random(100.0f) - 50.0f) / degreestoradians;
-                tempSpeed = random(3.0f) + 4.0f;
+                tmpdir = allObjects[i].gun_angle + (random_float(100.0f) - 50.0f) / degreestoradians;
+                tempSpeed = random_float(3.0f) + 4.0f;
                 tempSpeedX = cos(tmpdir) * tempSpeed;
                 tempSpeedY = sin(tmpdir) * tempSpeed;
                 create_object(allObjects[i].position.x, allObjects[i].position.y, tempSpeedX, tempSpeedY, idpd_bullet, tmpdir, 0);
 
-                tmpdir = allObjects[i].gun_angle + (random(40.0f) - 20.0f) / degreestoradians;
-                tempSpeed = random(3.0f) + 4.0f;
+                tmpdir = allObjects[i].gun_angle + (random_float(40.0f) - 20.0f) / degreestoradians;
+                tempSpeed = random_float(3.0f) + 4.0f;
                 tempSpeedX = cos(tmpdir) * tempSpeed;
                 tempSpeedY = sin(tmpdir) * tempSpeed;
                 create_object(allObjects[i].position.x, allObjects[i].position.y, tempSpeedX, tempSpeedY, idpd_bullet, tmpdir, 0);
@@ -3966,7 +4193,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                 idpd_spawn_count--;
             }
             //create portal charges
-            tempSpeedX = random(1) + 2;
+            tempSpeedX = random_float(1) + 2;
             diffx = rand() % 96 - 48;
             diffy = rand() % 96 - 48;
             tmpdir = atan2f(diffy, diffx);
@@ -4093,7 +4320,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             if (allObjects[i].speeddir <= 0.0f) {
                 allObjects[i].speeddir = 0.0f;
                 //create portal charges
-                tempSpeedX = random(1) + 2;
+                tempSpeedX = random_float(1) + 2;
                 diffx = rand() % 96 - 48;
                 diffy = rand() % 96 - 48;
                 tmpdir = atan2f(diffy, diffx);
@@ -4201,7 +4428,7 @@ void reset_popup_texts(std::vector<sf::Text>& texts, int largest_index) {
 
 void do_object_collision(int start, int end, int threadNUM) {       //create objects at different offsets depending on the thread so work is more evenly spread and overlap in object creation is basically impossible
     std::random_device rd;
-    // Initialize random number generator
+    // Initialize random_float number generator
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, RAND_MAX);
     
@@ -4514,7 +4741,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                         }
                         break;
                     case debris:
-                        //do this here so random functions work
+                        //do this here so random_float functions work
                         if (allObjects[currOBJ].alarm1 < 1) {
                             create_object(allObjects[currOBJ].position.x, allObjects[currOBJ].position.y, 0.5, 0.5, dust, 0, 0);    //dust
                             allObjects[currOBJ].my_id = nothing;
@@ -4601,6 +4828,12 @@ int generate_2x2_tile(int x, int y, int nub_chance, bool Btile) {  //x, y is the
         }
         allFloors[gen_curr_floor_index].setOrigin(0, choice + 4 * Btile);
         gen_curr_floor_index++;
+    }
+    if (removedwalls == 4) {
+        if ((!Btile && rand() % 12 == 0 || (area == 0 && rand() % 9 == 0))) {
+            create_object(x * 16 + 8 + (rand() % 16),
+                          y * 16 + 8 + (rand() % 16), 0, 0, prop, 0.0f, rand() % 4);
+        }
     }
     return removedwalls;
 }
@@ -6817,6 +7050,9 @@ int main()
                     int choice = 0;
                     int choice2 = 0;
                     float tmp_wep_angle = 0.0f;
+                    int choice_width = 0;
+                    int choice_height = 0;
+                    int choice_cap = 0;
                     switch (id) {
                     case objectID::player:
                         //crosshair
@@ -7295,39 +7531,60 @@ int main()
 
                         break;
                     case prop:
-                        add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24 + sf::Vector2f(0, 1), draw_shadow24s);
-                        shadow24_ArrayIndex++;      //shadow
                         if (allObjects[idx].next_hurt > current_frame) {
-                            choice = int(allObjects[idx].image_index * 0.4f) + 1;
+                            choice = int((allObjects[idx].image_index + 6) * 0.4f) + allObjects[idx].damage;
                         }
                         else {
-                            choice = 0;
+                            choice = int(allObjects[idx].image_index * 0.4f) % allObjects[idx].damage;
+                        }
+                        switch (allObjects[idx].alarm2) {
+                        case cactus_0_1:
+                        case cactus_0_2:
+                        case cactus_0_3:
+                            add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24 + sf::Vector2f(0, 1), draw_shadow24s);
+                            shadow24_ArrayIndex++;      //shadow
+                            break;
+                        case bones_0_1:
+                            add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24 + sf::Vector2f(0, -1), draw_shadow24s);
+                            shadow24_ArrayIndex++;      //shadow
+                            break;
+                        default:
+                            break;
                         }
 
-                        choice2 = allObjects[idx].alarm2;
+                        choice_height = allObjects[idx].next_melee;
+                        choice_width = allObjects[idx].alarm1;
+
+                        choice2 = allObjects[idx].alarm3;
+
+                        choice *= choice_width;
+
                         prop_sprites[prop_spritesIndex].setColor({ 255, 255, 255, 255 });
                         prop_sprites[prop_spritesIndex].setPosition(allObjects[idx].position - cameraPos);
                         prop_sprites[prop_spritesIndex].setRotation(0);
-                        prop_sprites[prop_spritesIndex].setOrigin(12, 12);
+                        prop_sprites[prop_spritesIndex].setOrigin(choice_width/2, choice_height/2);
                         prop_sprites[prop_spritesIndex].setScale(sf::Vector2f(1, 1));
-                        prop_sprites[prop_spritesIndex].setTextureRect(sf::IntRect{ 24 * choice, 24 * choice2, 24, 24 });
+                        prop_sprites[prop_spritesIndex].setTextureRect(sf::IntRect{ choice, choice2, choice_width, choice_height });
                         prop_spritesIndex++;
 
                         break;
                     case prop_dead:
-                        choice = int(allObjects[idx].image_index * 0.4f) + 4;
+                        choice = int(allObjects[idx].image_index * 0.4f) + allObjects[idx].damage + 3;
+                        
+                        choice_height = allObjects[idx].next_melee;
+                        choice_width = allObjects[idx].alarm1;
 
-                        if (choice > 7) {
-                            choice = 7;
-                        }
+                        choice2 = allObjects[idx].alarm3;
 
-                        choice2 = allObjects[idx].alarm2;
+
+                        choice *= choice_width;
+
                         prop_sprites[prop_spritesIndex].setColor({ 255, 255, 255, 255 });
                         prop_sprites[prop_spritesIndex].setPosition(allObjects[idx].position - cameraPos);
                         prop_sprites[prop_spritesIndex].setRotation(0);
-                        prop_sprites[prop_spritesIndex].setOrigin(12, 12);
+                        prop_sprites[prop_spritesIndex].setOrigin(choice_width / 2, choice_height / 2);
                         prop_sprites[prop_spritesIndex].setScale(sf::Vector2f(1, 1));
-                        prop_sprites[prop_spritesIndex].setTextureRect(sf::IntRect{ 24 * choice, 24 * choice2, 24, 24 });
+                        prop_sprites[prop_spritesIndex].setTextureRect(sf::IntRect{ choice, choice2, choice_width, choice_height });
                         prop_spritesIndex++;
 
                         break;

@@ -4,6 +4,7 @@
 
 #include <SFML/System/Vector2.hpp>
 
+#include "gameObjects.cpp"
 
 enum objectID {
 	nothing,
@@ -34,6 +35,7 @@ enum objectID {
 
 	ammo_pack, health_pack,
 	ammo_pack_destroy, heal_FX,
+	weapon_drop,
 	lust_FX,
 	laser_brain_FX,
 
@@ -244,7 +246,8 @@ enum hitboxes {
 	portal_clear_hitbox = 32,
 	ammo_hitbox = 4,
 
-	small_prop_hitbox = 4,
+	small_prop_hitbox = 7,
+	medium_prop_hitbox = 12,
 };
  
 struct gameObject{

@@ -232,7 +232,7 @@ protected:
     /// \brief Change the current playing position in the stream source
     ///
     /// This function must be overridden by derived classes to
-    /// allow random seeking into the stream source.
+    /// allow random_float seeking into the stream source.
     ///
     /// \param timeOffset New playing position, relative to the beginning of the stream
     ///
