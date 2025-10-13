@@ -961,7 +961,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].alarm3 = 0;
                     break;
                 }
-
+                allObjects[i].alarm3--;
 
 
                 allObjects[i].position = { x, y };
@@ -1399,13 +1399,16 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].team = no_team;     //enemy team
                 
 
-                for (int i = 0; i < 8; i++) {
+                for (int j = 0; j < 8; j++) {
                     tmpspd = 1.0f + random_float(2.0f);
                     create_object(x, y, tmpspd, tmpspd, smoke, 0, 0);    //smoke
                 }
-                for (int i = 0; i < 17; i++) {
-                    tmpspd = 5.0f + random_float(1.0f);
+                for (int j = 0; j < 17; j++) {
+                    tmpspd = 4.0f + random_float(1.0f);
                     create_object(x, y, tmpspd, tmpspd, dust, 0, 0);    //dust
+                }
+                if (image_index != 1) {
+                    create_object(allObjects[i].position.x, allObjects[i].position.y, 0, 0, scorch, 0, 0);
                 }
                 break;
             case idpd_nade:
@@ -1951,7 +1954,7 @@ void destroy_projectile(int object_index) {
             create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspd, tmpspd, smoke, 0, 0);    //smoke
         }
         for (int i = 0; i < 17; i++) {
-            tmpspd = 5.0f + random_float(1.0f);
+            tmpspd = 4.0f + random_float(1.0f);
             create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspd, tmpspd, dust, 0, 0);    //dust
         }
         play_sound_relative_to_player(snd_explosion_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
@@ -2280,6 +2283,26 @@ void enemy_die(int ENEMY, int PROJ) {
     case prop:
         allObjects[ENEMY].my_id = prop_dead;
         allObjects[ENEMY].image_index = 0;
+        switch (allObjects[ENEMY].alarm2) {
+        case barrel_1_1:
+            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, explosion, 0.0f, 0);
+            break;
+        case car_3_1:
+        case car_5_1:
+            for (int i = 0; i < 3; i++) {
+                create_object(allObjects[ENEMY].position.x + random_float(6) - 3, allObjects[ENEMY].position.y + random_float(6) - 3, 0, 0, explosion, 0.0f, 0);
+            }
+            for (int i = 0; i < 3; i++) {
+                create_object(allObjects[ENEMY].position.x + random_float(6) - 3, allObjects[ENEMY].position.y + random_float(6) - 3, 0, 0, explosion, 0.0f, 1);    //small explosion
+            }
+            allObjects[ENEMY].my_id = nothing;
+            break;
+        case small_generator_7_1:
+            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, explosion, 0.0f, 2);
+            break;
+        default:
+            break;
+        }
         break;
     case throne_2:
         //bloodlust
@@ -4832,7 +4855,8 @@ int generate_2x2_tile(int x, int y, int nub_chance, bool Btile) {  //x, y is the
     if (removedwalls == 4) {
         if ((!Btile && rand() % 12 == 0 || (area == 0 && rand() % 9 == 0))) {
             create_object(x * 16 + 8 + (rand() % 16),
-                          y * 16 + 8 + (rand() % 16), 0, 0, prop, 0.0f, rand() % 4);
+                          y * 16 + 8 + (rand() % 16), 0, 0, prop, 0.0f, rand() % 34);
+            //temp
         }
     }
     return removedwalls;
@@ -5650,10 +5674,15 @@ int main()
         shadow24tex.loadFromFile("res/shadow24.png");
         sf::VertexArray draw_shadow24s = create_vertex_array(shadow24tex, 1500 * draw_mult);
 
-        //shadow24
+        //shadow32
+        sf::Texture shadow32tex;
+        shadow32tex.loadFromFile("res/shadow32.png");
+        sf::VertexArray draw_shadow32s = create_vertex_array(shadow32tex, 500 * draw_mult);
+
+        //shadow48
         sf::Texture shadow48tex;
         shadow48tex.loadFromFile("res/shadow48.png");
-        sf::VertexArray draw_shadow48s = create_vertex_array(shadow48tex, 1500 * draw_mult);
+        sf::VertexArray draw_shadow48s = create_vertex_array(shadow48tex, 500 * draw_mult);
 
         //banditgun
         sf::Texture bandit_guntex;
@@ -6862,6 +6891,7 @@ int main()
         int bullet2_1BIGArrayIndex = 0;
 
         int shadow24_ArrayIndex = 0;
+        int shadow32_ArrayIndex = 0;
         int shadow48_ArrayIndex = 0;
 
         int playerbullet1_bloomArrayIndex = 0;
@@ -7541,14 +7571,61 @@ int main()
                         case cactus_0_1:
                         case cactus_0_2:
                         case cactus_0_3:
-                            add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24 + sf::Vector2f(0, 1), draw_shadow24s);
+                        case cactus_1_1:
+                        case cactus_1_2:
+                        case cactus_1_3:
+                        case cactus_1_1b:
+                        case cactus_1_2b:
+                        case cactus_1_3b:
+                        case barrel_1_1:
+                        case toxic_barrel_2_1:
+                        case tires_3_1:
+                            add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24 + sf::Vector2f(0, 2), draw_shadow24s);
                             shadow24_ArrayIndex++;      //shadow
                             break;
+                        case egg_4_1:
+                        case pipe_2_1:
+                            add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24 + sf::Vector2f(0, 0), draw_shadow24s);
+                            shadow24_ArrayIndex++;      //shadow
+                            break;
+                        case icicle_5_1:
+                        case news_stand_5_1:
+                        case vending_machine_5_1:
+                        case fire_hydrant_5_1:
+                        case snowman_5_1:
+                        case street_light_5_1:
+                            //none
+                            break;
                         case bones_0_1:
+                        case bones_1_1:
                             add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24 + sf::Vector2f(0, -1), draw_shadow24s);
                             shadow24_ArrayIndex++;      //shadow
                             break;
+                        case skull_1_1:
+                            add_sprite_32(shadow32_ArrayIndex, allObjects[idx].position - cameraPos + offset32 + sf::Vector2f(0, -2), draw_shadow32s);
+                            shadow32_ArrayIndex++;      //shadow
+                            break;
+                        case car_3_1:
+                        case car_5_1:
+                            add_sprite_32(shadow32_ArrayIndex, allObjects[idx].position - cameraPos + offset32 + sf::Vector2f(0, -4), draw_shadow32s);
+                            shadow32_ArrayIndex++;      //shadow
+                            break;
+                        case mutant_tube_6_1:
+                        case tube_6_1:
+                        case nuclear_pillar_7_1:
+                            add_sprite_32(shadow32_ArrayIndex, allObjects[idx].position - cameraPos + offset32 + sf::Vector2f(0, 2), draw_shadow32s);
+                            shadow32_ArrayIndex++;      //shadow
+                            break;
+                        case small_generator_7_1:
+                            //none
+                            break;
+                        case server_6_1:
+                            add_sprite_32(shadow32_ArrayIndex, allObjects[idx].position - cameraPos + offset32 + sf::Vector2f(0, 1), draw_shadow32s);
+                            shadow32_ArrayIndex++;      //shadow
+                            break;
                         default:
+                            add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24 + sf::Vector2f(0, 3), draw_shadow24s);
+                            shadow24_ArrayIndex++;      //shadow
                             break;
                         }
 
@@ -7560,7 +7637,7 @@ int main()
                         choice *= choice_width;
 
                         prop_sprites[prop_spritesIndex].setColor({ 255, 255, 255, 255 });
-                        prop_sprites[prop_spritesIndex].setPosition(allObjects[idx].position - cameraPos);
+                        prop_sprites[prop_spritesIndex].setPosition(allObjects[idx].position - cameraPos + (sf::Vector2f(0, -12 * (allObjects[idx].alarm2 == street_light_5_1))));
                         prop_sprites[prop_spritesIndex].setRotation(0);
                         prop_sprites[prop_spritesIndex].setOrigin(choice_width/2, choice_height/2);
                         prop_sprites[prop_spritesIndex].setScale(sf::Vector2f(1, 1));
@@ -7580,7 +7657,7 @@ int main()
                         choice *= choice_width;
 
                         prop_sprites[prop_spritesIndex].setColor({ 255, 255, 255, 255 });
-                        prop_sprites[prop_spritesIndex].setPosition(allObjects[idx].position - cameraPos);
+                        prop_sprites[prop_spritesIndex].setPosition(allObjects[idx].position - cameraPos + (sf::Vector2f(0, -12 * (allObjects[idx].alarm2 == street_light_5_1))));
                         prop_sprites[prop_spritesIndex].setRotation(0);
                         prop_sprites[prop_spritesIndex].setOrigin(choice_width / 2, choice_height / 2);
                         prop_sprites[prop_spritesIndex].setScale(sf::Vector2f(1, 1));
@@ -8165,6 +8242,7 @@ int main()
             clear_extra_vertex_array(draw_floorTile1_unders, floor1_under_ArrayIndex);
 
             clear_extra_vertex_array(draw_shadow24s, shadow24_ArrayIndex);
+            clear_extra_vertex_array(draw_shadow32s, shadow32_ArrayIndex);
             clear_extra_vertex_array(draw_shadow48s, shadow48_ArrayIndex);
 
             //portal spirals in background
@@ -8310,6 +8388,8 @@ int main()
             shadows.draw(draw_Wall1shadows, Renderer);
             Renderer.texture = &shadow24tex;
             shadows.draw(draw_shadow24s, Renderer);
+            Renderer.texture = &shadow32tex;
+            shadows.draw(draw_shadow32s, Renderer);
             Renderer.texture = &shadow48tex;
             shadows.draw(draw_shadow48s, Renderer);
 
