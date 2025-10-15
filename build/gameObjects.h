@@ -6,6 +6,8 @@
 
 #include "gameObjects.cpp"
 
+#include <chrono>
+
 enum objectID {
 	nothing,
 	bullet1, bullet1_destroy,
@@ -16,6 +18,8 @@ enum objectID {
 	throne_beam_charge_particle,
 
 	idpd_bullet, idpd_bullet_destroy,
+
+	toxic_gas,
 
 	scorch,
 	idpd_explosion,
@@ -365,4 +369,21 @@ struct portal_spiral {
 	float image_angle = 0.0f;
 
 	bool active = false;
+};
+
+struct debug_timer {
+	std::chrono::steady_clock::time_point start;
+
+	long long time_elapsed;
+
+	void inline timing_us_start() {
+		start = std::chrono::high_resolution_clock::now();
+	}
+
+	void inline timing_us_end() {
+
+		std::chrono::nanoseconds elapsed = std::chrono::high_resolution_clock::now() - start;
+
+		time_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+	}
 };

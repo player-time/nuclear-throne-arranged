@@ -31,6 +31,8 @@ int bandit_choice1 = 0;
 int draw_mult = 5;
 //
 
+bool global_debug = true;
+
 int seed = time(NULL);
 
 std::vector<gameObject> allObjects;
@@ -366,7 +368,7 @@ int portal_spiral_type = 1;
 int portal_spiral_time = 0;
 int portal_spiral_wave = 0;
 
-
+debug_timer debug_timer_;
 
 void create_portal_spiral() {
     all_portal_spirals_start++;
@@ -1462,6 +1464,23 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].scale = 0.7f;  //image scale
                 allObjects[i].image_index = rand() % 5;
                 break;
+            case toxic_gas:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].my_hitbox = enemy_bullet_hitbox;
+
+                allObjects[i].position = { x, y };
+                tmpdir = random_360_radians();
+                tmpspd = random_float(1.5f) + 0.2f;
+                allObjects[i].speed.x = cos(tmpdir) * tmpspd;
+                allObjects[i].speed.y = sin(tmpdir) * tmpspd;
+                allObjects[i].speeddir = tmpspd;
+
+                allObjects[i].direction = random_360_degrees();
+                allObjects[i].rotation = (random_float(3.0f) + 1.0f) * ((rand() % 2) * 2 - 1);  //rotation speed
+                allObjects[i].growspeed = 0.003f + random_float(0.002f);  //growspeed
+                allObjects[i].scale = 0.6f;  //image scale
+                allObjects[i].image_index = rand() % 5;
+                break;
             case smoke:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].my_hitbox = no_hitbox;
@@ -2287,12 +2306,18 @@ void enemy_die(int ENEMY, int PROJ) {
         case barrel_1_1:
             create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, explosion, 0.0f, 0);
             break;
+        case toxic_barrel_2_1:
+            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, explosion, 0.0f, 0);
+            for (int i = 0; i < 30; i++) {
+                create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, toxic_gas, 0.0f, 0);
+            }
+            break;
         case car_3_1:
         case car_5_1:
             for (int i = 0; i < 3; i++) {
                 create_object(allObjects[ENEMY].position.x + random_float(6) - 3, allObjects[ENEMY].position.y + random_float(6) - 3, 0, 0, explosion, 0.0f, 0);
             }
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 2; i++) {
                 create_object(allObjects[ENEMY].position.x + random_float(6) - 3, allObjects[ENEMY].position.y + random_float(6) - 3, 0, 0, explosion, 0.0f, 1);    //small explosion
             }
             allObjects[ENEMY].my_id = nothing;
@@ -3625,7 +3650,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
 
             //half hp noise
             max_hp = 600 * round(1 + LOOPS / 3) * (1 + (LOOPS * 0.05f)) * scarier_face;
-            
+
             if (allObjects[i].my_hp < max_hp * 0.5f && allObjects[i].scale > 0.5f) {
                 allObjects[i].scale = 0.0f;
                 play_sound_on_player(snd_throne_2_half_hp_ID);
@@ -3642,13 +3667,13 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
 
                 //attack logic
                 if (allObjects[i].alarm3 < 0) {
-                   
+
                     if (allObjects[i].team == 1) {  //attack 1
                         allObjects[i].alarm3 = 10;
                         allObjects[i].size++; //number of shots
                         tmpdir = direction_to_player(i) + (((30 + random_float(10)) / degreestoradians) * allObjects[i].walk_frames);  //what side that swaps every shot
                         tempSpeed = 5 + random_float(1);
-                        tempSpeedX = cos(tmpdir) * tempSpeed; 
+                        tempSpeedX = cos(tmpdir) * tempSpeed;
                         tempSpeedY = sin(tmpdir) * tempSpeed;
 
                         allObjects[i].walk_frames = -allObjects[i].walk_frames;
@@ -3663,7 +3688,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                             allObjects[i].team = (rand() % 3) + 1;
                         }
                         else {
-                            
+
                             allObjects[i].alarm3 /= (2 - allObjects[i].my_hp / max_hp);
                         }
                     }
@@ -3683,7 +3708,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                             create_object(allObjects[i].position.x, allObjects[i].position.y, tempSpeedX, tempSpeedY, guardian_bullet, tmpdir, 0);
                             allObjects[i].gun_angle += (360 / float(choice)) / degreestoradians;
                         }*/
-                        
+
                         allObjects[i].alarm3 = 0;
                         if (allObjects[i].size > LOOPS * 5 + 15) {
                             allObjects[i].alarm3 += 40;
@@ -3707,7 +3732,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                         play_sound_on_player(snd_throne_2_laser_ID);
                         allObjects[i].alarm3 = 100;
                         allObjects[i].team = (rand() % 3) + 1;
-                        
+
                         allObjects[i].walk_frames = -allObjects[i].walk_frames;
                     }
                 }
@@ -3730,7 +3755,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                     motion_add_dir(allObjects[i].walk_direction, 4.5f, i);
                 }
                 allObjects[i].speeddir -= 0.5f; //friction
-                if(allObjects[i].damage > 0){
+                if (allObjects[i].damage > 0) {
                     allObjects[i].damage--;
                     allObjects[i].speeddir = 0.0f;
                 }
@@ -3751,7 +3776,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             //
             break;
         case portal:
-            portal_camera_offset =  {(allObjects[i].position.x - allObjects[0].position.x) / 16, (allObjects[i].position.y - allObjects[0].position.y) / 16 };
+            portal_camera_offset = { (allObjects[i].position.x - allObjects[0].position.x) / 16, (allObjects[i].position.y - allObjects[0].position.y) / 16 };
             allObjects[i].image_index++;
             allObjects[i].alarm3--;
             if (allObjects[i].alarm1 == 0 && allObjects[i].image_index < 5 && area != 0) {
@@ -3795,7 +3820,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                         allObjects[0].next_hurt = current_frame + 6;
                     }
                     else {
-                    allObjects[0].gun_angle = 0;
+                        allObjects[0].gun_angle = 0;
                     }
                     if (is_within_circle(allObjects[i].position, allObjects[0].position, 96) || area == 0) {
                         tmpdir = atan2f(allObjects[i].position.y - allObjects[0].position.y, allObjects[i].position.x - allObjects[0].position.x);
@@ -3889,7 +3914,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                     tempSpeedY = sin(allObjects[i].direction) * 10;
                     create_object(allObjects[i].position.x, allObjects[i].position.y, tempSpeedX, tempSpeedY, bullet2, allObjects[i].direction + 180.0f / degreestoradians, 0);
                 }*/
-                if(allObjects[i].alarm1 < -40 - LOOPS * 10){
+                if (allObjects[i].alarm1 < -40 - LOOPS * 10) {
                     destroy_projectile(i);
                 }
             }
@@ -4008,7 +4033,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             break;
         case lust_FX:
             allObjects[i].image_index++;
-            allObjects[i].position = allObjects[0].position - sf::Vector2f{0, 16};
+            allObjects[i].position = allObjects[0].position - sf::Vector2f{ 0, 16 };
 
             if (allObjects[i].image_index > 25) {
                 allObjects[i].my_id = nothing;
@@ -4121,7 +4146,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             allObjects[i].alarm1--;
             allObjects[i].alarm2--;
             allObjects[i].alarm3--;
-            
+
             allObjects[i].facing_right = allObjects[i].speed.x > 0;
 
             if (allObjects[i].walk_frames > 0)
@@ -4317,7 +4342,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
         case idpd_nade:
             allObjects[i].alarm1++;
             allObjects[i].alarm2++;
-            
+
             if (allObjects[i].alarm1 > 90) {
                 destroy_projectile(i);
                 //play extra sound
@@ -4337,7 +4362,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             }
 
             allObjects[i].speeddir -= allObjects[i].friction;
-            if (allObjects[i].speeddir > 12.0f){
+            if (allObjects[i].speeddir > 12.0f) {
                 allObjects[i].speeddir = 12.0f;
             }
             if (allObjects[i].speeddir <= 0.0f) {
@@ -4394,7 +4419,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                 allObjects[i].position += allObjects[i].speed;
             }
             allObjects[i].alarm1--;
-            
+
             break;
         case dust:
             allObjects[i].speed.x *= 0.93f;
@@ -4403,6 +4428,29 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             allObjects[i].position.y += allObjects[i].speed.y;
             allObjects[i].scale += allObjects[i].growspeed;
             allObjects[i].growspeed -= 0.02f;
+            allObjects[i].direction += allObjects[i].rotation;
+            if (allObjects[i].scale < 0.0f) {
+                allObjects[i].my_id = nothing;
+            }
+            break;
+        case toxic_gas:
+            allObjects[i].speeddir -= 0.01f;
+            if (allObjects[i].speeddir < 0.0f) {
+                allObjects[i].speeddir = 0.0f;
+            }
+            tmpdir = atan2f(allObjects[i].speed.y, allObjects[i].speed.x);
+            allObjects[i].speed.x = cos(tmpdir) * allObjects[i].speeddir;
+            allObjects[i].speed.y = sin(tmpdir) * allObjects[i].speeddir;
+
+            allObjects[i].position.x += allObjects[i].speed.x;
+            allObjects[i].position.y += allObjects[i].speed.y;
+            allObjects[i].scale += allObjects[i].growspeed;
+            if (allObjects[i].growspeed > -0.005f) {
+                allObjects[i].growspeed -= 0.0002f;
+            }
+            if (allObjects[i].scale < 0.4f){
+                allObjects[i].growspeed -= 0.01f;
+            }
             allObjects[i].direction += allObjects[i].rotation;
             if (allObjects[i].scale < 0.0f) {
                 allObjects[i].my_id = nothing;
@@ -5134,8 +5182,10 @@ void generate_level(sound_sound_buffer all_sounds[]) {
         if (sub_area == 1) {
             for (int i = left_physics; i <= right_physics; i++) {
                 for (int j = top_physics; j <= bottom_physics; j++) {
-                    if(game_area[i][j].my_grid_type == floor_tile && !is_within_circle(sf::Vector2f(24016, 24016), sf::Vector2f( i * 16 + 8 , j * 16 + 8 ), 100)) {
-                        if (rand() % 4 == 0) {   //spawn enemy
+                    //if its the top left of a floor tile place enemy in center of tile
+                    if(i % 2 == 0 && j % 2 == 0 &&
+                        game_area[i][j].my_grid_type == floor_tile && !is_within_circle(sf::Vector2f(24016, 24016), sf::Vector2f( i * 16 + 8 , j * 16 + 8 ), 100)) {
+                        if (rand() % 1 == 0) {   //spawn enemy
                             if (rand() % 2) {   //cluster spawn
                                 tmp_num_of_enemies_to_spawn = (90 / (1 + (200 * pow(e_constant, -0.3f * LOOPS))));    //logistic growth so the enemy count caps out at about l30, but keeps general growth in early loops
                             }
@@ -5148,8 +5198,8 @@ void generate_level(sound_sound_buffer all_sounds[]) {
                         }
                         enemy_choice = rand() % 9;
                         if (tmp_num_of_enemies_to_spawn > 1) {  //cluster spawn destroys nearby walls
-                            for (int b = -1; b < 2; b++) {
-                                for (int c = -1; c < 2; c++) {
+                            for (int b = -1; b < 3; b++) {
+                                for (int c = -1; c < 3; c++) {
                                     if (game_area[i + b][j + c].my_grid_type == wall) {
                                         create_explo_tile(i + b, j + c);
                                         //create debris too
@@ -5159,9 +5209,10 @@ void generate_level(sound_sound_buffer all_sounds[]) {
                         }
                         for (int r = 0; r < tmp_num_of_enemies_to_spawn; r++) {
                             if (enemy_choice < 10) { //bandit
-                                float rand_off_x = random_360_radians() - 3.14f;
-                                float rand_off_y = random_360_radians() - 3.14f;
-                                create_object(i * 16 + 8 + rand_off_x, j * 16 + 8 + rand_off_y, 0, 0, bandit, 0, 0);
+                                //further apart reduces lag when spawning in to the level
+                                float rand_off_x = random_float(16.0f) - 8.0f;
+                                float rand_off_y = random_float(16.0f) - 8.0f;
+                                create_object(i * 16 + 16 + rand_off_x, j * 16 + 16 + rand_off_y, 0, 0, bandit, 0, 0);
                             }
                         }
                     }
@@ -5914,6 +5965,7 @@ int main()
         sf::Sprite temp;
         temp.setColor({ 0, 0, 0, 0 });
         temp.setOrigin({ 20,20 });
+        temp.setTexture(bullet2_1tex);
         bullet_2_batchable.push_back(temp);
     }
 
@@ -6322,12 +6374,16 @@ int main()
         ts.setColor(sf::Color::White);
         ts.setPosition({ 2, 22 });
 
+        //debug
+        
         int curr_objcount_real = 0;
-        //quite laggy so take that into account when using
+        //little laggy so take that into account when using
 
-        for (int i = 0; i < max_objects; i++) {
-            if (allObjects[i].my_id != nothing) {
-                curr_objcount_real++;
+        if (global_debug) {
+            for (int i = 0; i < max_objects; i++) {
+                if (allObjects[i].my_id != nothing) {
+                    curr_objcount_real++;
+                }
             }
         }
 
@@ -6339,12 +6395,14 @@ int main()
         tO.setPosition({ 2, 42 });
 
         int curr_tile_count = 0;
-        //quite laggy so take that into account when using
+        //little laggy so take that into account when using
 
-        for (int i = left_physics - extra_physics; i < right_physics + extra_physics; i++) {
-            for (int j = top_physics - extra_physics; j < bottom_physics + extra_physics; j++) {
-                if (game_area[i][j].my_grid_type != wall) {
-                    curr_tile_count++;
+        if (global_debug) {
+            for (int i = left_physics - extra_physics; i < right_physics + extra_physics; i++) {
+                for (int j = top_physics - extra_physics; j < bottom_physics + extra_physics; j++) {
+                    if (game_area[i][j].my_grid_type != wall) {
+                        curr_tile_count++;
+                    }
                 }
             }
         }
@@ -6355,6 +6413,7 @@ int main()
         tO0.setFont(font);
         tO0.setColor(sf::Color::White);
         tO0.setPosition({ 2, 62 });
+        //debug
 
         if (FRAME_ADVANCE == 2 && GAME_PAUSED) {
             GAME_PAUSED = false;
@@ -6364,6 +6423,7 @@ int main()
             GAME_PAUSED = true;
             FRAME_ADVANCE = 0;
         }
+        debug_timer_.timing_us_start();
 
         //start of things that shouldnt be done when paused
         if (!GAME_PAUSED) {
@@ -6642,6 +6702,7 @@ int main()
             //now thread collision logic in two parts to avoid wierdness
             int left_physics_adjusted = left_physics - extra_physics;
             int right_physics_adjusted = right_physics + extra_physics;
+
             do_object_collision(left_physics_adjusted, right_physics_adjusted, 0);
 
             player_invincible--;
@@ -7337,7 +7398,7 @@ int main()
                         rotateableSpriteBulletIndex++;
                         break;
                     case bullet2:
-                        bullet_2_batchable[bullet_2_batchableIndex].setTexture(bullet2_1tex);
+                        
                         bullet_2_batchable[bullet_2_batchableIndex].setColor({ 255, 255, 255, 255 });
                         bullet_2_batchable[bullet_2_batchableIndex].setPosition(allObjects[idx].position - cameraPos);
                         bullet_2_batchable[bullet_2_batchableIndex].setRotation(allObjects[idx].direction);
@@ -7538,6 +7599,18 @@ int main()
                         rotateable_effects_medium[rotateableEffectsMediumIndex].setScale(sf::Vector2f(allObjects[idx].scale, allObjects[idx].scale));
                         rotateable_effects_medium[rotateableEffectsMediumIndex].setTextureRect(sf::IntRect{ 16 * choice, 0, 16, 16 });
                         rotateableEffectsMediumIndex++;
+
+                        break;
+                    case toxic_gas:
+                        choice = allObjects[idx].image_index;
+                        variable_textures_bloom[variableTexturesBloomIndex].setTexture(allBigEffectSprites);
+                        variable_textures_bloom[variableTexturesBloomIndex].setColor({ 255, 255, 255, 255 });
+                        variable_textures_bloom[variableTexturesBloomIndex].setPosition(allObjects[idx].position - cameraPos);
+                        variable_textures_bloom[variableTexturesBloomIndex].setRotation(allObjects[idx].direction);
+                        variable_textures_bloom[variableTexturesBloomIndex].setTextureRect(sf::IntRect{ 24 * choice, 72, 24, 24 });
+                        variable_textures_bloom[variableTexturesBloomIndex].setOrigin(12, 12);
+                        variable_textures_bloom[variableTexturesBloomIndex].setScale(sf::Vector2f(allObjects[idx].scale, allObjects[idx].scale));
+                        variableTexturesBloomIndex++;
 
                         break;
                     case smoke:
@@ -8176,6 +8249,7 @@ int main()
             }
         }
 
+
         sf::Text tC;
         float currentTime = clock.restart().asSeconds();
         fps = 1.0f / currentTime;
@@ -8197,14 +8271,6 @@ int main()
 
         sf::Text debug1;
 
-        int tmpNUMoffloors = 0;
-        for (int i = left_physics; i <= right_physics; i++) {
-            for (int j = top_physics; j <= bottom_physics; j++) {
-                if (game_area[i][j].my_grid_type == exlpo_tile) {
-                    tmpNUMoffloors++;
-                }
-            }
-        }
         debug1.setString("spirit_anim_frame: " + std::to_string(spirit_anim_frame));
         debug1.setCharacterSize(8);
         debug1.setFont(font);
@@ -8584,10 +8650,9 @@ int main()
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
                     break;
                 }
-                spr.setScale(2, 2);
+                spr.setScale(spr.getScale().x * 2, spr.getScale().y * 2);
                 spr.setColor({ 255, 255, 255, 25 });
                 buffer_over.draw(spr, RendererBloom);
-                spr.setScale(1, 1);
             }
             reset_rotateable_sprites(variable_textures_bloom, variableTexturesBloomIndex);
 
@@ -8668,15 +8733,14 @@ int main()
             }
             reset_rotateable_sprites(rotateable_sprites_bullets_big_bloom, rotateableSpriteBulletBigBloomIndex);
 
-
             //bullet2 bloom
             batcher_bullet2.texture = &bullet2_1BIGtex;
-            batcher_bullet2.batchSprites(bullet_2_batchable);
+            //batcher_bullet2.batchSprites(bullet_2_batchable); //dont need to rebatch
             buffer_over.draw(batcher_bullet2, RendererBloom);
             reset_rotateable_sprites(bullet_2_batchable, bullet_2_batchableIndex);
 
             batcher_bullet1.texture = &bullet1_2BIGtex;
-            batcher_bullet1.batchSprites(bullet_1_batchable);
+            //batcher_bullet1.batchSprites(bullet_1_batchable);//dont need to rebatch
             buffer_over.draw(batcher_bullet1, RendererBloom);
             reset_rotateable_sprites(bullet_1_batchable, bullet_1_batchableIndex);
 
@@ -8736,18 +8800,27 @@ int main()
         if(area == 2){
 
         }
+        debug_timer_.timing_us_end();
+
 
         draw_text_NT(hp_text, buffer_over);
         //buffer_over.draw(c);
-        bool debug_text_show = 0;
 
-        if (debug_text_show) {
+        sf::Text tTime;
+        tTime.setString("time elapsed: " + std::to_string((debug_timer_.time_elapsed)) + "us");
+        tTime.setCharacterSize(8);
+        tTime.setFont(font);
+        tTime.setColor(sf::Color::White);
+        tTime.setPosition({ 2, 82 });
+
+        if (global_debug || 1) {
             draw_text_NT(tx, buffer_over);
             draw_text_NT(ty, buffer_over);
             draw_text_NT(ts, buffer_over);
             draw_text_NT(tC, buffer_over);
             draw_text_NT(tO, buffer_over);
             draw_text_NT(tO0, buffer_over);
+            draw_text_NT(tTime, buffer_over);
             draw_text_NT(tspr, buffer_over);
             draw_text_NT(debug1, buffer_over);
             draw_text_NT(debug2, buffer_over);
