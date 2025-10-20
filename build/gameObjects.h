@@ -20,6 +20,9 @@ enum objectID {
 	idpd_bullet, idpd_bullet_destroy,
 
 	toxic_gas,
+	toxic_gas_destroy,
+
+	the_wind,
 
 	scorch,
 	idpd_explosion,
