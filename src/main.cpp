@@ -41,6 +41,7 @@ std::vector <sf::Sprite> allFloors;
 int max_floors = 200;
 int gen_curr_floor_index = 0;
 
+
 std::vector<sf::Sprite> bullet_2_batchable;
 int bullet_2_batchable_max = 25000;
 
@@ -121,10 +122,13 @@ std::vector<sf::Sprite> wall_textures;
 int wall_boarder_textures_max = 600;
 std::vector<sf::Sprite> wall_boarder_textures;
 
-int floor_textures_max = 130;
+int floor_textures_max = 180;
 std::vector<sf::Sprite> floor_textures;
 
-int floor_textures_B_max = 100;
+int floor_textures_bloom_max = 130;
+std::vector<sf::Sprite> floor_textures_bloom;
+
+int floor_textures_B_max = 180;
 std::vector<sf::Sprite> floor_textures_B;
 
 int wall_textures_bot_max = 260;
@@ -2020,7 +2024,7 @@ int create_floor(int x, int y, bool Btile) {
     if (game_area[x][y].my_grid_type == wall) {
         removedwall = 1;
         //create detail
-        if (!Btile && rand() % 32 == 0) {
+        if (!Btile && rand() % 32 == 0 && area != 7) {
             create_object(x * 16 + 4 + (rand() % 8),
                           y * 16 + 4 + (rand() % 8), 0, 0, detail, 0.0f, 0);
         }
@@ -4829,7 +4833,25 @@ int generate_2x2_tile(int x, int y, int nub_chance, bool Btile) {  //x, y is the
         if (choice == 2 && Btile && removedwalls != 4) {
             choice = 1;
         }
-        allFloors[gen_curr_floor_index].setOrigin(0, choice + 4 * Btile);
+
+
+        if (area == 3 && Btile && choice == 3) {
+            choice = 2;
+        }
+        if (area == 4 && choice == 3) {
+            choice = 1;
+        }
+
+        if ((area == 2 && !Btile) || (area == 5 && rand() % 7 == 0) || (area == 7 && !Btile)) {
+            if (rand() % 2) {
+                choice += 4;
+            }
+        }
+        if (area == 6 && choice == 2 && rand() % 7) {
+            choice = 0;
+        }
+
+        allFloors[gen_curr_floor_index].setOrigin(Btile, choice);
         gen_curr_floor_index++;
     }
     if (removedwalls == 4) {
@@ -4840,6 +4862,190 @@ int generate_2x2_tile(int x, int y, int nub_chance, bool Btile) {  //x, y is the
         }
     }
     return removedwalls;
+}
+
+void generate_floors(int initial_goal, int safe_dist, int direction_choice_total, int no_turn_chance, int turn_90_chance, int lower_gen_rand, int upper_gen_rand, int Btile_chance, int floor_maker_chance) {
+    int goal = initial_goal;
+
+    level_generator level_generators[255];
+    int generators_active = 0;
+
+    top_physics = 1500;
+    bottom_physics = 1501;
+    left_physics = 1500;
+    right_physics = 1501;
+    game_area[1500][1500].my_grid_type = floor_tile;
+    game_area[1500][1501].my_grid_type = floor_tile;
+    game_area[1501][1500].my_grid_type = floor_tile;
+    game_area[1501][1501].my_grid_type = floor_tile;
+    goal -= 4;  //starting 4 tiles
+    level_generators[0].x = 1500;
+    level_generators[0].y = 1500;
+    level_generators[0].spdx = 0;
+    level_generators[0].spdy = 0;
+
+    level_generators[0].active = true;
+    generators_active++;
+
+    int biasx = ((rand() % 2) * 2 - 1) * 2;
+    int biasy = ((rand() % 2) * 2 - 1) * 2;
+    int extra = 0;
+    int turn = 0;
+    level_generators[0].spdx = rand() % 2;
+    if (level_generators[0].spdx == 1) {
+        level_generators[0].spdx = (rand() % 2) * 2 - 1;
+        level_generators[0].spdy = 0;
+    }
+    else {
+        level_generators[0].spdy = (rand() % 2) * 2 - 1;
+    }
+
+    while (goal > 0) {
+        for (int i = 0; i < 254; i++) {
+            if (level_generators[i].active) {
+                if (goal < initial_goal - safe_dist) {
+                    if (rand() % (lower_gen_rand + generators_active) > upper_gen_rand) {
+                        level_generators[i].active = false;
+                        generators_active--;
+                    }
+                    if (rand() % floor_maker_chance == 0) {
+                        for (int b = 0; b < 254; b++) {
+                            if (level_generators[b].active == false) {
+                                level_generators[b].active = true;
+                                level_generators[b].Btile = rand() % Btile_chance;
+                                level_generators[b].x = level_generators[i].x;
+                                level_generators[b].y = level_generators[i].y;
+                                level_generators[b].spdx = rand() % 2;
+                                if (level_generators[b].spdx == 1) {
+                                    level_generators[b].spdx = (rand() % 2) * 2 - 1;
+                                    level_generators[b].spdy = 0;
+                                }
+                                else {
+                                    level_generators[b].spdy = (rand() % 2) * 2 - 1;
+                                }
+                                generators_active++;
+                                break;
+                            }
+                        }
+                    }
+                    //turn = choose(0, 0, 0, 0, 0, 0, 0, 0, 0, 90, -90, 90, -90, 180);
+                    int choice = rand() % direction_choice_total;
+                    if (choice < no_turn_chance) {
+                        //turn = 0;
+                    }
+                    else if (choice < turn_90_chance) {
+                        //turn = (rand() % 2) * 2 - 1;
+                        //turn *= 90;
+                        if (level_generators[i].spdx != 0) {
+                            level_generators[i].spdx = 0;
+                            level_generators[i].spdy = (rand() % 2) * 2 - 1;
+                        }
+                        else {
+                            level_generators[i].spdy = 0;
+                            level_generators[i].spdx = (rand() % 2) * 2 - 1;
+                        }
+                    }
+                    else {
+                        //turn = 180;
+                        level_generators[i].spdx *= -1;
+                        level_generators[i].spdy *= -1;
+                    }
+                }
+
+                level_generators[i].x += level_generators[i].spdx * 2;
+                level_generators[i].y += level_generators[i].spdy * 2;
+                //special area removal for certain areas
+                if (area == 0 || area == 6) {
+                    goal -= generate_2x2_tile(level_generators[i].x, level_generators[i].y, 0, level_generators[i].Btile);
+                }
+                if (area == 2 || area == 4) {
+                    goal -= generate_2x2_tile(level_generators[i].x, level_generators[i].y, 1, level_generators[i].Btile);
+                }
+                if (area == 1) {
+                    if (rand() % 2) {   //clear out bigger area
+                        goal -= generate_2x2_tile(level_generators[i].x + biasx, level_generators[i].y + biasy, 1, level_generators[i].Btile);
+                        goal -= generate_2x2_tile(level_generators[i].x + biasx, level_generators[i].y, 1, level_generators[i].Btile);
+                        goal -= generate_2x2_tile(level_generators[i].x, level_generators[i].y + biasy, 1, level_generators[i].Btile);
+                    }
+                    goal -= generate_2x2_tile(level_generators[i].x, level_generators[i].y, 1, level_generators[i].Btile);
+                }
+                if (area == 3) {
+                    if (rand() % 8 == 0 || sub_area == 3) {
+                        int xoff = 0;
+                        int yoff = 0;
+                        if (sub_area == 3) {
+                            xoff = 32 * (rand() % 2) * ((rand() % 2) * 2 - 1);
+                            yoff = 32 * (rand() % 2) * ((rand() % 2) * 2 - 1);
+                        }
+                        goal -= generate_2x2_tile(level_generators[i].x + xoff, level_generators[i].y + yoff, 1, level_generators[i].Btile);
+                        goal -= generate_2x2_tile(level_generators[i].x + xoff + 2, level_generators[i].y + yoff, 1, level_generators[i].Btile);
+                        goal -= generate_2x2_tile(level_generators[i].x + xoff + 2, level_generators[i].y + yoff + 2, 1, level_generators[i].Btile);
+                        
+                        goal -= generate_2x2_tile(level_generators[i].x + xoff, level_generators[i].y + yoff + 2, 1, level_generators[i].Btile);
+                        goal -= generate_2x2_tile(level_generators[i].x + xoff, level_generators[i].y + yoff - 2, 1, level_generators[i].Btile);
+                        goal -= generate_2x2_tile(level_generators[i].x + xoff - 2, level_generators[i].y + yoff, 1, level_generators[i].Btile);
+                        goal -= generate_2x2_tile(level_generators[i].x + xoff + 2, level_generators[i].y + yoff - 2, 1, level_generators[i].Btile);
+                        goal -= generate_2x2_tile(level_generators[i].x + xoff - 2, level_generators[i].y + yoff - 2, 1, level_generators[i].Btile);
+                        goal -= generate_2x2_tile(level_generators[i].x + xoff - 2, level_generators[i].y + yoff + 2, 1, level_generators[i].Btile);
+                    }
+                    goal -= generate_2x2_tile(level_generators[i].x, level_generators[i].y, 1, level_generators[i].Btile);
+                }
+                if (area == 5) {
+                    if (rand() % 11 == 0) {
+                        if (rand() % 2) {
+                            goal -= generate_2x2_tile(level_generators[i].x + 2, level_generators[i].y, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x + 2, level_generators[i].y + 2, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x, level_generators[i].y + 2, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x, level_generators[i].y - 2, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x - 2, level_generators[i].y, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x + 2, level_generators[i].y - 2, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x - 2, level_generators[i].y - 2, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x - 2, level_generators[i].y + 2, 1, level_generators[i].Btile);
+                        }
+                        else {
+                            goal -= generate_2x2_tile(level_generators[i].x + 4, level_generators[i].y - 4, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x + 4, level_generators[i].y - 2, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x + 4, level_generators[i].y, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x + 4, level_generators[i].y + 2, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x + 4, level_generators[i].y + 4, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x - 4, level_generators[i].y - 4, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x - 4, level_generators[i].y - 2, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x - 4, level_generators[i].y, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x - 4, level_generators[i].y + 2, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x - 4, level_generators[i].y + 4, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x, level_generators[i].y - 4, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x - 2, level_generators[i].y - 4, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x + 2, level_generators[i].y - 4, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x, level_generators[i].y + 4, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x - 2, level_generators[i].y + 4, 1, level_generators[i].Btile);
+                            goal -= generate_2x2_tile(level_generators[i].x + 2, level_generators[i].y + 4, 1, level_generators[i].Btile);
+                        }
+                    }
+                    goal -= generate_2x2_tile(level_generators[i].x, level_generators[i].y, 1, level_generators[i].Btile);
+                }
+                if (area == 7) {
+                    if (rand() % 16 == 111) {
+                        int dix = -2 * (biasx / 2);
+                        int diy = -2 * (biasy / 2);
+                        for (int _i = 0; _i < 4; _i++) {
+                            for (int _j = 0; _j < 4; _j++) {
+                                goal -= generate_2x2_tile(level_generators[i].x + dix, level_generators[i].y + diy, 1, level_generators[i].Btile);
+                                dix += 2 * (biasx / 2);
+                            }
+                            dix = -2 * (biasx / 2);
+                            diy += 2 * (biasy / 2);
+                        }
+                    }
+                    else {
+                        goal -= generate_2x2_tile(level_generators[i].x + biasx, level_generators[i].y + biasy, 1, level_generators[i].Btile);
+                        goal -= generate_2x2_tile(level_generators[i].x + biasx, level_generators[i].y, 1, level_generators[i].Btile);
+                        goal -= generate_2x2_tile(level_generators[i].x, level_generators[i].y + biasy, 1, level_generators[i].Btile);
+                        goal -= generate_2x2_tile(level_generators[i].x, level_generators[i].y, 1, level_generators[i].Btile);
+                    }
+                }
+            }
+        }
+    }
 }
 
 void generate_level(sound_sound_buffer all_sounds[]) {
@@ -4860,9 +5066,6 @@ void generate_level(sound_sound_buffer all_sounds[]) {
     vector2D_reset(top_physics, bottom_physics, left_physics, right_physics);
 
     reset_popup_texts();
-
-    level_generator level_generators[255];
-    int generators_active = 0;
 
     gen_curr_floor_index = 0;
 
@@ -4895,111 +5098,10 @@ void generate_level(sound_sound_buffer all_sounds[]) {
     T2_sprite.setPosition(-1000, -1000);
 
     allObjects[0].position = { 24016.0f, 24016.0f };
-    int initial_goal = 0;
-    int goal = 0;
-    int safe_dist = 0;
-    top_physics = 1500;
-    bottom_physics = 1501;
-    left_physics = 1500;
-    right_physics = 1501;
-    game_area[1500][1500].my_grid_type = floor_tile;
-    game_area[1500][1501].my_grid_type = floor_tile;
-    game_area[1501][1500].my_grid_type = floor_tile;
-    game_area[1501][1501].my_grid_type = floor_tile;
-    goal -= 4;  //starting 4 tiles
-    level_generators[0].x = 1500;
-    level_generators[0].y = 1500;
-    level_generators[0].spdx = 0;
-    level_generators[0].spdy = 0;
 
-    level_generators[0].active = true;
-    generators_active++;
-
-    int biasx = ((rand() % 2) * 2 - 1) * 2;
-    int biasy = ((rand() % 2) * 2 - 1) * 2;
-    int extra = 0;
-    int turn = 0;
-    level_generators[0].spdx = rand() % 2;
-    if (level_generators[0].spdx == 1) {
-        level_generators[0].spdx = (rand() % 2) * 2 - 1;
-        level_generators[0].spdy = 0;
-    }
-    else {
-        level_generators[0].spdy = (rand() % 2) * 2 - 1;
-    }
     if (area == 0) {    //throne 2
         all_sounds[snd_music_ID].sound.setVolume(0.0f);
-        initial_goal = 240;
-        goal = initial_goal;
-        while (goal > 0) {
-            for (int i = 0; i < 254; i++) {
-                if (level_generators[i].active) {
-                    if (goal < initial_goal - safe_dist) {
-                        if (rand() % (19 + generators_active) > 22) {
-                            level_generators[i].active = false;
-                            generators_active--;
-                        }
-                        if (rand() % 4 == 0) {
-                            for (int b = 0; b < 254; b++) {
-                                if (level_generators[b].active == false) {
-                                    level_generators[b].active = true;
-                                    level_generators[b].Btile = 0;  //never b-tile
-                                    level_generators[b].x = level_generators[i].x;
-                                    level_generators[b].y = level_generators[i].y;
-                                    level_generators[b].spdx = rand() % 2;
-                                    if (level_generators[b].spdx == 1) {
-                                        level_generators[b].spdx = (rand() % 2) * 2 - 1;
-                                        level_generators[b].spdy = 0;
-                                    }
-                                    else {
-                                        level_generators[b].spdy = (rand() % 2) * 2 - 1;
-                                    }
-                                    generators_active++;
-                                    break;
-                                }
-                            }
-                        }
-                        //turn = choose(0, 0, 0, 0, 0, 0, 0, 0, 0, 90, -90, 90, -90, 180);
-                        int choice = rand() % 6;
-                        if (choice < 1) {
-                            //turn = 0;
-                        }
-                        else if (choice < 5) {
-                            //turn = (rand() % 2) * 2 - 1;
-                            //turn *= 90;
-                            if (level_generators[i].spdx != 0) {
-                                level_generators[i].spdx = 0;
-                                level_generators[i].spdy = (rand() % 2) * 2 - 1;
-                            }
-                            else {
-                                level_generators[i].spdy = 0;
-                                level_generators[i].spdx = (rand() % 2) * 2 - 1;
-                            }
-                        }
-                        else {
-                            //turn = 180;
-                            level_generators[i].spdx *= -1;
-                            level_generators[i].spdy *= -1;
-                        }
-                    }
-
-                    level_generators[i].x += level_generators[i].spdx * 2;
-                    level_generators[i].y += level_generators[i].spdy * 2;
-                    //only generate 1 tile at a time
-                    goal -= generate_2x2_tile(level_generators[i].x, level_generators[i].y, 0, level_generators[i].Btile);
-                }
-            }
-        }
-        //check if any details are on b-tiles
-        for (int i = 0; i < 500; i++) {
-            if (allObjects[i].my_id == detail) {
-                for (int j = 0; j < max_floors; j++) {                                                                                                                                         //is b-tile
-                    if (abs(allObjects[i].position.x - allFloors[j].getPosition().x - 16) < 19 && abs(allObjects[i].position.y - allFloors[j].getPosition().y - 16) < 19 && allFloors[j].getOrigin().y > 3) {
-                        allObjects[i].my_id = nothing;
-                    }
-                }
-            }
-        }
+        generate_floors(240, 0, 6, 1, 5, 19, 22, 1, 4);
 
         //generate enemies
         int tmp_num_of_enemies_to_spawn = LOOPS * 3;
@@ -5020,93 +5122,9 @@ void generate_level(sound_sound_buffer all_sounds[]) {
                 }
             }
         }
-
-        //clear out area around player
-        for (int i = 1499; i < 1503; i++) {
-            for (int j = 1499; j < 1503; j++) {
-                if (game_area[i][j].my_grid_type == wall) {
-                    create_explo_tile(i, j);
-                    //create debris too
-                }
-            }
-        }
     }
     if (area == 1) {
-        initial_goal = 480;
-        goal = initial_goal;
-        while (goal > 0) {
-            for (int i = 0; i < 254; i++) {
-                if (level_generators[i].active) {
-                    if (goal < initial_goal - safe_dist) {
-                        if (rand() % (19 + generators_active) > 20) {
-                            level_generators[i].active = false;
-                            generators_active--;
-                        }
-                        if (rand() % 8 == 0) {
-                            for (int b = 0; b < 254; b++) {
-                                if (level_generators[b].active == false) {
-                                    level_generators[b].active = true;
-                                    level_generators[b].Btile = rand() % 7 == 0;
-                                    level_generators[b].x = level_generators[i].x;
-                                    level_generators[b].y = level_generators[i].y;
-                                    level_generators[b].spdx = rand() % 2;
-                                    if (level_generators[b].spdx == 1) {
-                                        level_generators[b].spdx = (rand() % 2) * 2 - 1;
-                                        level_generators[b].spdy = 0;
-                                    }
-                                    else {
-                                        level_generators[b].spdy = (rand() % 2) * 2 - 1;
-                                    }
-                                    generators_active++;
-                                    break;
-                                }
-                            }
-                        }
-                        //turn = choose(0, 0, 0, 0, 0, 0, 0, 0, 0, 90, -90, 90, -90, 180);
-                        int choice = rand() % 14;
-                        if (choice < 9) {
-                            //turn = 0;
-                        }
-                        else if (choice < 13) {
-                            //turn = (rand() % 2) * 2 - 1;
-                            //turn *= 90;
-                            if (level_generators[i].spdx != 0) {
-                                level_generators[i].spdx = 0;
-                                level_generators[i].spdy = (rand() % 2) * 2 - 1;
-                            }
-                            else {
-                                level_generators[i].spdy = 0;
-                                level_generators[i].spdx = (rand() % 2) * 2 - 1;
-                            }
-                        }
-                        else {
-                            //turn = 180;
-                            level_generators[i].spdx *= -1;
-                            level_generators[i].spdy *= -1;
-                        }
-                    }
-
-                    level_generators[i].x += level_generators[i].spdx * 2;
-                    level_generators[i].y += level_generators[i].spdy * 2;
-                    if (rand() % 2) {   //clear out bigger area
-                        goal -= generate_2x2_tile(level_generators[i].x + biasx, level_generators[i].y + biasy, 1, level_generators[i].Btile);
-                        goal -= generate_2x2_tile(level_generators[i].x + biasx, level_generators[i].y, 1, level_generators[i].Btile);
-                        goal -= generate_2x2_tile(level_generators[i].x, level_generators[i].y + biasy, 1, level_generators[i].Btile);
-                    }
-                    goal -= generate_2x2_tile(level_generators[i].x, level_generators[i].y, 1, level_generators[i].Btile);
-                }
-            }
-        }
-        //check if any details are on b-tiles
-        for (int i = 0; i < 500; i++) {
-            if (allObjects[i].my_id == detail) {
-                for (int j = 0; j < max_floors; j++) {                                                                                                                                         //is b-tile
-                    if (abs(allObjects[i].position.x - allFloors[j].getPosition().x - 16) < 19 && abs(allObjects[i].position.y - allFloors[j].getPosition().y - 16) < 19 && allFloors[j].getOrigin().y > 3) {
-                        allObjects[i].my_id = nothing;
-                    }
-                }
-            }
-        }
+        generate_floors(480, 0, 14, 9, 13, 19, 20, 7, 8);
 
         //generate enemies
         int tmp_num_of_enemies_to_spawn = 1;
@@ -5157,14 +5175,49 @@ void generate_level(sound_sound_buffer all_sounds[]) {
         if (sub_area == 3) {
 
         }
+    }
+    if (area == 2) {
+        generate_floors(480, 0, 13, 8, 12, 
+            14, 15, 7, 15);
+    }
+    if (area == 3) {
+        generate_floors(480, 0, 6, 4, 6, 
+            39, 40, 7, 25);
+    }
+    if (area == 4) {
+        generate_floors(480, 0, 7, 4, 6, 
+            9, 10, 7, 4);
+    }
+    if (area == 5) {
+        generate_floors(480, 0, 16, 12, 14, 
+            14, 15, 7, 15);
+    }
+    if (area == 6) {
+        generate_floors(480, 0, 14, 11, 13, 
+            21, 22, 7, 20);
+    }
+    if (area == 7) {
+        generate_floors(520, 0, 15, 12, 14, 
+            8, 9, 7, 16);
+    }
 
-        //clear out area around player
-        for (int i = 1499; i < 1503; i++) {
-            for (int j = 1499; j < 1503; j++) {
-                if (game_area[i][j].my_grid_type == wall) {
-                    create_explo_tile(i, j);
-                    //create debris too
+    //check if any details are on b-tiles
+    for (int i = 0; i < 500; i++) {
+        if (allObjects[i].my_id == detail) {
+            for (int j = 0; j < max_floors; j++) {                                                                                                                                         //is b-tile
+                if (abs(allObjects[i].position.x - allFloors[j].getPosition().x - 16) < 19 && abs(allObjects[i].position.y - allFloors[j].getPosition().y - 16) < 19 && allFloors[j].getOrigin().y > 3) {
+                    allObjects[i].my_id = nothing;
                 }
+            }
+        }
+    }
+
+    //clear out area around player
+    for (int i = 1499; i < 1503; i++) {
+        for (int j = 1499; j < 1503; j++) {
+            if (game_area[i][j].my_grid_type == wall) {
+                create_explo_tile(i, j);
+                //create debris too
             }
         }
     }
@@ -5477,6 +5530,8 @@ int main()
         sf::Texture allExploTiles;
         allExploTiles.loadFromFile("res/allExploTiles.png");
 
+        sf::Texture floor_b_2_1_bloom;
+        floor_b_2_1_bloom.loadFromFile("res/2-1FloorBloom.png");
 
         sf::Texture Floor_T2_Tiles;
         Floor_T2_Tiles.loadFromFile("res/T2/T2_floor_unders.png");
@@ -5511,6 +5566,10 @@ int main()
         sf::Texture floorTile1_under;
         floorTile1_under.loadFromFile("res/sprFloor1_1_under.png");
         sf::VertexArray draw_floorTile1_unders = create_vertex_array(floorTile1_under, 210);
+
+        sf::Texture floorTile5_under;
+        floorTile5_under.loadFromFile("res/sprFloor5_1_under.png");
+        sf::VertexArray draw_floorTile5_unders = create_vertex_array(floorTile5_under, 210);
         //floorTile1B under
         sf::Texture floorTile1B_under;
         floorTile1B_under.loadFromFile("res/sprFloor1_1B_under.png");
@@ -5519,6 +5578,10 @@ int main()
         sf::Texture exploTile1_under;
         exploTile1_under.loadFromFile("res/sprExploTile1_under.png");
         sf::VertexArray draw_exploTile1_unders = create_vertex_array(exploTile1_under, 600);
+
+        sf::Texture exploTile5_under;
+        exploTile5_under.loadFromFile("res/sprExploTile5_under.png");
+        sf::VertexArray draw_exploTile5_unders = create_vertex_array(exploTile5_under, 600);
 
         sf::Texture exploTile0_under;
         exploTile0_under.loadFromFile("res/sprExploTile0_under.png");
@@ -6070,6 +6133,13 @@ int main()
         temp.setTexture(allFloors_tex);
         floor_textures.push_back(temp);
     }
+    for (int i = 0; i < floor_textures_bloom_max; i++) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        temp.setOrigin({ 0,0 });
+        temp.setTexture(floor_b_2_1_bloom);
+        floor_textures_bloom.push_back(temp);
+    }
     for (int i = 0; i < floor_textures_B_max; i++) {
         sf::Sprite temp;
         temp.setColor({ 0, 0, 0, 0 });
@@ -6263,8 +6333,15 @@ int main()
             BGColor = { 0, 0, 0, 0 };
             break;
         }
+
         if (want_gen) {
             want_gen = false;
+
+            area++;
+            if (area > 7) {
+                area = 0;
+                LOOPS++;
+            }
 
             //change sprites
             if (area == 0) {
@@ -6276,7 +6353,6 @@ int main()
                 bullet2_1BIGtex.loadFromFile("res/enemy_bullets/sprEnemyBullet2_1BIG.png");
             }
 
-            LOOPS++;
             generate_level(all_sounds);
         }
         //debug to see where the background bleeds through
@@ -6896,6 +6972,7 @@ int main()
         int floor1_under_ArrayIndex = 0;
         int floor1B_under_ArrayIndex = 0;
         int exploTile1_under_ArrayIndex = 0;
+        int exploTile5_under_ArrayIndex = 0;
         int exploTile0_under_ArrayIndex = 0;
         int floor0_under_ArrayIndex = 0;
 
@@ -6943,6 +7020,7 @@ int main()
         int wall_textures_botArrayIndex = 0;
 
         int floor_texturesArrayIndex = 0;
+        int floor_textures_bloomArrayIndex = 0;
         int floor_textures_BArrayIndex = 0;
 
         int explo_tiles_texArrayIndex = 0;
@@ -6954,22 +7032,60 @@ int main()
 
         int prop_spritesIndex = 0;
 
+        int floor5_under_ArrayIndex = 0;
+
         for (int i = 0; i < max_floors; i++) {
             currDrawPosition = allFloors[i].getPosition() - cameraPos;
             //currDrawPosition = {100, 100};
             if (abs(currDrawPosition.x - 160) < 200 && abs(currDrawPosition.y - 120) < 360) {
                 int choice = allFloors[i].getOrigin().y;
 
-                if (area == 1) {
-                    if (choice > 3) {
-                        choice -= 4;
+                int is_b_tile = allFloors[i].getOrigin().x;
+                int Btile_size = 0;
+
+                int area_offset_ = 0;
+                switch (area) {
+                case 1:
+                    area_offset_ = 0;
+                    Btile_size = 36;
+                    break;
+                case 3:
+                    area_offset_ = 68;
+                    Btile_size = 36;
+                    break;
+                case 4:
+                    area_offset_ = 104;
+                    Btile_size = 32;
+                    break;
+                case 5:
+                    area_offset_ = 136;
+                    Btile_size = 64;
+                    break;
+                case 6:
+                    area_offset_ = 200;
+                    Btile_size = 32;
+                    break;
+                case 7:
+                    area_offset_ = 232;
+                    Btile_size = 32;
+                    break;
+                }
+                
+                if (area == 2) {
+                    if (is_b_tile) {
                         add_sprite_32(floor1B_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 32), draw_floorTile1B_unders);
                         floor1B_under_ArrayIndex++;
 
                         floor_textures_B[floor_textures_BArrayIndex].setColor({ 255, 255, 255, 255 });
-                        floor_textures_B[floor_textures_BArrayIndex].setPosition(currDrawPosition - sf::Vector2f{2, 2});
-                        floor_textures_B[floor_textures_BArrayIndex].setTextureRect(sf::IntRect{ 36 * choice, 0, 36, 36 });
+                        floor_textures_B[floor_textures_BArrayIndex].setPosition(currDrawPosition - sf::Vector2f{ 0, 0 });
+                        floor_textures_B[floor_textures_BArrayIndex].setTextureRect(sf::IntRect{ 32 * choice, 36, 32, 32 });
                         floor_textures_BArrayIndex++;
+
+                        //bloom
+                        floor_textures_bloom[floor_textures_bloomArrayIndex].setColor({ 255, 255, 255, 255 });
+                        floor_textures_bloom[floor_textures_bloomArrayIndex].setPosition(currDrawPosition - sf::Vector2f(4, 4));
+                        floor_textures_bloom[floor_textures_bloomArrayIndex].setTextureRect(sf::IntRect{ 0, 0, 40, 40 });
+                        floor_textures_bloomArrayIndex++;
                     }
                     else {
                         add_sprite_32(floor1_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 32), draw_floorTile1_unders);
@@ -6981,7 +7097,7 @@ int main()
                         floor_texturesArrayIndex++;
                     }
                 }
-                if (area == 0) {
+                else if (area == 0) {
                     add_sprite_32(floor0_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 32), draw_floorTile0_unders);
                     floor0_under_ArrayIndex++;
 
@@ -6994,6 +7110,34 @@ int main()
                     T2_floor_tiles_tex[T2_floor_tiles_texArrayIndex].setPosition(currDrawPosition - sf::Vector2f{ 16 , 16 });
                     T2_floor_tiles_tex[T2_floor_tiles_texArrayIndex].setTextureRect(sf::IntRect{ 64 * choice, 0, 64, 96 });
                     T2_floor_tiles_texArrayIndex++;
+                }
+                else {
+                    if (is_b_tile) {
+                        if (area == 1) {
+                            add_sprite_32(floor1B_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 32), draw_floorTile1B_unders);
+                            floor1B_under_ArrayIndex++;
+                        }
+
+                        floor_textures_B[floor_textures_BArrayIndex].setColor({ 255, 255, 255, 255 });
+                        floor_textures_B[floor_textures_BArrayIndex].setPosition(currDrawPosition - sf::Vector2f{ float(Btile_size - 32) / 2, float(Btile_size - 32) / 2 });
+                        floor_textures_B[floor_textures_BArrayIndex].setTextureRect(sf::IntRect{ Btile_size * choice, area_offset_, Btile_size, Btile_size });
+                        floor_textures_BArrayIndex++;
+                    }
+                    else {
+                        if (area == 1) {
+                            add_sprite_32(floor1_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 32), draw_floorTile1_unders);
+                            floor1_under_ArrayIndex++;
+                        }
+                        else if (area == 5) {
+                            add_sprite_32(floor5_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 32), draw_floorTile5_unders);
+                            floor5_under_ArrayIndex++;
+                        }
+
+                        floor_textures[floor_texturesArrayIndex].setColor({ 255, 255, 255, 255 });
+                        floor_textures[floor_texturesArrayIndex].setPosition(currDrawPosition);
+                        floor_textures[floor_texturesArrayIndex].setTextureRect(sf::IntRect{ 32 * choice, 32 * area, 32, 32 });
+                        floor_texturesArrayIndex++;
+                    }
                 }
             }
         }
@@ -7074,6 +7218,10 @@ int main()
                     if (area == 1) {
                         add_sprite_16(exploTile1_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 16), draw_exploTile1_unders);
                         exploTile1_under_ArrayIndex++;
+                    }
+                    if (area == 5) {
+                        add_sprite_16(exploTile5_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 16), draw_exploTile5_unders);
+                        exploTile5_under_ArrayIndex++;
                     }
                     if (area == 0) {
                         add_sprite_16(exploTile0_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 16), draw_exploTile0_unders);
@@ -8245,12 +8393,14 @@ int main()
             clear_extra_vertex_array(draw_Wall1shadows, wallShadowArrayIndex);
 
             clear_extra_vertex_array(draw_exploTile1_unders, exploTile1_under_ArrayIndex);
+            clear_extra_vertex_array(draw_exploTile5_unders, exploTile5_under_ArrayIndex);
             clear_extra_vertex_array(draw_exploTile0_unders, exploTile0_under_ArrayIndex);
 
             clear_extra_vertex_array(draw_floorTile0_unders, floor0_under_ArrayIndex);
 
             clear_extra_vertex_array(draw_floorTile1B_unders, floor1B_under_ArrayIndex);
             clear_extra_vertex_array(draw_floorTile1_unders, floor1_under_ArrayIndex);
+            clear_extra_vertex_array(draw_floorTile5_unders, floor5_under_ArrayIndex);
 
             clear_extra_vertex_array(draw_shadow24s, shadow24_ArrayIndex);
             clear_extra_vertex_array(draw_shadow32s, shadow32_ArrayIndex);
@@ -8311,6 +8461,8 @@ int main()
 
             Renderer.texture = &exploTile1_under;
             buffer_under.draw(draw_exploTile1_unders, Renderer);
+            Renderer.texture = &exploTile5_under;
+            buffer_under.draw(draw_exploTile5_unders, Renderer);
             Renderer.texture = &exploTile0_under;
             buffer_under.draw(draw_exploTile0_unders, Renderer);
 
@@ -8319,6 +8471,8 @@ int main()
 
             Renderer.texture = &floorTile1_under;
             buffer_under.draw(draw_floorTile1_unders, Renderer);
+            Renderer.texture = &floorTile5_under;
+            buffer_under.draw(draw_floorTile5_unders, Renderer);
             Renderer.texture = &floorTile0_under;
             buffer_under.draw(draw_floorTile0_unders, Renderer);
 
@@ -8333,13 +8487,15 @@ int main()
             }
             reset_rotateable_sprites(floor_textures, floor_texturesArrayIndex);
 
-            for (sf::Sprite spr : floor_textures_B) {
-                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
-                    break;
+            if (area != 5) {
+                for (sf::Sprite spr : floor_textures_B) {
+                    if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                        break;
+                    }
+                    buffer_under.draw(spr);
                 }
-                buffer_under.draw(spr);
+                reset_rotateable_sprites(floor_textures_B, floor_textures_BArrayIndex);
             }
-            reset_rotateable_sprites(floor_textures_B, floor_textures_BArrayIndex);
 
             //explo tiles
             for (sf::Sprite spr : explo_tiles_tex) {
@@ -8349,6 +8505,16 @@ int main()
                 buffer_under.draw(spr);
             }
             reset_rotateable_sprites(explo_tiles_tex, explo_tiles_texArrayIndex);
+
+            if (area == 5) {
+                for (sf::Sprite spr : floor_textures_B) {
+                    if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                        break;
+                    }
+                    buffer_under.draw(spr);
+                }
+                reset_rotateable_sprites(floor_textures_B, floor_textures_BArrayIndex);
+            }
 
             //details
             for (sf::Sprite spr : under_effects_small) {
@@ -8410,6 +8576,14 @@ int main()
             combinedshadows.setColor(sf::Color(255, 255, 255, 100));
             //window.draw(combinedshadows);
             buffer_over.draw(combinedshadows);
+
+            for (sf::Sprite spr : floor_textures_bloom) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_over.draw(spr, RendererBloom);
+            }
+            reset_rotateable_sprites(floor_textures_bloom, floor_textures_bloomArrayIndex);
 
             //walls
             for (sf::Sprite spr : wall_textures_bot) {
