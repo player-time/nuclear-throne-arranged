@@ -112,6 +112,9 @@ bool t2_draw_in_front = true;
 std::vector<sf::Sprite> variable_textures;
 int variable_textures_max = 400;
 
+std::vector<sf::Sprite> wall_shadow_textures;
+int wall_shadow_textures_max = 600;
+
 
 std::vector<sf::Sprite> variable_textures_bloom;
 int variable_textures_bloom_max = 4000;
@@ -1618,8 +1621,8 @@ bool has_line_of_sight(float x, float y) {
     float prev_y_pos = y - allObjects[0].position.y;
 
     float angle_to_player = atan2f(prev_y_pos, prev_x_pos);
-    float x_spd = cos(angle_to_player) * -16.0f;
-    float y_spd = sin(angle_to_player) * -16.0f;
+    float x_spd = cos(angle_to_player) * -15.99f;
+    float y_spd = sin(angle_to_player) * -15.99f;
 
     while (int(x / 16) != int(allObjects[0].position.x / 16) || int(y / 16) != int(allObjects[0].position.y / 16)) {
         prev_x_pos = x;
@@ -2588,6 +2591,9 @@ void player_collision(int i, int j, int currOBJ) {
                     case objectID::portal:
                         if (allObjects[O].alarm1 == 0 && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, portal_hitbox + player_hitbox)) {
                             allObjects[O].alarm1 = 1;
+
+                            allObjects[0].alarm1 = 1;   //cant move
+
                             allObjects[O].alarm2 = portal_wait_time;
                             play_sound_on_player(snd_portal_close_ID);
                         }
@@ -3753,18 +3759,17 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                 want_gen = true;
                 stop_looping_sound(snd_portal_loop_ID);
             }
-            if (allObjects[i].alarm3 < 0) {
-                if (has_line_of_sight(allObjects[i].position.x, allObjects[i].position.y) || is_within_circle(allObjects[i].position, allObjects[0].position, 16) || area == 0) {
-                    if (is_within_circle(allObjects[i].position, allObjects[0].position, 32) || area == 0) {
-                        player_invincible = 100;
-                    }
+            if (allObjects[i].alarm3 < 0 || allObjects[0].alarm1 == 1) {
+                if (is_within_circle(allObjects[i].position, allObjects[0].position, 32) || area == 0) {
+                    player_invincible = 100;
+                }
+                if (is_within_circle(allObjects[i].position, allObjects[0].position, 96) || area == 0) {
+                    
                     if (is_within_circle(allObjects[i].position, allObjects[0].position, 48) || (allObjects[i].alarm1 != 0) || area == 0) {
                         tmpdir = atan2f(allObjects[i].position.y - allObjects[0].position.y, allObjects[i].position.x - allObjects[0].position.x);
-                        motion_add_dir(tmpdir, 3, 0);
-                        if (allObjects[i].alarm1 != 2) {
-                            allObjects[0].position.x += cos(tmpdir) * 3;
-                            allObjects[0].position.y += sin(tmpdir) * 3;
-                        }
+
+                        allObjects[0].position.x += cos(tmpdir) * 3;
+                        allObjects[0].position.y += sin(tmpdir) * 3;
 
                         allObjects[0].image_index = 3;
                         allObjects[0].gun_angle += 30;
@@ -3781,7 +3786,8 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                     }
                     if (is_within_circle(allObjects[i].position, allObjects[0].position, 96) || area == 0) {
                         tmpdir = atan2f(allObjects[i].position.y - allObjects[0].position.y, allObjects[i].position.x - allObjects[0].position.x);
-                        motion_add_dir(tmpdir, 2, 0);
+                        allObjects[0].position.x += cos(tmpdir) * 2;
+                        allObjects[0].position.y += sin(tmpdir) * 2;
                     }
                 }
             }
@@ -4855,10 +4861,58 @@ int generate_2x2_tile(int x, int y, int nub_chance, bool Btile) {  //x, y is the
         gen_curr_floor_index++;
     }
     if (removedwalls == 4) {
-        if ((!Btile && rand() % 12 == 0 || (area == 0 && rand() % 9 == 0))) {
-            create_object(x * 16 + 8 + (rand() % 16),
-                          y * 16 + 8 + (rand() % 16), 0, 0, prop, 0.0f, rand() % 34);
-            //temp
+        if (((!Btile || area == 3 || area == 5 || area == 6 || area == 7) && rand() % 11 == 0 || (area == 0 && rand() % 9 == 0))) {
+            int prop_range_bottom = 0;
+            int prop_range_size = 0;
+            int variance_prop = 1;
+            switch (area) {
+            case 0:
+                prop_range_bottom = 0;
+                prop_range_size = 4;
+                break;
+            case 1:
+                prop_range_bottom = 4;
+                prop_range_size = 9;
+                break;
+            case 2:
+                prop_range_bottom = 13;
+                prop_range_size = 2;
+                break;
+            case 3:
+                prop_range_bottom = 15;
+                prop_range_size = 2;
+                break;
+            case 4:
+                prop_range_bottom = 17;
+                prop_range_size = 4;
+                break;
+            case 5:
+                prop_range_bottom = 21;
+                prop_range_size = 7;
+                break;
+            case 6:
+                prop_range_bottom = 28;
+                prop_range_size = 4;
+                break;
+            case 7:
+                prop_range_bottom = 32;
+                prop_range_size = 2;
+                break;
+            }
+            if (area != 5) {
+                create_object(x * 16 + 16 + (rand() % variance_prop - int(variance_prop / 2)),
+                    y * 16 + 16 + (rand() % variance_prop - int(variance_prop / 2)), 0, 0, prop, 0.0f, prop_range_bottom + rand() % prop_range_size);
+            }
+            else {
+                if (Btile) {
+                    create_object(x * 16 + 16 + (rand() % variance_prop - int(variance_prop / 2)),
+                        y * 16 + 16 + (rand() % variance_prop - int(variance_prop / 2)), 0, 0, prop, 0.0f, icicle_5_1);
+                }
+                else {
+                    create_object(x * 16 + 16 + (rand() % variance_prop - int(variance_prop / 2)),
+                        y * 16 + 16 + (rand() % variance_prop - int(variance_prop / 2)), 0, 0, prop, 0.0f, prop_range_bottom + rand() % prop_range_size);
+                }
+            }
         }
     }
     return removedwalls;
@@ -5559,8 +5613,6 @@ int main()
         //wall1 shadow
         sf::Texture Wall1shadow;
         Wall1shadow.loadFromFile("res/sprWall1shadow.png");
-        sf::VertexArray draw_Wall1shadows = create_vertex_array(Wall1shadow, 600);
-
 
         //floorTile1 under
         sf::Texture floorTile1_under;
@@ -6103,6 +6155,13 @@ int main()
         sf::Sprite temp;
         temp.setColor({ 0, 0, 0, 0 });
         variable_textures_bloom.push_back(temp);
+    }
+
+    for (int i = 0; i < wall_shadow_textures_max; i++) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        temp.setTexture(Wall1shadow);
+        wall_shadow_textures.push_back(temp);
     }
     //walls
     for (int i = 0; i < wall_textures_max; i++) {
@@ -6967,8 +7026,6 @@ int main()
 
         int wallBoardeArrayIndex = 0;
 
-        int wallShadowArrayIndex = 0;
-
         int floor1_under_ArrayIndex = 0;
         int floor1B_under_ArrayIndex = 0;
         int exploTile1_under_ArrayIndex = 0;
@@ -6983,6 +7040,8 @@ int main()
         int shadow24_ArrayIndex = 0;
         int shadow32_ArrayIndex = 0;
         int shadow48_ArrayIndex = 0;
+
+        int wall_shadow_texturesIndex = 0;
 
         int playerbullet1_bloomArrayIndex = 0;
 
@@ -7155,34 +7214,73 @@ int main()
                     rand_choice ^= (rand_choice >> 7);
                     rand_choice ^= (rand_choice << 9);
                     int choice = int(rand_choice % 100);
-                    if (choice > 75) {
-                        choice = 0;
+                    if (area != 6) {
+                        if (choice > 75) {
+                            choice = 0;
+                        }
+                        if (choice > 70) {
+                            choice = 1;
+                        }
+                        if (choice > 60) {
+                            choice = 2;
+                        }
+                        if (choice > 24) {
+                            choice = 4;
+                        }
+                        if (choice > 16) {
+                            choice = 5;
+                        }
+                        if (choice > 7) {
+                            choice = 6;
+                        }
                     }
-                    if (choice > 70) {
-                        choice = 1;
+                    else {
+                        if (choice > 75) {
+                            choice = 0;
+                        }
+                        if (choice > 70) {
+                            choice = 1;
+                        }
+                        if (choice > 60) {
+                            choice = 2;
+                        }
+                        if (choice > 40) {
+                            choice = 3;
+                        }
+                        if (choice > 32) {
+                            choice = 4;
+                        }
+                        if (choice > 27) {
+                            choice = 5;
+                        }
+                        if (choice > 22) {
+                            choice = 6;
+                        }
+                        if (choice > 11) {
+                            choice = 7;
+                        }
                     }
-                    if (choice > 60) {
-                        choice = 2;
+                    int choice2 = 0;
+                    if (area == 2) {
+                        choice2 = int(rand_choice % 5);
                     }
-                    if (choice > 24) {
-                        choice = 4;
+                    else if (area == 4 || area == 5) {
+                        choice2 = int(rand_choice % 2);
                     }
-                    if (choice > 16) {
-                        choice = 5;
-                    }
-                    if (choice > 7) {
-                        choice = 6;
+                    else if (area == 3) {
+                        choice2 = int(rand_choice % 3);
                     }
                     //boarder of wall
-                   
                     wall_boarder_textures[wallBoardeArrayIndex].setColor({ 255, 255, 255, 255 });
                     wall_boarder_textures[wallBoardeArrayIndex].setPosition(currDrawPosition - sf::Vector2f{ 0, 8 });
-                    wall_boarder_textures[wallBoardeArrayIndex].setTextureRect(sf::IntRect{ 24 * area, 24 * 0, 24, 24 });
+                    wall_boarder_textures[wallBoardeArrayIndex].setTextureRect(sf::IntRect{ 24 * area, 24 * choice2, 24, 24 });
                     wallBoardeArrayIndex++;
 
 
-                    add_sprite_24(wallShadowArrayIndex, currDrawPosition - sf::Vector2f(4, -8), draw_Wall1shadows);
-                    wallShadowArrayIndex++;
+                    wall_shadow_textures[wall_shadow_texturesIndex].setColor({ 255, 255, 255, 255 });
+                    wall_shadow_textures[wall_shadow_texturesIndex].setPosition(currDrawPosition - sf::Vector2f{ 4, -8 });
+                    wall_shadow_textures[wall_shadow_texturesIndex].setTextureRect(sf::IntRect{ 24 * area, 24 * choice2, 24, 24 });
+                    wall_shadow_texturesIndex++;
 
                     wall_textures[wall_texturesArrayIndex].setColor({ 255, 255, 255, 255 });
                     wall_textures[wall_texturesArrayIndex].setPosition(currDrawPosition - sf::Vector2f{0, 8});
@@ -8311,6 +8409,9 @@ int main()
                         case 2:
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(horror_beam_destroyA3);
                             break;
+                        case 3:
+                            rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(horror_beam_destroyA3);
+                            break;
                         }
                         rotateable_sprites_bullets[rotateableSpriteBulletIndex].setColor({ 255, 255, 255, 255 });
                         rotateable_sprites_bullets[rotateableSpriteBulletIndex].setPosition(allObjects[idx].position - cameraPos);
@@ -8389,8 +8490,6 @@ int main()
         RendererBloom.blendMode = sf::BlendAdd;
 
         if (area >= 0) {
-
-            clear_extra_vertex_array(draw_Wall1shadows, wallShadowArrayIndex);
 
             clear_extra_vertex_array(draw_exploTile1_unders, exploTile1_under_ArrayIndex);
             clear_extra_vertex_array(draw_exploTile5_unders, exploTile5_under_ArrayIndex);
@@ -8561,8 +8660,15 @@ int main()
 
             //shadows now drawn
 
-            Renderer.texture = &Wall1shadow;
-            shadows.draw(draw_Wall1shadows, Renderer);
+            //wall shadows
+            for (sf::Sprite spr : wall_shadow_textures) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                shadows.draw(spr);
+            }
+            reset_rotateable_sprites(wall_shadow_textures, wall_shadow_texturesIndex);
+
             Renderer.texture = &shadow24tex;
             shadows.draw(draw_shadow24s, Renderer);
             Renderer.texture = &shadow32tex;
