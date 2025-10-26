@@ -31,7 +31,7 @@ int bandit_choice1 = 0;
 int draw_mult = 5;
 //
 
-bool global_debug = true;
+bool global_debug = false;
 
 int seed = time(NULL);
 
@@ -170,7 +170,7 @@ static int max_objects = 262144 / 4;
 int current_create_start = 1;
 //int curr_objcount = 1;   this is now redundant as threads break it   //important to keep this equal to the amount of objects active so increase when "adding" object and decrease when "removing" an object (setting it to "nothing" type) starts at one for the player object
 int current_frame = 0;      //used for stuff like i-frames, reset this each area
-int LOOPS = 0;
+int LOOPS = 30;
 //game logic stuff
 int area = 0;
 int sub_area = 1;
@@ -717,6 +717,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = small_prop_hitbox;
                     allObjects[i].damage = 1;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_plant_ID;
+                    allObjects[i].die_ID = snd_hit_plant_ID;
                     break;
                 case pipe_2_1:
                     allObjects[i].alarm1 = 24; //size of the sprite on the sprite sheet X
@@ -725,6 +727,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = small_prop_hitbox;
                     allObjects[i].damage = 1;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_metal_ID;
+                    allObjects[i].die_ID = snd_sewer_pipe_break_ID;
                     break;
                 case toxic_barrel_2_1:
                     allObjects[i].alarm1 = 24; //size of the sprite on the sprite sheet X
@@ -733,6 +737,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = small_prop_hitbox;
                     allObjects[i].damage = 1;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_metal_ID;
                     break;
                 case tires_3_1:
                     allObjects[i].alarm1 = 24; //size of the sprite on the sprite sheet X
@@ -741,6 +746,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = small_prop_hitbox;
                     allObjects[i].damage = 1;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_plant_ID;
+                    allObjects[i].die_ID = snd_hit_plant_ID;
                     break;
                 case crystal_4_1:
                 case crystal_4_2:
@@ -751,6 +758,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = small_prop_hitbox;
                     allObjects[i].damage = 1;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_rock_ID;
+                    allObjects[i].die_ID = snd_crystal_prop_break_ID;
                     break;
                 case fire_hydrant_5_1:
                     allObjects[i].alarm1 = 24; //size of the sprite on the sprite sheet X
@@ -759,6 +768,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = small_prop_hitbox;
                     allObjects[i].damage = 1;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_metal_ID;
+                    allObjects[i].die_ID = snd_hydrant_break_ID;
                     break;
                 case icicle_5_1:
                     allObjects[i].alarm1 = 24; //size of the sprite on the sprite sheet X
@@ -767,6 +778,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = small_prop_hitbox;
                     allObjects[i].damage = 1;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_rock_ID;
+                    allObjects[i].die_ID = snd_icicle_break_ID;
                     break;
 
 
@@ -777,6 +790,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = small_prop_hitbox;
                     allObjects[i].damage = 4;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_metal_ID;
+                    allObjects[i].die_ID = snd_hit_metal_ID;
                     break;
 
 
@@ -788,6 +803,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = small_prop_hitbox;
                     allObjects[i].damage = 1;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_rock_ID;
+                    allObjects[i].die_ID = snd_hit_rock_ID;
                     break;
 
 
@@ -798,6 +815,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = medium_prop_hitbox ;
                     allObjects[i].damage = 1;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_rock_ID;
+                    allObjects[i].die_ID = snd_hit_rock_ID;
                     break;
 
 
@@ -809,6 +828,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = medium_prop_hitbox;
                     allObjects[i].damage = 1;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_metal_ID;
+                    allObjects[i].die_ID = snd_hit_metal_ID;
                     break;
 
                 case vending_machine_5_1:
@@ -818,6 +839,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = medium_prop_hitbox;
                     allObjects[i].damage = 1;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_metal_ID;
+                    allObjects[i].die_ID = snd_vending_machine_break_ID;
                     break;
 
                 case snowman_5_1:
@@ -827,6 +850,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = medium_prop_hitbox;
                     allObjects[i].damage = 1;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_rock_ID;
+                    allObjects[i].die_ID = snd_snowman_break_ID;
                     break;
 
                 case news_stand_5_1:
@@ -836,6 +861,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = medium_prop_hitbox;
                     allObjects[i].damage = 1;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_metal_ID;
+                    allObjects[i].die_ID = snd_hydrant_break_ID;
                     break;
 
 
@@ -846,6 +873,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = small_prop_hitbox;
                     allObjects[i].damage = 8;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_plant_ID;
+                    allObjects[i].die_ID = snd_coccon_break_ID;
                     break;
 
 
@@ -856,6 +885,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = medium_prop_hitbox;
                     allObjects[i].damage = 1;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_metal_ID;
+                    allObjects[i].die_ID = snd_street_light_break_ID;
                     break;
 
                 case terminal_6_1:
@@ -865,6 +896,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = small_prop_hitbox;
                     allObjects[i].damage = 6;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_metal_ID;
+                    allObjects[i].die_ID = snd_server_break_ID;
                     break;
 
 
@@ -875,6 +908,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = medium_prop_hitbox;
                     allObjects[i].damage = 4;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_metal_ID;
+                    allObjects[i].die_ID = snd_mutant_tube_break_ID;
                     break;
 
 
@@ -885,6 +920,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = medium_prop_hitbox;
                     allObjects[i].damage = 1;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_metal_ID;
+                    allObjects[i].die_ID = snd_tube_break_ID;
                     break;
 
 
@@ -895,6 +932,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = medium_prop_hitbox;
                     allObjects[i].damage = 2;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_metal_ID;
+                    allObjects[i].die_ID = snd_server_break_ID;
                     break;
 
 
@@ -905,6 +944,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = medium_prop_hitbox;
                     allObjects[i].damage = 11;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_rock_ID;
+                    allObjects[i].die_ID = snd_generator_break_ID;
                     break;
 
 
@@ -915,6 +956,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].size = 1;
                     allObjects[i].my_hitbox = medium_prop_hitbox;
                     allObjects[i].damage = 11;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_rock_ID;
+                    allObjects[i].die_ID = snd_pillar_break_ID;
                     break;
 
                 default:
@@ -1252,6 +1295,10 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 
                 break;
             case idpd_spawn:
+                play_sound_on_player(snd_idpd_spawn_elite_ID);
+                if (LOOPS > 20) {
+                    play_sound_on_player(snd_idpd_spawn_ID);
+                }
                 allObjects[i].my_id = obj_id;
                 allObjects[i].my_hitbox = no_hitbox;
 
@@ -2337,12 +2384,15 @@ void enemy_die(int ENEMY, int PROJ) {
         switch (allObjects[ENEMY].alarm2) {
         case barrel_1_1:
             create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, explosion, 0.0f, 0);
+            play_sound_relative_to_player(snd_explosion_ID, allObjects[ENEMY].position.x, allObjects[ENEMY].position.y);
             break;
         case toxic_barrel_2_1:
             create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, explosion, 0.0f, 0);
             for (int i = 0; i < 30; i++) {
                 create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, toxic_gas, 0.0f, 0);
             }
+            play_sound_relative_to_player(snd_explosion_ID, allObjects[ENEMY].position.x, allObjects[ENEMY].position.y);
+            play_sound_relative_to_player(snd_toxic_barrel_gas_ID, allObjects[ENEMY].position.x, allObjects[ENEMY].position.y);
             break;
         case car_3_1:
         case car_5_1:
@@ -2353,9 +2403,11 @@ void enemy_die(int ENEMY, int PROJ) {
                 create_object(allObjects[ENEMY].position.x + random_float(6) - 3, allObjects[ENEMY].position.y + random_float(6) - 3, 0, 0, explosion, 0.0f, 1);    //small explosion
             }
             allObjects[ENEMY].my_id = nothing;
+            play_sound_relative_to_player(snd_car_explosion_ID, allObjects[ENEMY].position.x, allObjects[ENEMY].position.y);
             break;
         case small_generator_7_1:
             create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, explosion, 0.0f, 2);
+            play_sound_relative_to_player(snd_explosion_ID, allObjects[ENEMY].position.x, allObjects[ENEMY].position.y);
             break;
         default:
             break;
@@ -4966,7 +5018,7 @@ void generate_floors(int initial_goal, int safe_dist, int direction_choice_total
                         for (int b = 0; b < 254; b++) {
                             if (level_generators[b].active == false) {
                                 level_generators[b].active = true;
-                                level_generators[b].Btile = rand() % Btile_chance;
+                                level_generators[b].Btile = rand() % Btile_chance == 0;
                                 level_generators[b].x = level_generators[i].x;
                                 level_generators[b].y = level_generators[i].y;
                                 level_generators[b].spdx = rand() % 2;
@@ -5317,7 +5369,33 @@ int main()
 
     add_new_sound(snd_horror_beam_hold_ID, "snd/horror_beam_hold.wav", all_sounds, 0.00f, 0.0f, 70.0f);
 
+    
     add_new_sound(snd_hit_wall_ID, "snd/hit_wall.wav", all_sounds, 0.1f, 0.02f);
+
+    add_new_sound(snd_hit_rock_ID, "snd/hit_rock.wav", all_sounds, 0.1f, 0.02f);
+
+    add_new_sound(snd_hit_plant_ID, "snd/hit_plant.wav", all_sounds, 0.1f, 0.02f);
+
+    add_new_sound(snd_hit_metal_ID, "snd/hit_metal.wav", all_sounds, 0.1f, 0.02f);
+
+    add_new_sound(snd_hit_flesh_ID, "snd/hit_flesh.wav", all_sounds, 0.1f, 0.02f);
+    //prop related
+    add_new_sound(snd_sewer_pipe_break_ID, "snd/sewer_pipe_break.wav", all_sounds, 0.1f, 0.02f);
+    add_new_sound(snd_toxic_barrel_gas_ID, "snd/toxic_barrel_gas.wav", all_sounds, 0.1f, 0.02f);
+    add_new_sound(snd_car_explosion_ID, "snd/car_explosion.wav", all_sounds, 0.1f, 0.02f);
+    add_new_sound(snd_crystal_prop_break_ID, "snd/crystal_prop_break.wav", all_sounds, 0.1f, 0.02f);
+    add_new_sound(snd_coccon_break_ID, "snd/coccon_break.wav", all_sounds, 0.1f, 0.02f);
+    add_new_sound(snd_icicle_break_ID, "snd/icicle_break.wav", all_sounds, 0.1f, 0.02f);
+    add_new_sound(snd_hydrant_break_ID, "snd/hydrant_break.wav", all_sounds, 0.1f, 0.02f);
+    add_new_sound(snd_street_light_break_ID, "snd/street_light_break.wav", all_sounds, 0.1f, 0.02f);
+    add_new_sound(snd_vending_machine_break_ID, "snd/vending_machine_break.wav", all_sounds, 0.1f, 0.02f);
+    add_new_sound(snd_snowman_break_ID, "snd/snowman_break.wav", all_sounds, 0.1f, 0.02f);
+    add_new_sound(snd_server_break_ID, "snd/server_break.wav", all_sounds, 0.1f, 0.02f);
+    add_new_sound(snd_tube_break_ID, "snd/tube_break.wav", all_sounds, 0.1f, 0.02f);
+    add_new_sound(snd_mutant_tube_break_ID, "snd/mutant_tube_break.wav", all_sounds, 0.1f, 0.02f);
+    add_new_sound(snd_generator_break_ID, "snd/generator_break.wav", all_sounds, 0.1f, 0.02f);
+    add_new_sound(snd_pillar_break_ID, "snd/pillar_break.wav", all_sounds, 0.1f, 0.02f);
+
 
     add_new_sound(snd_wall_break_rock_ID, "snd/wall_break_rock.wav", all_sounds, 0.1f, 0.005f);
 
@@ -5383,7 +5461,10 @@ int main()
 
     add_new_sound(snd_idpd_freak_revive_ID, "snd/idpd_freak_revive.wav", all_sounds, 0.05f, 0.01f);
 
-    add_new_sound(snd_idpd_freak_revive_area_ID, "snd/idpd_freak_revive_area.wav", all_sounds, 0.05f, 0.01f);
+    add_new_sound(snd_idpd_spawn_ID, "snd/idpd_spawn.wav", all_sounds, 0.05f, 0.001f);
+    add_new_sound(snd_idpd_spawn_elite_ID, "snd/idpd_spawn_elite.wav", all_sounds, 0.05f, 0.0f);
+
+    add_new_sound(snd_idpd_freak_revive_area_ID, "snd/idpd_freak_revive_area.wav", all_sounds, 0.05f, 0.0f);
 
     add_new_sound(snd_portal_open_ID, "snd/portal_open.wav", all_sounds, 0.01f, 0.01f);
 
@@ -8366,15 +8447,12 @@ int main()
                         switch (choice) {
                         case 0:
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(playerbulletdelete1);
-                            rotateableSpriteBulletIndex++;
                             break;
                         case 1:
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(playerbulletdelete2);
-                            rotateableSpriteBulletIndex++;
                             break;
                         case 2:
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(playerbulletdelete3);
-                            rotateableSpriteBulletIndex++;
                             break;
                         case 3:
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(bullet1_destroy4tex);        //same as enemybullet1
@@ -9038,7 +9116,7 @@ int main()
         tTime.setColor(sf::Color::White);
         tTime.setPosition({ 2, 82 });
 
-        if (global_debug || 1) {
+        if (global_debug) {
             draw_text_NT(tx, buffer_over);
             draw_text_NT(ty, buffer_over);
             draw_text_NT(ts, buffer_over);

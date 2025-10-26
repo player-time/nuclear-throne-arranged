@@ -189,6 +189,27 @@ enum sound {
 	snd_horror_beam_hold_ID,
 
 	snd_hit_wall_ID,
+	snd_hit_rock_ID,
+	snd_hit_plant_ID,
+	snd_hit_metal_ID,
+	snd_hit_flesh_ID,
+
+	snd_sewer_pipe_break_ID,
+	snd_toxic_barrel_gas_ID,
+	snd_car_explosion_ID,
+	snd_crystal_prop_break_ID,
+	snd_coccon_break_ID,
+	snd_icicle_break_ID,
+	snd_hydrant_break_ID,
+	snd_street_light_break_ID,
+	snd_vending_machine_break_ID,
+	snd_snowman_break_ID,
+	snd_server_break_ID,
+	snd_tube_break_ID,
+	snd_mutant_tube_break_ID,
+	snd_generator_break_ID,
+	snd_pillar_break_ID,
+
 	snd_wall_break_rock_ID,
 
 	snd_IDPD_explosion_ID,
@@ -218,6 +239,9 @@ enum sound {
 	snd_nade_hit_wall_ID,
 	snd_IDPD_nade_load_ID,
 	snd_IDPD_nade_almost_ID,
+
+	snd_idpd_spawn_ID,
+	snd_idpd_spawn_elite_ID,
 };
 
 enum gridType { out_of_bounds, wall, exlpo_tile, boarder , floor_tile, void_tile, T2_boarder }; //, secret_wall, secret_explotile, vault_wall, vault_explotile};
