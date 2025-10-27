@@ -1,3 +1,29 @@
 ﻿  Copy OpenAL DLL
-  main.cpp
-  CMakeSFMLProject.vcxproj -> C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\bin\MinSizeRel\CMakeSFMLProject.exe
+  Building Custom Rule C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/CMakeLists.txt
+  CMake is re-running because C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/generate.stamp is out-of-date.
+    the file 'C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/CMakeLists.txt'
+    is newer than 'C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeFiles/generate.stamp.depend'
+    result='-1'
+  -- Selecting Windows SDK version 10.0.19041.0 to target Windows 10.0.19045.
+  MSBuild version 17.3.1+2badb37d1 for .NET Framework
+    Performing update step for 'sfml-populate'
+    CMake Error at C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-subbuild/sfml-populate-prefix/tmp/sfml-populate-gitupdate.cmake:34 (message):
+      Failed to get the hash for HEAD:
+    
+      fatal: not a git repository: '.git'
+    
+    
+    
+C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets(247,5): error MSB8066: Custom build for 'C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\_deps\sfml-subbuild\CMakeFiles\c06874a68ac7f672ef11798a64236689\sfml-populate-update.rule;C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\_deps\sfml-subbuild\CMakeFiles\c06874a68ac7f672ef11798a64236689\sfml-populate-patch.rule;C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\_deps\sfml-subbuild\CMakeFiles\c06874a68ac7f672ef11798a64236689\sfml-populate-configure.rule;C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\_deps\sfml-subbuild\CMakeFiles\c06874a68ac7f672ef11798a64236689\sfml-populate-build.rule;C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\_deps\sfml-subbuild\CMakeFiles\c06874a68ac7f672ef11798a64236689\sfml-populate-install.rule;C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\_deps\sfml-subbuild\CMakeFiles\c06874a68ac7f672ef11798a64236689\sfml-populate-test.rule;C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\_deps\sfml-subbuild\CMakeFiles\9bddd5f6b30619fed10cd1d1b202944c\sfml-populate-complete.rule;C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\_deps\sfml-subbuild\CMakeFiles\74359fda0cf4582c9cbb9213d2ce04ba\sfml-populate.rule' exited with code 1. [C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\_deps\sfml-subbuild\sfml-populate.vcxproj]
+  
+  CMake Error at C:/Program Files/CMake/share/cmake-3.29/Modules/FetchContent.cmake:1714 (message):
+    Build step for sfml failed: 1
+  Call Stack (most recent call first):
+    C:/Program Files/CMake/share/cmake-3.29/Modules/FetchContent.cmake:1854:EVAL:2 (__FetchContent_directPopulate)
+    C:/Program Files/CMake/share/cmake-3.29/Modules/FetchContent.cmake:1854 (cmake_language)
+    C:/Program Files/CMake/share/cmake-3.29/Modules/FetchContent.cmake:2081 (FetchContent_Populate)
+    CMakeLists.txt:14 (FetchContent_MakeAvailable)
+  
+  
+  -- Configuring incomplete, errors occurred!
+C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets(247,5): error MSB8066: Custom build for 'C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\CMakeLists.txt' exited with code 1.

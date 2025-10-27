@@ -19,15 +19,15 @@ project(sfml-populate NONE)
 # Pass through things we've already detected in the main project to avoid
 # paying the cost of redetecting them again in ExternalProject_Add()
 set(GIT_EXECUTABLE [==[C:/Program Files/Git/cmd/git.exe]==])
-set(GIT_VERSION_STRING [==[2.42.0.windows.1]==])
+set(GIT_VERSION_STRING [==[2.51.0.windows.1]==])
 set_property(GLOBAL PROPERTY _CMAKE_FindGit_GIT_EXECUTABLE_VERSION
-  [==[C:/Program Files/Git/cmd/git.exe;2.42.0.windows.1]==]
+  [==[C:/Program Files/Git/cmd/git.exe;2.51.0.windows.1]==]
 )
 
 
 include(ExternalProject)
 ExternalProject_Add(sfml-populate
-                     "UPDATE_DISCONNECTED" "False" "GIT_REPOSITORY" "https://github.com/SFML/SFML.git" "EXTERNALPROJECT_INTERNAL_ARGUMENT_SEPARATOR" "GIT_TAG" "2.6.x" "GIT_SHALLOW" "ON"
+                     "UPDATE_DISCONNECTED" "False" "GIT_REPOSITORY" "https://github.com/SFML/SFML" "EXTERNALPROJECT_INTERNAL_ARGUMENT_SEPARATOR" "GIT_TAG" "2.6.x" "GIT_SHALLOW" "ON"
                     SOURCE_DIR          "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-src"
                     BINARY_DIR          "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-build"
                     CONFIGURE_COMMAND   ""

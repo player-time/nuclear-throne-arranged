@@ -23,7 +23,7 @@
 #include "C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\gameObjects.h"
 #include "C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\sprites.h"
 
-#include ".\SFML\SimpleSpriteBatcher.hpp"
+#include <SFML/SimpleSpriteBatcher.hpp>
 
 //temp debug variables
 
@@ -139,8 +139,6 @@ std::vector<sf::Sprite> wall_textures_bot;
 
 int explo_tiles_tex_max = 600;
 std::vector<sf::Sprite> explo_tiles_tex;
-
-
 
 int T2_explo_tiles_tex_max = 600;
 std::vector<sf::Sprite> T2_explo_tiles_tex;
@@ -449,6 +447,25 @@ void draw_text_NT(sf::Text text, sf::RenderTexture &renderer) {
     text.setPosition(text.getPosition() + sf::Vector2f{ 0, -1 });
     text.setColor(sf::Color::White);
     renderer.draw(text);
+}
+
+//draw light source
+void draw_light(sf::Vector2f pos, sf::RenderTexture& the_darkness, int large_radius, int small_radius) {
+    sf::RenderStates Renderer_2;
+    Renderer_2.blendMode = sf::BlendMin;
+    sf::CircleShape circ;
+
+    circ.setRadius(large_radius);
+    circ.setPointCount(24);
+    circ.setOrigin(large_radius, large_radius);
+    circ.setFillColor({ 0, 0, 0, 128 });
+    circ.setPosition(pos - cameraPos + sf::Vector2f(random_float(1.0f) - 0.5f, random_float(1.0f) - 0.5f));
+    the_darkness.draw(circ, Renderer_2);
+
+    circ.setRadius(small_radius);
+    circ.setOrigin(small_radius, small_radius);
+    circ.setFillColor({ 0, 0, 0, 0 });
+    the_darkness.draw(circ, Renderer_2);
 }
 
 float angle_to_player_radians(sf::Vector2f position) {
@@ -5523,10 +5540,17 @@ int main()
     buffer_under.create(320, 240);
     sf::Sprite buffer_underSprite(buffer_under.getTexture());
 
+
     //shadows
     sf::RenderTexture shadows;
     shadows.create(320, 240);
     sf::Sprite bufferShadows(shadows.getTexture());
+
+    //darkness
+    sf::RenderTexture the_darkness;
+    the_darkness.create(320, 240);
+    sf::Sprite bufferthe_darkness(the_darkness.getTexture());
+
 
     //sprites drawn under shadows
     sf::RenderTexture buffer_over;
@@ -6294,6 +6318,7 @@ int main()
         temp.setTexture(allExploTiles);
         explo_tiles_tex.push_back(temp);
     }
+
     //throne 2
     for (int i = 0; i < T2_explo_tiles_tex_max; i++) {
         sf::Sprite temp;
@@ -6501,6 +6526,7 @@ int main()
         buffer_over.clear(sf::Color::Transparent);
         buffer_under.clear(sf::Color::Transparent);
         shadows.clear(sf::Color::Transparent);
+        the_darkness.clear(sf::Color::Black);
 
         sf::CircleShape c{ 3.0f };
         sf::Text tx;
@@ -7174,10 +7200,12 @@ int main()
 
         int floor5_under_ArrayIndex = 0;
 
+
+
         for (int i = 0; i < max_floors; i++) {
             currDrawPosition = allFloors[i].getPosition() - cameraPos;
             //currDrawPosition = {100, 100};
-            if (abs(currDrawPosition.x - 160) < 200 && abs(currDrawPosition.y - 120) < 360) {
+            if (abs(currDrawPosition.x - 160) < 240 && abs(currDrawPosition.y - 120) < 400) {
                 int choice = allFloors[i].getOrigin().y;
 
                 int is_b_tile = allFloors[i].getOrigin().x;
@@ -7210,7 +7238,6 @@ int main()
                     Btile_size = 32;
                     break;
                 }
-                
                 if (area == 2) {
                     if (is_b_tile) {
                         add_sprite_32(floor1B_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 32), draw_floorTile1B_unders);
@@ -7226,6 +7253,8 @@ int main()
                         floor_textures_bloom[floor_textures_bloomArrayIndex].setPosition(currDrawPosition - sf::Vector2f(4, 4));
                         floor_textures_bloom[floor_textures_bloomArrayIndex].setTextureRect(sf::IntRect{ 0, 0, 40, 40 });
                         floor_textures_bloomArrayIndex++;
+                        //draw light in dark level
+                        draw_light(currDrawPosition + cameraPos + sf::Vector2f(16, 16), the_darkness, 32 + rand() % 4, 0);
                     }
                     else {
                         add_sprite_32(floor1_under_ArrayIndex, currDrawPosition - sf::Vector2f(0, 32), draw_floorTile1_unders);
@@ -7262,6 +7291,7 @@ int main()
                         floor_textures_B[floor_textures_BArrayIndex].setPosition(currDrawPosition - sf::Vector2f{ float(Btile_size - 32) / 2, float(Btile_size - 32) / 2 });
                         floor_textures_B[floor_textures_BArrayIndex].setTextureRect(sf::IntRect{ Btile_size * choice, area_offset_, Btile_size, Btile_size });
                         floor_textures_BArrayIndex++;
+                        
                     }
                     else {
                         if (area == 1) {
@@ -7451,6 +7481,9 @@ int main()
                             allObjects[idx].gun_angle = 0;
                         }
 
+                        //draw light in dark level
+                        draw_light(allObjects[idx].position, the_darkness, 130 + rand() % 4, 45 + rand() % 3);
+
                         choice = int(allObjects[0].image_index * 0.4f);
                         player_sprite.setPosition(allObjects[idx].position - cameraPos);
                         player_sprite.setRotation(allObjects[idx].gun_angle);   //rotation
@@ -7538,6 +7571,8 @@ int main()
                             portal_sprite.setTextureRect({ choice * 32, 0, 32, 32 });
                             portal_sprite.setOrigin(16, 16);
                         }
+                        //draw light in dark level
+                        draw_light(allObjects[idx].position, the_darkness, 120 + rand() % 8, 40 + rand() % 6);
                         break;
                     case portal_lightning:
                         choice = int(allObjects[idx].image_index * 0.4f);
@@ -7735,6 +7770,8 @@ int main()
                         explosions_sprites[explosionIndex].setPosition(allObjects[idx].position - cameraPos);
                         explosions_sprites[explosionIndex].setTextureRect(sf::IntRect{ 96 * choice, 0, 96, 96 });
                         explosionIndex++;
+                        //draw light in dark level
+                        draw_light(allObjects[idx].position, the_darkness, 160 + rand() % 4, 110 + rand() % 3);
                         break;
                     case explosion:
                         choice = int(allObjects[idx].image_index * 0.4f);
@@ -7753,6 +7790,8 @@ int main()
                             explosions_sprites[explosionIndex].setTextureRect(sf::IntRect{ 48 * choice, 144, 48, 48 });
                         }
                         explosionIndex++;
+                        //draw light in dark level
+                        draw_light(allObjects[idx].position, the_darkness, 160 + rand() % 4, 110 + rand() % 3);
                         break;
 
                     case plasma_impact:
@@ -8474,6 +8513,9 @@ int main()
                         rotateable_sprites_bullets[rotateableSpriteBulletIndex].setPosition(allObjects[idx].position - cameraPos);
                         rotateable_sprites_bullets[rotateableSpriteBulletIndex].setRotation(allObjects[idx].direction);
                         rotateableSpriteBulletIndex++;
+
+                        //draw light in dark level
+                        draw_light(allObjects[idx].position, the_darkness, 70 + rand() % 4, 30 + rand() % 3);
                         break;
                     case horror_bullet_destroy:
                         choice = int(allObjects[idx].image_index * 0.4f);
@@ -9071,6 +9113,13 @@ int main()
 
             if (t2_draw_in_front) {
                 buffer_over.draw(T2_sprite);
+            }
+
+            if (area == 2 || area == 4 || area == 6) {
+                the_darkness.display();
+
+                sf::Sprite combinedthe_darkness(the_darkness.getTexture());
+                buffer_over.draw(combinedthe_darkness);
             }
 
             for (sf::Text tex : popup_texts) {

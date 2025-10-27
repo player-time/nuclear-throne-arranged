@@ -1,11 +1,26 @@
 ﻿  Clipboard.cpp
+  Context.cpp
+  Cursor.cpp
+  GlContext.cpp
+  GlResource.cpp
   Joystick.cpp
   JoystickManager.cpp
   Keyboard.cpp
   Mouse.cpp
+  Sensor.cpp
+  SensorManager.cpp
+  Touch.cpp
+  VideoMode.cpp
+  Vulkan.cpp
   ClipboardImpl.cpp
+  CursorImpl.cpp
   InputImpl.cpp
   JoystickImpl.cpp
+  SensorImpl.cpp
+  VideoModeImpl.cpp
+  Generating Code...
+  Compiling...
+  VulkanImplWin32.cpp
   WglContext.cpp
   WindowImplWin32.cpp
   Window.cpp

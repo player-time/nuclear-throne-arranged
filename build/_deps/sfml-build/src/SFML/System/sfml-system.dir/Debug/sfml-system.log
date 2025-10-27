@@ -1,14 +1,14 @@
 ﻿  Clock.cpp
   Err.cpp
+  FileInputStream.cpp
   Lock.cpp
+  MemoryInputStream.cpp
   Mutex.cpp
   Sleep.cpp
   String.cpp
   Thread.cpp
   ThreadLocal.cpp
   Time.cpp
-  FileInputStream.cpp
-  MemoryInputStream.cpp
   ClockImpl.cpp
   MutexImpl.cpp
   SleepImpl.cpp

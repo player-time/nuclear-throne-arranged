@@ -7,24 +7,24 @@
   JoystickManager.cpp
   Keyboard.cpp
   Mouse.cpp
-  Touch.cpp
   Sensor.cpp
   SensorManager.cpp
+  Touch.cpp
   VideoMode.cpp
   Vulkan.cpp
-  Window.cpp
-  WindowBase.cpp
-  WindowImpl.cpp
-  CursorImpl.cpp
   ClipboardImpl.cpp
+  CursorImpl.cpp
   InputImpl.cpp
-  Generating Code...
-  Compiling...
   JoystickImpl.cpp
   SensorImpl.cpp
   VideoModeImpl.cpp
+  Generating Code...
+  Compiling...
   VulkanImplWin32.cpp
-  WindowImplWin32.cpp
   WglContext.cpp
+  WindowImplWin32.cpp
+  Window.cpp
+  WindowBase.cpp
+  WindowImpl.cpp
   Generating Code...
   sfml-window.vcxproj -> C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\_deps\sfml-build\lib\Debug\sfml-window-s-d.lib
