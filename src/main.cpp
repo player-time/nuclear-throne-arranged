@@ -148,6 +148,10 @@ std::vector<sf::Sprite> T2_floor_tiles_tex;
 
 sf::Vector2f cameraPos = { 24000.0f, 24000.0f };
 
+sf::Image game_icon;
+
+bool fullscreen_mode = true;
+
 //text ingame
 std::vector<sf::Text> popup_texts;
 int popup_texts_max = 100;
@@ -219,12 +223,10 @@ int foot_step_sound_to_play = org;
 int footstep_audio_offset = 0;
 int footstep_audio_offset_slime = 0;
 
-bool player_rolling = false;
-
-int player_bullets = 255;
-int player_bolts = 55;
-int player_shells = 55;
-int player_explosives = 55;
+int player_bullets = 0;
+int player_bolts = 0;
+int player_shells = 0;
+int player_explosives = 0;
 int player_energy = 55;
 
 int player_bullets_max = 255;
@@ -263,6 +265,7 @@ bool player_move_right = false;
 
 bool player_held_LMB = false;
 bool player_held_RMB = false;
+bool player_pressed_RMB_this_frame = false;
 
 bool LMB_pressed = false;
 bool RMB_pressed = false;
@@ -306,8 +309,12 @@ bool LMB_released = true;
 bool RMB_released = true;
 bool SHIFT_held = false;
 
+//character specific
 //horror
 float horror_beam_strength = 0.0f;
+//fish
+int roll = 0;
+float roll_direction = 0.0f;
 
 //camera
 float camera_want_x = 0.0f;
@@ -348,8 +355,11 @@ int ultra_picked = 2;   //0 = no ultra
 
 int meltdown = 1;       //set to 2 when meltdown is picked
 
-character player_character = fish;
+character player_character = rebel;
 int player_character_idle_frames = 6;
+int player_character_walk_frames = 6;
+int player_character_death_frames = 6;
+int player_character_hurt_frames = 3;
 
 //sounds
 
@@ -599,53 +609,78 @@ void pickup_ammo() {
         int choice = rand() % 5;
         switch (choice) {
         default:    //case 0:
-            player_bullets += 32;
+            player_bullets += 32 + (player_character == fish) * 8;
             if (player_bullets > player_bullets_max) {
                 player_bullets = player_bullets_max;
                 create_popuptext("MAX BULLETS", allObjects[0].position + sf::Vector2f{ 0, -8 });
             }
             else {
-                create_popuptext("+32 BULLETS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                if (player_character == fish) {
+                    create_popuptext("+40 BULLETS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+                else {
+                    create_popuptext("+32 BULLETS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
             }
             break;
         case 1:
-            player_energy += 10;
+            player_energy += 10 + (player_character == fish) * 3;
             if (player_energy > player_energy_max) {
                 player_energy = player_energy_max;
                 create_popuptext("MAX ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
             }
             else {
-                create_popuptext("+10 ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                if (player_character == fish) {
+                    create_popuptext("+13 ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+                else {
+                    create_popuptext("+10 ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
             }
             break;
         case 2:
-            player_shells += 8;
+            player_shells += 8 + (player_character == fish) * 2;
             if (player_shells > player_shells_max) {
                 player_shells = player_shells_max;
                 create_popuptext("MAX SHELLS", allObjects[0].position + sf::Vector2f{ 0, -8 });
             }
             else {
-                create_popuptext("+8 SHELLS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                if (player_character == fish) {
+                    create_popuptext("+10 SHELLS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+                else {
+                    create_popuptext("+8 SHELLS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
             }
             break;
         case 3:
-            player_bolts += 7;
+            player_bolts += 7 + (player_character == fish) * 2;
             if (player_bolts > player_bolts_max) {
                 player_bolts = player_bolts_max;
                 create_popuptext("MAX BOLTS", allObjects[0].position + sf::Vector2f{ 0, -8 });
             }
             else {
-                create_popuptext("+7 BOLTS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                if (player_character == fish) {
+                    create_popuptext("+9 BOLTS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+                else {
+                    create_popuptext("+7 BOLTS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
             }
             break;
         case 4:
-            player_explosives += 6;
+            player_explosives += 6 + (player_character == fish) * 2;
             if (player_explosives > player_explosives_max) {
                 player_explosives = player_explosives_max;
                 create_popuptext("MAX EXPLOSIVES", allObjects[0].position + sf::Vector2f{ 0, -8 });
             }
             else {
-                create_popuptext("+6 EXPLOSIVES", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                if (player_character == fish) {
+                    create_popuptext("+8 EXPLOSIVES", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+                else {
+                    create_popuptext("+6 EXPLOSIVES", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
             }
             break;
         }
@@ -657,7 +692,12 @@ void pickup_ammo() {
             create_popuptext("MAX ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
         }
         else {
-            create_popuptext("+10 ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            if (player_character == fish) {
+                create_popuptext("+13 ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            else {
+                create_popuptext("+10 ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
         }
     }
 }
@@ -2532,9 +2572,16 @@ void enemy_die(int ENEMY, int PROJ) {
 void resize_window(int change, sf::RenderWindow &window) {
     window_size_x += 320 * change;
     window_size_y += 240 * change;
-    window.setSize(sf::Vector2u(window_size_x, window_size_y));
-    window.setPosition(window.getPosition() - sf::Vector2i(160 * change, 120 * change));
+    
+    if (window_size_x == 960 && fullscreen_mode) {
+        window_size_x += 320 * change;
+        window_size_y += 240 * change;
+        window_scale += change;
+    }
+    
     cameraOffset = { -window_size_x / (window_scale * 2), -window_size_y / (window_scale * 2) };
+
+    window.close();
 
     if (window_size_x == 320) {
         sf::Image cursor_pixels_1_16;
@@ -2555,8 +2602,30 @@ void resize_window(int change, sf::RenderWindow &window) {
         sf::Image cursor_pixels_1_64;
         cursor_pixels_1_64.loadFromFile("res/player/sprCrosshair_1_64.png");
         naitive_cursor_sprite.loadFromPixels(cursor_pixels_1_64.getPixelsPtr(), sf::Vector2u(64, 64), sf::Vector2u(32, 32));
+    }    
+    if (fullscreen_mode) {
+        window.create({ (u_int)window_size_x, (u_int)window_size_y }, "Nuclear Throne Arranged", sf::Style::Fullscreen);
+        window.setPosition({ 0, 0 });
     }
+    else {
+        //if not fullscreen
+        window.create({ (u_int)window_size_x, (u_int)window_size_y }, "Nuclear Throne Arranged", sf::Style::Close);
+        window.setPosition(window.getPosition() - sf::Vector2i(160 * change, 120 * change));
+    }
+
     window.setMouseCursor(naitive_cursor_sprite);
+
+    window.setVerticalSyncEnabled(false);
+
+    window.setFramerateLimit(MAXFPS);
+
+    game_icon.loadFromFile("res/NT icon arranged.png");
+    window.setIcon(32, 32, game_icon.getPixelsPtr());
+
+    sf::View myView(sf::Vector2f(160, 120), sf::Vector2f(320, 240));
+    window.setView(myView);
+
+    window.setKeyRepeatEnabled(false);
 }
 
 void enemy_push(int currOBJ, int O) {
@@ -4580,7 +4649,14 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                             case objectID::player:
                                 player_collision(i, j, O);
                                 if (!can_move_outside_T2_arena) {
-                                    collide_wall(O, i, j, h, w, 5);
+                                    if (!roll) {
+                                        collide_wall(O, i, j, h, w, 5);
+                                    }
+                                    else {
+                                        object_bounce_wall(O, h, w, 5, 5, i, j);
+                                        roll_direction = allObjects[O].direction;
+
+                                    }
                                 }
                                 break;
                             case idpd_freak:
@@ -4655,7 +4731,13 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                 }
                                 break;
                             case objectID::player:
-                                collide_wall(O, i, j, h, w, 5);
+                                if (!roll) {
+                                    collide_wall(O, i, j, h, w, 5);
+                                }
+                                else {
+                                    object_bounce_wall(O, h, w, 5, 5, i, j);
+                                    roll_direction = allObjects[O].direction;
+                                }
                                 break;
                             case objectID::ammo_pack:
                                 collide_wall(O, i, j, h, w, 7);
@@ -5238,6 +5320,112 @@ void generate_floors(int initial_goal, int safe_dist, int direction_choice_total
     }
 }
 
+void swap_player_textures(sf::Texture &player_tex, character new_character, bool BSKIN) {
+
+    is_Bskin = BSKIN;
+    player_character = new_character;
+
+    player_sprite.setTexture(player_tex);
+    switch (player_character) {
+    case horror:
+        player_character_idle_frames = 6;
+        player_character_walk_frames = 6;
+        player_character_death_frames = 7;
+        player_character_hurt_frames = 3;
+        break;
+    case fish:
+        player_character_idle_frames = 4;
+        player_character_walk_frames = 6;
+        player_character_death_frames = 6;
+        player_character_hurt_frames = 3;
+        break;
+    case crystal:
+        player_character_idle_frames = 4;
+        player_character_walk_frames = 6;
+        player_character_death_frames = 6;
+        player_character_hurt_frames = 3;
+        break;
+    case eyes:
+        player_character_idle_frames = 4;
+        player_character_walk_frames = 6;
+        player_character_death_frames = 6;
+        player_character_hurt_frames = 3;
+        break;
+    case melting:
+        player_character_idle_frames = 4;
+        player_character_walk_frames = 6;
+        player_character_death_frames = 6;
+        player_character_hurt_frames = 3;
+        break;
+    case plant:
+        player_character_idle_frames = 4;
+        player_character_walk_frames = 4;
+        player_character_death_frames = 6;
+        player_character_hurt_frames = 3;
+        //only 4 walk frames aswell
+        break;
+    case YV:
+        if (!is_Bskin) {
+            player_character_idle_frames = 4;
+            player_character_walk_frames = 6;
+        }
+        else {
+            player_character_idle_frames = 14;
+            player_character_walk_frames = 14;
+        }
+        player_character_death_frames = 19;
+        player_character_hurt_frames = 3;
+        break;
+    case steroids:
+        player_character_idle_frames = 11;
+        player_character_walk_frames = 6;
+        player_character_death_frames = 6;
+        player_character_hurt_frames = 3;
+        break;
+    case robot:
+        player_character_idle_frames = 26;
+        player_character_walk_frames = 6;
+        player_character_death_frames = 6;
+        player_character_hurt_frames = 3;
+        break;
+    case chicken:
+        player_character_idle_frames = 11;
+        player_character_walk_frames = 6;
+        player_character_death_frames = 6;
+        player_character_hurt_frames = 3;
+        break;
+    case rebel:
+        player_character_idle_frames = 6;
+        player_character_walk_frames = 6;
+        player_character_hurt_frames = 3;
+        if (!is_Bskin) {
+            player_character_death_frames = 7;
+        }
+        else {
+            player_character_death_frames = 6;
+        }
+        break;
+    case rogue:
+        player_character_idle_frames = 10;
+        player_character_walk_frames = 6;
+        player_character_death_frames = 6;
+        player_character_hurt_frames = 3;
+        break;
+    case frog:
+        player_character_idle_frames = 6;
+        player_character_walk_frames = 6;
+        player_character_death_frames = 6;
+        player_character_hurt_frames = 3;
+        break;
+    case skeleton:
+        player_character_idle_frames = 6;
+        player_character_walk_frames = 7;
+        player_character_death_frames = 6;
+        player_character_hurt_frames = 10;
+        break;
+    }
+}
+
 void swap_sounds(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_buffers[]) {
     switch (area) {
     case 0:
@@ -5267,11 +5455,57 @@ void swap_sounds(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_buff
     }
 }
 
-void start_new_run() {
+void start_new_run(character chararcter_choice, sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_buffers[]) {
+    player_character = chararcter_choice;
 
+    switch (player_character) {
+    case horror:
+        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_horror_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
+        break;
+    case fish:
+        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_fish_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
+        break;
+    case crystal:
+        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_crystal_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
+        break;
+    case eyes:
+        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_eyes_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
+        break;
+    case melting:
+        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_melting_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
+        break;
+    case plant:
+        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_plant_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
+        break;
+    case YV:
+        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_YV_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
+        break;
+    case steroids:
+        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_steroids_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
+        break;
+    case robot:
+        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_robot_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
+        break;
+    case chicken:
+        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_chicken_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
+        break;
+    case rebel:
+        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_rebel_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
+        break;
+    case rogue:
+        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_rogue_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
+        break;
+    case frog:
+        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_frog_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
+        break;
+    case skeleton:
+        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_skeleton_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
+        break;
+    }
 }
 
 void generate_level(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_buffers[]) {
+
     //reset area
     for (int i = left_physics - 2; i <= right_physics + 2; i++) {
         for (int j = top_physics - 2; j <= bottom_physics + 2; j++) {
@@ -5455,8 +5689,6 @@ void generate_level(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_b
 //no debug window
 #pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 
-sf::Image game_icon;
-
 int main()
 {
 
@@ -5559,7 +5791,22 @@ int main()
 
     add_new_sound(snd_grunt_fire_ID, "snd/grunt_fire.wav", all_sounds, snd_grunt_fire_ID, all_extra_sound_buffers, 0.1f, 0.01f);
 
-    add_new_sound(snd_horror_hurt_ID, "snd/horror_hurt.wav", all_sounds, snd_horror_hurt_ID, all_extra_sound_buffers, 0.07f, 0.00f);
+
+    add_new_sound_buffer(snd_horror_hurt_ID, "snd/horror_hurt.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_fish_hurt_ID, "snd/fish_hurt.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_crystal_hurt_ID, "snd/crystal_hurt.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_eyes_hurt_ID, "snd/eyes_hurt.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_melting_hurt_ID, "snd/melting_hurt.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_plant_hurt_ID, "snd/plant_hurt.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_YV_hurt_ID, "snd/YV_hurt.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_steroids_hurt_ID, "snd/steroids_hurt.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_robot_hurt_ID, "snd/robot_hurt.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_chicken_hurt_ID, "snd/chicken_hurt.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_rebel_hurt_ID, "snd/rebel_hurt.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_rogue_hurt_ID, "snd/rogue_hurt.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_frog_hurt_ID, "snd/frog_hurt.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_skeleton_hurt_ID, "snd/skeleton_hurt.wav", all_extra_sound_buffers);
+
 
     add_new_sound(snd_pickup_disappear_ID, "snd/pickup_disappear.wav", all_sounds, snd_pickup_disappear_ID, all_extra_sound_buffers, 0.1f, 0.01f);
 
@@ -5728,14 +5975,18 @@ int main()
     all_sounds[snd_music_ID].sound.setLoop(true);
     
 
-    auto window = sf::RenderWindow({ (u_int)window_size_x, (u_int)window_size_y }, "Nuclear Throne Arranged", 4U);
+    auto window = sf::RenderWindow({ (u_int)window_size_x, (u_int)window_size_y }, "Nuclear Throne Arranged", sf::Style::Fullscreen);
+    
+    //sf::RenderWindow(sf::VideoMode(), "app.exe", sf::Style::Fullscreen);
     window.setFramerateLimit(MAXFPS);
 
     game_icon.loadFromFile("res/NT icon arranged.png");
     window.setIcon(32, 32, game_icon.getPixelsPtr());
-
+        
     sf::View myView(sf::Vector2f(160, 120), sf::Vector2f(320, 240));
     window.setView(myView);
+
+    window.setKeyRepeatEnabled(false);
 
      //sprites drawn over shadows
     sf::RenderTexture buffer_under;
@@ -6261,65 +6512,62 @@ int main()
         sf::Texture fishB_tex;
         fishB_tex.loadFromFile("res/player/characters/fishB.png");
 
-        switch (player_character) {
-        case horror:
-            player_sprite.setTexture(horror_tex);
-            player_character_idle_frames = 6;
-            break;
-        case fish:
-            player_sprite.setTexture(fish_tex);
-            player_character_idle_frames = 4;
-            break;
-        /*case crystal:
-            player_sprite.setTexture(crystal_tex);
-            player_character_idle_frames = 4;
-            break;
-        case eyes:
-            player_sprite.setTexture(eyes_tex);
-            player_character_idle_frames = 4;
-            break;
-        case melting:
-            player_sprite.setTexture(melting_tex);
-            player_character_idle_frames = 4;
-            break;
-        case plant:
-            player_sprite.setTexture(plant_tex);
-            player_character_idle_frames = 4;
-            //only 4 walk frames aswell
-            break;
-        case YV:
-            player_sprite.setTexture(YV_tex);
-            player_character_idle_frames = 4;
-            break;
-        case steroids:
-            player_sprite.setTexture(steriods_tex);
-            player_character_idle_frames = 11;
-            break;
-        case robot:
-            player_sprite.setTexture(robot_tex);
-            player_character_idle_frames = 26 ;
-            break;
-        case chicken:
-            player_sprite.setTexture(chicken_tex);
-            player_character_idle_frames = 11;
-            break;
-        case rebel:
-            player_sprite.setTexture(rebel_tex);
-            player_character_idle_frames = 6;
-            break;
-        case rogue:
-            player_sprite.setTexture(rogue_tex);
-            player_character_idle_frames = 10;
-            break;
-        case frog:
-            player_sprite.setTexture(frog_tex);
-            player_character_idle_frames = 6;
-            break;
-        case skeleton:
-            player_sprite.setTexture(skeleton_tex);
-            player_character_idle_frames = 6;
-            break;*/
-        }
+        sf::Texture crystal_tex;
+        crystal_tex.loadFromFile("res/player/characters/crystal.png");
+        sf::Texture crystalB_tex;
+        crystalB_tex.loadFromFile("res/player/characters/crystalB.png");
+
+        sf::Texture eyes_tex;
+        eyes_tex.loadFromFile("res/player/characters/eyes.png");
+        sf::Texture eyesB_tex;
+        eyesB_tex.loadFromFile("res/player/characters/eyesB.png");
+
+        sf::Texture melting_tex;
+        melting_tex.loadFromFile("res/player/characters/melting.png");
+        sf::Texture meltingB_tex;
+        meltingB_tex.loadFromFile("res/player/characters/meltingB.png");
+
+        sf::Texture plant_tex;
+        plant_tex.loadFromFile("res/player/characters/plant.png");
+        sf::Texture plantB_tex;
+        plantB_tex.loadFromFile("res/player/characters/plantB.png");
+
+        sf::Texture YV_tex;
+        YV_tex.loadFromFile("res/player/characters/YV.png");
+        sf::Texture YVB_tex;
+        YVB_tex.loadFromFile("res/player/characters/YVB.png");
+
+        sf::Texture steroids_tex;
+        steroids_tex.loadFromFile("res/player/characters/steroids.png");
+        sf::Texture steroidsB_tex;
+        steroidsB_tex.loadFromFile("res/player/characters/steroidsB.png");
+
+        sf::Texture robot_tex;
+        robot_tex.loadFromFile("res/player/characters/robot.png");
+        sf::Texture robotB_tex;
+        robotB_tex.loadFromFile("res/player/characters/robotB.png");
+
+        sf::Texture chicken_tex;
+        chicken_tex.loadFromFile("res/player/characters/chicken.png");
+        sf::Texture chickenB_tex;
+        chickenB_tex.loadFromFile("res/player/characters/chickenB.png");
+
+        sf::Texture rebel_tex;
+        rebel_tex.loadFromFile("res/player/characters/rebel.png");
+        sf::Texture rebelB_tex;
+        rebelB_tex.loadFromFile("res/player/characters/rebelB.png");
+
+        sf::Texture rogue_tex;
+        rogue_tex.loadFromFile("res/player/characters/rogue.png");
+        sf::Texture rogueB_tex;
+        rogueB_tex.loadFromFile("res/player/characters/rogueB.png");
+
+        sf::Texture frog_tex;
+        frog_tex.loadFromFile("res/player/characters/frog.png");
+
+        sf::Texture skeleton_tex;
+        skeleton_tex.loadFromFile("res/player/characters/skeleton.png");
+        
 
         sf::Texture crosshair_tex;
         crosshair_tex.loadFromFile("res/player/sprCrosshair.png");
@@ -6737,6 +6985,7 @@ int main()
                 }
                 if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
                     player_held_RMB = true;
+                    player_pressed_RMB_this_frame = true;
                 }
                 else {
                     player_held_RMB = false;
@@ -6786,6 +7035,57 @@ int main()
             }
 
             generate_level(all_sounds, all_extra_sound_buffers);
+
+            player_character = character(int(player_character) + 1);
+            if (player_character > 13) {
+                player_character = fish;
+            }
+            start_new_run(player_character, all_sounds, all_extra_sound_buffers);
+
+            switch (player_character) {
+            case fish:
+                swap_player_textures(fish_tex, character(player_character), false);
+                break;
+            case crystal:
+                swap_player_textures(crystal_tex, character(player_character), false);
+                break;
+            case eyes:
+                swap_player_textures(eyes_tex, character(player_character), false);
+                break;
+            case melting:
+                swap_player_textures(melting_tex, character(player_character), false);
+                break;
+            case plant:
+                swap_player_textures(plant_tex, character(player_character), false);
+                break;
+            case YV:
+                swap_player_textures(YV_tex, character(player_character), false);
+                break;
+            case steroids:
+                swap_player_textures(steroids_tex, character(player_character), false);
+                break;
+            case robot:
+                swap_player_textures(robot_tex, character(player_character), false);
+                break;
+            case chicken:
+                swap_player_textures(chicken_tex, character(player_character), false);
+                break;
+            case rebel:
+                swap_player_textures(rebel_tex, character(player_character), false);
+                break;
+            case horror:
+                swap_player_textures(horror_tex, character(player_character), false);
+                break;
+            case rogue:
+                swap_player_textures(rogue_tex, character(player_character), false);
+                break;
+            case frog:
+                swap_player_textures(frog_tex, character(player_character), false);
+                break;
+            case skeleton:
+                swap_player_textures(skeleton_tex, character(player_character), false);
+                break;
+            }
         }
         //debug to see where the background bleeds through
         //BGColor = { 255, 0, 0, 0};
@@ -6881,35 +7181,68 @@ int main()
                 }
             }
             allObjects[0].team = player_team;
+
+            if (player_pressed_RMB_this_frame) {
+                switch (player_character) {
+                case fish:      //roll
+                    if (roll <= 0) {
+                        roll = 12;
+                        if (allObjects[0].speeddir > 0.4f) {
+                            roll_direction = allObjects[0].direction;
+                        }
+                        else {
+                            roll_direction = direction_to_mouse;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+            player_pressed_RMB_this_frame = false;
+
             //do player movement first
             int horizontal_player_move = player_move_right - player_move_left;
             int vertical_player_move = player_move_down - player_move_up;
-            float player_acceleration = 2.5f;
+            float player_acceleration = 4.2f;
+
+            if (roll > 0) {
+                roll--;
+                player_acceleration = 5.0f;
+                create_object(allObjects[0].position.x, allObjects[0].position.y + 4, 0.7, 0.7, dust, 0, 0);    //dust
+            }
+
             if (allObjects[0].alarm1 > 0) {
                 player_acceleration = 0;
             }
-            float dirto_add = 0.0f;
-            if (horizontal_player_move || vertical_player_move) {
 
-                if (!horizontal_player_move && vertical_player_move) {
-                    dirto_add = 180.0f - (90.0f * vertical_player_move);
+            float dirto_add = 0.0f;
+            if (horizontal_player_move || vertical_player_move || roll > 0) {
+
+                if (roll <= 0) {
+                    if (!horizontal_player_move && vertical_player_move) {
+                        dirto_add = 180.0f - (90.0f * vertical_player_move);
+                    }
+                    if (horizontal_player_move && !vertical_player_move) {
+                        dirto_add = 90.0f - (90.0f * horizontal_player_move);
+                    }
+                    if (horizontal_player_move && vertical_player_move) {
+                        if (horizontal_player_move == 1 && vertical_player_move == 1) {
+                            dirto_add = 45.0f;
+                        }
+                        if (horizontal_player_move == 1 && vertical_player_move == -1) {
+                            dirto_add = 315.0f;
+                        }
+                        if (horizontal_player_move == -1 && vertical_player_move == -1) {
+                            dirto_add = 225.0f;
+                        }
+                        if (horizontal_player_move == -1 && vertical_player_move == 1) {
+                            dirto_add = 135.0f;
+                        }
+                    }
                 }
-                if (horizontal_player_move && !vertical_player_move) {
-                    dirto_add = 90.0f - (90.0f * horizontal_player_move);
-                }
-                if (horizontal_player_move && vertical_player_move) {
-                    if (horizontal_player_move == 1 && vertical_player_move == 1) {
-                        dirto_add = 45.0f;
-                    }
-                    if (horizontal_player_move == 1 && vertical_player_move == -1) {
-                        dirto_add = 315.0f;
-                    }
-                    if (horizontal_player_move == -1 && vertical_player_move == -1) {
-                        dirto_add = 225.0f;
-                    }
-                    if (horizontal_player_move == -1 && vertical_player_move == 1) {
-                        dirto_add = 135.0f;
-                    }
+                else {  //rolling
+                    dirto_add = roll_direction * degreestoradians;
                 }
 
                 float spd_add_x = cos(dirto_add / degreestoradians) * player_acceleration;
@@ -6928,8 +7261,8 @@ int main()
                 allObjects[0].direction = new_angle;
             }
 
-            if (allObjects[0].speeddir > player_max_speed) {
-                allObjects[0].speeddir = player_max_speed;
+            if (allObjects[0].speeddir > player_max_speed + (roll > 0) * 2) {
+                allObjects[0].speeddir = player_max_speed + (roll > 0) * 2;
             }
 
             //allObjects[0].friction = 0.45f;
@@ -6949,7 +7282,7 @@ int main()
             else {
                 //footsteps
                 foot_step_sound_to_play = no_footstep;
-                if (!player_rolling && ((round(allObjects[0].image_index * 0.4f) >= (player_footsetp + 2) && (round(allObjects[0].image_index * 0.4f) - 1) < (player_footsetp + 2)))) {
+                if (roll <= 0 && ((int(round(allObjects[0].image_index * 0.4f)) % player_character_walk_frames + 1 >= (player_footsetp + 2) && (int(round(allObjects[0].image_index * 0.4f)) % player_character_walk_frames) < (player_footsetp + 2)))) {
                     if (player_character == plant) {
                         player_footsetp++;
                         if (player_footsetp >= 3) {
@@ -7123,18 +7456,6 @@ int main()
             //calualte direction to mouse
             direction_to_mouse = atan2f(allObjects[0].position.y - (mousepos.y + cameraPos.y), allObjects[0].position.x - (mousepos.x + cameraPos.x)) + 180.0f / degreestoradians;
 
-            /*switch (player_character) {
-            case horror:
-                if (allObjects[0].image_index >= 14) {
-                    allObjects[0].image_index = -1;
-                }
-                break;
-            case fish:
-                if (allObjects[0].image_index >= 9) {
-                    allObjects[0].image_index = -1;
-                }
-                break;
-            }*/
             allObjects[0].image_index++;
 
             if (player_prev_speed_greater_than_zero != allObjects[0].speeddir > 0.0f) {
@@ -7200,6 +7521,7 @@ int main()
             calculate_ammo_drop_mult(); //calculate ammo mult after firing
 
             play_sounds_this_frame_count[snd_horror_beam_hold_ID] = -1;
+
             if (player_held_RMB) {    //player active logic
                 switch (player_character) {
                 case horror:        //unnerfed beam
@@ -7428,11 +7750,7 @@ int main()
                         }
                         break;
                     case snd_player_hurt_ID:
-                        switch(player_character){
-                        case horror:
-                            play_sound_random_pitch(all_sounds[snd_horror_hurt_ID].sound, all_sounds[snd_horror_hurt_ID].pitch_variance, snd_horror_hurt_ID);
-                            break;
-                        }
+                        play_sound_random_pitch(all_sounds[snd_player_hurt_ID].sound, all_sounds[snd_player_hurt_ID].pitch_variance, snd_player_hurt_ID);
                         break;
                     }
                     play_sounds_this_frame_count[i] = 0;
@@ -7917,10 +8235,16 @@ int main()
                             choice = int(allObjects[0].image_index * 0.4f) % player_character_idle_frames;
                         }
                         else {
-                            choice = int(allObjects[0].image_index * 0.4f) % 6;
+                            choice = int(allObjects[0].image_index * 0.4f) % player_character_walk_frames;
                         }
                         player_sprite.setPosition(allObjects[idx].position - cameraPos);
-                        player_sprite.setRotation(allObjects[idx].gun_angle);   //rotation
+                        //roll rotation vs. portal rotation
+                        if (allObjects[idx].gun_angle != 0.0f) {
+                            player_sprite.setRotation(allObjects[idx].gun_angle);   //rotation
+                        }
+                        else {
+                            player_sprite.setRotation(roll * -30 * (player_is_facing_right));   //rotation
+                        }
                         player_sprite.setTextureRect(sf::IntRect{ 48 * choice, 48 * choice2, 48, 48 });
                         player_sprite.setScale(player_is_facing_right * allObjects[0].scale, 1 * allObjects[0].scale);
                         player_wave++;
@@ -9019,7 +9343,7 @@ int main()
 
         sf::Text debug1;
 
-        debug1.setString("player_walk_material: " + std::to_string(player_walk_material));
+        debug1.setString("foot_step_sound_to_play: " + std::to_string(foot_step_sound_to_play));
         debug1.setCharacterSize(8);
         debug1.setFont(font);
         debug1.setColor(sf::Color::White);

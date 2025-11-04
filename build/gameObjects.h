@@ -252,8 +252,24 @@ enum sound_ID {
 	snd_IDPD_explosion_ID,
 	snd_plasma_hit_ID,
 
+
 	snd_player_hurt_ID,
+
 	snd_horror_hurt_ID,
+	snd_fish_hurt_ID,
+	snd_crystal_hurt_ID,
+	snd_eyes_hurt_ID,
+	snd_melting_hurt_ID,
+	snd_plant_hurt_ID,
+	snd_YV_hurt_ID,
+	snd_steroids_hurt_ID,
+	snd_robot_hurt_ID,
+	snd_chicken_hurt_ID,
+	snd_rebel_hurt_ID,
+	snd_rogue_hurt_ID,
+	snd_frog_hurt_ID,
+	snd_skeleton_hurt_ID,
+	
 
 	snd_pickup_disappear_ID,
 	snd_ammo_pickup_ID,
