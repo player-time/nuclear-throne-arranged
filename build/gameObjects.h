@@ -34,6 +34,15 @@ enum objectID {
 
 	player,
 
+	crystal_shield,
+
+	melt_splat,
+
+	meat_explosion,
+
+	plant_tangle_seed,
+	plant_tangle,
+
 	throne_2, throne_2_death,
 
 	popup_text,
@@ -176,6 +185,8 @@ enum sound_ID {
 
 	snd_wall_break_ID,
 
+	snd_player_specific_1_ID,
+
 	//end of sounds that will be used, not just in buffers
 
 	snd_music_ID,
@@ -270,6 +281,10 @@ enum sound_ID {
 	snd_frog_hurt_ID,
 	snd_skeleton_hurt_ID,
 	
+
+	snd_corpse_explode_ID,
+	snd_corpse_explode_TB_ID,
+
 
 	snd_pickup_disappear_ID,
 	snd_ammo_pickup_ID,
@@ -415,6 +430,7 @@ enum hitboxes {
 	idpd_explosion_hitbox = 48,
 	explosion_hitbox = 24,
 	small_explosion_hitbox = 12,
+	meat_explosion_hitbox = 12,
 	idpd_nade_hitbox = 2,
 	idpd_freak_hitbox = 7,
 	wall_hitbox = 8,
@@ -424,6 +440,8 @@ enum hitboxes {
 
 	small_prop_hitbox = 7,
 	medium_prop_hitbox = 12,
+	crystal_shield_hitbox = 24,
+	plant_tangle_hitbox = 24,
 };
  
 struct gameObject{
@@ -447,6 +465,7 @@ struct gameObject{
 	int next_melee = 0;
 	int rad_drop = 0;
 	int my_hp = 0;
+	int max_hp = 0;
 	int team = 0;
 	int size = 0;
 
