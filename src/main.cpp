@@ -33,6 +33,9 @@ int draw_mult = 5;
 
 bool global_debug = true;
 
+bool debug_invincibility = false;
+
+
 int seed = time(NULL);
 
 std::vector<gameObject> allObjects;
@@ -279,6 +282,7 @@ float playerDiagonalSpeedMult = 9.656855f / 4.0f;
 bool player_prev_speed_greater_than_zero = false;
 
 sf::Sprite player_sprite;
+sf::Sprite player_corpse_sprite;
 
 sf::Sprite wep_sprite;
 sf::Sprite bwep_sprite;
@@ -289,17 +293,30 @@ sf::Cursor naitive_cursor_sprite;
 sf::Sprite strong_spirit_sprite;
 
 
+int go_addy1 = 55;
+int go_addy2 = 3;
+sf::Text game_over_text;
+int game_over_time = 0;
+
+sf::Sprite letter_boxes;
+
 
 bool naitive_cursor_active = true;
 
 int crosshair_selected = 0;
 
+//held main weapon stuff
 int wep_shine_frame = 0;
 float wep_angle = (rand() % 2 * 2 - 1) * 120.0f; //this is the offset used for melee
 float wep_kick = 0.0f;
 int swapmove = 0;
 bool reloaded = true;
 bool breloaded = true;
+
+//bwep
+int Bwep_shine_frame = 0;
+float Bwep_angle = (rand() % 2 * 2 - 1) * 120.0f; //this is the offset used for melee
+float Bwep_kick = 0.0f;
 
 //check if key has been released
 bool P_released = true;
@@ -330,6 +347,10 @@ bool destroy_on_screen_corpses = false;
 //plant
 bool plant_seed_exists = false;
 int player_tangle_ID = -1;
+//rebel
+int enemy_index_fire_at = 0;
+bool heal_all_allys = false;
+int ally_count = 0;
 
 //camera
 float camera_want_x = 0.0f;
@@ -367,12 +388,20 @@ float scarier_face = 0.8f;
 
 bool has_throne_butt = false;
 
+bool player_alive = true;
+bool has_died = false;
+int player_corpse_id = 0;
+
+//chicken stuff
+int chicken_headless_timer = 150;
+bool chicken_beheaded = false;
+
 //ultras
 int ultra_picked = 2;   //0 = no ultra
 
 int meltdown = 1;       //set to 2 when meltdown is picked
 
-character player_character = rebel;
+character player_character = fish;
 int player_character_idle_frames = 6;
 int player_character_walk_frames = 6;
 int player_character_death_frames = 6;
@@ -760,6 +789,13 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
     for (int i = current_create_start; i < max_objects; i++) {
         if (allObjects[i].my_id == nothing) {
             switch (obj_id) {
+            case player_corpse:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].my_hitbox = enemy_bullet_hitbox;
+                allObjects[i].image_index = 0;
+
+                allObjects[i].position = { x, y };
+                break;
             case prop:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].my_hitbox = no_hitbox;
@@ -1307,6 +1343,37 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].size = 2; //is health pack
                 allObjects[i].alarm1 = 60 + ((200 + rand() % 30) / ((5 + LOOPS) / 5));
                 break;
+            case rebel_ally:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].my_hitbox = enemy_bullet_hitbox;
+
+                allObjects[i].position = { x, y };
+                allObjects[i].speed = { 0, 0 };
+
+                allObjects[i].speeddir = 0.0f;
+                allObjects[i].direction = random_360_radians();
+                allObjects[i].friction = 0.2f;
+
+                allObjects[i].alarm1 = 30 + rand() % 10;
+                allObjects[i].alarm2 = 160;
+
+                allObjects[i].walk_frames = 0;
+
+                allObjects[i].next_hurt = 0;
+                allObjects[i].my_hp = 12 + (ultra_picked == 1) * 18;
+                allObjects[i].max_hp = allObjects[i].my_hp;
+                allObjects[i].image_index = rand() % 17;
+                allObjects[i].team = player_team;     //player team
+                allObjects[i].rad_drop = 5;
+
+                allObjects[i].size = 1;
+
+                allObjects[i].hurt_ID = snd_bandit_hurt_ID;
+                allObjects[i].die_ID = snd_bandit_die_ID;
+
+                ally_count++;
+
+                break;
             case bandit:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].my_hitbox = bandit_hitbox;
@@ -1333,8 +1400,6 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 
                 allObjects[i].hurt_ID = snd_bandit_hurt_ID;
                 allObjects[i].die_ID = snd_bandit_die_ID;
-
-                allObjects[i].my_hitbox = bandit_hitbox;
 
                 enemy_count++;
 
@@ -1420,12 +1485,15 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
             case player_bullet:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].my_hitbox = enemy_bullet_hitbox;
+                allObjects[i].damage = 3;
 
                 allObjects[i].position = { x, y };
                 allObjects[i].speed = { xspd, yspd };
                 allObjects[i].direction = direction * degreestoradians;
                 allObjects[i].image_index = 0;
                 allObjects[i].team = player_team;     //player team
+
+                allObjects[i].size = image_index;   //whether it is visually a player bullet or ally bullet
                 break;
             case player_bullet_destroy:
                 allObjects[i].my_id = obj_id;
@@ -1468,7 +1536,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 
                 allObjects[i].position = { x, y };
                 allObjects[i].speed = { xspd, yspd };
-                allObjects[i].scale = 1.0f; //bigger if laser brain
+                allObjects[i].scale = laser_brain; //bigger if laser brain
                 allObjects[i].direction = direction * degreestoradians;
                 allObjects[i].image_index = image_index;
                 allObjects[i].team = player_team;     //player team
@@ -1483,7 +1551,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 
                 allObjects[i].position = { x, y };
                 allObjects[i].speed = { xspd, yspd };
-                allObjects[i].scale = 1.0f; //bigger if laser brain
+                allObjects[i].scale = laser_brain; //bigger if laser brain
                 allObjects[i].direction = direction * degreestoradians;
                 allObjects[i].image_index = image_index;
                 allObjects[i].team = player_team;     //player team
@@ -1548,11 +1616,15 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
             case idpd_explosion:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].my_hitbox = idpd_explosion_hitbox;
+                allObjects[i].team = enemy_team;     //enemy team
+                if (image_index == 1) { //rogue explosion
+                    allObjects[i].my_hitbox = explosion_hitbox;
+                    allObjects[i].team = player_team;     //player team
+                }
                 allObjects[i].damage = 8;
 
                 allObjects[i].position = { x, y };
                 allObjects[i].image_index = 0;
-                allObjects[i].team = enemy_team;     //enemy team
                 play_sound_relative_to_player(snd_explosion_ID, x, y);
                 break;
             case explosion:
@@ -1749,7 +1821,7 @@ void corpse_portal_spawning_logic() {
     else {
         corpse_delay_counter = 0;
     }
-    if (corpse_delay_counter >= corpse_delay) {
+    if (corpse_delay_counter >= corpse_delay - ((area == 0) * 40)) {
         create_portal = true;
         lowest_corpse_lifetime = 65535;
         for (int i = 0; i < max_objects; i++) {
@@ -1853,11 +1925,11 @@ void pick_throne_butt(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound
     }
 }
 
-bool has_line_of_sight(float x, float y) {
+bool has_line_of_sight(float x, float y, float playerX = allObjects[0].position.x, float playerY = allObjects[0].position.y) {
 
     //return true;
-    float prev_x_pos = x - allObjects[0].position.x;
-    float prev_y_pos = y - allObjects[0].position.y;
+    float prev_x_pos = x - playerX;
+    float prev_y_pos = y - playerY;
 
     float angle_to_player = atan2f(prev_y_pos, prev_x_pos);
     float x_spd = cos(angle_to_player) * -15.00f;
@@ -1865,7 +1937,7 @@ bool has_line_of_sight(float x, float y) {
 
     bool return_false_later = false;
 
-    while (int(x / 16) != int(allObjects[0].position.x / 16) || int(y / 16) != int(allObjects[0].position.y / 16)) {
+    while (int(x / 16) != int(playerX / 16) || int(y / 16) != int(playerY / 16)) {
         prev_x_pos = x;
         prev_y_pos = y;
 
@@ -1890,10 +1962,10 @@ bool has_line_of_sight(float x, float y) {
                 }
             }
             //has run past the player
-            if (x_spd > 0 && x > allObjects[0].position.x + 0.1f ||
-                x_spd < 0 && x < allObjects[0].position.x - 0.1f ||
-                y_spd > 0 && y > allObjects[0].position.y + 0.1f ||
-                y_spd < 0 && y < allObjects[0].position.y - 0.1f) {
+            if (x_spd > 0 && x > playerX + 0.1f ||
+                x_spd < 0 && x < playerX - 0.1f ||
+                y_spd > 0 && y > playerY + 0.1f ||
+                y_spd < 0 && y < playerY - 0.1f) {
                 return true;
             }
             if (return_false_later) {
@@ -1903,10 +1975,10 @@ bool has_line_of_sight(float x, float y) {
 
         if (game_area[int(x / 16)][int(y / 16)].my_grid_type == wall) {
             //has run past the player
-            if(x_spd > 0 && x > allObjects[0].position.x + 0.1f ||
-                x_spd < 0 && x < allObjects[0].position.x - 0.1f ||
-                y_spd > 0 && y > allObjects[0].position.y + 0.1f ||
-                y_spd < 0 && y < allObjects[0].position.y - 0.1f) {
+            if(x_spd > 0 && x > playerX + 0.1f ||
+                x_spd < 0 && x < playerX - 0.1f ||
+                y_spd > 0 && y > playerY + 0.1f ||
+                y_spd < 0 && y < playerY - 0.1f) {
                 return true;
             }
             return false;
@@ -2157,7 +2229,11 @@ void motion_add_XY_speed(float xspd, float yspd, int index) {
 void ammo_drop_function(int ENEMY, int base_chance) {
     //ammo drop
     if (random_float(100) < base_chance * global_ammo_mult) {
-        if (random_float(player_max_hp) > player_hp && rand() % 3 != 0) {
+        float tmp_player_max_hp = player_max_hp;
+        if (tmp_player_max_hp <= 0) {
+            tmp_player_max_hp = 1;
+        }
+        if (random_float(tmp_player_max_hp) >= player_hp && rand() % 3 != 0) {
             create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, health_pack, 0, 0);
         }
         else {
@@ -2240,6 +2316,7 @@ void destroy_projectile(int object_index) {
         break;
     case idpd_nade:
         allObjects[object_index].my_id = idpd_explosion;
+        allObjects[object_index].damage = 8;
         allObjects[object_index].image_index = 0;  //make sure the first 3 frames are non-damaging
         allObjects[object_index].my_hitbox = idpd_explosion_hitbox;
 
@@ -2655,6 +2732,19 @@ void enemy_die(int ENEMY, int PROJ) {
         play_sound_on_player(snd_throne_2_dead_start_ID);
         allObjects[ENEMY].alarm3 = corpse_delay;  //delay when killin last enemy
         break;
+    case rebel_ally:
+        basic_enemy_death_logic();
+        enemy_count++;
+        ally_count--;
+
+        //convert into corpse
+        allObjects[ENEMY].corpse_id = rebel_ally_CORPSE;
+
+        allObjects[ENEMY].my_id = enemy_corpse;
+
+        ammo_drop_function(ENEMY, 16);
+
+        break;
     case bandit:
         basic_enemy_death_logic();
 
@@ -2879,7 +2969,7 @@ void bullet_collide_player(int O, int currOBJ) {
         }
         destroy_projectile(O);
         if (allObjects[currOBJ].next_hurt < current_frame && player_invincible == 0) {
-            play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
+            play_sound_on_player(snd_player_hurt_ID);
             player_hp -= allObjects[O].damage;
             allObjects[currOBJ].next_hurt = current_frame + 6;
             allObjects[currOBJ].image_index = 0;
@@ -2951,7 +3041,7 @@ void player_collision(int i, int j, int currOBJ) {
                     case objectID::bandit:
                         diffx = allObjects[O].position.x - allObjects[currOBJ].position.x;
                         diffy = allObjects[O].position.y - allObjects[currOBJ].position.y;
-                        if (is_within_circle(allObjects[currOBJ].position, allObjects[O].position, bandit_hitbox + player_hitbox)) {
+                        if (is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[currOBJ].my_hitbox + allObjects[O].my_hitbox)) {
                             tmpdir = atan2f(diffy, diffx) + 180.0f / degreestoradians;
 
                             motion_add_dir(tmpdir, 0.5f, currOBJ);  //the bigger the enemy the more it pushes: speed = size * 0.5
@@ -2964,7 +3054,7 @@ void player_collision(int i, int j, int currOBJ) {
                             tmpdir = atan2f(diffy, diffx) + 180.0f / degreestoradians;
 
                             motion_add_dir(tmpdir, 1.0f, currOBJ);  //the bigger the enemy the more it pushes: speed = size * 0.5
-                            if (allObjects[O].next_melee < current_frame && allObjects[currOBJ].next_hurt < current_frame) { //melee cooldown
+                            if (allObjects[O].next_melee < current_frame && allObjects[currOBJ].next_hurt < current_frame && !player_invincible) { //melee cooldown
                                 play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
                                 allObjects[O].next_melee = current_frame + 25;
                                 player_hp -= 5;
@@ -2981,7 +3071,7 @@ void player_collision(int i, int j, int currOBJ) {
                             tmpdir = atan2f(diffy, diffx) + 180.0f / degreestoradians;
 
                             //motion_add_dir(tmpdir, 1.0f, currOBJ);  //the bigger the enemy the more it pushes: speed = size * 0.5
-                            if (allObjects[O].alarm1 < 0 && allObjects[O].next_melee < current_frame && allObjects[currOBJ].next_hurt < current_frame) { //melee cooldown
+                            if (allObjects[O].alarm1 < 0 && allObjects[O].next_melee < current_frame && allObjects[currOBJ].next_hurt < current_frame && !player_invincible) { //melee cooldown
                                 play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
                                 allObjects[O].next_melee = current_frame + 30;
                                 player_hp -= 10;
@@ -2992,7 +3082,7 @@ void player_collision(int i, int j, int currOBJ) {
                         }
                         break;
                     case objectID::idpd_explosion:
-                        if (player_invincible == 0 && (allObjects[O].image_index == 3 || allObjects[O].image_index == 4) && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox + player_hitbox)) {
+                        if (allObjects[O].team != allObjects[0].team && player_invincible == 0 && (allObjects[O].image_index == 3 || allObjects[O].image_index == 4) && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox + player_hitbox)) {
                             play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
                             player_hp -= 8;
                             allObjects[currOBJ].next_hurt = current_frame + 6;
@@ -3117,9 +3207,8 @@ void basic_enemy_collision(int currOBJ, int i, int j) {
                             }
                         }
                         break;
-                    case objectID::bandit:
-                        enemy_push(currOBJ, O);
-                        break;
+                    case objectID::rebel_ally:__fallthrough;
+                    case objectID::bandit:__fallthrough;
                     case objectID::idpd_freak:
                         enemy_push(currOBJ, O);
                         break;
@@ -3162,7 +3251,7 @@ void plant_tangle_collision(int currOBJ, int i, int j) {
             for (int O : game_area[i + w][j + h].object_indexes) {
                 if (O != currOBJ) {
                     switch (allObjects[O].my_id) {
-                    case objectID::bandit:
+                    case objectID::bandit:__fallthrough;
                     case objectID::idpd_freak:
                         if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, allObjects[O].my_hitbox + allObjects[currOBJ].my_hitbox)) {
                             allObjects[O].position.x -= allObjects[O].speed.x * (1 - (0.1 * allObjects[O].size));
@@ -3579,6 +3668,7 @@ void explosion_collision(int currOBJ, int i, int j) {
                             destroy_projectile(Other);
                         }
                         break;
+                    case rebel_ally:
                     case bandit:
                     case idpd_freak:
                     case prop:
@@ -3645,6 +3735,7 @@ void idpd_explosion_collision(int currOBJ, int i, int j) {
                             destroy_projectile(O);
                         }
                         break;
+                    case rebel_ally:
                     case bandit:
                     case idpd_freak:
                     case prop:
@@ -3773,7 +3864,12 @@ void meat_explosion_collision(int currOBJ, int i, int j) {
 }
 
 float direction_to_player(int OBJ) {
-    return atan2f(allObjects[0].position.y - allObjects[OBJ].position.y, allObjects[0].position.x - allObjects[OBJ].position.x);
+    if (player_alive) {
+        return atan2f(allObjects[0].position.y - allObjects[OBJ].position.y, allObjects[0].position.x - allObjects[OBJ].position.x);
+    }
+    else {
+        return atan2f(allObjects[player_corpse_id].position.y - allObjects[OBJ].position.y, allObjects[player_corpse_id].position.x - allObjects[OBJ].position.x);
+    }
 }
 
 void T2_bullet_step(int i) {
@@ -3812,7 +3908,7 @@ void throne_2_collision(int currOBJ, int i, int j) {
     int choice = 0;
     
     if (allObjects[currOBJ].alarm1 <= 0) {
-        if (allObjects[currOBJ].alarm3 <= 0 && allObjects[currOBJ].alarm1 <= 0) {
+        if (allObjects[currOBJ].alarm3 <= 0 && allObjects[currOBJ].alarm1 <= 0 && player_alive) {
             if (allObjects[currOBJ].team == 2) {  //attack 2
                 choice = 10 + LOOPS;
                 for (int b = 0; b < choice; b++) {
@@ -3868,6 +3964,7 @@ void throne_2_collision(int currOBJ, int i, int j) {
                             }
                         }
                         break;
+                    case player_bullet:__fallthrough;
                     case idpd_bullet:
                         if (allObjects[O].team != enemy_team && is_within_throne_2(allObjects[currOBJ].position, allObjects[O].position, enemy_bullet_hitbox)) {
                             destroy_projectile(O);
@@ -3917,15 +4014,57 @@ void add_object_indexs_to_2Dvector(int start, int end) {
     }
 }
 
+void swap_weapons() {
+    
+    int tmp_reloaded = reloaded;
+    int tmp_wep_shine_frame = wep_shine_frame;
+    float tmp_wep_kick = wep_kick;
+    float tmp_wep_angle = wep_angle;
+    float tmp_wep_reload = wep_reload;
+    int tmp_wep = wep;
+
+    reloaded = breloaded;
+    wep_shine_frame = Bwep_shine_frame;
+    wep_kick = Bwep_kick;
+    wep_angle = Bwep_angle;
+    wep_reload = bwep_reload;
+    wep = bwep;
+
+    breloaded = tmp_reloaded;
+    Bwep_shine_frame = tmp_wep_shine_frame;
+    Bwep_kick = tmp_wep_kick;
+    Bwep_angle = tmp_wep_angle;
+    bwep_reload = tmp_wep_reload;
+    bwep = tmp_wep;
+}
+
 void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, bool b_wep_shot = false) {
     float Xspd = 0.0f;
     float Yspd = 0.0f;
     float Xoff = 0.0f;
     float Yoff = 0.0f;
     if (!crystal_is_shielding) {
+        if (b_wep_shot) {
+            swap_weapons();
+            index = wep;
+        }
+        float accuracy_curr = 1.0f;
+        if (player_character == steroids) {
+            LMB_pressed = true;
+            if (ultra_picked == 0) {
+                accuracy_curr = 1.8f;
+            }
+            else if (ultra_picked == 1) {
+                accuracy_curr = 0.8f;
+            }
+            else if (ultra_picked == 2) {
+                accuracy_curr = 1.2f;
+            }
+        }
+
         switch (index) {
         case 0:     //ultra shovel
-            if ((LMB_pressed || player_character == steroids) && wep_reload <= 0.0f && shots == 1) {
+            if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
                 LMB_pressed = false;
                 if (player_rads > 13) {
                     reloaded = false;
@@ -3943,13 +4082,13 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                     create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, ultra_slash, direction, 0);
 
                     Xspd -= 1;
-                    direction += 60.0f / degreestoradians;
+                    direction += (60.0f * accuracy_curr) / degreestoradians;
 
                     Xoff = cos(direction) * (long_arms * 15.0f + 24.0f);
                     Yoff = sin(direction) * (long_arms * 15.0f + 24.0f);
                     create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, ultra_slash, direction, 0);
 
-                    direction -= 120.0f / degreestoradians;
+                    direction -= (120.0f * accuracy_curr) / degreestoradians;
 
                     Xoff = cos(direction) * (long_arms * 15.0f + 24.0f);
                     Yoff = sin(direction) * (long_arms * 15.0f + 24.0f);
@@ -3961,7 +4100,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             }
             break;
         case 11:
-            if ((LMB_pressed || player_character == steroids) && wep_reload <= 0.0f && player_energy - 24 * shots >= 0) {
+            if (LMB_pressed && wep_reload <= 0.0f && player_energy - 24 * shots >= 0) {
                 reloaded = false;
 
                 player_energy -= 24 * shots;
@@ -3993,6 +4132,9 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             break;
         default:
             break;
+        }
+        if (b_wep_shot) {
+            swap_weapons();
         }
     }
 }
@@ -4040,6 +4182,64 @@ void object_tunnel_corner(int currOBJ) {
     default:
         break;
     }
+}
+
+bool is_an_enemy(objectID objID) {
+    switch (objID) {
+    case bandit:__fallthrough;
+    case idpd_freak:__fallthrough;
+    case throne_2:
+        return true;
+    default:
+        return false;
+    }
+}
+
+//find the nearest enemy that has line of sight of the position
+int find_nearest_LOS_enemy(sf::Vector2f pos){
+    int I = int(pos.x / 16.0f);
+    int J = int(pos.y / 16.0f);
+    //int enemy_index = 0;
+
+    //spirals out from the center of the position
+    for (int idx : game_area[I][J].object_indexes) {
+        if (is_an_enemy(allObjects[idx].my_id) && has_line_of_sight(allObjects[idx].position.x, allObjects[idx].position.y, pos.x, pos.y)) {
+            return idx;
+        }
+    }
+    for (int SIZE = 1; SIZE < 10; SIZE++) {
+        //top and bottom rows
+        for (int i = -SIZE; i < SIZE + 1; i++) {
+            int j = -SIZE;
+            for (int idx : game_area[I + i][J + j].object_indexes) {
+                if (is_an_enemy(allObjects[idx].my_id) && has_line_of_sight(allObjects[idx].position.x, allObjects[idx].position.y, pos.x, pos.y)) {
+                    return idx;
+                }
+            }
+            j = SIZE;
+            for (int idx : game_area[I + i][J + j].object_indexes) {
+                if (is_an_enemy(allObjects[idx].my_id) && has_line_of_sight(allObjects[idx].position.x, allObjects[idx].position.y, pos.x, pos.y)) {
+                    return idx;
+                }
+            }
+        }
+        //left and right colums
+        for (int j = -SIZE + 1; j < SIZE; j++) {
+            int i = -SIZE;
+            for (int idx : game_area[I + i][J + j].object_indexes) {
+                if (is_an_enemy(allObjects[idx].my_id) && has_line_of_sight(allObjects[idx].position.x, allObjects[idx].position.y, pos.x, pos.y)) {
+                    return idx;
+                }
+            }
+            i = SIZE;
+            for (int idx : game_area[I + i][J + j].object_indexes) {
+                if (is_an_enemy(allObjects[idx].my_id) && has_line_of_sight(allObjects[idx].position.x, allObjects[idx].position.y, pos.x, pos.y)) {
+                    return idx;
+                }
+            }
+        }
+    }
+    return 0;
 }
 
 void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    //logic done on each obect every frame
@@ -4150,7 +4350,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                 t2_draw_in_front = false;
 
                 //attack logic
-                if (allObjects[i].alarm3 < 0) {
+                if (allObjects[i].alarm3 < 0 && player_alive) {
 
                     if (allObjects[i].team == 1) {  //attack 1
                         allObjects[i].alarm3 = 10;
@@ -4422,6 +4622,9 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                 allObjects[i].alarm1--;
                 if (allObjects[i].alarm1 == 0) {
                     allObjects[i].direction = direction_to_player(i) + (random_float(60) - 30) / degreestoradians;
+                    if (!player_alive) {
+                        allObjects[i].direction = 0;    //classic
+                    }
                     play_sound_relative_to_player(snd_throne_2_laser_fire_ID, allObjects[i].position.x, allObjects[i].position.y);
                 }
                 //do after object logic
@@ -4579,6 +4782,9 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                 allObjects[i].my_id = nothing;
             }
             break;
+        case player_corpse:
+            allObjects[i].image_index++;
+            break;
         case prop:
             allObjects[i].image_index++;
             break;
@@ -4586,6 +4792,70 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             if (allObjects[i].image_index < 8) {
                 allObjects[i].image_index++;
             }
+            break;
+        case rebel_ally:
+            allObjects[i].speeddir -= allObjects[i].friction;
+
+            if (allObjects[i].walk_frames > 0) {
+                motion_add_dir(allObjects[i].direction, 0.8f, i);
+            }
+            if (!is_within_circle(allObjects[0].position, allObjects[i].position, 52)) {
+                tmpdir = direction_to_player(i);
+                motion_add_dir(tmpdir, 0.5f, i);
+            }
+
+            if (allObjects[i].speeddir > 4.5f) {
+                allObjects[i].speeddir = 4.5f;
+            }
+            else if (allObjects[i].speeddir < 0.0f) {
+                allObjects[i].speeddir = 0;
+            }
+
+            allObjects[i].speed.x = cos(allObjects[i].direction) * allObjects[i].speeddir;
+            allObjects[i].speed.y = sin(allObjects[i].direction) * allObjects[i].speeddir;
+
+            allObjects[i].position += allObjects[i].speed;
+
+            allObjects[i].image_index++;
+
+            allObjects[i].alarm1--;
+            allObjects[i].alarm2--;
+            allObjects[i].walk_frames--;
+
+            //take damage over time
+            if (allObjects[i].alarm2 < 0) {
+                allObjects[i].alarm2 = 40;
+                allObjects[i].my_hp -= 1;
+                if(allObjects[i].my_hp <= 0) {  //dead
+                    enemy_die(i, -1);
+                }
+            }
+
+            if (heal_all_allys) {
+                allObjects[i].my_hp = allObjects[i].max_hp;
+            }
+
+            //bandit ai
+            if (allObjects[i].alarm1 < 0) {
+                //choose what to do
+                allObjects[i].alarm1 = 10 + rand() % 10;
+                //walk towards player
+                allObjects[i].speeddir += 0.4f;
+                allObjects[i].direction = angle_to_player_radians(allObjects[i].position) + (random_180_radians() - (90.0f / degreestoradians)) / 2;
+                allObjects[i].walk_frames = 10 + rand() % 10;
+                allObjects[i].facing_right = cos(allObjects[i].direction) > 0;
+
+                //sf::Vector2f enemy_pos;
+                //enemy_index = find_nearest_LOS_enemy(allObjects[0].position);
+                if (enemy_index_fire_at != 0) {
+                    tmpdir = atan2f(allObjects[enemy_index_fire_at].position.y - allObjects[i].position.y, allObjects[enemy_index_fire_at].position.x - allObjects[i].position.x);
+                    tmpdir += (random_float(20) - 10) / degreestoradians;
+                    tempSpeedX = cos(tmpdir) * 7;
+                    tempSpeedY = sin(tmpdir) * 7;
+                    create_object(allObjects[i].position.x, allObjects[i].position.y, tempSpeedX, tempSpeedY, player_bullet, tmpdir, 1);
+                }
+            }
+            //bandit ai
             break;
         case bandit:
             allObjects[i].speeddir -= allObjects[i].friction;
@@ -5195,11 +5465,10 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                             case objectID::ammo_pack:
                                 collide_wall(O, i, j, h, w, 7);
                                 break;
-                            case bandit:
-                                object_bounce_wall(O, h, w, bandit_hitbox, bandit_hitbox, i, j);
-                                break;
+                            case rebel_ally:__fallthrough;
+                            case bandit:__fallthrough;
                             case idpd_freak:
-                                object_bounce_wall(O, h, w, idpd_freak_hitbox, idpd_freak_hitbox, i, j);
+                                object_bounce_wall(O, h, w, allObjects[O].my_hitbox, allObjects[O].my_hitbox, i, j);
                                 break;
                             case objectID::idpd_freak_corpse:
                                 object_bounce_wall(O, h, w, idpd_freak_hitbox + 1, idpd_freak_hitbox + 1, i, j);
@@ -5402,6 +5671,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                     case objectID::prop:
                         basic_enemy_collision(currOBJ, i, j);
                         break;
+                    case objectID::rebel_ally:__fallthrough;
                     case objectID::bandit:
                         basic_enemy_collision(currOBJ, i, j);
                         break;
@@ -5801,6 +6071,7 @@ void swap_player_textures(sf::Texture &player_tex, character new_character, bool
     player_character = new_character;
 
     player_sprite.setTexture(player_tex);
+    player_corpse_sprite.setTexture(player_tex);
     switch (player_character) {
     case horror:
         player_character_idle_frames = 6;
@@ -5896,8 +6167,8 @@ void swap_player_textures(sf::Texture &player_tex, character new_character, bool
     case skeleton:
         player_character_idle_frames = 6;
         player_character_walk_frames = 7;
-        player_character_death_frames = 6;
-        player_character_hurt_frames = 10;
+        player_character_death_frames = 10;
+        player_character_hurt_frames = 3;
         break;
     }
 }
@@ -5935,6 +6206,9 @@ void start_new_run(character chararcter_choice, sound_sound_buffer all_sounds[],
     player_character = chararcter_choice;
 
     player_max_speed = 4.0f;
+    laser_brain = 1.0f;
+    player_alive = true;
+    has_died = false;
 
     //reset global variables
     eyes_using_TK = false;
@@ -5994,6 +6268,8 @@ void start_new_run(character chararcter_choice, sound_sound_buffer all_sounds[],
         break;
     case robot:
 
+        laser_brain += 0.1f;
+
         player_max_hp = 8;
         player_hp = 8;
         change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_robot_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
@@ -6030,6 +6306,9 @@ void start_new_run(character chararcter_choice, sound_sound_buffer all_sounds[],
         change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_skeleton_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
         break;
     }
+    //debug
+    player_max_hp += 4;
+    //debug
 }
 
 void generate_level(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_buffers[]) {
@@ -6059,6 +6338,7 @@ void generate_level(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_b
     gen_curr_floor_index++;
 
     enemy_count = 0;
+    ally_count = 0; //rebel
     created_portal = false; //can create portal again
     create_portal = false;
     lowest_corpse_lifetime_ID = 0;
@@ -6066,6 +6346,8 @@ void generate_level(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_b
     player_friction_mult = 1.0f;
     allObjects[0].alarm1 = 0;
     player_invincible = 0;
+
+    player_corpse_id = 0;
 
     plant_seed_exists = false;
 
@@ -6209,6 +6491,15 @@ void generate_level(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_b
                 create_explo_tile(i, j);
                 //create debris too
             }
+        }
+    }
+
+    //rebel allies for ultra A
+    if (player_character == rebel) {
+        player_hp += int((player_max_hp - player_hp) / 2);
+        if (ultra_picked == 1) {
+            create_object(allObjects[0].position.x + random_float(2) - 1.0f, allObjects[0].position.y + random_float(2) - 1.0f, 0, 0, rebel_ally, 0, 0);
+            create_object(allObjects[0].position.x + random_float(2) - 1.0f, allObjects[0].position.y + random_float(2) - 1.0f, 0, 0, rebel_ally, 0, 0);
         }
     }
     enemy_count_start = enemy_count;
@@ -6567,6 +6858,7 @@ int main()
     
     //player_sprite
     player_sprite.setOrigin(24,24);
+    player_corpse_sprite.setOrigin(24,24);
 
     eyes_TK_sprite.setOrigin(16, 16);
 
@@ -6632,6 +6924,9 @@ int main()
         hp_text.setCharacterSize(8);
         hp_text.setFont(font);
         hp_text.setPosition(40, 7);
+
+        game_over_text.setCharacterSize(8);
+        game_over_text.setFont(font);
 
         sf::Texture portalDisappearTex;
         portalDisappearTex.loadFromFile("res/sprPortalDisappear.png");
@@ -6895,6 +7190,10 @@ int main()
         //playerbullet1_2
         sf::Texture playerbullet1_2tex;
         playerbullet1_2tex.loadFromFile("res/player/projectiles/bullets/playerbullet1_2.png");
+
+        //rebel_ally bullet
+        sf::Texture ally_bullettex;
+        ally_bullettex.loadFromFile("res/player/projectiles/bullets/allyBullet.png");
 
         //playerbulletdestroy1
         sf::Texture playerbulletdelete1;
@@ -7164,6 +7463,11 @@ int main()
 
         wep_sprite.setTexture(weapons_tex);
         bwep_sprite.setTexture(weapons_tex);
+
+        sf::Texture letter_boxes_sprite;
+        letter_boxes_sprite.loadFromFile("res/letterBoxs.png");
+
+        letter_boxes.setTexture(letter_boxes_sprite);
 
     //initialize the area, this should be reset every level to regenerate the next level
     for (int i = 0; i < gridSize; i++) {
@@ -7435,7 +7739,7 @@ int main()
 
     seed = rand();
 
-    player_character = YV;
+    player_character = rogue;
 
     start_new_run(player_character, all_sounds, all_extra_sound_buffers);
 
@@ -7796,529 +8100,596 @@ int main()
 
         //start of things that shouldnt be done when paused
         if (!GAME_PAUSED) {
-            //leveling up
-            if (player_level < 10) {
-                if (player_rads > player_level * 60) {
-                    player_rads -= player_level * 60;
-                    player_level++;
-                }
-            }
-            else {
-                if (player_rads > 600 * meltdown) {
-                    player_rads = 600 * meltdown;
-                }
-            }
-            allObjects[0].team = player_team;
 
-
-
-            crystal_shield_cooldown--;
-
-            if (player_pressed_RMB_this_frame) {
-                float tmpXSPD = 0.0f;
-                float tmpYSPD = 0.0f;
-                switch (player_character) {
-                case fish:      //roll
-                    if (roll <= 0) {
-                        roll = 12;
-                        if (allObjects[0].speeddir > 0.4f) {
-                            roll_direction = allObjects[0].direction;
-                        }
-                        else {
-                            roll_direction = direction_to_mouse;
-                        }
+            //start of player stuff
+            if (player_alive) {
+                //leveling up
+                if (player_level < 10) {
+                    if (player_rads > player_level * 60) {
+                        player_rads -= player_level * 60;
+                        player_level++;
                     }
-                    break;
-                case crystal:
-                    if (crystal_shield_cooldown <= 0) {
-                        crystal_is_shielding = true;
-                        crystal_shield_time = 0;
-                        create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, crystal_shield, 0, 0);
-                    }
-                    break;
-                case melting:
-                    if (enemy_count > 0 || created_portal) {
-                        destroy_on_screen_corpses = true;
-                    }
-                    break;
-                case plant:
-                    if (!plant_seed_exists && ultra_picked != 2) {
-                        plant_seed_exists = true;
-                        if (player_tangle_ID != -1) {
-                            allObjects[player_tangle_ID].my_id = nothing;
-                        }
-                        tmpXSPD = cos(direction_to_mouse) * 12;
-                        tmpYSPD = sin(direction_to_mouse) * 12;
-                        player_tangle_ID = create_object(allObjects[0].position.x, allObjects[0].position.y, tmpXSPD, tmpYSPD, plant_tangle_seed, direction_to_mouse, 0);
-                    }
-                    break;
-                case YV:
-                    LMB_pressed = true;
-                    fire_weapon(wep, direction_to_mouse, 2, ultra_picked == 2);
-                    break;
-                default:
-                    break;
-                }
-            }
-            player_pressed_RMB_this_frame = false;
-
-
-
-            //do player movement first
-            int horizontal_player_move = player_move_right - player_move_left;
-            int vertical_player_move = player_move_down - player_move_up;
-            float player_acceleration = 4.2f;
-
-            if (roll > 0) {
-                roll--;
-                player_acceleration = 5.0f;
-                create_object(allObjects[0].position.x, allObjects[0].position.y + 4, 0.7, 0.7, dust, 0, 0);    //dust
-            }
-
-            if (allObjects[0].alarm1 > 0) {
-                player_acceleration = 0;
-            }
-
-            float dirto_add = 0.0f;
-            if (horizontal_player_move || vertical_player_move || roll > 0) {
-
-                if (roll <= 0) {
-                    if (!horizontal_player_move && vertical_player_move) {
-                        dirto_add = 180.0f - (90.0f * vertical_player_move);
-                    }
-                    if (horizontal_player_move && !vertical_player_move) {
-                        dirto_add = 90.0f - (90.0f * horizontal_player_move);
-                    }
-                    if (horizontal_player_move && vertical_player_move) {
-                        if (horizontal_player_move == 1 && vertical_player_move == 1) {
-                            dirto_add = 45.0f;
-                        }
-                        if (horizontal_player_move == 1 && vertical_player_move == -1) {
-                            dirto_add = 315.0f;
-                        }
-                        if (horizontal_player_move == -1 && vertical_player_move == -1) {
-                            dirto_add = 225.0f;
-                        }
-                        if (horizontal_player_move == -1 && vertical_player_move == 1) {
-                            dirto_add = 135.0f;
-                        }
-                    }
-                }
-                else {  //rolling
-                    dirto_add = roll_direction * degreestoradians;
-                }
-
-                float spd_add_x = cos(dirto_add / degreestoradians) * player_acceleration;
-                float spd_add_y = sin(dirto_add / degreestoradians) * player_acceleration;
-
-                float spd_curr_x = cos(allObjects[0].direction) * allObjects[0].speeddir;
-                float spd_curr_y = sin(allObjects[0].direction) * allObjects[0].speeddir;
-
-                spd_curr_x += spd_add_x;
-                spd_curr_y += spd_add_y;
-
-                float new_angle = atan2f(spd_curr_y, spd_curr_x);
-                float new_speed = sqrt((spd_curr_y * spd_curr_y) + (spd_curr_x * spd_curr_x));
-
-                allObjects[0].speeddir = new_speed;
-                allObjects[0].direction = new_angle;
-            }
-
-            if (allObjects[0].speeddir > player_max_speed + (roll > 0) * 2) {
-                allObjects[0].speeddir = player_max_speed + (roll > 0) * 2;
-            }
-
-            //allObjects[0].friction = 0.45f;
-            float friction_player = 0.45f;
-            if (SHIFT_held && allObjects[0].friction > 0.3f && allObjects[0].friction < 0.5f) {
-                friction_player = 2.0f;
-            }
-            else {
-                friction_player = allObjects[0].friction;
-            }
-            allObjects[0].speeddir -= friction_player * player_friction_mult;
-
-            if (allObjects[0].speeddir <= 0) {
-                allObjects[0].speeddir = 0;
-                player_footsetp = 0;
-            }
-            else {
-                //footsteps
-                foot_step_sound_to_play = no_footstep;
-                if (roll <= 0 && ((int(round(allObjects[0].image_index * 0.4f)) % player_character_walk_frames + 1 >= (player_footsetp + 2) && (int(round(allObjects[0].image_index * 0.4f)) % player_character_walk_frames) < (player_footsetp + 2)))) {
-                    if (player_character == plant) {
-                        player_footsetp++;
-                        if (player_footsetp >= 3) {
-                            player_footsetp -= 3;
-                        }
-                        foot_step_sound_to_play = pla;
-                    }
-                    else if (player_character == robot || player_character == horror) {
-                        player_footsetp++;
-                        if (player_footsetp == 2 || player_footsetp == 5) {
-                            player_footsetp++;
-                        }
-                        if (player_footsetp >= 6) {
-                            player_footsetp -= 6;
-                        }
-                        if (player_character == horror) {
-                            foot_step_sound_to_play = org;
-                        }
-                        if (player_character == robot) {
-                            foot_step_sound_to_play = met;
-                        }
-                    }
-                    else {
-                        player_footsetp += 3;
-                        if (player_footsetp >= 6) {
-                            player_footsetp -= 6;
-                        }
-                        if (player_character == YV || player_character == rebel) {
-                            foot_step_sound_to_play = sho;
-                        }
-                        else {
-                            foot_step_sound_to_play = org;
-                        }
-                    }
-                    if (footstep_audio_offset == 0) {
-                        footstep_audio_offset = 1;
-                    }
-                    else {
-                        footstep_audio_offset = 0;
-                    }
-                    if (player_walk_material == slime_rock_mat || player_walk_material == slime_sand_mat) {
-                        if (footstep_audio_offset_slime == 0) {
-                            footstep_audio_offset_slime = 1;
-                        }
-                        else {
-                            footstep_audio_offset_slime = 0;
-                        }
-                    }
-                }
-                int choice = 0;
-                int choice2 = 0;
-                switch (foot_step_sound_to_play) {
-                default:
-                    break;
-                case org:
-                    switch (player_walk_material) {
-                    case sand_mat:
-                        choice = snd_foot_orgsand_1_ID + rand() % 6;
-                        break;
-                    case rock_mat:
-                        choice = snd_foot_orgrock_1_ID + rand() % 6;
-                        break;
-                    case metal_mat:
-                        choice = snd_foot_orgmetal_1_ID + rand() % 6;
-                        break;
-                    case slime_rock_mat:
-                        choice = snd_foot_orgrock_1_ID + rand() % 6;
-                        choice2 = snd_foot_slime_1_ID + rand() % 6;
-                        break;
-                    case slime_sand_mat:
-                        choice = snd_foot_orgsand_1_ID + rand() % 6;
-                        choice2 = snd_foot_slime_1_ID + rand() % 6;
-                        break;
-                    }
-                    break;
-                case pla:
-                    switch (player_walk_material) {
-                    case sand_mat:
-                        choice = snd_foot_plasand_1_ID + rand() % 6;
-                        break;
-                    case rock_mat:
-                        choice = snd_foot_plarock_1_ID + rand() % 6;
-                        break;
-                    case metal_mat:
-                        choice = snd_foot_plametal_1_ID + rand() % 6;
-                        break;
-                    case slime_rock_mat:
-                        choice = snd_foot_plarock_1_ID + rand() % 6;
-                        choice2 = snd_foot_slime_1_ID + rand() % 6;
-                        break;
-                    case slime_sand_mat:
-                        choice = snd_foot_plasand_1_ID + rand() % 6;
-                        choice2 = snd_foot_slime_1_ID + rand() % 6;
-                        break;
-                    }
-                    break;
-                case met:
-                    switch (player_walk_material) {
-                    case sand_mat:
-                        choice = snd_foot_metsand_1_ID + rand() % 6;
-                        break;
-                    case rock_mat:
-                        choice = snd_foot_metrock_1_ID + rand() % 6;
-                        break;
-                    case metal_mat:
-                        choice = snd_foot_metmetal_1_ID + rand() % 6;
-                        break;
-                    case slime_rock_mat:
-                        choice = snd_foot_metrock_1_ID + rand() % 6;
-                        choice2 = snd_foot_slime_1_ID + rand() % 6;
-                        break;
-                    case slime_sand_mat:
-                        choice = snd_foot_metsand_1_ID + rand() % 6;
-                        choice2 = snd_foot_slime_1_ID + rand() % 6;
-                        break;
-                    }
-                    break;
-                case sho:
-                    switch (player_walk_material) {
-                    case sand_mat:
-                        choice = snd_foot_shosand_1_ID + rand() % 6;
-                        break;
-                    case rock_mat:
-                        choice = snd_foot_shorock_1_ID + rand() % 6;
-                        break;
-                    case metal_mat:
-                        choice = snd_foot_shometal_1_ID + rand() % 6;
-                        break;
-                    case slime_rock_mat:
-                        choice = snd_foot_shorock_1_ID + rand() % 6;
-                        choice2 = snd_foot_slime_1_ID + rand() % 6;
-                        break;
-                    case slime_sand_mat:
-                        choice = snd_foot_shosand_1_ID + rand() % 6;
-                        choice2 = snd_foot_slime_1_ID + rand() % 6;
-                        break;
-                    }
-                    break;
-                }
-                if (foot_step_sound_to_play != no_footstep) {
-                    change_sound_buffer(static_cast<sound_ID>(snd_foot_1 + footstep_audio_offset), all_sounds, static_cast<sound_ID>(choice), all_extra_sound_buffers, 0.1f, 0.0f, 24);
-                    play_sound_on_player(static_cast<sound_ID>(snd_foot_1 + footstep_audio_offset));
-                    if (player_walk_material == slime_rock_mat || player_walk_material == slime_sand_mat) {
-                        change_sound_buffer(static_cast<sound_ID>(snd_foot_3 + footstep_audio_offset_slime), all_sounds, static_cast<sound_ID>(choice2), all_extra_sound_buffers, 0.1f, 0.0f, 20);
-                        play_sound_on_player(static_cast<sound_ID>(snd_foot_3 + footstep_audio_offset_slime));
-                    }
-                }
-            }
-
-            if (!crystal_is_shielding) {
-                allObjects[0].position.x += cos(allObjects[0].direction) * allObjects[0].speeddir;
-                allObjects[0].position.y += sin(allObjects[0].direction) * allObjects[0].speeddir;
-            }
-
-            current_create_start = 1;   //reset each frame so that objects can be slotted into deleted objects places
-            if (wep < 11) {
-                weapon_camera_type = 2;
-            }
-            else {
-                weapon_camera_type = 4;
-            }
-
-            mouse_offset_window_center_x = (mousepos.x - window_size_x / (window_scale * 2)) / (6 - weapon_camera_type);
-            mouse_offset_window_center_y = (mousepos.y - window_size_y / (window_scale * 2)) / (6 - weapon_camera_type);
-
-            camera_want_x = floor(allObjects[0].position.x + cameraOffset.x + mouse_offset_window_center_x + portal_camera_offset.x);
-            camera_want_y = floor(allObjects[0].position.y + cameraOffset.y + mouse_offset_window_center_y + portal_camera_offset.y);
-            portal_camera_offset = {0, 0};
-
-            cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x);
-            cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y);
-
-            //calualte direction to mouse
-            direction_to_mouse = atan2f(allObjects[0].position.y - (mousepos.y + cameraPos.y), allObjects[0].position.x - (mousepos.x + cameraPos.x)) + 180.0f / degreestoradians;
-
-            allObjects[0].image_index++;
-
-            if (player_prev_speed_greater_than_zero != allObjects[0].speeddir > 0.0f) {
-                //allObjects[0].image_index = 0;
-            }
-            player_prev_speed_greater_than_zero = allObjects[0].speeddir > 0.0f;
-            player_is_facing_right = (0 > allObjects[0].position.x - (mousepos.x + cameraPos.x)) * 2 - 1;
-
-            float xspd = 0.0f;
-            float yspd = 0.0f;
-
-            float tmpdir = 0.0f;
-            float tmpspd = 0.0f;
-            float diffx = 0.0f;
-            float diffy = 0.0f;
-
-            swapmove = 0;
-            if (SPACE_pressed) {
-                SPACE_pressed = false;
-
-                play_swap_sound(bwep);
-
-                int tmpwep = wep;
-                wep = bwep;
-                bwep = tmpwep;
-
-                //reload
-                float tmpreload = wep_reload;
-                wep_reload = bwep_reload;
-                bwep_reload = tmpreload;
-
-                wep_kick = 0;
-                swapmove = 1;
-
-                int tmpreloaded = reloaded;
-                reloaded = breloaded;
-                breloaded = tmpreloaded;
-            }
-            if (wep_reload >= 0.0f) {
-                wep_reload -= reload_speed * (1 + (stress * (1 - float(player_hp) / float(player_max_hp)))
-                                                + ((player_character == YV) * 0.2f) 
-                                                + ((player_character == YV && ultra_picked == 1) * 0.4f));
-            }
-
-            if (wep_reload < 0.0f && !reloaded) {
-                reloaded = true;
-                if (wep < 11) {
-                    play_sound_on_player(snd_melee_flip_ID);
                 }
                 else {
-                    get_wep_reload_sound(wep);
+                    if (player_rads > 600 * meltdown) {
+                        player_rads = 600 * meltdown;
+                    }
                 }
-            }
+                allObjects[0].team = player_team;
 
-            if (wep_kick > 0) {
-                wep_kick--;
-            }
-            else if (wep_kick < 0) {
-                wep_kick++;
-            }
 
-            if (player_held_LMB) {      //player shooting logic
-                fire_weapon(wep, direction_to_mouse);
-            }
-            calculate_ammo_drop_mult(); //calculate ammo mult after firing
 
-            play_sounds_this_frame_count[snd_horror_beam_hold_ID] = -1;
+                crystal_shield_cooldown--;
 
-            if (player_held_RMB) {    //player active logic
-                switch (player_character) {
-                case horror:        //unnerfed beam
-                    xspd = cos(direction_to_mouse) * 12;
-                    yspd = sin(direction_to_mouse) * 12;
+                if (player_pressed_RMB_this_frame) {
+                    float tmpXSPD = 0.0f;
+                    float tmpYSPD = 0.0f;
+                    switch (player_character) {
+                    case fish:      //roll
+                        if (roll <= 0) {
+                            roll = 12;
+                            if (allObjects[0].speeddir > 0.4f) {
+                                roll_direction = allObjects[0].direction;
+                            }
+                            else {
+                                roll_direction = direction_to_mouse;
+                            }
+                        }
+                        break;
+                    case crystal:
+                        if (crystal_shield_cooldown <= 0) {
+                            crystal_is_shielding = true;
+                            crystal_shield_time = 0;
+                            create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, crystal_shield, 0, 0);
+                        }
+                        break;
+                    case melting:
+                        if (enemy_count > 0 || created_portal) {
+                            destroy_on_screen_corpses = true;
+                        }
+                        break;
+                    case plant:
+                        if (!plant_seed_exists && ultra_picked != 2) {
+                            plant_seed_exists = true;
+                            if (player_tangle_ID != -1) {
+                                allObjects[player_tangle_ID].my_id = nothing;
+                            }
+                            tmpXSPD = cos(direction_to_mouse) * 12;
+                            tmpYSPD = sin(direction_to_mouse) * 12;
+                            player_tangle_ID = create_object(allObjects[0].position.x, allObjects[0].position.y, tmpXSPD, tmpYSPD, plant_tangle_seed, direction_to_mouse, 0);
+                        }
+                        break;
+                    case YV:
+                        LMB_pressed = true;
+                        fire_weapon(wep, direction_to_mouse, 2, ultra_picked == 2);
+                        break;
+                    case rebel:
+                        //if picked riot or has alive allys the cost is 2
+                        tmpXSPD = (ally_count != 0 || ultra_picked == 2) + 1;
+                        if (player_hp > tmpXSPD) {
+                            play_sound_on_player(snd_player_hurt_ID);
+                            player_hp -= tmpXSPD;
+                            allObjects[0].next_hurt = current_frame + 6;
+                            allObjects[0].image_index = 0;
+                            create_object(allObjects[0].position.x + random_float(2) - 1.0f, allObjects[0].position.y + random_float(2) - 1.0f, 0, 0, rebel_ally, 0, 0);
+                            if (ultra_picked == 2) {
+                                create_object(allObjects[0].position.x + random_float(2) - 1.0f, allObjects[0].position.y + random_float(2) - 1.0f, 0, 0, rebel_ally, 0, 0);
+                            }
+                            heal_all_allys = true;
+                        }
+                        break;
+                    default:
+                        break;
+                    }
+                }
+                player_pressed_RMB_this_frame = false;
 
-                    for (int i = (int)horror_beam_strength; i > 0; i--) {
-                        if (player_rads > 0) {
-                            tmpdir = random_360_radians();
-                            create_object(allObjects[0].position.x + (cos(tmpdir) * horror_beam_strength + 1), allObjects[0].position.y + (sin(tmpdir) * horror_beam_strength + 1), xspd, yspd, horror_bullet, direction_to_mouse, 0);
-                            player_rads--;
-                            play_sounds_this_frame_count[snd_horror_beam_hold_ID] = 1;
-                            if (horror_beam_strength == 1.0f) {
-                                play_sounds_this_frame_count[snd_horror_beam_start_ID] = 1;
+
+
+                //do player movement first
+                int horizontal_player_move = player_move_right - player_move_left;
+                int vertical_player_move = player_move_down - player_move_up;
+                float player_acceleration = 4.2f;
+
+                if (roll > 0) {
+                    roll--;
+                    player_acceleration = 5.0f;
+                    create_object(allObjects[0].position.x, allObjects[0].position.y + 4, 0.7, 0.7, dust, 0, 0);    //dust
+                }
+
+                if (allObjects[0].alarm1 > 0) {
+                    player_acceleration = 0;
+                }
+
+                float dirto_add = 0.0f;
+                if (horizontal_player_move || vertical_player_move || roll > 0) {
+
+                    if (roll <= 0) {
+                        if (!horizontal_player_move && vertical_player_move) {
+                            dirto_add = 180.0f - (90.0f * vertical_player_move);
+                        }
+                        if (horizontal_player_move && !vertical_player_move) {
+                            dirto_add = 90.0f - (90.0f * horizontal_player_move);
+                        }
+                        if (horizontal_player_move && vertical_player_move) {
+                            if (horizontal_player_move == 1 && vertical_player_move == 1) {
+                                dirto_add = 45.0f;
+                            }
+                            if (horizontal_player_move == 1 && vertical_player_move == -1) {
+                                dirto_add = 315.0f;
+                            }
+                            if (horizontal_player_move == -1 && vertical_player_move == -1) {
+                                dirto_add = 225.0f;
+                            }
+                            if (horizontal_player_move == -1 && vertical_player_move == 1) {
+                                dirto_add = 135.0f;
                             }
                         }
                     }
-
-                    horror_beam_strength += 0.1f;
-
-                    if (horror_beam_strength > 7.0f) {
-                        horror_beam_strength = 7.0f;
+                    else {  //rolling
+                        dirto_add = roll_direction * degreestoradians;
                     }
-                    break;
-                case crystal:
-                    if (crystal_is_shielding && crystal_shield_time < 22) {
-                        crystal_shield_time++;
+
+                    float spd_add_x = cos(dirto_add / degreestoradians) * player_acceleration;
+                    float spd_add_y = sin(dirto_add / degreestoradians) * player_acceleration;
+
+                    float spd_curr_x = cos(allObjects[0].direction) * allObjects[0].speeddir;
+                    float spd_curr_y = sin(allObjects[0].direction) * allObjects[0].speeddir;
+
+                    spd_curr_x += spd_add_x;
+                    spd_curr_y += spd_add_y;
+
+                    float new_angle = atan2f(spd_curr_y, spd_curr_x);
+                    float new_speed = sqrt((spd_curr_y * spd_curr_y) + (spd_curr_x * spd_curr_x));
+
+                    allObjects[0].speeddir = new_speed;
+                    allObjects[0].direction = new_angle;
+                }
+
+                if (allObjects[0].speeddir > player_max_speed + (roll > 0) * 2) {
+                    allObjects[0].speeddir = player_max_speed + (roll > 0) * 2;
+                }
+
+                //allObjects[0].friction = 0.45f;
+                float friction_player = 0.45f;
+                if (SHIFT_held && allObjects[0].friction > 0.3f && allObjects[0].friction < 0.5f) {
+                    friction_player = 2.0f;
+                }
+                else {
+                    friction_player = allObjects[0].friction;
+                }
+                allObjects[0].speeddir -= friction_player * player_friction_mult;
+
+                if (allObjects[0].speeddir <= 0) {
+                    allObjects[0].speeddir = 0;
+                    player_footsetp = 0;
+                }
+                else {
+                    //footsteps
+                    foot_step_sound_to_play = no_footstep;
+                    if (roll <= 0 && ((int(round(allObjects[0].image_index * 0.4f)) % player_character_walk_frames + 1 >= (player_footsetp + 2) && (int(round(allObjects[0].image_index * 0.4f)) % player_character_walk_frames) < (player_footsetp + 2)))) {
+                        if (player_character == plant) {
+                            player_footsetp++;
+                            if (player_footsetp >= 3) {
+                                player_footsetp -= 3;
+                            }
+                            foot_step_sound_to_play = pla;
+                        }
+                        else if (player_character == robot || player_character == horror) {
+                            player_footsetp++;
+                            if (player_footsetp == 2 || player_footsetp == 5) {
+                                player_footsetp++;
+                            }
+                            if (player_footsetp >= 6) {
+                                player_footsetp -= 6;
+                            }
+                            if (player_character == horror) {
+                                foot_step_sound_to_play = org;
+                            }
+                            if (player_character == robot) {
+                                foot_step_sound_to_play = met;
+                            }
+                        }
+                        else {
+                            player_footsetp += 3;
+                            if (player_footsetp >= 6) {
+                                player_footsetp -= 6;
+                            }
+                            if (player_character == YV || player_character == rebel) {
+                                foot_step_sound_to_play = sho;
+                            }
+                            else {
+                                foot_step_sound_to_play = org;
+                            }
+                        }
+                        if (footstep_audio_offset == 0) {
+                            footstep_audio_offset = 1;
+                        }
+                        else {
+                            footstep_audio_offset = 0;
+                        }
+                        if (player_walk_material == slime_rock_mat || player_walk_material == slime_sand_mat) {
+                            if (footstep_audio_offset_slime == 0) {
+                                footstep_audio_offset_slime = 1;
+                            }
+                            else {
+                                footstep_audio_offset_slime = 0;
+                            }
+                        }
+                    }
+                    int choice = 0;
+                    int choice2 = 0;
+                    switch (foot_step_sound_to_play) {
+                    default:
+                        break;
+                    case org:
+                        switch (player_walk_material) {
+                        case sand_mat:
+                            choice = snd_foot_orgsand_1_ID + rand() % 6;
+                            break;
+                        case rock_mat:
+                            choice = snd_foot_orgrock_1_ID + rand() % 6;
+                            break;
+                        case metal_mat:
+                            choice = snd_foot_orgmetal_1_ID + rand() % 6;
+                            break;
+                        case slime_rock_mat:
+                            choice = snd_foot_orgrock_1_ID + rand() % 6;
+                            choice2 = snd_foot_slime_1_ID + rand() % 6;
+                            break;
+                        case slime_sand_mat:
+                            choice = snd_foot_orgsand_1_ID + rand() % 6;
+                            choice2 = snd_foot_slime_1_ID + rand() % 6;
+                            break;
+                        }
+                        break;
+                    case pla:
+                        switch (player_walk_material) {
+                        case sand_mat:
+                            choice = snd_foot_plasand_1_ID + rand() % 6;
+                            break;
+                        case rock_mat:
+                            choice = snd_foot_plarock_1_ID + rand() % 6;
+                            break;
+                        case metal_mat:
+                            choice = snd_foot_plametal_1_ID + rand() % 6;
+                            break;
+                        case slime_rock_mat:
+                            choice = snd_foot_plarock_1_ID + rand() % 6;
+                            choice2 = snd_foot_slime_1_ID + rand() % 6;
+                            break;
+                        case slime_sand_mat:
+                            choice = snd_foot_plasand_1_ID + rand() % 6;
+                            choice2 = snd_foot_slime_1_ID + rand() % 6;
+                            break;
+                        }
+                        break;
+                    case met:
+                        switch (player_walk_material) {
+                        case sand_mat:
+                            choice = snd_foot_metsand_1_ID + rand() % 6;
+                            break;
+                        case rock_mat:
+                            choice = snd_foot_metrock_1_ID + rand() % 6;
+                            break;
+                        case metal_mat:
+                            choice = snd_foot_metmetal_1_ID + rand() % 6;
+                            break;
+                        case slime_rock_mat:
+                            choice = snd_foot_metrock_1_ID + rand() % 6;
+                            choice2 = snd_foot_slime_1_ID + rand() % 6;
+                            break;
+                        case slime_sand_mat:
+                            choice = snd_foot_metsand_1_ID + rand() % 6;
+                            choice2 = snd_foot_slime_1_ID + rand() % 6;
+                            break;
+                        }
+                        break;
+                    case sho:
+                        switch (player_walk_material) {
+                        case sand_mat:
+                            choice = snd_foot_shosand_1_ID + rand() % 6;
+                            break;
+                        case rock_mat:
+                            choice = snd_foot_shorock_1_ID + rand() % 6;
+                            break;
+                        case metal_mat:
+                            choice = snd_foot_shometal_1_ID + rand() % 6;
+                            break;
+                        case slime_rock_mat:
+                            choice = snd_foot_shorock_1_ID + rand() % 6;
+                            choice2 = snd_foot_slime_1_ID + rand() % 6;
+                            break;
+                        case slime_sand_mat:
+                            choice = snd_foot_shosand_1_ID + rand() % 6;
+                            choice2 = snd_foot_slime_1_ID + rand() % 6;
+                            break;
+                        }
+                        break;
+                    }
+                    if (foot_step_sound_to_play != no_footstep) {
+                        change_sound_buffer(static_cast<sound_ID>(snd_foot_1 + footstep_audio_offset), all_sounds, static_cast<sound_ID>(choice), all_extra_sound_buffers, 0.1f, 0.0f, 24);
+                        play_sound_on_player(static_cast<sound_ID>(snd_foot_1 + footstep_audio_offset));
+                        if (player_walk_material == slime_rock_mat || player_walk_material == slime_sand_mat) {
+                            change_sound_buffer(static_cast<sound_ID>(snd_foot_3 + footstep_audio_offset_slime), all_sounds, static_cast<sound_ID>(choice2), all_extra_sound_buffers, 0.1f, 0.0f, 20);
+                            play_sound_on_player(static_cast<sound_ID>(snd_foot_3 + footstep_audio_offset_slime));
+                        }
+                    }
+                }
+
+                if (!crystal_is_shielding) {
+                    allObjects[0].position.x += cos(allObjects[0].direction) * allObjects[0].speeddir;
+                    allObjects[0].position.y += sin(allObjects[0].direction) * allObjects[0].speeddir;
+                }
+
+                current_create_start = 1;   //reset each frame so that objects can be slotted into deleted objects places
+                if (wep < 11) {
+                    weapon_camera_type = 2;
+                }
+                else {
+                    weapon_camera_type = 4;
+                }
+
+                mouse_offset_window_center_x = (mousepos.x - window_size_x / (window_scale * 2)) / (6 - weapon_camera_type);
+                mouse_offset_window_center_y = (mousepos.y - window_size_y / (window_scale * 2)) / (6 - weapon_camera_type);
+
+                camera_want_x = floor(allObjects[0].position.x + cameraOffset.x + mouse_offset_window_center_x + portal_camera_offset.x);
+                camera_want_y = floor(allObjects[0].position.y + cameraOffset.y + mouse_offset_window_center_y + portal_camera_offset.y);
+                portal_camera_offset = { 0, 0 };
+
+                cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x);
+                cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y);
+
+                //calualte direction to mouse
+                direction_to_mouse = atan2f(allObjects[0].position.y - (mousepos.y + cameraPos.y), allObjects[0].position.x - (mousepos.x + cameraPos.x)) + 180.0f / degreestoradians;
+
+                allObjects[0].image_index++;
+
+                if (player_prev_speed_greater_than_zero != allObjects[0].speeddir > 0.0f) {
+                    //allObjects[0].image_index = 0;
+                }
+                player_prev_speed_greater_than_zero = allObjects[0].speeddir > 0.0f;
+                player_is_facing_right = (0 > allObjects[0].position.x - (mousepos.x + cameraPos.x)) * 2 - 1;
+
+                float xspd = 0.0f;
+                float yspd = 0.0f;
+
+                float tmpdir = 0.0f;
+                float tmpspd = 0.0f;
+                float diffx = 0.0f;
+                float diffy = 0.0f;
+
+                if (debug_invincibility) {
+                    player_invincible = 2;
+                }
+
+                swapmove = 0;
+                if (SPACE_pressed) {
+                    SPACE_pressed = false;
+
+                    play_swap_sound(bwep);
+
+                    if (player_character != steroids) {
+                        int tmpwep = wep;
+                        wep = bwep;
+                        bwep = tmpwep;
+
+                        //reload
+                        float tmpreload = wep_reload;
+                        wep_reload = bwep_reload;
+                        bwep_reload = tmpreload;
+
+                        wep_kick = 0;
                     }
                     else {
-                        crystal_is_shielding = false;
-                        crystal_shield_time = 0;
+                        swap_weapons();
                     }
-                    break;
-                case eyes:
-                    eyes_using_TK = true;
-                    if (ultra_picked == 2) {
-                        eyes_using_ultraB_TK = false;
+                    swapmove = 1;
+
+                    int tmpreloaded = reloaded;
+                    reloaded = breloaded;
+                    breloaded = tmpreloaded;
+                }
+                if (wep_reload >= 0.0f) {
+                    int tmp_player_max_hp = player_max_hp;
+                    if (tmp_player_max_hp == 0) {
+                        tmp_player_max_hp = 1;
                     }
-                    break;
-                    //auto fire seed
-                case plant:
-                    if (!plant_seed_exists && ultra_picked == 2) {
-                        plant_seed_exists = true;
-                        if (player_tangle_ID != -1) {
-                            allObjects[player_tangle_ID].my_id = nothing;
+                    wep_reload -= reload_speed * (1 + (stress * (1 - float(player_hp) / float(tmp_player_max_hp)))
+                        + ((player_character == YV) * 0.2f)
+                        + ((player_character == YV && ultra_picked == 1) * 0.4f));
+                }
+
+                //steroids
+                if (bwep_reload >= 0.0f && player_character == steroids) {
+                    bwep_reload -= reload_speed * (1 + (stress * (1 - float(player_hp) / float(player_max_hp))));
+
+                    if (bwep_reload < 0.0f && !breloaded) {
+                        breloaded = true;
+                        if (bwep < 11) {
+                            play_sound_on_player(snd_melee_flip_ID);
                         }
+                        else {
+                            get_wep_reload_sound(bwep);
+                        }
+                    }
+
+                    if (Bwep_kick > 0) {
+                        Bwep_kick--;
+                    }
+                    else if (Bwep_kick < 0) {
+                        Bwep_kick++;
+                    }
+                }
+
+                if (wep_reload < 0.0f && !reloaded) {
+                    reloaded = true;
+                    if (wep < 11) {
+                        play_sound_on_player(snd_melee_flip_ID);
+                    }
+                    else {
+                        get_wep_reload_sound(wep);
+                    }
+                }
+
+                if (wep_kick > 0) {
+                    wep_kick--;
+                }
+                else if (wep_kick < 0) {
+                    wep_kick++;
+                }
+
+                if (player_held_LMB) {      //player shooting logic
+                    fire_weapon(wep, direction_to_mouse);
+                }
+                calculate_ammo_drop_mult(); //calculate ammo mult after firing
+
+                play_sounds_this_frame_count[snd_horror_beam_hold_ID] = -1;
+
+                if (player_held_RMB) {    //player active logic
+                    switch (player_character) {
+                    case horror:        //unnerfed beam
                         xspd = cos(direction_to_mouse) * 12;
                         yspd = sin(direction_to_mouse) * 12;
-                        player_tangle_ID = create_object(allObjects[0].position.x, allObjects[0].position.y, xspd, yspd, plant_tangle_seed, direction_to_mouse, 0);
+
+                        for (int i = (int)horror_beam_strength; i > 0; i--) {
+                            if (player_rads > 0) {
+                                tmpdir = random_360_radians();
+                                create_object(allObjects[0].position.x + (cos(tmpdir) * horror_beam_strength + 1), allObjects[0].position.y + (sin(tmpdir) * horror_beam_strength + 1), xspd, yspd, horror_bullet, direction_to_mouse, 0);
+                                player_rads--;
+                                play_sounds_this_frame_count[snd_horror_beam_hold_ID] = 1;
+                                if (horror_beam_strength == 1.0f) {
+                                    play_sounds_this_frame_count[snd_horror_beam_start_ID] = 1;
+                                }
+                            }
+                        }
+
+                        horror_beam_strength += 0.1f;
+
+                        if (horror_beam_strength > 7.0f) {
+                            horror_beam_strength = 7.0f;
+                        }
+                        break;
+                    case crystal:
+                        if (crystal_is_shielding && crystal_shield_time < 22) {
+                            crystal_shield_time++;
+                        }
+                        else {
+                            crystal_is_shielding = false;
+                            crystal_shield_time = 0;
+                        }
+                        break;
+                    case eyes:
+                        eyes_using_TK = true;
+                        if (ultra_picked == 2) {
+                            eyes_using_ultraB_TK = false;
+                        }
+                        break;
+                        //auto fire seed
+                    case plant:
+                        if (!plant_seed_exists && ultra_picked == 2) {
+                            plant_seed_exists = true;
+                            if (player_tangle_ID != -1) {
+                                allObjects[player_tangle_ID].my_id = nothing;
+                            }
+                            xspd = cos(direction_to_mouse) * 12;
+                            yspd = sin(direction_to_mouse) * 12;
+                            player_tangle_ID = create_object(allObjects[0].position.x, allObjects[0].position.y, xspd, yspd, plant_tangle_seed, direction_to_mouse, 0);
+                        }
+                        break;
+                    case steroids:
+                        fire_weapon(wep, direction_to_mouse, 1, 0, true);
+                        break;
+                    default:
+                        break;
                     }
-                    break;
-                default:
-                    break;
                 }
-            }
-            else {
+                else {
+                    switch (player_character) {
+                    case horror:
+                        //horror beam
+                        horror_beam_strength -= 1.0f;
+                        if (horror_beam_strength < 1.0f) {
+                            horror_beam_strength = 1.0f;
+                        }
+                        break;
+                    case crystal:
+                        if (crystal_is_shielding) {
+                            crystal_is_shielding = false;
+                            crystal_shield_time = 0;
+                        }
+                        break;
+                    case eyes:
+                        eyes_using_TK = false;
+                        if (ultra_picked == 2) {
+                            eyes_using_ultraB_TK = true;
+                        }
+                        break;
+                    default:
+                        break;
+                    }
+                }
                 switch (player_character) {
                 case horror:
-                    //horror beam
-                    horror_beam_strength -= 1.0f;
-                    if (horror_beam_strength < 1.0f) {
-                        horror_beam_strength = 1.0f;
+                    if (!all_sounds[snd_horror_beam_hold_ID].sound.getLoop()) {
+                        all_sounds[snd_horror_beam_hold_ID].sound.play();
+                        all_sounds[snd_horror_beam_hold_ID].sound.setLoop(true);
+                        all_sounds[snd_horror_beam_hold_ID].sound.setVolume(0.0f);
                     }
-                    break;
-                case crystal:
-                    if (crystal_is_shielding) {
-                        crystal_is_shielding = false;
-                        crystal_shield_time = 0;
-                    }
-                    break;
-                case eyes:
-                    eyes_using_TK = false;
-                    if (ultra_picked == 2) {
-                        eyes_using_ultraB_TK = true;
-                    }
-                    break;
-                default:
-                    break;
-                }
-            }
-            switch (player_character) {
-            case horror:
-                if (!all_sounds[snd_horror_beam_hold_ID].sound.getLoop()) {
-                    all_sounds[snd_horror_beam_hold_ID].sound.play();
-                    all_sounds[snd_horror_beam_hold_ID].sound.setLoop(true);
-                    all_sounds[snd_horror_beam_hold_ID].sound.setVolume(0.0f);
-                }
-                if (ultra_picked == 2) {    //anomaly
-                    int totalhp = 0;
-                    for (int i = 1; i < max_objects; i++) {
-                        switch (allObjects[i].my_id) {
-                        case bandit:
-                            totalhp += allObjects[i].my_hp;
-                            break;
-                        case idpd_freak:
-                            totalhp += allObjects[i].my_hp;
-                            break;
-                        case throne_2:
-                            totalhp += allObjects[i].my_hp;
-                            break;
-                        default:
-                            break;
-                        }
-                    }
-                    if (totalhp <= 140 && totalhp) {
-                        //clear_all_bullets();
+                    if (ultra_picked == 2) {    //anomaly
+                        int totalhp = 0;
                         for (int i = 1; i < max_objects; i++) {
                             switch (allObjects[i].my_id) {
                             case bandit:
-                                enemy_die(i, -1);
-                                play_sound_relative_to_player(snd_horror_portal_ID, allObjects[i].position.x, allObjects[i].position.y);
+                                totalhp += allObjects[i].my_hp;
                                 break;
                             case idpd_freak:
-                                enemy_die(i, -1);
-                                play_sound_relative_to_player(snd_horror_portal_ID, allObjects[i].position.x, allObjects[i].position.y);
+                                totalhp += allObjects[i].my_hp;
                                 break;
                             case throne_2:
-                                enemy_die(i, -1);
-                                play_sound_relative_to_player(snd_horror_portal_ID, allObjects[i].position.x, allObjects[i].position.y);
+                                totalhp += allObjects[i].my_hp;
                                 break;
                             default:
                                 break;
                             }
                         }
+                        if (totalhp <= 140 && totalhp) {
+                            //clear_all_bullets();
+                            for (int i = 1; i < max_objects; i++) {
+                                switch (allObjects[i].my_id) {
+                                case bandit:
+                                    enemy_die(i, -1);
+                                    play_sound_relative_to_player(snd_horror_portal_ID, allObjects[i].position.x, allObjects[i].position.y);
+                                    break;
+                                case idpd_freak:
+                                    enemy_die(i, -1);
+                                    play_sound_relative_to_player(snd_horror_portal_ID, allObjects[i].position.x, allObjects[i].position.y);
+                                    break;
+                                case throne_2:
+                                    enemy_die(i, -1);
+                                    play_sound_relative_to_player(snd_horror_portal_ID, allObjects[i].position.x, allObjects[i].position.y);
+                                    break;
+                                default:
+                                    break;
+                                }
+                            }
+                        }
                     }
+                    break;
+                default:
+                    break;
                 }
-                break;
-            default:
-                break;
             }
+            else {  //!player_alive 
+                //create corpse
+                if (!has_died) {
+                    has_died = true;
+                    player_corpse_id = create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, player_corpse, 0, 0);
+                }
+                allObjects[0].position.x = (left_physics - extra_physics) * 16 + 8;    //just put the player outside so no enemies can see them, do extra stuff for T2 and freaks because of 0-1
+                allObjects[0].scale = 0;
+            }
+            //end of player stuff
 
             global_effects_alarm1--;
             if (global_effects_alarm1 <= 0) {
@@ -8355,7 +8726,18 @@ int main()
             int left_physics_adjusted = left_physics - extra_physics;
             int right_physics_adjusted = right_physics + extra_physics;
 
+            //rebel
+            enemy_index_fire_at = find_nearest_LOS_enemy(allObjects[0].position);
+            heal_all_allys = false;
+
             do_object_collision(left_physics_adjusted, right_physics_adjusted, 0);
+
+            //check if player got hit
+            if (allObjects[0].next_hurt == current_frame + 6) {
+                if (player_character == rogue) {
+                    create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, idpd_explosion, 0, 1);
+                }
+            }
 
             player_invincible--;
             if (player_invincible < 0) {
@@ -8374,8 +8756,35 @@ int main()
                 }
                 else {
                     //die
+                    if (player_character != chicken) {
+                        player_alive = false;
+                    }
+                    else {
+                        if (!chicken_beheaded) {
+                            chicken_beheaded = true;
+                            player_max_hp -= 2;
+                            if (player_max_hp < 0) {
+                                player_max_hp = 0;
+                            }
+                        }
+                        if (chicken_headless_timer > 0) {
+                            chicken_headless_timer--;
+                        }
+                        else {
+                            player_alive = false;
+                        }
+                    }
                 }
             }
+            else {
+                //chicken
+                chicken_headless_timer = 150 * ((ultra_picked == 1) + 1);
+                if (chicken_beheaded) {
+                    player_invincible = 7;
+                    chicken_beheaded = false;
+                }
+            }
+
             if (player_hp >= player_max_hp && can_recover_spirit) {
                 has_spirit = true;
                 can_recover_spirit = false;
@@ -8442,7 +8851,7 @@ int main()
                         all_sounds[snd_portal_loop_ID].sound.setVolume(80.0f);
                         break;
                     case snd_plasma_huge_ID:
-                        if (laser_brain < 1.1f) {
+                        if (laser_brain < 1.15f) {
                             play_sound_random_pitch(all_sounds[i].sound, all_sounds[i].pitch_variance, i);
                         }
                         else {
@@ -8450,7 +8859,7 @@ int main()
                         }
                         break;
                     case snd_plasma_split_ID:
-                        if (laser_brain < 1.1f) {
+                        if (laser_brain < 1.15f) {
                             play_sound_random_pitch(all_sounds[i].sound, all_sounds[i].pitch_variance, i);
                         }
                         else {
@@ -8910,6 +9319,19 @@ int main()
                     int choice_height = 0;
                     int choice_cap = 0;
                     switch (id) {
+                    case objectID::player_corpse:
+                        player_corpse_sprite.setPosition(allObjects[idx].position - cameraPos);
+
+                        choice = int(allObjects[idx].image_index * 0.4f);
+                        if (choice > player_character_death_frames - 1) {
+                            choice = player_character_death_frames - 1;
+                        }
+
+                        choice2 = 3;
+
+                        player_corpse_sprite.setTextureRect(sf::IntRect{ 48 * choice, 48 * choice2, 48, 48 });
+                        player_corpse_sprite.setScale(player_is_facing_right, 1);
+                        break;
                     case objectID::player:
                         //crosshair
                         cursor_sprite.setPosition(sf::Vector2f(mousepos));
@@ -8964,6 +9386,8 @@ int main()
 
                         allObjects[0].alarm1 = 0;
 
+
+
                         tmp_wep_angle = direction_to_mouse;
 
                         if (wep < 11) {     //melee
@@ -8981,11 +9405,35 @@ int main()
                         wep_sprite.setRotation(tmp_wep_angle * degreestoradians);
                         wep_sprite.setOrigin(wep_get_origin(wep));
 
-                        bwep_sprite.setPosition(allObjects[idx].position - cameraPos + sf::Vector2f(-2 * player_is_facing_right, swapmove));
-                        bwep_sprite.setTextureRect(sf::IntRect{ 0, 36 * bwep, 36, 36 });
-                        bwep_sprite.setScale(1 * allObjects[0].scale, player_is_facing_right * allObjects[0].scale);
-                        bwep_sprite.setRotation(-90 - 15 * player_is_facing_right);
-                        bwep_sprite.setOrigin(wep_get_origin(bwep));
+
+                        if (player_character != steroids) {
+                            bwep_sprite.setPosition(allObjects[idx].position - cameraPos + sf::Vector2f(-2 * player_is_facing_right, swapmove));
+                            bwep_sprite.setTextureRect(sf::IntRect{ 0, 36 * bwep, 36, 36 });
+                            bwep_sprite.setScale(1 * allObjects[0].scale, player_is_facing_right * allObjects[0].scale);
+                            bwep_sprite.setRotation(-90 - 15 * player_is_facing_right);
+                            bwep_sprite.setOrigin(wep_get_origin(bwep));
+                        }
+                        else {
+                            tmp_wep_angle = direction_to_mouse;
+
+                            if (bwep < 11) {     //melee
+                                tmp_wep_angle = direction_to_mouse + (Bwep_angle * (1 - (Bwep_kick / 20))) / degreestoradians;
+                            }
+
+                            bwep_sprite.setPosition(allObjects[idx].position - cameraPos + sf::Vector2f(cos(tmp_wep_angle) * -Bwep_kick, sin(tmp_wep_angle) * -Bwep_kick));
+                            bwep_sprite.setTextureRect(sf::IntRect{ 36 * Bwep_shine_frame, 36 * bwep, 36, 36 });
+                            if (wep < 11) {
+                                bwep_sprite.setScale(1 * allObjects[0].scale, (player_is_facing_right * (breloaded * 2 - 1)) * allObjects[0].scale);
+                            }
+                            else {
+                                bwep_sprite.setScale(1 * allObjects[0].scale, player_is_facing_right * allObjects[0].scale);
+                            }
+                            bwep_sprite.setRotation(tmp_wep_angle * degreestoradians);
+                            bwep_sprite.setOrigin(wep_get_origin(bwep));
+                        }
+
+
+
                         break;
                     case crystal_shield:
                         choice = (crystal_shield_time > 15) * (crystal_shield_time % 2 * 2 - 1);    //x-offset to make shaking effect
@@ -9306,10 +9754,18 @@ int main()
                         break;
                     case idpd_explosion:
                         choice = int(allObjects[idx].image_index * 0.4f);
-                        explosions_sprites[explosionIndex].setOrigin(48, 48);
-                        explosions_sprites[explosionIndex].setColor({ 255, 255, 255, 255 });
-                        explosions_sprites[explosionIndex].setPosition(allObjects[idx].position - cameraPos);
-                        explosions_sprites[explosionIndex].setTextureRect(sf::IntRect{ 96 * choice, 0, 96, 96 });
+                        if (allObjects[idx].my_hitbox == idpd_explosion_hitbox) {
+                            explosions_sprites[explosionIndex].setOrigin(48, 48);
+                            explosions_sprites[explosionIndex].setColor({ 255, 255, 255, 255 });
+                            explosions_sprites[explosionIndex].setPosition(allObjects[idx].position - cameraPos);
+                            explosions_sprites[explosionIndex].setTextureRect(sf::IntRect{ 96 * choice, 0, 96, 96 });
+                        }
+                        else {
+                            explosions_sprites[explosionIndex].setOrigin(24, 24);
+                            explosions_sprites[explosionIndex].setColor({ 255, 255, 255, 255 });
+                            explosions_sprites[explosionIndex].setPosition(allObjects[idx].position - cameraPos);
+                            explosions_sprites[explosionIndex].setTextureRect(sf::IntRect{ 48 * choice, 248, 48, 48 });
+                        }
                         explosionIndex++;
                         //draw light in dark level
                         draw_light(allObjects[idx].position, the_darkness, 160 + rand() % 4, 110 + rand() % 3);
@@ -9727,6 +10183,46 @@ int main()
                         rotateable_effects_small[rotateableEffectsSmallIndex].setTextureRect(sf::IntRect{ 8 * choice, 16, 8, 8 });
                         rotateableEffectsSmallIndex++;
                         break;
+                    case rebel_ally:
+                        add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24, draw_shadow24s);
+                        shadow24_ArrayIndex++;      //shadow
+                        rotateable_sprites_guns[rotateableSpriteGunIndex].setTexture(bandit_guntex);
+                        rotateable_sprites_guns[rotateableSpriteGunIndex].setColor({ 255, 255, 255, 255 });
+                        rotateable_sprites_guns[rotateableSpriteGunIndex].setPosition(allObjects[idx].position - cameraPos);
+                        rotateable_sprites_guns[rotateableSpriteGunIndex].setOrigin({ 16,16 });
+                        rotateable_sprites_guns[rotateableSpriteGunIndex].setScale(1, 1);
+                        rotateable_sprites_guns[rotateableSpriteGunIndex].setRotation(allObjects[idx].direction * degreestoradians);
+                        rotateableSpriteGunIndex++;    //gun
+
+                        all_enemy_sprites[allEnemySpritesIndex].setColor({ 255, 255, 255, 255 });
+                        all_enemy_sprites[allEnemySpritesIndex].setPosition(allObjects[idx].position - cameraPos);
+                        all_enemy_sprites[allEnemySpritesIndex].setScale(allObjects[idx].facing_right * 2 - 1, 1);
+
+                        if (allObjects[idx].image_index >= 0) {
+                            if (abs(allObjects[idx].speed.x) < 0.01f && abs(allObjects[idx].speed.y) < 0.01f) {
+                                choice = (int(allObjects[idx].image_index * 0.4f) % 4);
+                                choice2 = 0;
+                            }
+                            else {
+                                choice = (int(allObjects[idx].image_index * 0.4f) % 6);
+                                choice2 = 1;
+                            }
+                        }
+                        else {
+                            if (allObjects[idx].image_index < -3) {
+                                choice = 0;
+                            }
+                            else {
+                                choice = 1;
+                            }
+                            choice2 = 2;
+                        }
+                        choice2 += 9;
+
+                        all_enemy_sprites[allEnemySpritesIndex].setTextureRect(sf::IntRect{ 48 * choice, 48 * choice2, 48, 48 });
+                        allEnemySpritesIndex++;
+
+                        break;
                     case bandit:
                         add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24, draw_shadow24s);
                         shadow24_ArrayIndex++;      //shadow
@@ -9918,7 +10414,12 @@ int main()
                             rotateableSpriteBulletIndex++;
                         }
                         else {
-                            rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(playerbullet1_2tex);
+                            if (allObjects[idx].size == 0) {
+                                rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(playerbullet1_2tex);
+                            }
+                            else {
+                                rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(ally_bullettex);
+                            }
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setColor({ 255, 255, 255, 255 });
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setPosition(allObjects[idx].position - cameraPos);
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setRotation(allObjects[idx].direction);
@@ -10110,7 +10611,7 @@ int main()
                         case 1:
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(enemy_bullet_destroy2_2);
                             break;
-                        case 2:
+                        default:
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(enemy_bullet_destroy2_3);
                             break;
                         }
@@ -10148,7 +10649,7 @@ int main()
 
         sf::Text debug1;
 
-        debug1.setString("explosionIndex: " + std::to_string(explosionIndex));
+        debug1.setString("ally_count: " + std::to_string(ally_count));
         debug1.setCharacterSize(8);
         debug1.setFont(font);
         debug1.setColor(sf::Color::White);
@@ -10334,6 +10835,9 @@ int main()
 
             reset_rotateable_sprites(all_enemy_corpses, allEnemyCorpsesIndex);
 
+            if(!player_alive) {
+                buffer_under.draw(player_corpse_sprite);
+            }
 
             buffer_under.display();
 
@@ -10523,7 +11027,7 @@ int main()
             //portal
             buffer_over.draw(portal_sprite);
 
-            if (!crystal_is_shielding) {
+            if (!crystal_is_shielding && player_alive) {
                 buffer_over.draw(bwep_sprite);
 
                 if (direction_to_mouse - (180 / degreestoradians) > 0) {
@@ -10554,9 +11058,11 @@ int main()
             }
 
             //player
-            buffer_over.draw(player_sprite);
+            if (player_alive) {
+                buffer_over.draw(player_sprite);
+            }
 
-            if (!crystal_is_shielding) {
+            if (!crystal_is_shielding && player_alive) {
                 if (direction_to_mouse - (180 / degreestoradians) <= 0) {
                     buffer_over.draw(wep_sprite);
                 }
@@ -10723,21 +11229,63 @@ int main()
                     tex.setPosition(tex.getPosition() + cameraPos);
                 }
             }
-            //rads
-            choice = int(16 * player_rads / (player_level * 60 + 600 * (meltdown - 1)));
-            if (choice > 16) {
-                choice = 16;
+
+            //ui
+            if (player_alive) {
+                //rads
+                choice = int(16 * player_rads / (player_level * 60 + 600 * (meltdown - 1)));
+                if (choice > 16) {
+                    choice = 16;
+                }
+                choice *= 14;
+                xp_bar_spr.setTextureRect({ choice, 0, 14, 24 });
+                player_level_spr.setTextureRect({ (player_level - 1) * 8, 0, 8, 8 });
+
+                buffer_over.draw(xp_bar_spr);
+                buffer_over.draw(player_level_spr);
+                buffer_over.draw(hp_bar_spr);
+                buffer_over.draw(health_bar_spr);
+                draw_text_NT(hp_text, buffer_over);
+                go_addy1 = 55;
+                go_addy2 = 3;
+                game_over_time = 0;
             }
-            choice *= 14;
-            xp_bar_spr.setTextureRect({ choice, 0, 14, 24 });
-            player_level_spr.setTextureRect({ (player_level - 1) * 8, 0, 8, 8 });
+            else {
 
-            buffer_over.draw(xp_bar_spr);
-            buffer_over.draw(player_level_spr);
-            buffer_over.draw(hp_bar_spr);
-            buffer_over.draw(health_bar_spr);
-            draw_text_NT(hp_text, buffer_over);
+                sf::RectangleShape dark_screen;
+                dark_screen.setSize(sf::Vector2f(320, 240));
+                dark_screen.setFillColor(sf::Color(0, 0, 0, 153));  //0.6 opacity
+                buffer_over.draw(dark_screen);
 
+                if (game_over_time > 7) {
+                    game_over_time = 7;
+                }
+                if (game_over_time > 0) {
+                    letter_boxes.setTextureRect({ int(game_over_time * 0.4f) * 320, 0, 320, 240 });
+                    buffer_over.draw(letter_boxes);
+                }
+
+                game_over_time++;
+                
+                game_over_text.setString("THE STRUGGLE CONTINUES");
+                game_over_text.setPosition(160 - 88, 64 - 3 + go_addy1 + go_addy2);
+
+                draw_text_NT(game_over_text, buffer_over);
+                if (go_addy2 == 3) {
+                    go_addy2 = 1;
+                }
+                else{
+                    if (go_addy2 == 0){
+                        if (go_addy1 > 1) {
+                            go_addy1 -= 18;
+                        }
+                        else if (go_addy1 == 1) {
+                            go_addy1 = 0;
+                        }
+                    }
+                    go_addy2 = 0;
+                }
+            }
             buffer_over.display();
             //draw all sprites that are over shadows
             //window.draw(buffer_overSprite);
@@ -10749,7 +11297,7 @@ int main()
         debug_timer_.timing_us_end();
 
 
-        draw_text_NT(hp_text, buffer_over);
+        //draw_text_NT(hp_text, buffer_over);
         //buffer_over.draw(c);
 
         sf::Text tTime;

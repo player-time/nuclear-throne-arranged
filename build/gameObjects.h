@@ -33,6 +33,9 @@ enum objectID {
 	explosion,
 
 	player,
+	player_corpse,
+
+	rebel_ally,
 
 	crystal_shield,
 
@@ -157,6 +160,8 @@ enum enemy_corpses {
 	idpd_freak_CORPSE,	//filler, not actually used
 	scorpion_CORPSE,
 	golden_scorpion_CORPSE,
+
+	rebel_ally_CORPSE = 4,
 };
 
 enum ground_material {
