@@ -30,6 +30,8 @@ enum objectID {
 	idpd_portal_charge,
 	idpd_spawn,
 
+	rogue_strike,
+
 	explosion,
 
 	player,
@@ -429,7 +431,7 @@ enum what_team {
 //for circular hitboxes, radius
 enum hitboxes {
 	no_hitbox = 0,
-	player_hitbox = 4,
+	player_hitbox = 4,	//4 default
 	bandit_hitbox = 8, enemy_bullet_hitbox = 3, plasma_hitbox = 5, guardian_bullet_hitbox = 4,
 	plasma_impact_hitbox = 32,
 	idpd_explosion_hitbox = 48,
