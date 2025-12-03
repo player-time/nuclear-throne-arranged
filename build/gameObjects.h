@@ -24,6 +24,8 @@ enum objectID {
 
 	the_wind,
 
+	flame,
+
 	scorch,
 	idpd_explosion,
 	idpd_nade, idpd_nade_remove,
@@ -51,6 +53,12 @@ enum objectID {
 	throne_2, throne_2_death,
 
 	popup_text,
+
+	feather_raven, 
+	feather, 
+	money,
+
+	stress_sweat,
 
 	rad, rad_destroy,
 
@@ -194,6 +202,8 @@ enum sound_ID {
 
 	snd_player_specific_1_ID,
 
+	snd_player_loop_1_ID,
+
 	//end of sounds that will be used, not just in buffers
 
 	snd_music_ID,
@@ -288,6 +298,12 @@ enum sound_ID {
 	snd_frog_hurt_ID,
 	snd_skeleton_hurt_ID,
 	
+
+	snd_fish_roll_ID,
+
+	snd_crystal_shield_ID,
+
+	snd_eyes_TK_ID,
 
 	snd_corpse_explode_ID,
 	snd_corpse_explode_TB_ID,
