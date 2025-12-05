@@ -26,6 +26,11 @@ enum objectID {
 
 	flame,
 
+
+
+	static_effect,
+
+
 	scorch,
 	idpd_explosion,
 	idpd_nade, idpd_nade_remove,

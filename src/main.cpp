@@ -404,7 +404,7 @@ int player_wave = 0;
 
 float scarier_face = 0.8f;
 
-bool has_throne_butt = false;
+bool has_throne_butt = true;
 
 bool player_alive = true;
 bool has_died = false;
@@ -1958,6 +1958,40 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 
                 allObjects[i].image_index = rand() % 3;
                 allObjects[i].direction = random_360_degrees();
+                break;
+            case static_effect:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].my_hitbox = no_hitbox;
+                allObjects[i].position = { x, y };
+                allObjects[i].image_index = 0;
+                allObjects[i].direction = direction;
+
+                allObjects[i].speed = {xspd, yspd};
+
+                allObjects[i].size = image_index;   //offset on the sprite sheet
+                switch (image_index) {
+                case 224:
+                    allObjects[i].alarm1 = 15;
+                    allObjects[i].alarm2 = 2;
+                    break;
+                case 168:
+                    allObjects[i].alarm1 = 10;
+                    allObjects[i].alarm2 = 3;
+                    break;
+                case 192:
+                    allObjects[i].alarm1 = 15;
+                    allObjects[i].alarm2 = 4;
+                    break;
+                case 216:
+                    allObjects[i].alarm1 = 18;
+                    allObjects[i].alarm2 = 5;
+                    break;
+                default:
+                    allObjects[i].alarm1 = 0;
+                    allObjects[i].alarm2 = 0;
+                    break;
+                }
+
                 break;
             default:
                 break;
@@ -3518,6 +3552,7 @@ void plant_tangle_collision(int currOBJ, int i, int j) {
                             if (has_throne_butt && allObjects[O].my_hp < allObjects[O].max_hp * 0.33f) {
                                 allObjects[O].my_hp = 0;
                                 enemy_die(O, 0);
+                                create_object(allObjects[O].position.x, allObjects[O].position.y, 0, 0, static_effect, 0, 192);
                             }
                         }
                         break;
@@ -3789,6 +3824,10 @@ void ultra_slash_collision(int currOBJ, int i, int j) {
                 if (allObjects[currOBJ].alarm3 == 0 && game_area[i + w][j + h].my_grid_type == wall && is_within_circle(sf::Vector2f(((i + w) * 16) + 8, ((j + h) * 16) + 8), allObjects[currOBJ].position, (wall_hitbox + 24))) {
                     allObjects[currOBJ].position -= allObjects[currOBJ].speed;
                     allObjects[currOBJ].alarm3 = 1;
+
+                    float ang_to = allObjects[currOBJ].direction;
+
+                    create_object((((i + w) * 16) + 8) - cos(ang_to) * 11, (((j + h) * 16) + 8) - sin(ang_to) * 11, 0, 0, static_effect, ang_to * degreestoradians, 224);
                 }
                 switch (allObjects[O].my_id) {
                 case throne_2:
@@ -4402,8 +4441,9 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 }
                 if (skeleton_gamble) {
                     hurt_player(1);
+                    create_object(allObjects[0].position.x + Xspd * 2, allObjects[0].position.y + Yspd * 2, 0, 0, static_effect, direction * degreestoradians, 168);
                 }
-                if (player_hp == 0 && !has_spirit) {
+                if (player_hp == 0 && !has_spirit && skeleton_gamble) {
                     create_popuptext("FUCK", allObjects[0].position);
                     player_hp = -999;
                 }
@@ -5643,6 +5683,29 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             }
             allObjects[i].speed.y += 0.4f;
             allObjects[i].position += allObjects[i].speed;
+
+            break;
+        case static_effect:
+            allObjects[i].image_index++;
+
+            if (allObjects[i].alarm1 < allObjects[i].image_index) {
+                allObjects[i].my_id = nothing;
+            }
+
+            if (allObjects[i].speed.x != 0 || allObjects[i].speed.y != 0) {
+                float tmp_d = atan2f(allObjects[i].speed.y, allObjects[i].speed.x);
+                allObjects[i].speed.x -= cos(tmp_d) * 0.1f;
+                allObjects[i].speed.y -= sin(tmp_d) * 0.1f;
+                if (abs(allObjects[i].speed.x) < 0.2f) {
+                    allObjects[i].speed.x = 0;
+                }
+                if (abs(allObjects[i].speed.y) < 0.2f) {
+                    allObjects[i].speed.y = 0;
+                }
+            }
+
+            allObjects[i].position += allObjects[i].speed;
+
             break;
         default:
             break;
@@ -9250,9 +9313,22 @@ int main()
                             if (player_max_hp < 0) {
                                 player_max_hp = 0;
                             }
+                            float tmp_DIR = 0.0f;
+                            for (int i = 0; i < 12; i++) {
+                                float tmp_SPD = random_float(3) + 2;
+                                create_object(allObjects[0].position.x, allObjects[0].position.y, cos(tmp_DIR) * tmp_SPD, sin(tmp_DIR) * tmp_SPD, static_effect, tmp_DIR * degreestoradians, 216);
+                                tmp_DIR += 30 / degreestoradians;
+                            }
                         }
                         if (chicken_headless_timer > 0) {
                             chicken_headless_timer--;
+                            if (rand() % 12 == 0 || (rand() % 3 == 0 && chicken_headless_timer < 60)) {
+                                float tmp_DIR = -(45 + random_float(90)) / degreestoradians;
+
+                                float tmp_SPD = random_float(3) + 2;
+                                create_object(allObjects[0].position.x, allObjects[0].position.y - 4, cos(tmp_DIR) * tmp_SPD, sin(tmp_DIR) * tmp_SPD, static_effect, tmp_DIR * degreestoradians, 216);
+                            }
+                            
                         }
                         else {
                             player_alive = false;
@@ -9263,6 +9339,7 @@ int main()
             else {
                 //chicken
                 chicken_headless_timer = 150 * ((ultra_picked == 1) + 1);
+
                 if (chicken_beheaded) {
                     player_invincible = 7;
                     chicken_beheaded = false;
@@ -9847,7 +9924,7 @@ int main()
                         draw_light(allObjects[idx].position, the_darkness, 130 + rand() % 4, 45 + rand() % 3);
 
                         if (choice2 == 0) {
-                            choice = int(allObjects[0].image_index * 0.4f) % player_character_idle_frames;
+                            choice = int(allObjects[0].image_index * 0.4f) % (player_character_idle_frames - (player_character == chicken && player_hp == 0) * 7);
                         }
                         else {
                             choice = int(allObjects[0].image_index * 0.4f) % player_character_walk_frames;
@@ -9860,7 +9937,7 @@ int main()
                         else {
                             player_sprite.setRotation(roll * -30 * (player_is_facing_right));   //rotation
                         }
-                        player_sprite.setTextureRect(sf::IntRect{ 48 * choice, 48 * choice2, 48, 48 });
+                        player_sprite.setTextureRect(sf::IntRect{ 48 * choice, 48 * (choice2 + ((player_character == chicken && player_hp == 0) * 4)), 48, 48});
                         player_sprite.setScale(player_is_facing_right * allObjects[0].scale, 1 * allObjects[0].scale);
                         player_wave++;
 
@@ -9889,9 +9966,6 @@ int main()
                             wep_swap_sprite.setScale(1, 1);
                             wep_swap_sprite.setTextureRect({int(wep_swap_anim * 0.4f) * 10, 0, 10, 10});
                             wep_swap_sprite.setPosition(allObjects[idx].position - cameraPos + sf::Vector2f(cos(tmp_wep_angle) * 10, sin(tmp_wep_angle) * 10 ));
-                        }
-                        else {
-                            wep_swap_sprite.setScale(0, 0);
                         }
                         wep_swap_anim++;
 
@@ -10718,6 +10792,44 @@ int main()
                         rotateable_effects_small[rotateableEffectsSmallIndex].setRotation(allObjects[idx].direction);
                         rotateable_effects_small[rotateableEffectsSmallIndex].setTextureRect(sf::IntRect{ choice, 192, 8, 8 });
                         rotateableEffectsSmallIndex++;
+                        break;
+                    case static_effect:
+                        choice = int(allObjects[idx].image_index * 0.4f);
+                        if (allObjects[idx].alarm2 == 2) {
+                            rotateable_effects_medium[rotateableEffectsMediumIndex].setColor({ 255, 255, 255, 255 });
+                            rotateable_effects_medium[rotateableEffectsMediumIndex].setPosition(allObjects[idx].position - cameraPos);
+                            rotateable_effects_medium[rotateableEffectsMediumIndex].setRotation(allObjects[idx].direction);
+                            rotateable_effects_medium[rotateableEffectsMediumIndex].setTextureRect(sf::IntRect{ choice * 16, allObjects[idx].size, 16, 16 });
+                            rotateableEffectsMediumIndex++;
+                        }
+                        else if (allObjects[idx].alarm2 == 3) {
+                            rotateable_effects_large[rotateableEffectsLargeIndex].setColor({ 255, 255, 255, 255 });
+                            rotateable_effects_large[rotateableEffectsLargeIndex].setPosition(allObjects[idx].position - cameraPos);
+                            rotateable_effects_large[rotateableEffectsLargeIndex].setRotation(allObjects[idx].direction);
+                            rotateable_effects_large[rotateableEffectsLargeIndex].setScale(1, 1);
+                            rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ choice * 24, allObjects[idx].size, 24, 24 });
+                            rotateableEffectsLargeIndex++;
+                        }
+                        else if (allObjects[idx].alarm2 == 4) {
+                            variable_textures[variableTexturesIndex].setTexture(allBigEffectSprites);
+                            variable_textures[variableTexturesIndex].setColor({ 255, 255, 255, 255 });
+                            variable_textures[variableTexturesIndex].setPosition(allObjects[idx].position - cameraPos);
+                            variable_textures[variableTexturesIndex].setRotation(0);
+                            variable_textures[variableTexturesIndex].setTextureRect(sf::IntRect{ choice * 24, allObjects[idx].size, 24, 24 });
+                            variable_textures[variableTexturesIndex].setOrigin(12, 12);
+                            variable_textures[variableTexturesIndex].setScale(1, 1);
+                            variableTexturesIndex++;
+                        }
+                        else if (allObjects[idx].alarm2 == 5) {
+                            variable_textures[variableTexturesIndex].setTexture(allBigEffectSprites);
+                            variable_textures[variableTexturesIndex].setColor({ 255, 255, 255, 255 });
+                            variable_textures[variableTexturesIndex].setPosition(allObjects[idx].position - cameraPos);
+                            variable_textures[variableTexturesIndex].setRotation(allObjects[idx].direction);
+                            variable_textures[variableTexturesIndex].setTextureRect(sf::IntRect{ choice * 32, allObjects[idx].size, 32, 16 });
+                            variable_textures[variableTexturesIndex].setOrigin(8, 8);
+                            variable_textures[variableTexturesIndex].setScale(1, 1);
+                            variableTexturesIndex++;
+                        }
                         break;
                     case rebel_ally:
                         add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24, draw_shadow24s);
@@ -11608,6 +11720,7 @@ int main()
             crystal_shield_sprite.setScale(0, 0);
 
             buffer_over.draw(wep_swap_sprite);
+            wep_swap_sprite.setScale(0, 0);
 
             //plasma impact
             for (sf::Sprite spr : plasma_impact_sprites) {
