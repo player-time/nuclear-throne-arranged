@@ -37,6 +37,8 @@ bool debug_invincibility = false;
 
 bool EXIT_PROGRAM_NOW = false;
 
+int GLOBAL_DEBUG_INT = 0;
+
 
 int seed = time(NULL);
 
@@ -225,7 +227,7 @@ bool global_stop_music = false;
 
 //player stuff
 int player_level = 1;
-int player_rads = 9999;
+int player_rads = 30;
 
 int player_invincible = 0;
 
@@ -304,6 +306,7 @@ sf::Cursor naitive_cursor_sprite;
 
 sf::Sprite strong_spirit_sprite;
 
+sf::Sprite player_level_up_crown;
 
 int go_addy1 = 55;
 int go_addy2 = 3;
@@ -342,6 +345,7 @@ bool SHIFT_held = false;
 //character specific
 //horror
 float horror_beam_strength = 0.0f;
+int horror_held_beam_length = 0;
 //fish
 int roll = 0;
 float roll_direction = 0.0f;
@@ -1969,6 +1973,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].speed = {xspd, yspd};
 
                 allObjects[i].size = image_index;   //offset on the sprite sheet
+
+                allObjects[i].alarm3 = 0;   //whether the object follows the player
                 switch (image_index) {
                 case 224:
                     allObjects[i].alarm1 = 15;
@@ -1982,9 +1988,27 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].alarm1 = 15;
                     allObjects[i].alarm2 = 4;
                     break;
-                case 216:
+                case 216:   //blood streak
                     allObjects[i].alarm1 = 18;
                     allObjects[i].alarm2 = 5;
+                    break;
+                case 232:   //acid streak
+                    allObjects[i].alarm1 = 18;
+                    allObjects[i].alarm2 = 5;
+                    break;
+                case 240:   //ally damage
+                    allObjects[i].alarm1 = 12;
+                    allObjects[i].alarm2 = 2;
+                    break;
+                case 256:   //horror TB
+                    allObjects[i].alarm1 = 25;
+                    allObjects[i].alarm2 = 2;
+                    allObjects[i].alarm3 = 1;
+                    break;
+                case 254:   //level up
+                    allObjects[i].alarm1 = 100;
+                    allObjects[i].alarm2 = 6;
+                    allObjects[i].alarm3 = 1;
                     break;
                 default:
                     allObjects[i].alarm1 = 0;
@@ -3497,6 +3521,7 @@ void basic_enemy_collision(int currOBJ, int i, int j) {
                                 else {  //dead
                                     enemy_die(currOBJ, O);
                                 }
+                                create_object(allObjects[O].position.x, allObjects[O].position.y, 0, 0, static_effect, random_360_degrees(), 192);
                             }
                         }
                         break;
@@ -3563,6 +3588,7 @@ void plant_tangle_collision(int currOBJ, int i, int j) {
                             if (has_throne_butt && allObjects[O].my_hp < allObjects[O].max_hp * 0.33f) {
                                 allObjects[O].my_hp = 0;
                                 enemy_die(O, 0);
+                                create_object(allObjects[O].position.x, allObjects[O].position.y, 0, 0, static_effect, 0, 192);
                             }
                         }
                         break;
@@ -4287,7 +4313,10 @@ void throne_2_collision(int currOBJ, int i, int j) {
                                 else {  //dead
                                     enemy_die(currOBJ, O);
                                 }
+                                create_object(allObjects[O].position.x, allObjects[O].position.y, 0, 0, static_effect, random_360_degrees(), 192);
+
                             }
+
                         }
                         break;
                     default:
@@ -5166,7 +5195,17 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             //take damage over time
             if (allObjects[i].alarm2 < 0) {
                 allObjects[i].alarm2 = 40;
+                if (created_portal) {
+                    allObjects[i].alarm2 = 10; 
+                }
                 allObjects[i].my_hp -= 1;
+
+                tmpdir = random_360_degrees();
+
+                tempSpeed = 3.5f;
+
+                create_object(allObjects[i].position.x, allObjects[i].position.y, cos(tmpdir) * tempSpeed, sin(tmpdir) * tempSpeed, static_effect, random_360_degrees(), 240);
+
                 if(allObjects[i].my_hp <= 0) {  //dead
                     enemy_die(i, -1);
                 }
@@ -5176,9 +5215,9 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                 allObjects[i].my_hp = allObjects[i].max_hp;
             }
 
-            //bandit ai
+            //rebel ally ai
             if (allObjects[i].alarm1 < 0) {
-                //choose what to do
+
                 allObjects[i].alarm1 = 10 + rand() % 10;
                 //walk towards player
                 allObjects[i].speeddir += 0.4f;
@@ -5196,7 +5235,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                     create_object(allObjects[i].position.x, allObjects[i].position.y, tempSpeedX, tempSpeedY, player_bullet, tmpdir, 1);
                 }
             }
-            //bandit ai
+            //rebel ally ai
             break;
         case bandit:
             allObjects[i].speeddir -= allObjects[i].friction;
@@ -5706,6 +5745,10 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
 
             allObjects[i].position += allObjects[i].speed;
 
+            if (allObjects[i].alarm3 == 1) {
+                allObjects[i].position = allObjects[0].position - sf::Vector2f{0, 16};
+            }
+
             break;
         default:
             break;
@@ -5718,11 +5761,11 @@ void reset_rotateable_sprites(std::vector<sf::Sprite> &sprites, int largest_inde
     }
 }
 
-void reset_popup_texts(std::vector<sf::Text>& texts, int largest_index) {
+/*void reset_popup_texts(std::vector<sf::Text>& texts, int largest_index) {
     for (int i = 0; i < largest_index; i++) {
         texts[i].setString("");
     }
-}
+}*/
 
 void rogue_strike_strike(sf::Vector2f pos) {
     int tmp_size = 2;
@@ -7312,6 +7355,13 @@ int main()
     strong_spirit_sprite.setTextureRect({0, 0, 32, 48});
     strong_spirit_sprite.setTexture(strongSpirit_tex);
 
+
+    sf::Texture level_up_texture;
+    level_up_texture.loadFromFile("res/player/sprLevelUp.png");
+
+    player_level_up_crown.setOrigin(32, 32);
+    player_level_up_crown.setTextureRect({ 0, 0, 64, 64 });
+    player_level_up_crown.setTexture(level_up_texture);
     //load sprites
         sf::Texture allEnemySprites;
         allEnemySprites.loadFromFile("res/enemies/all_enemies.png");
@@ -7343,6 +7393,7 @@ int main()
         hp_bar.loadFromFile("res/player/hp_bar.png");
         sf::Texture health_bar;
         health_bar.loadFromFile("res/player/health_bar.png");
+
 
         player_level_spr.setTexture(player_level_tex);
         player_level_spr.setOrigin(0, 0);
@@ -8567,6 +8618,12 @@ int main()
                     if (player_rads > player_level * 60) {
                         player_rads -= player_level * 60;
                         player_level++;
+                        if (player_level < 10) {
+                            create_object(allObjects[0].position.x, allObjects[0].position.y - 16, 0, 0, static_effect, 0, 254);
+                        }
+                        else {
+                            //ultra
+                        }
                     }
                 }
                 else {
@@ -9076,14 +9133,36 @@ int main()
                                 tmpdir = random_360_radians();
                                 create_object(allObjects[0].position.x + (cos(tmpdir) * horror_beam_strength + 1), allObjects[0].position.y + (sin(tmpdir) * horror_beam_strength + 1), xspd, yspd, horror_bullet, direction_to_mouse, 0);
                                 player_rads--;
+                                horror_held_beam_length++;
                                 play_sounds_this_frame_count[snd_horror_beam_hold_ID] = 1;
                                 if (horror_beam_strength == 1.0f) {
                                     play_sounds_this_frame_count[snd_horror_beam_start_ID] = 1;
                                 }
+                                //throne butt
+                                if (has_throne_butt && horror_held_beam_length > 30) {
+                                    //heal
+
+                                    player_hp++;
+
+                                    if (player_hp > player_max_hp) {
+                                        player_hp = player_max_hp;
+                                        create_popuptext("MAX HP", allObjects[0].position);
+                                    }
+                                    else {
+                                        create_popuptext("+1 HP", allObjects[0].position);
+                                    }
+                                    create_object(allObjects[0].position.x, allObjects[0].position.y - 16, 0, 0, static_effect, 0, 256);
+
+                                    horror_held_beam_length = 0;
+                                }
+                            }
+                            else {
+                                horror_held_beam_length = 0;
+                                horror_beam_strength = 1.0f;
                             }
                         }
 
-                        horror_beam_strength += 0.1f;
+                        horror_beam_strength += 0.1f * (has_throne_butt + 1);
 
                         if (horror_beam_strength > 7.0f) {
                             horror_beam_strength = 7.0f;
@@ -9134,6 +9213,7 @@ int main()
                     case horror:
                         //horror beam
                         horror_beam_strength -= 1.0f;
+                        horror_held_beam_length = 0;    //throne butt
                         if (horror_beam_strength < 1.0f) {
                             horror_beam_strength = 1.0f;
                         }
@@ -10799,8 +10879,10 @@ int main()
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setColor({ 255, 255, 255, 255 });
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setPosition(allObjects[idx].position - cameraPos);
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setRotation(allObjects[idx].direction);
+                            rotateable_effects_medium[rotateableEffectsMediumIndex].setScale(1, 1);
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setTextureRect(sf::IntRect{ choice * 16, allObjects[idx].size, 16, 16 });
                             rotateableEffectsMediumIndex++;
+                            GLOBAL_DEBUG_INT = choice;
                         }
                         else if (allObjects[idx].alarm2 == 3) {
                             rotateable_effects_large[rotateableEffectsLargeIndex].setColor({ 255, 255, 255, 255 });
@@ -10829,6 +10911,21 @@ int main()
                             variable_textures[variableTexturesIndex].setOrigin(8, 8);
                             variable_textures[variableTexturesIndex].setScale(1, 1);
                             variableTexturesIndex++;
+                        }
+                        else if (allObjects[idx].alarm2 == 6) {
+                            //level up
+
+                            if (choice > 7 && choice < 31) {
+                                choice = 7;
+                            }
+                            else if (choice > 30) {
+                                choice -= 24;
+                            }
+
+                            player_level_up_crown.setPosition(allObjects[idx].position - cameraPos);
+                            player_level_up_crown.setTextureRect(sf::IntRect{ choice * 64, 0, 64, 64 });
+                            player_level_up_crown.setScale(1, 1);
+
                         }
                         break;
                     case rebel_ally:
@@ -11297,7 +11394,7 @@ int main()
 
         sf::Text debug1;
 
-        debug1.setString("ally_count: " + std::to_string(ally_count));
+        debug1.setString("debug1: " + std::to_string(GLOBAL_DEBUG_INT));
         debug1.setCharacterSize(8);
         debug1.setFont(font);
         debug1.setColor(sf::Color::White);
@@ -11739,6 +11836,7 @@ int main()
             }
             buffer_over.draw(rogue_portal_strike_sprite);
 
+
             //  !!! BLOOM START !!!  //
 
 
@@ -11880,6 +11978,8 @@ int main()
                     tex.setPosition(tex.getPosition() + cameraPos);
                 }
             }
+            buffer_over.draw(player_level_up_crown);
+            player_level_up_crown.setScale(0, 0);
 
             //ui
             if (player_alive) {

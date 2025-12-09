@@ -1,5 +1,5 @@
 ﻿  Copy OpenAL DLL
   main.cpp
-C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\main.cpp(2205): warning C4715: 'wep_get_origin': not all control paths return a value
-C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\main.cpp(2003): warning C4715: 'create_object': not all control paths return a value
+C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\main.cpp(2229): warning C4715: 'wep_get_origin': not all control paths return a value
+C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\main.cpp(2027): warning C4715: 'create_object': not all control paths return a value
   CMakeSFMLProject.vcxproj -> C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\bin\Release\CMakeSFMLProject.exe
