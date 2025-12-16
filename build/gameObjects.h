@@ -17,6 +17,8 @@ enum objectID {
 	T2_bullet,
 	throne_beam_charge_particle,
 
+	revenge_bullet, revenge_bullet_spawner,
+
 	idpd_bullet, idpd_bullet_destroy,
 
 	toxic_gas,
@@ -65,11 +67,12 @@ enum objectID {
 
 	stress_sweat,
 
+	weapon_drop,
+
 	rad, rad_destroy,
 
 	ammo_pack, health_pack,
 	ammo_pack_destroy, heal_FX,
-	weapon_drop,
 	lust_FX,
 	laser_brain_FX,
 
@@ -470,6 +473,10 @@ enum hitboxes {
 	medium_prop_hitbox = 12,
 	crystal_shield_hitbox = 24,
 	plant_tangle_hitbox = 24,
+
+	weapon_hitbox = 8,
+
+	revenge_bullet_hitbox = -2,
 };
  
 struct gameObject{

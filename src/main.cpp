@@ -31,7 +31,7 @@ int bandit_choice1 = 0;
 int draw_mult = 5;
 //
 
-bool global_debug = false;
+bool global_debug = true;
 
 bool debug_invincibility = false;
 
@@ -110,6 +110,9 @@ int prop_sprites_max = 50;
 std::vector<sf::Sprite> scorch_sprites;
 int scorch_sprites_max = 400;
 
+std::vector<sf::Sprite> weapon_sprites;
+int weapon_sprites_max = 1000;
+
 sf::Sprite portal_sprite;
 
 sf::Sprite T2_sprite;
@@ -128,6 +131,9 @@ int variable_textures_bloom_max = 4000;
 
 int wall_textures_max = 600;
 std::vector<sf::Sprite> wall_textures;
+
+int rain_textures_max = 100;
+std::vector<sf::Sprite> rain_textures;
 
 int wall_boarder_textures_max = 600;
 std::vector<sf::Sprite> wall_boarder_textures;
@@ -159,6 +165,8 @@ sf::Image game_icon;
 
 bool fullscreen_mode = true;
 
+sf::Vector2f fullscreen_offset = { 0, 0 };
+
 //text ingame
 std::vector<sf::Text> popup_texts;
 int popup_texts_max = 100;
@@ -182,9 +190,12 @@ int current_frame = 0;      //used for stuff like i-frames, reset this each area
 
 
 
-int LOOPS = 15;
+int LOOPS = 29;
 
 
+
+bool veryhard_mode = false;
+float revenge_bullet_offset = 1.0f;
 
 //game logic stuff
 int area = 0;
@@ -227,7 +238,7 @@ bool global_stop_music = false;
 
 //player stuff
 int player_level = 1;
-int player_rads = 30;
+int player_rads = 30000;
 
 int player_invincible = 0;
 
@@ -252,6 +263,11 @@ int player_energy_max = 55;
 float global_ammo_mult = 1.0f;  //ammo mult deteremined by the player ammo and weapons
 
 float player_friction_mult = 1.0f;
+
+
+int nearest_wep_drop_ID = 0;
+float nearest_wep_drop_distance = 32.0f;
+
 
 int player_max_rads = 60;
 int player_hp = 12;
@@ -286,6 +302,7 @@ bool player_pressed_RMB_this_frame = false;
 bool LMB_pressed = false;
 bool RMB_pressed = false;
 bool SPACE_pressed = false;
+bool E_pressed = false;
 
 bool player_swap_weps = false;
 int change_window_scale = 0;
@@ -338,6 +355,7 @@ bool P_released = true;
 bool L_released = true;
 bool R_released = true;
 bool SPACE_released = true;
+bool E_released = true;
 bool LMB_released = true;
 bool RMB_released = true;
 bool SHIFT_held = false;
@@ -385,6 +403,8 @@ float window_size_y = 480.0f;
 int window_scale = 2;
 sf::Vector2f cameraOffset = { -window_size_x / (window_scale * 2), -window_size_y / (window_scale * 2) };
 
+sf::Vector2f fullscreen_window_offset = {0, 0};  //how much the drawn area of the game is offset from the top left
+
 int mouse_offset_window_center_x = 0;
 int mouse_offset_window_center_y = 0;
 
@@ -400,6 +420,8 @@ float laser_brain = 1.2f;
 int second_stomach = 0;
 float stress = 1.0f;
 int bloodlust = 1;
+
+bool rabbit_paw = 1;
 
 bool has_spirit = true;
 bool can_recover_spirit = false;
@@ -534,6 +556,19 @@ void draw_text_NT(sf::Text text, sf::RenderTexture &renderer) {
     text.setPosition(text.getPosition() + sf::Vector2f{ 0, -1 });
     text.setColor(sf::Color::White);
     renderer.draw(text);
+}
+
+void draw_weapon_text(int wep_ID, sf::Vector2f pos, sf::Text text, sf::RenderTexture& renderer) {
+    switch (wep_ID) {
+    case 0:
+        text.setString("ULTRA SHOVEL");
+        break;
+    case 11:
+        text.setString("SUPER PLASMA CANNON");
+        break;
+    }
+    text.setPosition(int(pos.x - cameraPos.x) - text.getString().getSize() * 4, int(pos.y - cameraPos.y) - 32);
+    draw_text_NT(text, renderer);
 }
 
 //draw light source
@@ -1321,6 +1356,28 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].image_index = 0;
                 allObjects[i].team = enemy_team;     //enemy team
                 break;
+            case revenge_bullet_spawner:
+                allObjects[i].my_id = obj_id;
+
+                allObjects[i].position = { x, y };
+                allObjects[i].image_index = image_index;
+
+                break;
+            case revenge_bullet:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].my_hitbox = revenge_bullet_hitbox;
+                allObjects[i].damage = 1;
+
+                allObjects[i].position = { x, y };
+                allObjects[i].speed = { xspd, yspd };
+                allObjects[i].image_index = rand() % 5;
+                allObjects[i].team = enemy_team;     //enemy team
+
+                if (is_within_circle(allObjects[i].position, allObjects[0].position, 72)) {
+                    allObjects[i].my_id = nothing;
+                }
+                break;
+
             case large_guardian_bullet:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].my_hitbox = guardian_bullet_hitbox;
@@ -1397,6 +1454,9 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].image_index = 0;
                 allObjects[i].size = 1;
                 allObjects[i].alarm1 = 60 + ((200 + rand() % 30) / ((5 + LOOPS) / 5));
+                if (rabbit_paw) {
+                    create_object(x, y, 0, 0, static_effect, 0, 384);
+                }
                 break;
             case health_pack:
                 allObjects[i].my_id = ammo_pack;
@@ -1407,6 +1467,9 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].image_index = 0;
                 allObjects[i].size = 2; //is health pack
                 allObjects[i].alarm1 = 60 + ((200 + rand() % 30) / ((5 + LOOPS) / 5));
+                if (rabbit_paw) {
+                    create_object(x, y, 0, 0, static_effect, 0, 384);
+                }
                 break;
             case rebel_ally:
                 allObjects[i].my_id = obj_id;
@@ -1662,6 +1725,20 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].speeddir = xspd;
                 allObjects[i].friction = 0.1f;
                 allObjects[i].alarm3 = 0;
+                break;
+            case weapon_drop:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].my_hitbox = weapon_hitbox;
+
+                allObjects[i].position = { x, y };
+                allObjects[i].speed = { 0, 0 };
+                allObjects[i].speeddir = 0;
+                allObjects[i].size = 0 + (rand() % 2) * 11;
+                allObjects[i].friction = 0.4f;
+
+                allObjects[i].rotation = (1.0f + random_float(1.0f)) * (rand() % 2 * 2 - 1);
+
+                allObjects[i].growspeed = random_360_degrees();
                 break;
             case scorch:
                 allObjects[i].my_id = obj_id;
@@ -1921,13 +1998,13 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].my_id = feather;
                 allObjects[i].my_hitbox = no_hitbox;
 
-                if (feather_raven) {
+                if (obj_id == feather_raven) {
                     allObjects[i].my_hp = 0;   //detemines sprite
                 }
-                else if(feather) {
+                else if(obj_id == feather) {
                     allObjects[i].my_hp = 8;   //detemines sprite
                 }
-                if (money) {
+                if (obj_id == money) {
                     allObjects[i].my_hp = 16;   //detemines sprite
                 }
 
@@ -1975,6 +2052,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].size = image_index;   //offset on the sprite sheet
 
                 allObjects[i].alarm3 = 0;   //whether the object follows the player
+
                 switch (image_index) {
                 case 224:
                     allObjects[i].alarm1 = 15;
@@ -2009,6 +2087,40 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].alarm1 = 100;
                     allObjects[i].alarm2 = 6;
                     allObjects[i].alarm3 = 1;
+                    break;
+                case 264:   //drip
+                    allObjects[i].alarm1 = 15;
+                    allObjects[i].alarm2 = 3;
+                    break;
+                case 288:   //rain
+                    allObjects[i].alarm1 = 25;
+                    allObjects[i].alarm2 = 7;
+                    break;
+                case 289:   //rain
+                    allObjects[i].alarm1 = 26;
+                    allObjects[i].alarm2 = 7;
+                    allObjects[i].size = 288;
+                    break;
+                case 272:   //cave sparkle
+                    allObjects[i].alarm1 = 15;
+                    allObjects[i].alarm2 = 2;
+                    break;
+                case 336:   //breath
+                    allObjects[i].alarm1 = 18;
+                    allObjects[i].alarm2 = 8;
+                    allObjects[i].facing_right = player_is_facing_right == 1;
+                    allObjects[i].scale = 1.0f;
+                    break;
+                case 360:   //snow
+                    allObjects[i].alarm1 = 99999;
+                    allObjects[i].alarm2 = 8;
+                    allObjects[i].rotation = random_float(2 * 3.14);
+                    allObjects[i].scale = 1.0f;
+                    allObjects[i].damage = rand() % 3;
+                    break;
+                case 384:   //rabbit paw
+                    allObjects[i].alarm1 = 18;
+                    allObjects[i].alarm2 = 3;
                     break;
                 default:
                     allObjects[i].alarm1 = 0;
@@ -2587,6 +2699,9 @@ void destroy_projectile(int object_index) {
         allObjects[object_index].direction = random_360_degrees();
         allObjects[object_index].friction = 0.3f + random_float(0.4f);
         break;
+    case revenge_bullet:
+        allObjects[object_index].my_id = nothing;   //debug
+        break;
     case large_guardian_bullet:
         play_sound_on_player(snd_big_ball_explode_ID);
 
@@ -2917,6 +3032,7 @@ void clear_all_bullets() {      //clear all enemy bullets
         case bullet1:
         case bullet2:
         case guardian_bullet:
+        case revenge_bullet:
         case player_bullet:
         case idpd_bullet:
         case T2_bullet:
@@ -2949,6 +3065,16 @@ void basic_enemy_death_logic() {
     enemy_count--;
 }
 
+float direction_to_player(int OBJ) {
+    if (player_alive) {
+        return atan2f(allObjects[0].position.y - allObjects[OBJ].position.y, allObjects[0].position.x - allObjects[OBJ].position.x);
+    }
+    else {
+        return atan2f(allObjects[player_corpse_id].position.y - allObjects[OBJ].position.y, allObjects[player_corpse_id].position.x - allObjects[OBJ].position.x);
+    }
+}
+
+
 void enemy_die(int ENEMY, int PROJ) {
     if (PROJ > 0) {     //is killed by and object (not anomaly)
         allObjects[ENEMY].speed = allObjects[PROJ].speed;
@@ -2972,6 +3098,10 @@ void enemy_die(int ENEMY, int PROJ) {
             tempSpdy = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 6.0f)) - 3.0f;
             create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, tempSpdx, tempSpdy, rad, 0.0f, 0);
         }
+    }
+
+    if (veryhard_mode) {
+        create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, revenge_bullet_spawner, 0, int(allObjects[ENEMY].max_hp / 3));
     }
 
     if (abs(allObjects[ENEMY].speed.x) < 1.0f && abs(allObjects[ENEMY].speed.y) < 1.0f) {
@@ -3052,6 +3182,10 @@ void enemy_die(int ENEMY, int PROJ) {
         allObjects[ENEMY].my_id = enemy_corpse;
 
         ammo_drop_function(ENEMY, 16);
+
+        if (rand() % 20 == 0) {
+            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, weapon_drop, 0, 0);
+        }
 
         //debug start
         for (int i = 0; i < 7; i++) {
@@ -3151,23 +3285,29 @@ void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = 
     window_size_x += 320 * change;
     window_size_y += 240 * change;
     
-    if (window_size_x == 960 && fullscreen_mode) {
-        if (change == 0) {
-            change = 1;
-        }
-        window_size_x += 320 * change;
-        window_size_y += 240 * change;
-        window_scale += change;
-    }
-    
     cameraOffset = { -window_size_x / (window_scale * 2), -window_size_y / (window_scale * 2) };
 
-    if (window_size_x == 320) {
-        sf::Image cursor_pixels_1_16;
-        cursor_pixels_1_16.loadFromFile("res/player/sprCrosshair_1_16.png");
-        naitive_cursor_sprite.loadFromPixels(cursor_pixels_1_16.getPixelsPtr(), sf::Vector2u(16, 16), sf::Vector2u(8, 8));
-    }
-    if (window_size_x == 640) {
+    sf::Image cursor_pixels;
+
+    sf::Texture cursor_tex;
+    cursor_tex.loadFromFile("res/player/sprCrosshair_1_16.png");
+
+    sf::Sprite cursor_sprite(cursor_tex);
+    //cursor_sprite.setTexture(cursor_tex);
+    cursor_sprite.setScale(window_scale, window_scale);
+
+    //cursor_pixels = cursor_tex.copyToImage();
+
+    sf::RenderTexture cursor_render_tex;
+    cursor_render_tex.create(16 * window_scale, 16 * window_scale);
+
+    cursor_render_tex.draw(cursor_sprite);
+    cursor_render_tex.display();
+    cursor_pixels = cursor_render_tex.getTexture().copyToImage();
+
+    naitive_cursor_sprite.loadFromPixels(cursor_pixels.getPixelsPtr(), sf::Vector2u(16 * window_scale, 16 * window_scale), sf::Vector2u(8 * window_scale, 8 * window_scale));
+
+    /*if (window_size_x == 640) {
         sf::Image cursor_pixels_1_32;
         cursor_pixels_1_32.loadFromFile("res/player/sprCrosshair_1_32.png");
         naitive_cursor_sprite.loadFromPixels(cursor_pixels_1_32.getPixelsPtr(), sf::Vector2u(32, 32), sf::Vector2u(16, 16));
@@ -3181,17 +3321,28 @@ void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = 
         sf::Image cursor_pixels_1_64;
         cursor_pixels_1_64.loadFromFile("res/player/sprCrosshair_1_64.png");
         naitive_cursor_sprite.loadFromPixels(cursor_pixels_1_64.getPixelsPtr(), sf::Vector2u(64, 64), sf::Vector2u(32, 32));
-    }
-    if (swap_fullscreen || fullscreen_mode) {
+    }*/
+    if (swap_fullscreen) {
         window.close();
         if (fullscreen_mode) {
-            window.create({ (u_int)window_size_x, (u_int)window_size_y }, "Nuclear Throne Arranged", sf::Style::Fullscreen);
+            window.create({ (u_int)1920, (u_int)1080 }, "Nuclear Throne Arranged", sf::Style::Fullscreen);
+
+            fullscreen_window_offset.x = (window.getSize().x - window_size_x) / 2;
+            fullscreen_window_offset.y = (window.getSize().y - window_size_y) / 2;
+
             window.setPosition({ 0, 0 });
+            sf::View myView(sf::Vector2f(960, 540), sf::Vector2f(1920, 1080));
+            window.setView(myView);
         }
         else {
             //if not fullscreen
             window.create({ (u_int)window_size_x, (u_int)window_size_y }, "Nuclear Throne Arranged", sf::Style::Close);
             window.setPosition(window.getPosition() - sf::Vector2i(160 * change, 120 * change));
+
+            sf::View myView(sf::Vector2f(160, 120), sf::Vector2f(320, 240));
+            window.setView(myView);
+            fullscreen_window_offset.x = 0;
+            fullscreen_window_offset.y = 0;
         }
 
         window.setMouseCursor(naitive_cursor_sprite);
@@ -3203,16 +3354,19 @@ void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = 
         game_icon.loadFromFile("res/NT icon arranged.png");
         window.setIcon(32, 32, game_icon.getPixelsPtr());
 
-        sf::View myView(sf::Vector2f(160, 120), sf::Vector2f(320, 240));
-        window.setView(myView);
 
         window.setKeyRepeatEnabled(false);
     }
     else {      //dont need to create new window if not swapping between fullscreen
-        window.setSize({ (u_int)window_size_x, (u_int)window_size_y });
-        window.resetGLStates();
-        window.setPosition(window.getPosition() - sf::Vector2i(160 * change, 120 * change));
+        if (!fullscreen_mode) {
+            window.setSize({ (u_int)window_size_x, (u_int)window_size_y });
+            window.setPosition(window.getPosition() - sf::Vector2i(160 * change, 120 * change));
+            fullscreen_window_offset.x = 0;
+            fullscreen_window_offset.y = 0;
+        }
         window.setMouseCursor(naitive_cursor_sprite);
+        fullscreen_window_offset.x = (window.getSize().x - window_size_x) / 2;
+        fullscreen_window_offset.y = (window.getSize().y - window_size_y) / 2;
     }
     window.setMouseCursorGrabbed(true);
 }
@@ -3281,11 +3435,28 @@ void horror_bullet_collision(int currOBJ, int i, int j) {
 
 void bullet_collide_player(int O, int currOBJ) {
     if (allObjects[O].team != allObjects[currOBJ].team && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox + player_hitbox)) {
-        if (allObjects[currOBJ].next_hurt < current_frame && player_invincible == 0) {
+        objectID proj_ID = allObjects[O].my_id;
+        if (allObjects[currOBJ].next_hurt < current_frame && player_invincible == 0 && proj_ID != revenge_bullet) {
             motion_add_XY_speed(allObjects[O].speed.x, allObjects[O].speed.y, currOBJ);
         }
         destroy_projectile(O);
-        if (allObjects[currOBJ].next_hurt < current_frame && player_invincible == 0) {
+        if ((allObjects[currOBJ].next_hurt < current_frame || proj_ID == revenge_bullet) && player_invincible == 0) {
+            play_sound_on_player(snd_player_hurt_ID);
+            player_hp -= allObjects[O].damage;
+            allObjects[currOBJ].next_hurt = current_frame + 6;
+            allObjects[currOBJ].image_index = 0;
+
+        }
+    }
+}
+
+void bullet_collide_player_ignore_iframes(int O, int currOBJ) {
+    if (allObjects[O].team != allObjects[currOBJ].team && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox + player_hitbox)) {
+        if (player_invincible == 0) {
+            motion_add_XY_speed(allObjects[O].speed.x, allObjects[O].speed.y, currOBJ);
+        }
+        destroy_projectile(O);
+        if (player_invincible == 0) {
             play_sound_on_player(snd_player_hurt_ID);
             player_hp -= allObjects[O].damage;
             allObjects[currOBJ].next_hurt = current_frame + 6;
@@ -3310,6 +3481,9 @@ void player_collision(int i, int j, int currOBJ) {
                     case large_guardian_bullet:
                     case T2_bullet:
                         bullet_collide_player(O, currOBJ);
+                        break;
+                    case revenge_bullet:
+                        bullet_collide_player_ignore_iframes(O, currOBJ);
                         break;
                     case toxic_gas:
                         //only hit player if the toxic is big enough
@@ -3464,6 +3638,43 @@ void crystal_shield_collision(int currOBJ, int i, int j) {
                         case idpd_freak:
                             enemy_push(O, currOBJ);
                             break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void wep_push(int currOBJ, int O) {
+    if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, 12 + 12)) {
+        float diffx = 0.0f;
+        float diffy = 0.0f;
+        float tmpdir = 0.0f;
+        diffx = allObjects[currOBJ].position.x - allObjects[O].position.x;
+        diffy = allObjects[currOBJ].position.y - allObjects[O].position.y;
+
+        tmpdir = atan2f(diffy, diffx);
+        motion_add_dir(tmpdir, 1.0f, currOBJ);
+
+    }
+}
+
+void weapon_drop_collision(int currOBJ, int i, int j) {
+    for (int w = -2; w < 3; w++) {
+        for (int h = -2; h < 3; h++) {
+            for (int O : game_area[i + w][j + h].object_indexes) {
+                if (O != currOBJ && allObjects[O].my_id == weapon_drop) {
+                    wep_push(currOBJ, O);
+                }
+                else if (allObjects[O].my_id == player) {
+                    if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, 16)) {
+                        float xdiff = allObjects[O].position.x - allObjects[currOBJ].position.x;
+                        float ydiff = allObjects[O].position.y - allObjects[currOBJ].position.y;
+                        float tmpdist = sqrt(xdiff * xdiff + ydiff * ydiff);
+                        if (tmpdist < nearest_wep_drop_distance) {
+                            nearest_wep_drop_ID = currOBJ;
+                            nearest_wep_drop_distance = tmpdist;
                         }
                     }
                 }
@@ -4187,15 +4398,6 @@ void meat_explosion_collision(int currOBJ, int i, int j) {
     }
 }
 
-float direction_to_player(int OBJ) {
-    if (player_alive) {
-        return atan2f(allObjects[0].position.y - allObjects[OBJ].position.y, allObjects[0].position.x - allObjects[OBJ].position.x);
-    }
-    else {
-        return atan2f(allObjects[player_corpse_id].position.y - allObjects[OBJ].position.y, allObjects[player_corpse_id].position.x - allObjects[OBJ].position.x);
-    }
-}
-
 void T2_bullet_step(int i) {
     float tempSpeedX = 0.0f;
     float tempSpeedY = 0.0f;
@@ -4504,6 +4706,7 @@ void object_tunnel_corner(int currOBJ) {
     case objectID::plant_tangle_seed:
     case objectID::idpd_bullet:
     case objectID::guardian_bullet:
+    case objectID::revenge_bullet:
     case objectID::large_guardian_bullet:
     case objectID::bullet2:
     case objectID::player_bullet:
@@ -4933,6 +5136,22 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
         case plant_tangle:
             allObjects[i].image_index++;
             break;
+        case revenge_bullet_spawner:
+            allObjects[i].image_index--;
+            if (allObjects[i].image_index <= 0) {
+                allObjects[i].my_id = nothing;
+            }
+            //if (allObjects[i].image_index % 1 == 0) {
+                tmpdir = direction_to_player(i) + random_float(0.3f) - 0.15f;
+                create_object(allObjects[i].position.x + random_float(revenge_bullet_offset * 2) - revenge_bullet_offset, allObjects[i].position.y + random_float(revenge_bullet_offset * 2) - revenge_bullet_offset, cos(tmpdir) * 4, sin(tmpdir) * 4, revenge_bullet, 0, 0);
+            //}
+            
+            break;
+        case revenge_bullet:
+            allObjects[i].image_index++;
+            allObjects[i].position += allObjects[i].speed;
+            //eyes_tk_push(i);
+            break;
         case guardian_bullet:
             allObjects[i].image_index++;
             allObjects[i].position += allObjects[i].speed;
@@ -5236,6 +5455,24 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                 }
             }
             //rebel ally ai
+            break;
+
+        case weapon_drop:
+            allObjects[i].speeddir -= allObjects[i].friction;
+            if (allObjects[i].speeddir > 7.9f) {
+                allObjects[i].speeddir = 7.9f;
+            }
+            else if (allObjects[i].speeddir < 0.0f) {
+                allObjects[i].speeddir = 0;
+            }
+
+            allObjects[i].speed.x = cos(allObjects[i].direction) * allObjects[i].speeddir;
+            allObjects[i].speed.y = sin(allObjects[i].direction) * allObjects[i].speeddir;
+
+            allObjects[i].position += allObjects[i].speed;
+
+            allObjects[i].growspeed += allObjects[i].speeddir * allObjects[i].rotation;
+
             break;
         case bandit:
             allObjects[i].speeddir -= allObjects[i].friction;
@@ -5743,10 +5980,30 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                 }
             }
 
-            allObjects[i].position += allObjects[i].speed;
+            if (allObjects[i].alarm2 != 7 || allObjects[i].image_index < 15) {
+                allObjects[i].position += allObjects[i].speed;
+            }
 
             if (allObjects[i].alarm3 == 1) {
                 allObjects[i].position = allObjects[0].position - sf::Vector2f{0, 16};
+            }
+
+            if (allObjects[i].size == 360) {
+                allObjects[i].position -= allObjects[i].speed;
+                if (allObjects[i].speed.y < 320) {
+                    allObjects[i].position.x += sin(allObjects[i].rotation / 5);
+                    allObjects[i].position.y += (1 - (sin(allObjects[i].rotation / 3)) / 2);
+                    allObjects[i].rotation += 0.2f;
+                    //accumulated dist
+                    allObjects[i].speed.y += (1 - (sin(allObjects[i].rotation / 3)) / 2);
+
+                }
+                else {
+                    allObjects[i].scale -= 0.1f;
+                    if (allObjects[i].scale < 0.0f) {
+                        allObjects[i].my_id = nothing;
+                    }
+                }
             }
 
             break;
@@ -5823,6 +6080,9 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                         roll_direction = allObjects[O].direction;
                                     }
                                 }
+                                break;
+                            case objectID::weapon_drop:
+                                collide_wall(O, i, j, h, w, allObjects[O].my_hitbox);
                                 break;
                             case idpd_freak:
                                 if (!can_move_outside_T2_arena) {
@@ -5920,8 +6180,13 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                     roll_direction = allObjects[O].direction;
                                 }
                                 break;
+                            case objectID::weapon_drop:
+                                collide_wall(O, i, j, h, w, allObjects[O].my_hitbox);
+
+                                break;
                             case objectID::ammo_pack:
                                 collide_wall(O, i, j, h, w, 7);
+
                                 break;
                             case rebel_ally:__fallthrough;
                             case bandit:__fallthrough;
@@ -5953,6 +6218,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                     case objectID::bullet1:
                     case objectID::idpd_bullet:
                     case objectID::guardian_bullet:
+                    case objectID::revenge_bullet:
                     case objectID::large_guardian_bullet:
                     case objectID::bullet2:
                     case objectID::player_bullet:
@@ -6128,6 +6394,9 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                         break;
                     case objectID::crystal_shield:
                         crystal_shield_collision(currOBJ, i, j);
+                        break;
+                    case objectID::weapon_drop:
+                        weapon_drop_collision(currOBJ, i, j);
                         break;
                     case objectID::prop:
                         basic_enemy_collision(currOBJ, i, j);
@@ -6820,6 +7089,12 @@ void generate_level(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_b
     allObjects[0].alarm1 = 0;
     player_invincible = 0;
 
+    rogue_strike_position = sf::Vector2f(mousepos) + cameraPos;
+    rogue_holding_strike = false;
+
+    //recalculate revenge bullet offset
+    revenge_bullet_offset = LOOPS + 5;
+
     player_corpse_id = 0;
 
     plant_seed_exists = false;
@@ -6870,7 +7145,7 @@ void generate_level(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_b
     }
     if (area == 1) {
         generate_floors(480, 0, 14, 9, 13, 19, 20, 7, 8);
-
+        DEBUG_GOTO_1:
         //generate enemies
         int tmp_num_of_enemies_to_spawn = 1;
         int enemy_choice = 0;
@@ -6924,18 +7199,194 @@ void generate_level(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_b
     if (area == 2) {
         generate_floors(480, 0, 13, 8, 12, 
             14, 15, 7, 15);
+        //debug
+        int tmp_num_of_enemies_to_spawn = 1;
+        int enemy_choice = 0;
+        if (sub_area == 1) {
+            for (int i = left_physics; i <= right_physics; i++) {
+                for (int j = top_physics; j <= bottom_physics; j++) {
+                    //if its the top left of a floor tile place enemy in center of tile
+                    if (i % 2 == 0 && j % 2 == 0 &&
+                        game_area[i][j].my_grid_type == floor_tile && !is_within_circle(sf::Vector2f(24016, 24016), sf::Vector2f(i * 16 + 8, j * 16 + 8), 100)) {
+                        if (rand() % 1 == 0) {   //spawn enemy
+                            if (rand() % 2) {   //cluster spawn
+                                tmp_num_of_enemies_to_spawn = (90 / (1 + (200 * pow(e_constant, -0.3f * LOOPS))));    //logistic growth so the enemy count caps out at about l30, but keeps general growth in early loops
+                            }
+                            else {              //single spawn
+                                tmp_num_of_enemies_to_spawn = 1;
+                            }
+                        }
+                        else {
+                            tmp_num_of_enemies_to_spawn = 0;
+                        }
+                        enemy_choice = rand() % 9;
+                        if (tmp_num_of_enemies_to_spawn > 1) {  //cluster spawn destroys nearby walls
+                            for (int b = -1; b < 3; b++) {
+                                for (int c = -1; c < 3; c++) {
+                                    if (game_area[i + b][j + c].my_grid_type == wall) {
+                                        create_explo_tile(i + b, j + c);
+                                        //create debris too
+                                    }
+                                }
+                            }
+                        }
+                        for (int r = 0; r < tmp_num_of_enemies_to_spawn; r++) {
+                            if (enemy_choice < 10) { //bandit
+                                //further apart reduces lag when spawning in to the level
+                                float rand_off_x = random_float(16.0f) - 8.0f;
+                                float rand_off_y = random_float(16.0f) - 8.0f;
+                                create_object(i * 16 + 16 + rand_off_x, j * 16 + 16 + rand_off_y, 0, 0, bandit, 0, 0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //debug
     }
     if (area == 3) {
         generate_floors(480, 0, 6, 4, 6, 
             39, 40, 7, 25);
+        //debug
+        int tmp_num_of_enemies_to_spawn = 1;
+        int enemy_choice = 0;
+        if (sub_area == 1) {
+            for (int i = left_physics; i <= right_physics; i++) {
+                for (int j = top_physics; j <= bottom_physics; j++) {
+                    //if its the top left of a floor tile place enemy in center of tile
+                    if (i % 2 == 0 && j % 2 == 0 &&
+                        game_area[i][j].my_grid_type == floor_tile && !is_within_circle(sf::Vector2f(24016, 24016), sf::Vector2f(i * 16 + 8, j * 16 + 8), 100)) {
+                        if (rand() % 1 == 0) {   //spawn enemy
+                            if (rand() % 2) {   //cluster spawn
+                                tmp_num_of_enemies_to_spawn = (90 / (1 + (200 * pow(e_constant, -0.3f * LOOPS))));    //logistic growth so the enemy count caps out at about l30, but keeps general growth in early loops
+                            }
+                            else {              //single spawn
+                                tmp_num_of_enemies_to_spawn = 1;
+                            }
+                        }
+                        else {
+                            tmp_num_of_enemies_to_spawn = 0;
+                        }
+                        enemy_choice = rand() % 9;
+                        if (tmp_num_of_enemies_to_spawn > 1) {  //cluster spawn destroys nearby walls
+                            for (int b = -1; b < 3; b++) {
+                                for (int c = -1; c < 3; c++) {
+                                    if (game_area[i + b][j + c].my_grid_type == wall) {
+                                        create_explo_tile(i + b, j + c);
+                                        //create debris too
+                                    }
+                                }
+                            }
+                        }
+                        for (int r = 0; r < tmp_num_of_enemies_to_spawn; r++) {
+                            if (enemy_choice < 10) { //bandit
+                                //further apart reduces lag when spawning in to the level
+                                float rand_off_x = random_float(16.0f) - 8.0f;
+                                float rand_off_y = random_float(16.0f) - 8.0f;
+                                create_object(i * 16 + 16 + rand_off_x, j * 16 + 16 + rand_off_y, 0, 0, bandit, 0, 0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //debug
     }
     if (area == 4) {
         generate_floors(480, 0, 7, 4, 6, 
             9, 10, 7, 4);
+        //debug
+        int tmp_num_of_enemies_to_spawn = 1;
+        int enemy_choice = 0;
+        if (sub_area == 1) {
+            for (int i = left_physics; i <= right_physics; i++) {
+                for (int j = top_physics; j <= bottom_physics; j++) {
+                    //if its the top left of a floor tile place enemy in center of tile
+                    if (i % 2 == 0 && j % 2 == 0 &&
+                        game_area[i][j].my_grid_type == floor_tile && !is_within_circle(sf::Vector2f(24016, 24016), sf::Vector2f(i * 16 + 8, j * 16 + 8), 100)) {
+                        if (rand() % 1 == 0) {   //spawn enemy
+                            if (rand() % 2) {   //cluster spawn
+                                tmp_num_of_enemies_to_spawn = (90 / (1 + (200 * pow(e_constant, -0.3f * LOOPS))));    //logistic growth so the enemy count caps out at about l30, but keeps general growth in early loops
+                            }
+                            else {              //single spawn
+                                tmp_num_of_enemies_to_spawn = 1;
+                            }
+                        }
+                        else {
+                            tmp_num_of_enemies_to_spawn = 0;
+                        }
+                        enemy_choice = rand() % 9;
+                        if (tmp_num_of_enemies_to_spawn > 1) {  //cluster spawn destroys nearby walls
+                            for (int b = -1; b < 3; b++) {
+                                for (int c = -1; c < 3; c++) {
+                                    if (game_area[i + b][j + c].my_grid_type == wall) {
+                                        create_explo_tile(i + b, j + c);
+                                        //create debris too
+                                    }
+                                }
+                            }
+                        }
+                        for (int r = 0; r < tmp_num_of_enemies_to_spawn; r++) {
+                            if (enemy_choice < 10) { //bandit
+                                //further apart reduces lag when spawning in to the level
+                                float rand_off_x = random_float(16.0f) - 8.0f;
+                                float rand_off_y = random_float(16.0f) - 8.0f;
+                                create_object(i * 16 + 16 + rand_off_x, j * 16 + 16 + rand_off_y, 0, 0, bandit, 0, 0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //debug
     }
     if (area == 5) {
         generate_floors(480, 0, 16, 12, 14, 
             14, 15, 7, 15);
+        //debug
+        int tmp_num_of_enemies_to_spawn = 1;
+        int enemy_choice = 0;
+        if (sub_area == 1) {
+            for (int i = left_physics; i <= right_physics; i++) {
+                for (int j = top_physics; j <= bottom_physics; j++) {
+                    //if its the top left of a floor tile place enemy in center of tile
+                    if (i % 2 == 0 && j % 2 == 0 &&
+                        game_area[i][j].my_grid_type == floor_tile && !is_within_circle(sf::Vector2f(24016, 24016), sf::Vector2f(i * 16 + 8, j * 16 + 8), 100)) {
+                        if (rand() % 1 == 0) {   //spawn enemy
+                            if (rand() % 2) {   //cluster spawn
+                                tmp_num_of_enemies_to_spawn = (90 / (1 + (200 * pow(e_constant, -0.3f * LOOPS))));    //logistic growth so the enemy count caps out at about l30, but keeps general growth in early loops
+                            }
+                            else {              //single spawn
+                                tmp_num_of_enemies_to_spawn = 1;
+                            }
+                        }
+                        else {
+                            tmp_num_of_enemies_to_spawn = 0;
+                        }
+                        enemy_choice = rand() % 9;
+                        if (tmp_num_of_enemies_to_spawn > 1) {  //cluster spawn destroys nearby walls
+                            for (int b = -1; b < 3; b++) {
+                                for (int c = -1; c < 3; c++) {
+                                    if (game_area[i + b][j + c].my_grid_type == wall) {
+                                        create_explo_tile(i + b, j + c);
+                                        //create debris too
+                                    }
+                                }
+                            }
+                        }
+                        for (int r = 0; r < tmp_num_of_enemies_to_spawn; r++) {
+                            if (enemy_choice < 10) { //bandit
+                                //further apart reduces lag when spawning in to the level
+                                float rand_off_x = random_float(16.0f) - 8.0f;
+                                float rand_off_y = random_float(16.0f) - 8.0f;
+                                create_object(i * 16 + 16 + rand_off_x, j * 16 + 16 + rand_off_y, 0, 0, bandit, 0, 0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //debug
     }
     if (area == 6) {
         generate_floors(480, 0, 14, 11, 13, 
@@ -7278,8 +7729,9 @@ int main()
     all_sounds[snd_music_ID].sound.play();
     all_sounds[snd_music_ID].sound.setLoop(true);
     
+    //create fullscreen window by default
+    auto window = sf::RenderWindow({ (u_int)1920, (u_int)1080 }, "Nuclear Throne Arranged", sf::Style::Fullscreen);
 
-    auto window = sf::RenderWindow({ (u_int)window_size_x, (u_int)window_size_y }, "Nuclear Throne Arranged", sf::Style::Fullscreen);
     
     //sf::RenderWindow(sf::VideoMode(), "app.exe", sf::Style::Fullscreen);
     window.setFramerateLimit(MAXFPS);
@@ -7287,7 +7739,7 @@ int main()
     game_icon.loadFromFile("res/NT icon arranged.png");
     window.setIcon(32, 32, game_icon.getPixelsPtr());
         
-    sf::View myView(sf::Vector2f(160, 120), sf::Vector2f(320, 240));
+    sf::View myView(sf::Vector2f(960, 540), sf::Vector2f(1920, 1080));
     window.setView(myView);
 
     window.setKeyRepeatEnabled(false);
@@ -7418,6 +7870,10 @@ int main()
         hp_text.setCharacterSize(8);
         hp_text.setFont(font);
         hp_text.setPosition(40, 7);
+
+        sf::Text wep_text;
+        wep_text.setCharacterSize(8);
+        wep_text.setFont(font);
 
         game_over_text.setCharacterSize(8);
         game_over_text.setFont(font);
@@ -7569,6 +8025,7 @@ int main()
         sf::Texture guardian_bullet_4tex;
         guardian_bullet_4tex.loadFromFile("res/enemy_bullets/guardian_bullet_4.png");
 
+
         //destroy
         sf::Texture guardian_bullet_destroy_1tex;
         guardian_bullet_destroy_1tex.loadFromFile("res/enemy_bullets/guardian_bullet_destroy_1.png");
@@ -7587,6 +8044,24 @@ int main()
 
         sf::Texture guardian_bullet_destroy_6tex;
         guardian_bullet_destroy_6tex.loadFromFile("res/enemy_bullets/guardian_bullet_destroy_6.png");
+
+
+        //revenge_bullet
+
+        sf::Texture revenge_bullet_1tex;
+        revenge_bullet_1tex.loadFromFile("res/enemy_bullets/revenge_bullet_1.png");
+
+        sf::Texture revenge_bullet_2tex;
+        revenge_bullet_2tex.loadFromFile("res/enemy_bullets/revenge_bullet_2.png");
+
+        sf::Texture revenge_bullet_3tex;
+        revenge_bullet_3tex.loadFromFile("res/enemy_bullets/revenge_bullet_3.png");
+
+        sf::Texture revenge_bullet_4tex;
+        revenge_bullet_4tex.loadFromFile("res/enemy_bullets/revenge_bullet_4.png");
+
+        sf::Texture revenge_bullet_5tex;
+        revenge_bullet_5tex.loadFromFile("res/enemy_bullets/revenge_bullet_5.png");
 
 
         //idpd_bullet
@@ -7959,9 +8434,9 @@ int main()
         sf::Image cursor_pixels_1_64;
         cursor_pixels_1_64.loadFromFile("res/player/sprCrosshair_1_64.png");
 
-        naitive_cursor_sprite.loadFromPixels(cursor_pixels_1_32.getPixelsPtr(), sf::Vector2u(32, 32), sf::Vector2u(16, 16));
+       // naitive_cursor_sprite.loadFromPixels(cursor_pixels_1_32.getPixelsPtr(), sf::Vector2u(32, 32), sf::Vector2u(16, 16));
 
-        window.setMouseCursor(naitive_cursor_sprite);
+        //window.setMouseCursor(naitive_cursor_sprite);
 
         sf::Texture weapons_tex;
         weapons_tex.loadFromFile("res/player/weapons.png");
@@ -8142,6 +8617,13 @@ int main()
         scorch_sprites.push_back(temp);
     }
 
+    for (int i = 0; i < weapon_sprites_max; i++) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        temp.setTexture(weapons_tex);
+        weapon_sprites.push_back(temp);
+    }
+
     for (int i = 0; i < variable_textures_max; i++) {
         sf::Sprite temp;
         temp.setColor({ 0, 0, 0, 0 });
@@ -8158,6 +8640,14 @@ int main()
         temp.setColor({ 0, 0, 0, 0 });
         temp.setTexture(Wall1shadow);
         wall_shadow_textures.push_back(temp);
+    }
+
+    for (int i = 0; i < rain_textures_max; i++) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        temp.setOrigin({ 0,0 });
+        temp.setTexture(allBigEffectSprites);
+        rain_textures.push_back(temp);
     }
     //walls
     for (int i = 0; i < wall_textures_max; i++) {
@@ -8301,6 +8791,8 @@ int main()
         break;
     }
 
+    resize_window(0, window);
+
     while (window.isOpen()){
         for (auto event = sf::Event(); window.pollEvent(event);){
             if (window.hasFocus()) {
@@ -8380,6 +8872,10 @@ int main()
                         SPACE_pressed = true;
                         SPACE_released = false;
                     }
+                    if (event.key.code == sf::Keyboard::E && E_released) {
+                        E_pressed = true;
+                        E_released = false;
+                    }
                     if (event.key.code == sf::Keyboard::F) {
                         clear_all_bullets();
                     }
@@ -8444,6 +8940,9 @@ int main()
                     if (event.key.code == sf::Keyboard::Space) {
                         SPACE_released = true;
                     }
+                    if (event.key.code == sf::Keyboard::E) {
+                        E_released = true;
+                    }
 
                     if (event.key.code == sf::Keyboard::W) {
                         player_move_up = false;
@@ -8494,8 +8993,21 @@ int main()
         }
 
         //find the direction from the player to the mouse on this frame
-        mousepos.x = sf::Mouse::getPosition(window).x / window_scale;
-        mousepos.y = sf::Mouse::getPosition(window).y / window_scale;
+        mousepos.x = (sf::Mouse::getPosition(window).x - fullscreen_window_offset.x) / window_scale;
+        mousepos.y = (sf::Mouse::getPosition(window).y - fullscreen_window_offset.y) / window_scale;
+
+        if (mousepos.x > 320) {
+            mousepos.x = 320;
+        }
+        else if (mousepos.x < 0) {
+            mousepos.x = 0;
+        }
+        if (mousepos.y > 240) {
+            mousepos.y = 240;
+        }
+        else if (mousepos.y < 0) {
+            mousepos.y = 0;
+        }
 
         //area background color
         switch (area) {
@@ -8531,7 +9043,7 @@ int main()
         }
         //debug to see where the background bleeds through
         //BGColor = { 255, 0, 0, 0};
-        window.clear(BGColor);
+        window.clear(sf::Color::Black);
         buffer_over.clear(sf::Color::Transparent);
         buffer_under.clear(sf::Color::Transparent);
         shadows.clear(sf::Color::Transparent);
@@ -9033,6 +9545,19 @@ int main()
                     player_invincible = 2;
                 }
 
+
+                if (nearest_wep_drop_ID != 0 && E_pressed) {
+                    int tmpwep = wep;
+                    wep = allObjects[nearest_wep_drop_ID].size;
+                    allObjects[nearest_wep_drop_ID].size = tmpwep;
+                    wep_reload = 0.0f;
+                    //weapon_drop swap
+                }
+                E_pressed = false;
+
+                nearest_wep_drop_ID = 0;
+                nearest_wep_drop_distance = 32.0f;
+
                 swapmove = 0;
                 if (SPACE_pressed) {
                     SPACE_pressed = false;
@@ -9315,6 +9840,9 @@ int main()
                 }
                 allObjects[0].position.x = (left_physics - extra_physics) * 16 + 8;    //just put the player outside so no enemies can see them, do extra stuff for T2 and freaks because of 0-1
                 allObjects[0].scale = 0;
+
+                eyes_using_TK = false;
+                eyes_using_ultraB_TK = false;
             }
             //end of player stuff
 
@@ -9323,8 +9851,6 @@ int main()
                 int randomX = rand() % 320;
                 int randomY = rand() % 240;
 
-                global_effects_alarm1 = 1 + rand() % 60;
-
                 switch (area) {
                 case 0:
                 case 1:
@@ -9332,6 +9858,50 @@ int main()
                         game_area[int((cameraPos.x + randomX) / 16)][int((cameraPos.y + randomY) / 16)].my_grid_type == floor_tile) {
                         create_object(cameraPos.x + randomX, cameraPos.y + randomY, 0, 0, the_wind, 0, 0);
                     }
+                    global_effects_alarm1 = 1 + rand() % 60;
+                    break;
+                case 2:
+                    if (game_area[int((cameraPos.x + randomX) / 16)][int((cameraPos.y + randomY) / 16)].my_grid_type == exlpo_tile ||
+                        game_area[int((cameraPos.x + randomX) / 16)][int((cameraPos.y + randomY) / 16)].my_grid_type == floor_tile) {
+                        create_object(cameraPos.x + randomX, cameraPos.y + randomY, 0, 0, static_effect, 0, 264);
+                    }
+                    global_effects_alarm1 = 1 + rand() % 120;
+                    break;
+                case 3:
+                    //rain
+                    for (int i = 0; i < 3; i++) {
+                        randomX = rand() % 640 - 160;
+                        randomY = rand() % 480 - 120;
+
+                        if (game_area[int((cameraPos.x + randomX) / 16)][int((cameraPos.y + randomY) / 16)].my_grid_type == exlpo_tile ||
+                            game_area[int((cameraPos.x + randomX) / 16)][int((cameraPos.y + randomY) / 16)].my_grid_type == floor_tile) {
+                            create_object(cameraPos.x + randomX + 360 - 24, cameraPos.y + randomY - 360 + 24, -24, 24, static_effect, 0, 288);
+                        }
+                        else {
+                            //rain drop animation draws on top of walls
+                            create_object(cameraPos.x + randomX + 360 - 24, cameraPos.y + randomY - 360 + 24, -24, 24, static_effect, 0, 289);
+                        }
+                    }
+                    global_effects_alarm1 = 1;
+                    break;
+                case 4:
+
+                    create_object(cameraPos.x + randomX, cameraPos.y + randomY, 0, 0, static_effect, 0, 272);
+
+                    global_effects_alarm1 = 1 + rand() % 60;
+                    break;
+                case 5:
+                    randomX = rand() % 640 - 160;
+                    randomY = rand() % 480 - 120;
+
+                    create_object(cameraPos.x + randomX, cameraPos.y + randomY - 360, 0, 0, static_effect, 0, 360);
+
+                    if (rand() % 50 == 0) {
+                        if (player_character != robot && player_character != plant) {
+                            create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, static_effect, 0, 336);
+                        }
+                    }
+                    global_effects_alarm1 = 2;
                     break;
                 default:
                     break;
@@ -9390,6 +9960,11 @@ int main()
                         if (!chicken_beheaded) {
                             chicken_beheaded = true;
                             player_max_hp -= 2;
+                            //feathers
+                            for (int i = 0; i < 9; i++) {
+                                create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, feather, 0, 0);
+                            }
+
                             if (player_max_hp < 0) {
                                 player_max_hp = 0;
                             }
@@ -9412,6 +9987,9 @@ int main()
                         }
                         else {
                             player_alive = false;
+                            for (int i = 0; i < 3; i++) {
+                                create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, feather, 0, 0);
+                            }
                         }
                     }
                 }
@@ -9423,6 +10001,9 @@ int main()
                 if (chicken_beheaded) {
                     player_invincible = 7;
                     chicken_beheaded = false;
+                    for (int i = 0; i < 5; i++) {
+                        create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, feather, 0, 0);
+                    }
                 }
             }
 
@@ -9689,6 +10270,9 @@ int main()
         int explosionIndex = 0;
 
         int wall_texturesArrayIndex = 0;
+
+        int rain_texturesIndex = 0;
+
         int wall_textures_botArrayIndex = 0;
 
         int floor_texturesArrayIndex = 0;
@@ -9701,6 +10285,8 @@ int main()
         int T2_floor_tiles_texArrayIndex = 0;
 
         int scorch_spritesIndex = 0;
+
+        int weapon_spritesIndex = 0;
 
         int prop_spritesIndex = 0;
 
@@ -10029,7 +10615,7 @@ int main()
 
 
                         //portal strike
-                        if (rogue_holding_strike) {
+                        if (rogue_holding_strike && player_alive) {
                             rogue_portal_strike_sprite.setScale(1, 1);
                             rogue_portal_strike_sprite.setPosition(rogue_strike_position - cameraPos);
                             rogue_portal_strike_sprite.setTextureRect({ 192 * (current_frame % 6), 0, 192, 48 });
@@ -10048,7 +10634,6 @@ int main()
                             wep_swap_sprite.setPosition(allObjects[idx].position - cameraPos + sf::Vector2f(cos(tmp_wep_angle) * 10, sin(tmp_wep_angle) * 10 ));
                         }
                         wep_swap_anim++;
-
 
 
                         if (wep < 11) {     //melee
@@ -10257,6 +10842,31 @@ int main()
                         variable_textures[variableTexturesIndex].setScale(allObjects[idx].scale, 1);
                         variableTexturesIndex++;
 
+                        break;
+                    case revenge_bullet:
+                        choice = int(allObjects[idx].image_index * 0.4f) % 5;
+                        switch (choice) {
+                        default:
+                            rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(revenge_bullet_1tex);
+                            break;
+                        case 1:
+                            rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(revenge_bullet_2tex);
+                            break;
+                        case 2:
+                            rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(revenge_bullet_3tex);
+                            break;
+                        case 3:
+                            rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(revenge_bullet_4tex);
+                            break;
+                        case 4:
+                            rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(revenge_bullet_5tex);
+                            break;
+                        }
+
+                        rotateable_sprites_bullets[rotateableSpriteBulletIndex].setColor({ 255, 255, 255, 255 });
+                        rotateable_sprites_bullets[rotateableSpriteBulletIndex].setPosition(allObjects[idx].position - cameraPos);
+                        rotateable_sprites_bullets[rotateableSpriteBulletIndex].setRotation(0);
+                        rotateableSpriteBulletIndex++;
                         break;
                     case idpd_bullet:       //bullets destroy animation
                         if (allObjects[idx].image_index == 1) {
@@ -10474,6 +11084,14 @@ int main()
                         scorch_sprites[scorch_spritesIndex].setPosition(allObjects[idx].position - cameraPos);
                         scorch_sprites[scorch_spritesIndex].setTextureRect({ 0, 0, 48, 48 });
                         scorch_spritesIndex++;
+                        break;
+                    case weapon_drop:
+                        weapon_sprites[weapon_spritesIndex].setColor({ 255, 255, 255, 255 });
+                        weapon_sprites[weapon_spritesIndex].setPosition(allObjects[idx].position - cameraPos);
+                        weapon_sprites[weapon_spritesIndex].setOrigin(wep_get_origin(allObjects[idx].size));
+                        weapon_sprites[weapon_spritesIndex].setRotation(allObjects[idx].growspeed);
+                        weapon_sprites[weapon_spritesIndex].setTextureRect({ 0, allObjects[idx].size * 36, 36, 36 });
+                        weapon_spritesIndex++;
                         break;
                     case idpd_nade:
                         choice = (allObjects[idx].alarm1 > 69) * (int(allObjects[idx].alarm1 * 0.4f) % 2 + 1);
@@ -10882,7 +11500,6 @@ int main()
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setScale(1, 1);
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setTextureRect(sf::IntRect{ choice * 16, allObjects[idx].size, 16, 16 });
                             rotateableEffectsMediumIndex++;
-                            GLOBAL_DEBUG_INT = choice;
                         }
                         else if (allObjects[idx].alarm2 == 3) {
                             rotateable_effects_large[rotateableEffectsLargeIndex].setColor({ 255, 255, 255, 255 });
@@ -10926,6 +11543,56 @@ int main()
                             player_level_up_crown.setTextureRect(sf::IntRect{ choice * 64, 0, 64, 64 });
                             player_level_up_crown.setScale(1, 1);
 
+                        }
+                        else if (allObjects[idx].alarm2 == 7) {
+                            //rain
+                            if (allObjects[idx].image_index < 15) {
+
+                                rain_textures[rain_texturesIndex].setTextureRect(sf::IntRect{ 0, allObjects[idx].size, 32, 32 });
+                                rain_textures[rain_texturesIndex].setOrigin(0, 32);
+                                rain_textures[rain_texturesIndex].setColor({ 255, 255, 255, 255 });
+                                rain_textures[rain_texturesIndex].setPosition(allObjects[idx].position - cameraPos);
+                                rain_textures[rain_texturesIndex].setRotation(0);
+                                rain_textures[rain_texturesIndex].setScale(1, 1);
+                                rain_texturesIndex++;
+                            }
+                            else {
+                                choice = int((allObjects[idx].image_index - 15) * 0.4f);
+
+                                if (allObjects[idx].alarm1 == 25) {
+
+                                    variable_textures[variableTexturesIndex].setTexture(allBigEffectSprites);
+                                    variable_textures[variableTexturesIndex].setTextureRect(sf::IntRect{ choice * 12 + 32, allObjects[idx].size, 12, 12 });
+                                    variable_textures[variableTexturesIndex].setOrigin(6, 12);
+                                    variable_textures[variableTexturesIndex].setColor({ 255, 255, 255, 255 });
+                                    variable_textures[variableTexturesIndex].setPosition(allObjects[idx].position - cameraPos);
+                                    variable_textures[variableTexturesIndex].setRotation(0);
+                                    variable_textures[variableTexturesIndex].setScale(1, 1);
+                                    variableTexturesIndex++;
+                                }
+                                else {
+                                    rain_textures[rain_texturesIndex].setTextureRect(sf::IntRect{ choice * 12 + 32, allObjects[idx].size, 12, 12 });
+                                    rain_textures[rain_texturesIndex].setOrigin(6, 12);
+                                    rain_textures[rain_texturesIndex].setColor({ 255, 255, 255, 255 });
+                                    rain_textures[rain_texturesIndex].setPosition(allObjects[idx].position - cameraPos);
+                                    rain_textures[rain_texturesIndex].setRotation(0);
+                                    rain_textures[rain_texturesIndex].setScale(1, 1);
+                                    rain_texturesIndex++;
+                                }
+                            }
+                        }
+                        else if (allObjects[idx].alarm2 == 8) {
+                            //breath / snow
+                            if (allObjects[idx].size == 360) {
+                                choice = allObjects[idx].damage;
+                            }
+                            rain_textures[rain_texturesIndex].setTextureRect(sf::IntRect{ choice * 24, allObjects[idx].size, 24, 24 });
+                            rain_textures[rain_texturesIndex].setOrigin(12, 12);
+                            rain_textures[rain_texturesIndex].setColor({ 255, 255, 255, sf::Uint8(255 * allObjects[idx].scale) });
+                            rain_textures[rain_texturesIndex].setPosition(allObjects[idx].position - cameraPos);
+                            rain_textures[rain_texturesIndex].setRotation(0);
+                            rain_textures[rain_texturesIndex].setScale(allObjects[idx].facing_right * 2 - 1, 1);
+                            rain_texturesIndex++;
                         }
                         break;
                     case rebel_ally:
@@ -11634,6 +12301,15 @@ int main()
                 buffer_over.draw(spr);
             }
             reset_rotateable_sprites(wall_textures_bot, wall_textures_botArrayIndex);
+            
+            //weapon drops
+            for (sf::Sprite spr : weapon_sprites) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_over.draw(spr);
+            }
+            reset_rotateable_sprites(weapon_sprites, weapon_spritesIndex);
 
             //props
             for (sf::Sprite spr : prop_sprites) {
@@ -11713,11 +12389,11 @@ int main()
 
             //bullet2
             batcher_bullet2.texture = &bullet2_1tex;
-            batcher_bullet2.batchSprites(bullet_2_batchable);
+            batcher_bullet2.batchSprites(bullet_2_batchable, bullet_2_batchableIndex);
             buffer_over.draw(batcher_bullet2, Renderer);
 
             batcher_bullet1.texture = &bullet1_2tex;
-            batcher_bullet1.batchSprites(bullet_1_batchable);
+            batcher_bullet1.batchSprites(bullet_1_batchable, bullet_1_batchableIndex);
             buffer_over.draw(batcher_bullet1, Renderer);
 
             for (sf::Sprite spr : variable_textures_bloom) {
@@ -11960,6 +12636,14 @@ int main()
 
             buffer_over.draw(strong_spirit_sprite);
 
+            for (sf::Sprite spr : rain_textures) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_over.draw(spr);
+            }
+            reset_rotateable_sprites(rain_textures, rain_texturesIndex);
+
             if (t2_draw_in_front) {
                 buffer_over.draw(T2_sprite);
             }
@@ -12000,6 +12684,12 @@ int main()
                 go_addy1 = 55;
                 go_addy2 = 3;
                 game_over_time = 0;
+
+                //weapon to pick up text weapon_drop
+                if (nearest_wep_drop_ID != 0) {
+                    draw_weapon_text(allObjects[nearest_wep_drop_ID].size, allObjects[nearest_wep_drop_ID].position, wep_text, buffer_over);
+                    
+                }
             }
             else {
 
@@ -12082,8 +12772,18 @@ int main()
             current_frame++;
         }
 
+        if (fullscreen_mode) {
+            buffer_overSprite.setScale(sf::Vector2f(window_scale, window_scale));
+            buffer_overSprite.setPosition(fullscreen_window_offset);
+        }
+        else {
+            buffer_overSprite.setScale(sf::Vector2f(1, 1));
+            buffer_overSprite.setPosition(0, 0);
+        }
+
         window.draw(buffer_overSprite);
-        
+
+
         //window.draw(bufferShadows);
         
 

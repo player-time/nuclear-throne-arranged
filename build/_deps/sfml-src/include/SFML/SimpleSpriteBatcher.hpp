@@ -8,16 +8,28 @@ class SimpleSpriteBatcher : public sf::Drawable
 public:
     sf::Texture* texture{ nullptr };
     SimpleSpriteBatcher() = default;
-    void batchSprites(const std::vector<sf::Sprite>& sprites)
+    /* void batchSprites(const std::vector<sf::Sprite>&sprites)
     {
         m_vertices.resize(sprites.size() * 6u);
         for (std::size_t i{ 0u }; i < sprites.size(); ++i)
             setQuad(&(sprites[i]), i * 6u);
+    }*/
+    void batchSprites(const std::vector<sf::Sprite>& sprites, size_t size)
+    {
+        m_vertices.resize(size * 6u);
+        for (std::size_t i{ 0u }; i < size; ++i)
+            setQuad(&(sprites[i]), i * 6u);
     }
-    void batchSprites(const std::vector<sf::Sprite*>& sprites)
+    /*void batchSprites(const std::vector<sf::Sprite*>& sprites)
     {
         m_vertices.resize(sprites.size() * 6u);
         for (std::size_t i{ 0u }; i < sprites.size(); ++i)
+            setQuad(sprites[i], i * 6u);
+    }*/
+    void batchSprites(const std::vector<sf::Sprite*>& sprites, size_t size)
+    {
+        m_vertices.resize(size * 6u);
+        for (std::size_t i{ 0u }; i < size; ++i)
             setQuad(sprites[i], i * 6u);
     }
 
