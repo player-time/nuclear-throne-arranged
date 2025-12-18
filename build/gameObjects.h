@@ -212,6 +212,25 @@ enum sound_ID {
 
 	snd_player_loop_1_ID,
 
+	snd_wep_pickup_ID,
+
+	snd_pistol_swap_ID,
+	snd_machine_gun_swap_ID,
+	snd_hammer_swap_ID,
+	snd_shotgun_swap_ID,
+	snd_bow_swap_ID,
+	snd_guitar_swap_ID,
+	snd_explosive_swap_ID,
+	snd_energy_swap_ID,
+	snd_motorized_swap_ID,
+	snd_sword_swap_ID,
+	snd_flame_swap_ID,
+	snd_dragon_swap_ID,
+	snd_gold_swap_ID,
+
+	snd_player_shoot_A_ID,
+	snd_player_shoot_B_ID,
+
 	//end of sounds that will be used, not just in buffers
 
 	snd_music_ID,
@@ -331,8 +350,8 @@ enum sound_ID {
 	snd_ultra_shovel_ID,
 	snd_plasma_huge_ID, snd_plasma_huge_upgrade_ID,
 	snd_plasma_split_ID, snd_plasma_split_upgrade_ID,
-	snd_hammer_swap_ID,
-	snd_energy_swap_ID,
+
+
 	snd_explosion_ID,
 	snd_explosion_s_ID,
 	snd_nade_hit_wall_ID,
@@ -341,7 +360,22 @@ enum sound_ID {
 
 	snd_idpd_spawn_ID,
 	snd_idpd_spawn_elite_ID,
+	
+	//weapon fire snds
+	snd_sword_ID,
+	snd_black_sword_ID,
+	snd_wrench_ID,
+	snd_shovel_ID,
+	snd_sledge_ID,
 
+	snd_guitar_ID,
+	snd_screwdriver_ID,
+	snd_energy_sword_ID,
+	snd_energy_sword_up_ID,
+	snd_energy_hammer_ID,
+	snd_energy_hammer_up_ID,
+	snd_energy_screw_ID,
+	snd_energy_screw_up_ID,
 
 	snd_foot_metmetal_1_ID,
 	snd_foot_metmetal_2_ID,
@@ -441,7 +475,7 @@ enum subWallType{upLeft, up, upRight, right, downRight, down, downLeft, left, mi
 enum character{ fish, crystal, eyes, melting, plant, YV, steroids, robot, chicken, rebel, horror, rogue, frog, skeleton };
 
 enum weapon_types {		//cutoffs for weapon types
-	melee_weps = 11,
+	melee_weps = 8,
 	energy_weps = 41,
 };
 
@@ -581,7 +615,7 @@ struct level_generator {
 
 struct sound_sound_buffer {
 	sf::Sound sound;
-	float pitch_variance;
+	float pitch_variance = 0.0f;
 };
 
 struct portal_spiral {
