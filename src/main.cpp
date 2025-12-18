@@ -569,7 +569,7 @@ void draw_weapon_text(int wep_ID, sf::Vector2f pos, sf::Text text, sf::RenderTex
     case 4:text.setString("SHOVEL");break;
     case 5:text.setString("SLEDGEHAMMER");break;
     case 6:text.setString("GUITAR");break;
-    case 7:text.setString("SCREWDRIVER");break;
+    case 7:text.setString("LIGHTNING HAMMER");break;
     case 8:text.setString("ENERGY SWORD");break;
     case 9:text.setString("ENERGY HAMMER");break;
     case 10:text.setString("ENERGY SCREWDRIVER");break;
@@ -1724,10 +1724,10 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].image_index = 0;
                 allObjects[i].rotation = random_360_degrees();
                 break;
-            case ultra_slash:
+            case melee_slash:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].my_hitbox = no_hitbox;
-                allObjects[i].damage = 30;
+                allObjects[i].damage = image_index;
 
                 allObjects[i].position = { x, y };
                 allObjects[i].image_index = 0;
@@ -2342,14 +2342,13 @@ sound_ID get_shoot_sound(int wep_id) {
     switch (wep_id) {
     case 0: /*ushov*/ return snd_shoot_1_ID; break;
 
-
     case 1: /*sword*/return snd_sword_ID; break;
     case 2: /*black sword*/return snd_black_sword_ID; break;
     case 3: /*wrench*/return snd_wrench_ID; break;
     case 4: /*shovel*/return snd_shovel_ID; break;
     case 5: /*sledge*/return snd_sledge_ID; break;
     case 6: /*guitar*/return snd_guitar_ID; break;
-    case 7: /*screwdriver*/return snd_screwdriver_ID; break;
+    case 7: /*lightning hammer*/return snd_lightning_hammer_ID; break;
 
     case 8: /*Esword*/
         if (laser_brain < 1.1f) {
@@ -2392,9 +2391,9 @@ sf::Vector2f wep_get_origin(int wep_id){
     case 2: /*black sword*/return sf::Vector2f( 5, 4 );break;
     case 3: /*wrench*/return sf::Vector2f( 5, 4 );break;
     case 4: /*shovel*/return sf::Vector2f( 5, 5 );break;
-    case 5: /*sledge*/return sf::Vector2f( 5, 5 );break;
+    case 5: /*sledge*/return sf::Vector2f( 5, 7 );break;
     case 6: /*guitar*/return sf::Vector2f( 5, 5 );break;
-    case 7: /*screwdriver*/return sf::Vector2f( 3, 4 );break;
+    case 7: /*lightning hammer*/return sf::Vector2f( 4, 7 );break;
     case 8: /*Esword*/return sf::Vector2f( 4, 4 );break;
     case 9: /*Ehammer*/return sf::Vector2f( 5, 7 );break;
     case 10: /*Escrew*/return sf::Vector2f( 3, 4 );break;
@@ -2414,7 +2413,7 @@ void play_swap_sound(int wep_id) {
     case 4: /*shovel*/play_sounds_this_frame_count[snd_hammer_swap_ID] = 1; break;
     case 5: /*sledge*/play_sounds_this_frame_count[snd_hammer_swap_ID] = 1; break;
     case 6: /*guitar*/play_sounds_this_frame_count[snd_guitar_swap_ID] = 1; break;
-    case 7: /*screwdriver*/play_sounds_this_frame_count[snd_sword_swap_ID] = 1; break;
+    case 7: /*lightning hammer*/play_sounds_this_frame_count[snd_hammer_swap_ID] = 1; break;
     case 8: /*Esword*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
     case 9: /*Ehammer*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
     case 10: /*Escrew*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
@@ -4128,8 +4127,11 @@ void plasma_collision(int plasma, int i, int j) {
 void ultra_slash_collision(int currOBJ, int i, int j) {
     for (int w = -7; w < 8; w++) {
         for (int h = -7; h < 8; h++) {
-            for (int O : game_area[i + w][j + h].object_indexes) {
-                if (allObjects[currOBJ].alarm3 == 0 && game_area[i + w][j + h].my_grid_type == wall && is_within_circle(sf::Vector2f(((i + w) * 16) + 8, ((j + h) * 16) + 8), allObjects[currOBJ].position, (wall_hitbox + 24))) {
+            if (allObjects[currOBJ].alarm3 == 0 && game_area[i + w][j + h].my_grid_type == wall && is_within_melee_slash(allObjects[currOBJ].position, sf::Vector2f(((i + w) * 16) + 8, ((j + h) * 16) + 8), wall_hitbox, allObjects[currOBJ].direction)) {
+                if (allObjects[currOBJ].damage == 42) {
+                    create_explo_tile(i + w, j + h);
+                }
+                else {
                     allObjects[currOBJ].position -= allObjects[currOBJ].speed;
                     allObjects[currOBJ].alarm3 = 1;
 
@@ -4137,6 +4139,8 @@ void ultra_slash_collision(int currOBJ, int i, int j) {
 
                     create_object((((i + w) * 16) + 8) - cos(ang_to) * 11, (((j + h) * 16) + 8) - sin(ang_to) * 11, 0, 0, static_effect, ang_to * degreestoradians, 224);
                 }
+            }
+            for (int O : game_area[i + w][j + h].object_indexes) {
                 switch (allObjects[O].my_id) {
                 case throne_2:
                     if (allObjects[O].alarm1 < 0 && allObjects[O].next_hurt < current_frame &&
@@ -4650,20 +4654,59 @@ void YV_money() {
     }
 
 }
+
+void play_wep_sound() {
+    if (current_player_weapon_sound == 0) {
+        play_sound_on_player(snd_player_shoot_A_ID);
+    }
+    else {
+        play_sound_on_player(snd_player_shoot_B_ID);
+    }
+}
+
+void swing_melee(float direction, float reload, float damage) {
+    float Xspd = 0.0f;
+    float Xoff = 0.0f;
+    float Yoff = 0.0f;
+
+    LMB_pressed = false;
+    reloaded = false;
+
+    wep_kick = -6;
+    wep_angle *= -1;
+    play_wep_sound();
+    wep_reload += reload;
+    motion_add_dir(direction, 8, 0);
+
+    Xspd = (3 + long_arms * 3.0f) - (damage == 22 || damage == 42);
+
+    float extra_off = 24.0f - (damage == 42) * 7;
+    Xoff = cos(direction) * (long_arms * 20.0f + extra_off);    //24.0f is to account for the offset
+    Yoff = sin(direction) * (long_arms * 20.0f + extra_off);
+    create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, melee_slash, direction, damage);
+}
+
+void not_enough_energy() {
+    play_sound_on_player(snd_empty_ID);
+    create_popuptext("NOT ENOUGH ENERGY", allObjects[0].position);
+    LMB_pressed = false;
+    wep_kick = 3;
+}
+
 void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, bool b_wep_shot = false, bool skeleton_gamble = false) {
     float Xspd = 0.0f;
     float Yspd = 0.0f;
     float Xoff = 0.0f;
     float Yoff = 0.0f;
 
-    if (index != 0 && index != 11) {    //spc and ushov get their own shoot sound
+    /*if (index != 0 && index != 11) {    //spc and ushov get their own shoot sound
         if (current_player_weapon_sound == 0) {
             play_sound_on_player(snd_player_shoot_A_ID);
         }
         else {
             play_sound_on_player(snd_player_shoot_B_ID);
         }
-    }
+    }*/
 
     if (!crystal_is_shielding) {
         if (b_wep_shot) {
@@ -4708,25 +4751,135 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                     Xspd = (3 + long_arms * 3.0f);
                     Xoff = cos(direction) * (long_arms * 20.0f + 24.0f);    //24.0f is to account for the offset
                     Yoff = sin(direction) * (long_arms * 20.0f + 24.0f);
-                    create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, ultra_slash, direction, 0);
+                    create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, melee_slash, direction, 30);
 
                     Xspd -= 1;
                     direction += (60.0f * accuracy_curr) / degreestoradians;
 
                     Xoff = cos(direction) * (long_arms * 15.0f + 24.0f);
                     Yoff = sin(direction) * (long_arms * 15.0f + 24.0f);
-                    create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, ultra_slash, direction, 0);
+                    create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, melee_slash, direction, 30);
 
                     direction -= (120.0f * accuracy_curr) / degreestoradians;
 
                     Xoff = cos(direction) * (long_arms * 15.0f + 24.0f);
                     Yoff = sin(direction) * (long_arms * 15.0f + 24.0f);
-                    create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, ultra_slash, direction, 0);
+                    create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, melee_slash, direction, 30);
                 }
                 else {
                     //not enough rads
                 }
             }
+            break;
+        case 1: //chicken sword
+            if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
+                swing_melee(direction, 18.0f, 3);
+            }
+            break;
+        case 2: //black sword
+            if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
+                swing_melee(direction, 16.0f, 6);
+            }
+            break;
+        case 3: //wrench
+            if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
+                swing_melee(direction, 22.0f, 4);
+            }
+            break;
+        case 4: //shovel
+            if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
+                LMB_pressed = false;
+                reloaded = false;
+
+                wep_kick = -6;
+                wep_angle *= -1;
+                play_wep_sound();
+                wep_reload += 35.0f;
+                motion_add_dir(direction, 8, 0);
+
+                Xspd = (3 + long_arms * 3.0f);
+                Xoff = cos(direction) * (long_arms * 20.0f + 24.0f);    //24.0f is to account for the offset
+                Yoff = sin(direction) * (long_arms * 20.0f + 24.0f);
+                create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, melee_slash, direction, 8);
+                Xspd -= 1;
+                direction += (60.0f * accuracy_curr) / degreestoradians;
+
+                Xoff = cos(direction) * (long_arms * 15.0f + 24.0f);
+                Yoff = sin(direction) * (long_arms * 15.0f + 24.0f);
+                create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, melee_slash, direction, 8);
+
+                direction -= (120.0f * accuracy_curr) / degreestoradians;
+
+                Xoff = cos(direction) * (long_arms * 15.0f + 24.0f);
+                Yoff = sin(direction) * (long_arms * 15.0f + 24.0f);
+                create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, melee_slash, direction, 8);
+            }
+            break;
+        case 5: //sledge
+            if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
+                swing_melee(direction, 35.0f, 12);
+            }
+            break;
+        case 6: //guitar
+            if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
+                swing_melee(direction, 21.0f, 13);
+            }
+            break;
+        case 7: //lightning hammer
+            if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
+                swing_melee(direction, 32.0f, 7);
+            }
+            break;
+        case 8: //esword
+            if ((LMB_pressed && wep_reload <= 0.0f && shots == 1 && player_energy - 2 >= 0) || (skeleton_gamble && wep_reload <= 0.0f)) {
+                swing_melee(direction, 12.0f, 22);
+                player_energy -= 2 * !(skeleton_gamble);
+
+                wep_reload *= gamble_reload;
+
+                if (skeleton_gamble && rand() % 10 < 2) {
+                    hurt_player(1);
+                    create_object(allObjects[0].position.x + Xspd * 2, allObjects[0].position.y + Yspd * 2, 0, 0, static_effect, direction * degreestoradians, 168);
+                }
+                if (player_hp == 0 && !has_spirit && skeleton_gamble) {
+                    create_popuptext("FUCK", allObjects[0].position);
+                    player_hp = -999;
+                }
+
+                //laser brain fx
+                for (int i = 0; i < 2 * ((laser_brain > 1.1f) + 1); i++) {
+                    create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, laser_brain_FX, random_360_degrees(), 0);
+                }
+            }
+            if (LMB_pressed && wep_reload < 0.0f && player_energy - 2 < 0 && shots == 1 && !skeleton_gamble) {
+                not_enough_energy();
+            }
+            break;
+        case 9: //ehammer
+            if ((LMB_pressed && wep_reload <= 0.0f && shots == 1 && player_energy - 5 >= 0) || (skeleton_gamble && wep_reload <= 0.0f)) {
+                swing_melee(direction, 20.0f, 42);
+                player_energy -= 5 * !(skeleton_gamble);
+
+                wep_reload *= gamble_reload;
+
+                if (skeleton_gamble && rand() % 10 < 5) {
+                    hurt_player(1);
+                    create_object(allObjects[0].position.x + Xspd * 2, allObjects[0].position.y + Yspd * 2, 0, 0, static_effect, direction * degreestoradians, 168);
+                }
+                if (player_hp == 0 && !has_spirit && skeleton_gamble) {
+                    create_popuptext("FUCK", allObjects[0].position);
+                    player_hp = -999;
+                }
+                //laser brain fx
+                for (int i = 0; i < 3 * ((laser_brain > 1.1f) + 1); i++) {
+                    create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, laser_brain_FX, random_360_degrees(), 0);
+                }
+            }
+            if (LMB_pressed && wep_reload < 0.0f && player_energy - 5 < 0 && shots == 1 && !skeleton_gamble) {
+                not_enough_energy();
+            }
+            break;
+        case 10://escrew
             break;
         case 11:
             if ((LMB_pressed && wep_reload <= 0.0f && player_energy - 24 * shots >= 0)      ||    (skeleton_gamble && wep_reload <= 0.0f)) {
@@ -4747,7 +4900,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                     create_object(allObjects[0].position.x + Xspd / 2, allObjects[0].position.y + Yspd / 2, Xspd, Yspd, plasma_huge, direction, 0);
 
                     //laser brain fx
-                    for (int i = 0; i < 24; i++) {
+                    for (int i = 0; i < 12 * ((laser_brain > 1.1f) + 1); i++) {
                         create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, laser_brain_FX, random_360_degrees(), 0);
                     }
                 }
@@ -4765,10 +4918,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 }
             }
             if (LMB_pressed && wep_reload < 0.0f && player_energy - 24 * shots < 0) {
-                play_sound_on_player(snd_empty_ID);
-                create_popuptext("NOT ENOUGH ENERGY", allObjects[0].position);
-                LMB_pressed = false;
-                wep_kick = 3;
+                not_enough_energy();
             }
 
             break;
@@ -4883,6 +5033,15 @@ int find_nearest_LOS_enemy(sf::Vector2f pos){
         }
     }
     return 0;
+}
+
+bool is_energy_slash_with_brain(int damage) {
+    if (damage == 22 || damage == 7 || damage == 42) {
+        if (laser_brain > 1.15f) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    //logic done on each obect every frame
@@ -5820,7 +5979,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                 allObjects[i].my_id = nothing;
             }
             break;
-        case ultra_slash:
+        case melee_slash:
             allObjects[i].speeddir -= allObjects[i].friction;
             allObjects[i].speed.x = cos(allObjects[i].direction) * allObjects[i].speeddir;
             allObjects[i].speed.y = sin(allObjects[i].direction) * allObjects[i].speeddir;
@@ -5829,6 +5988,9 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             allObjects[i].alarm3 = 0;
 
             allObjects[i].image_index++;
+            if (is_energy_slash_with_brain(allObjects[i].damage) && current_frame % 2) {
+                allObjects[i].image_index--;
+            }
             if (allObjects[i].image_index > 6) {
                 allObjects[i].my_id = nothing;
             }
@@ -6185,7 +6347,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                     T2_bullet_step(O);
                                 }
                                 break;
-                            case ultra_slash:
+                            case melee_slash:
                                 if (allObjects[O].image_index < 5 && w == 0 && h == 0) {
                                     ultra_slash_collision(O, i, j);
                                 }
@@ -6345,7 +6507,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                             explosion_collision(currOBJ, i, j);
                         }
                         break;
-                    case objectID::ultra_slash:
+                    case objectID::melee_slash:
                         if (allObjects[currOBJ].image_index < 5) {
                             ultra_slash_collision(currOBJ,i, j);
                         }
@@ -6509,7 +6671,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                             plasma_impact_collision(currOBJ, i, j);
                         }
                         break;
-                    case ultra_slash:
+                    case melee_slash:
                         if (allObjects[currOBJ].image_index < 5) {
                             ultra_slash_collision(currOBJ, i, j);
                         }
@@ -7020,7 +7182,7 @@ void start_new_run(character chararcter_choice, sound_sound_buffer all_sounds[],
     player_character = chararcter_choice;
 
     player_max_speed = 4.0f;
-    laser_brain = 1.0f;
+    laser_brain = 1.2f;
     player_alive = true;
     has_died = false;
 
@@ -7205,7 +7367,7 @@ void generate_level(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_b
         all_sounds[snd_music_ID].sound.setVolume(0.0f);
         generate_floors(240, 0, 6, 1, 5, 19, 22, 1, 4);
 
-        create_object(24016, 24016, 0, 0, weapon_drop, 0, 12);//debug
+        create_object(24016, 24016, 0, 0, weapon_drop, 0, 8);//debug
 
         //generate enemies
         int tmp_num_of_enemies_to_spawn = LOOPS * 3;
@@ -7741,7 +7903,7 @@ int main()
     add_new_sound_buffer(snd_sledge_ID, "snd/sledge.wav", all_extra_sound_buffers);
 
     add_new_sound_buffer(snd_guitar_ID, "snd/guitar.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_screwdriver_ID, "snd/screwdriver.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_lightning_hammer_ID, "snd/lightning_hammer.wav", all_extra_sound_buffers);
     add_new_sound_buffer(snd_energy_sword_ID, "snd/energy_sword.wav", all_extra_sound_buffers);
     add_new_sound_buffer(snd_energy_sword_up_ID, "snd/energy_sword_up.wav", all_extra_sound_buffers);
     add_new_sound_buffer(snd_energy_hammer_ID, "snd/energy_hammer.wav", all_extra_sound_buffers);
@@ -8424,6 +8586,42 @@ int main()
         ultra_slash_tex_2.loadFromFile("res/player/projectiles/melee/ultra_slash_2.png");
         sf::Texture ultra_slash_tex_3;
         ultra_slash_tex_3.loadFromFile("res/player/projectiles/melee/ultra_slash_3.png");
+
+        sf::Texture normal_slash_tex_1;
+        normal_slash_tex_1.loadFromFile("res/player/projectiles/melee/normal_slash_1.png");
+        sf::Texture normal_slash_tex_2;
+        normal_slash_tex_2.loadFromFile("res/player/projectiles/melee/normal_slash_2.png");
+        sf::Texture normal_slash_tex_3;
+        normal_slash_tex_3.loadFromFile("res/player/projectiles/melee/normal_slash_3.png");
+
+        sf::Texture heavy_slash_tex_1;
+        heavy_slash_tex_1.loadFromFile("res/player/projectiles/melee/heavy_slash_1.png");
+        sf::Texture heavy_slash_tex_2;
+        heavy_slash_tex_2.loadFromFile("res/player/projectiles/melee/heavy_slash_2.png");
+        sf::Texture heavy_slash_tex_3;
+        heavy_slash_tex_3.loadFromFile("res/player/projectiles/melee/heavy_slash_3.png");
+
+        sf::Texture energy_slash_tex_1;
+        energy_slash_tex_1.loadFromFile("res/player/projectiles/melee/energy_slash_1.png");
+        sf::Texture energy_slash_tex_2;
+        energy_slash_tex_2.loadFromFile("res/player/projectiles/melee/energy_slash_2.png");
+        sf::Texture energy_slash_tex_3;
+        energy_slash_tex_3.loadFromFile("res/player/projectiles/melee/energy_slash_3.png");
+
+        sf::Texture heavy_energy_slash_tex_1;
+        heavy_energy_slash_tex_1.loadFromFile("res/player/projectiles/melee/heavy_energy_slash_1.png");
+        sf::Texture heavy_energy_slash_tex_2;
+        heavy_energy_slash_tex_2.loadFromFile("res/player/projectiles/melee/heavy_energy_slash_2.png");
+        sf::Texture heavy_energy_slash_tex_3;
+        heavy_energy_slash_tex_3.loadFromFile("res/player/projectiles/melee/heavy_energy_slash_3.png");
+
+        sf::Texture lightning_slash_tex_1;
+        lightning_slash_tex_1.loadFromFile("res/player/projectiles/melee/lightning_slash_1.png");
+        sf::Texture lightning_slash_tex_2;
+        lightning_slash_tex_2.loadFromFile("res/player/projectiles/melee/lightning_slash_2.png");
+        sf::Texture lightning_slash_tex_3;
+        lightning_slash_tex_3.loadFromFile("res/player/projectiles/melee/lightning_slash_3.png");
+
 
         sf::Texture idpd_freak_revive_area_tex;
         idpd_freak_revive_area_tex.loadFromFile("res/enemies/sprPopoReviveArea.png");
@@ -11313,16 +11511,85 @@ int main()
 
 
                         break;
-                    case ultra_slash:
+                    case melee_slash:
                         choice = int(allObjects[idx].image_index * 0.4f);
                         if (choice == 0) {
-                            rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(ultra_slash_tex_1);
+                            switch (allObjects[idx].damage) {
+                            default:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(ultra_slash_tex_1);
+                                break;
+                            case 3:__fallthrough;
+                            case 4:__fallthrough;
+                            case 6:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(normal_slash_tex_1);
+                                break;
+                            case 8:__fallthrough;
+                            case 12:__fallthrough;
+                            case 13:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(heavy_slash_tex_1);
+                                break;
+                            case 7:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(lightning_slash_tex_1);
+                                break;
+                            case 22:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(energy_slash_tex_1);
+                                break;
+                            case 42:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(heavy_energy_slash_tex_1);
+                                break;
+                            }
                         }
                         if (choice == 1) {
-                            rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(ultra_slash_tex_2);
+                            switch (allObjects[idx].damage) {
+                            default:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(ultra_slash_tex_2);
+                                break;
+                            case 3:__fallthrough;
+                            case 4:__fallthrough;
+                            case 6:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(normal_slash_tex_2);
+                                break;
+                            case 8:__fallthrough;
+                            case 12:__fallthrough;
+                            case 13:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(heavy_slash_tex_2);
+                                break;
+                            case 7:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(lightning_slash_tex_2);
+                                break;
+                            case 22:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(energy_slash_tex_2);
+                                break;
+                            case 42:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(heavy_energy_slash_tex_2);
+                                break;
+                            }
                         }
                         if (choice == 2) {
-                            rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(ultra_slash_tex_3);
+                            switch (allObjects[idx].damage) {
+                            default:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(ultra_slash_tex_3);
+                                break;
+                            case 3:__fallthrough;
+                            case 4:__fallthrough;
+                            case 6:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(normal_slash_tex_3);
+                                break;
+                            case 8:__fallthrough;
+                            case 12:__fallthrough;
+                            case 13:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(heavy_slash_tex_3);
+                                break;
+                            case 7:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(lightning_slash_tex_3);
+                                break;
+                            case 22:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(energy_slash_tex_3);
+                                break;
+                            case 42:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(heavy_energy_slash_tex_3);
+                                break;
+                            }
                         }
 
                         rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setColor({ 255, 255, 255, 255 });

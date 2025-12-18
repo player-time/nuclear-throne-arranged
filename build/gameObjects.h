@@ -90,7 +90,8 @@ enum objectID {
 	plasma_particle,
 	plasma_hit,
 
-	ultra_slash,
+	melee_slash,
+	melee_shank,
 
 	horror_bullet, horror_bullet_destroy,
 
@@ -369,7 +370,7 @@ enum sound_ID {
 	snd_sledge_ID,
 
 	snd_guitar_ID,
-	snd_screwdriver_ID,
+	snd_lightning_hammer_ID,
 	snd_energy_sword_ID,
 	snd_energy_sword_up_ID,
 	snd_energy_hammer_ID,
