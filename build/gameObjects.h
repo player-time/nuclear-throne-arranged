@@ -378,6 +378,18 @@ enum sound_ID {
 	snd_energy_screw_ID,
 	snd_energy_screw_up_ID,
 
+	snd_plasma_cannon_ID,
+	snd_plasma_cannon_up_ID,
+	snd_plasma_gun_ID,
+	snd_plasma_gun_up_ID,
+	snd_plasma_rifle_ID,
+	snd_plasma_rifle_up_ID,
+	snd_plasma_mini_ID,
+	snd_plasma_mini_up_ID,
+
+
+
+
 	snd_foot_metmetal_1_ID,
 	snd_foot_metmetal_2_ID,
 	snd_foot_metmetal_3_ID,

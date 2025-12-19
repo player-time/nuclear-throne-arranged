@@ -190,7 +190,7 @@ int current_frame = 0;      //used for stuff like i-frames, reset this each area
 
 
 
-int LOOPS = 15;
+int LOOPS = 29;
 
 
 
@@ -560,6 +560,10 @@ void draw_text_NT(sf::Text text, sf::RenderTexture &renderer) {
     renderer.draw(text);
 }
 
+
+
+
+
 void draw_weapon_text(int wep_ID, sf::Vector2f pos, sf::Text text, sf::RenderTexture& renderer, sf::Sprite wep_arrow_sprite) {
     switch (wep_ID) {
     case 0:text.setString("ULTRA SHOVEL");break;
@@ -574,12 +578,150 @@ void draw_weapon_text(int wep_ID, sf::Vector2f pos, sf::Text text, sf::RenderTex
     case 9:text.setString("ENERGY HAMMER");break;
     case 10:text.setString("ENERGY SCREWDRIVER");break;
     case 11:text.setString("SUPER PLASMA CANNON");break;
+    case 12:text.setString("PLASMA CANNON");break;
+    case 13:text.setString("PLASMA GUN");break;
+    case 14:text.setString("PLASMA RIFLE");break;
+    case 15:text.setString("PLASMA MINIGUN");break;
     }
     text.setPosition(int(pos.x - cameraPos.x) - text.getString().getSize() * 4, int(pos.y - cameraPos.y) - 28);
     wep_arrow_sprite.setPosition(int(pos.x - cameraPos.x), int(pos.y - cameraPos.y) - 16);
     renderer.draw(wep_arrow_sprite);
     draw_text_NT(text, renderer);
 }
+
+sound_ID get_shoot_sound(int wep_id) {
+    switch (wep_id) {
+    case 0: /*ushov*/ return snd_shoot_1_ID; break;
+
+    case 1: /*sword*/return snd_sword_ID; break;
+    case 2: /*black sword*/return snd_black_sword_ID; break;
+    case 3: /*wrench*/return snd_wrench_ID; break;
+    case 4: /*shovel*/return snd_shovel_ID; break;
+    case 5: /*sledge*/return snd_sledge_ID; break;
+    case 6: /*guitar*/return snd_guitar_ID; break;
+    case 7: /*lightning hammer*/return snd_lightning_hammer_ID; break;
+
+    case 8: /*Esword*/
+        if (laser_brain < 1.15f) {
+            return snd_energy_sword_ID;
+        }
+        else {
+            return snd_energy_sword_up_ID;
+        }
+        break;
+
+    case 9: /*Ehammer*/
+        if (laser_brain < 1.15f) {
+            return snd_energy_hammer_ID;
+        }
+        else {
+            return snd_energy_hammer_up_ID;
+        }
+        break;
+
+    case 10: /*Escrew*/
+        if (laser_brain < 1.15f) {
+            return snd_energy_screw_ID;
+        }
+        else {
+            return snd_energy_screw_up_ID;
+        }
+        break;
+
+    case 11: /*SPC*/ return snd_shoot_1_ID; break;
+
+    case 12: /*PC*/
+        if (laser_brain < 1.15f) {
+            return snd_plasma_cannon_ID;
+        }
+        else {
+            return snd_plasma_cannon_up_ID;
+        }
+        break;
+
+    case 13: /*plasma gun*/
+        if (laser_brain < 1.15f) {
+            return snd_plasma_gun_ID;
+        }
+        else {
+            return snd_plasma_gun_up_ID;
+        }
+        break;
+
+    case 14: /*plasma rifle*/
+        if (laser_brain < 1.15f) {
+            return snd_plasma_rifle_ID;
+        }
+        else {
+            return snd_plasma_rifle_up_ID;
+        }
+        break;
+
+    case 15: /*plasma mini*/
+        if (laser_brain < 1.15f) {
+            return snd_plasma_mini_ID;
+        }
+        else {
+            return snd_plasma_mini_up_ID;
+        }
+        break;
+    default:
+        return snd_shoot_1_ID;
+        break;
+    }
+}
+
+sf::Vector2f wep_get_origin(int wep_id) {
+    switch (wep_id) {
+    case 0: /*ushov*/return sf::Vector2f(5, 7); break;
+    case 1: /*sword*/return sf::Vector2f(5, 4); break;
+    case 2: /*black sword*/return sf::Vector2f(5, 4); break;
+    case 3: /*wrench*/return sf::Vector2f(5, 4); break;
+    case 4: /*shovel*/return sf::Vector2f(5, 5); break;
+    case 5: /*sledge*/return sf::Vector2f(5, 7); break;
+    case 6: /*guitar*/return sf::Vector2f(5, 5); break;
+    case 7: /*lightning hammer*/return sf::Vector2f(4, 7); break;
+    case 8: /*Esword*/return sf::Vector2f(4, 4); break;
+    case 9: /*Ehammer*/return sf::Vector2f(5, 7); break;
+    case 10: /*Escrew*/return sf::Vector2f(3, 4); break;
+    case 11: /*SPC*/ return sf::Vector2f(3, 6); break;
+    case 12: /*PC*/ return sf::Vector2f(5, 5); break;
+    case 13: /*plasma gun*/ return sf::Vector2f(4, 5); break;
+    case 14: /*plasma rifle*/ return sf::Vector2f(4, 5); break;
+    case 15: /*plasma minigun*/ return sf::Vector2f(4, 5); break;
+    default:
+        return sf::Vector2f(0, 0);
+        break;
+    }
+}
+
+void play_swap_sound(int wep_id) {
+    switch (wep_id) {
+    case 0: /*ushov*/play_sounds_this_frame_count[snd_hammer_swap_ID] = 1; break;
+    case 1: /*sword*/play_sounds_this_frame_count[snd_sword_swap_ID] = 1; break;
+    case 2: /*black sword*/play_sounds_this_frame_count[snd_sword_swap_ID] = 1; break;
+    case 3: /*wrench*/play_sounds_this_frame_count[snd_hammer_swap_ID] = 1; break;
+    case 4: /*shovel*/play_sounds_this_frame_count[snd_hammer_swap_ID] = 1; break;
+    case 5: /*sledge*/play_sounds_this_frame_count[snd_hammer_swap_ID] = 1; break;
+    case 6: /*guitar*/play_sounds_this_frame_count[snd_guitar_swap_ID] = 1; break;
+    case 7: /*lightning hammer*/play_sounds_this_frame_count[snd_hammer_swap_ID] = 1; break;
+    case 8: /*Esword*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 9: /*Ehammer*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 10: /*Escrew*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 11:  /*SPC*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 12:  /*PC*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 13:  /*plasma gun*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 14:  /*plasma rifle*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 15:  /*plasma minigun*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    default:
+        break;
+    }
+}
+
+
+
+
+
 
 //draw light source
 void draw_light(sf::Vector2f pos, sf::RenderTexture& the_darkness, int large_radius, int small_radius) {
@@ -2338,91 +2480,6 @@ void get_wep_reload_sound(int wep) {
     }
 }
 
-sound_ID get_shoot_sound(int wep_id) {
-    switch (wep_id) {
-    case 0: /*ushov*/ return snd_shoot_1_ID; break;
-
-    case 1: /*sword*/return snd_sword_ID; break;
-    case 2: /*black sword*/return snd_black_sword_ID; break;
-    case 3: /*wrench*/return snd_wrench_ID; break;
-    case 4: /*shovel*/return snd_shovel_ID; break;
-    case 5: /*sledge*/return snd_sledge_ID; break;
-    case 6: /*guitar*/return snd_guitar_ID; break;
-    case 7: /*lightning hammer*/return snd_lightning_hammer_ID; break;
-
-    case 8: /*Esword*/
-        if (laser_brain < 1.1f) {
-            return snd_energy_sword_ID;
-        }
-        else {
-            return snd_energy_sword_up_ID;
-        }
-        break;
-
-    case 9: /*Ehammer*/
-        if (laser_brain < 1.1f) {
-            return snd_energy_hammer_ID;
-        }
-        else {
-            return snd_energy_hammer_up_ID;
-        }
-        break;
-
-    case 10: /*Escrew*/
-        if (laser_brain < 1.1f) {
-            return snd_energy_screw_ID;
-        }
-        else {
-            return snd_energy_screw_up_ID;
-        }
-        break;
-
-    case 11: /*SPC*/ return snd_shoot_1_ID; break;
-    default:
-        return snd_shoot_1_ID;
-        break;
-    }
-}
-
-sf::Vector2f wep_get_origin(int wep_id){
-    switch (wep_id) {
-    case 0: /*ushov*/return sf::Vector2f( 5, 7 );break;
-    case 1: /*sword*/return sf::Vector2f( 5, 4 );break;
-    case 2: /*black sword*/return sf::Vector2f( 5, 4 );break;
-    case 3: /*wrench*/return sf::Vector2f( 5, 4 );break;
-    case 4: /*shovel*/return sf::Vector2f( 5, 5 );break;
-    case 5: /*sledge*/return sf::Vector2f( 5, 7 );break;
-    case 6: /*guitar*/return sf::Vector2f( 5, 5 );break;
-    case 7: /*lightning hammer*/return sf::Vector2f( 4, 7 );break;
-    case 8: /*Esword*/return sf::Vector2f( 4, 4 );break;
-    case 9: /*Ehammer*/return sf::Vector2f( 5, 7 );break;
-    case 10: /*Escrew*/return sf::Vector2f( 3, 4 );break;
-    case 11: /*SPC*/ return sf::Vector2f( 3, 6 ); break;
-    default:
-        return sf::Vector2f(0, 0);
-        break;
-    }
-}
-
-void play_swap_sound(int wep_id) {
-    switch (wep_id) {
-    case 0: /*ushov*/play_sounds_this_frame_count[snd_hammer_swap_ID] = 1;break;
-    case 1: /*sword*/play_sounds_this_frame_count[snd_sword_swap_ID] = 1; break;
-    case 2: /*black sword*/play_sounds_this_frame_count[snd_sword_swap_ID] = 1; break;
-    case 3: /*wrench*/play_sounds_this_frame_count[snd_hammer_swap_ID] = 1; break;
-    case 4: /*shovel*/play_sounds_this_frame_count[snd_hammer_swap_ID] = 1; break;
-    case 5: /*sledge*/play_sounds_this_frame_count[snd_hammer_swap_ID] = 1; break;
-    case 6: /*guitar*/play_sounds_this_frame_count[snd_guitar_swap_ID] = 1; break;
-    case 7: /*lightning hammer*/play_sounds_this_frame_count[snd_hammer_swap_ID] = 1; break;
-    case 8: /*Esword*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
-    case 9: /*Ehammer*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
-    case 10: /*Escrew*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
-    case 11:  /*SPC*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1;break;
-    default:
-        break;
-    }
-}
-
 void bounce_in_wall(int currOBJ) {
     bool bouncedV = false;
     bool bouncedH = false;
@@ -3254,7 +3311,7 @@ void enemy_die(int ENEMY, int PROJ) {
         ammo_drop_function(ENEMY, 16);
 
         if (rand() % 20 == 0) {
-            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, weapon_drop, 0, rand() % 11);
+            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, weapon_drop, 0, rand() % 16);
         }
 
         //debug start
@@ -4693,20 +4750,53 @@ void not_enough_energy() {
     wep_kick = 3;
 }
 
+void fire_energy_shot(int shots, bool skeleton_gamble, float direction, float gamble_reload, int free_shots, int cost, float reload, float proj_speed, objectID object_type, float player_KB, float wep_KB) {
+    if ((LMB_pressed && wep_reload <= 0.0f && player_energy - cost * shots >= 0) || (skeleton_gamble && wep_reload <= 0.0f)) {
+        reloaded = false;
+
+        player_energy -= cost * shots * !(skeleton_gamble);
+        LMB_pressed = false;
+        wep_kick = wep_KB;
+        motion_add_dir(direction, player_KB, 0);
+        
+        play_wep_sound();
+
+        wep_reload += reload * shots * gamble_reload;
+        float Xspd = cos(direction) * proj_speed;
+        float Yspd = sin(direction) * proj_speed;
+
+        for (int j = 0; j < shots + free_shots; j++) {
+            create_object(allObjects[0].position.x + Xspd / 2, allObjects[0].position.y + Yspd / 2, Xspd, Yspd, object_type, direction, 0);
+
+            //laser brain fx
+            for (int i = 0; i < ceil(cost / 2) * ((laser_brain > 1.1f) + 1); i++) {
+                create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, laser_brain_FX, random_360_degrees(), 0);
+            }
+        }
+        if (skeleton_gamble && rand() % 10 < cost) {
+            hurt_player(1);
+            create_object(allObjects[0].position.x + Xspd * 2, allObjects[0].position.y + Yspd * 2, 0, 0, static_effect, direction * degreestoradians, 168);
+        }
+        if (player_hp == 0 && !has_spirit && skeleton_gamble) {
+            create_popuptext("FUCK", allObjects[0].position);
+            player_hp = -999;
+        }
+
+        if (free_shots == 1) {
+            YV_money();
+        }
+    }
+    if (LMB_pressed && wep_reload < 0.0f && player_energy - 24 * shots < 0) {
+        not_enough_energy();
+    }
+}
+
 void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, bool b_wep_shot = false, bool skeleton_gamble = false) {
     float Xspd = 0.0f;
     float Yspd = 0.0f;
     float Xoff = 0.0f;
     float Yoff = 0.0f;
 
-    /*if (index != 0 && index != 11) {    //spc and ushov get their own shoot sound
-        if (current_player_weapon_sound == 0) {
-            play_sound_on_player(snd_player_shoot_A_ID);
-        }
-        else {
-            play_sound_on_player(snd_player_shoot_B_ID);
-        }
-    }*/
 
     if (!crystal_is_shielding) {
         if (b_wep_shot) {
@@ -4773,17 +4863,17 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             break;
         case 1: //chicken sword
             if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
-                swing_melee(direction, 18.0f, 3);
+                swing_melee(direction, 18.0f, 6);
             }
             break;
         case 2: //black sword
             if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
-                swing_melee(direction, 16.0f, 6);
+                swing_melee(direction, 16.0f, 12);
             }
             break;
         case 3: //wrench
             if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
-                swing_melee(direction, 22.0f, 4);
+                swing_melee(direction, 22.0f, 8);
             }
             break;
         case 4: //shovel
@@ -4800,34 +4890,34 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 Xspd = (3 + long_arms * 3.0f);
                 Xoff = cos(direction) * (long_arms * 20.0f + 24.0f);    //24.0f is to account for the offset
                 Yoff = sin(direction) * (long_arms * 20.0f + 24.0f);
-                create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, melee_slash, direction, 8);
+                create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, melee_slash, direction, 16);
                 Xspd -= 1;
                 direction += (60.0f * accuracy_curr) / degreestoradians;
 
                 Xoff = cos(direction) * (long_arms * 15.0f + 24.0f);
                 Yoff = sin(direction) * (long_arms * 15.0f + 24.0f);
-                create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, melee_slash, direction, 8);
+                create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, melee_slash, direction, 16);
 
                 direction -= (120.0f * accuracy_curr) / degreestoradians;
 
                 Xoff = cos(direction) * (long_arms * 15.0f + 24.0f);
                 Yoff = sin(direction) * (long_arms * 15.0f + 24.0f);
-                create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, melee_slash, direction, 8);
+                create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, melee_slash, direction, 16);
             }
             break;
         case 5: //sledge
             if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
-                swing_melee(direction, 35.0f, 12);
+                swing_melee(direction, 35.0f, 24);
             }
             break;
         case 6: //guitar
             if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
-                swing_melee(direction, 21.0f, 13);
+                swing_melee(direction, 21.0f, 26);
             }
             break;
         case 7: //lightning hammer
             if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
-                swing_melee(direction, 32.0f, 7);
+                swing_melee(direction, 32.0f, 14);
             }
             break;
         case 8: //esword
@@ -4921,6 +5011,18 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 not_enough_energy();
             }
 
+            break;
+        case 12://plasma cannon
+            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 8, 40, 6.0f, plasma_big, -6, 10);
+            break;
+        case 13://plasma gun
+            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 16, 6.0f, plasma, -3, 5);
+            break;
+        case 14://plasma rifle
+            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 10, 6.0f, plasma, -3, 7);
+            break;
+        case 15://plasma mini
+            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 3, 6.0f, plasma, -2, 8);
             break;
         default:
             break;
@@ -5036,7 +5138,7 @@ int find_nearest_LOS_enemy(sf::Vector2f pos){
 }
 
 bool is_energy_slash_with_brain(int damage) {
-    if (damage == 22 || damage == 7 || damage == 42) {
+    if (damage == 22 || damage == 14 || damage == 42) {
         if (laser_brain > 1.15f) {
             return true;
         }
@@ -7910,6 +8012,15 @@ int main()
     add_new_sound_buffer(snd_energy_hammer_up_ID, "snd/energy_hammer_up.wav", all_extra_sound_buffers);
     add_new_sound_buffer(snd_energy_screw_ID, "snd/energy_screw.wav", all_extra_sound_buffers);
     add_new_sound_buffer(snd_energy_screw_up_ID, "snd/energy_screw_up.wav", all_extra_sound_buffers);
+
+    add_new_sound_buffer(snd_plasma_cannon_ID, "snd/plasma_big.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_plasma_cannon_up_ID, "snd/plasma_big_up.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_plasma_gun_ID, "snd/plasma_gun.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_plasma_gun_up_ID, "snd/plasma_gun_up.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_plasma_rifle_ID, "snd/plasma_rifle.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_plasma_rifle_up_ID, "snd/plasma_rifle_up.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_plasma_mini_ID, "snd/plasma_mini.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_plasma_mini_up_ID, "snd/plasma_mini_up.wav", all_extra_sound_buffers);
     
     //footsteps
     add_new_sound_buffer(snd_foot_metmetal_1_ID, "snd/footsteps/foot_metmetal_1.wav", all_extra_sound_buffers);
@@ -11518,17 +11629,17 @@ int main()
                             default:
                                 rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(ultra_slash_tex_1);
                                 break;
-                            case 3:__fallthrough;
-                            case 4:__fallthrough;
-                            case 6:
+                            case 6:__fallthrough;
+                            case 8:__fallthrough;
+                            case 12:
                                 rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(normal_slash_tex_1);
                                 break;
-                            case 8:__fallthrough;
-                            case 12:__fallthrough;
-                            case 13:
+                            case 16:__fallthrough;
+                            case 24:__fallthrough;
+                            case 26:
                                 rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(heavy_slash_tex_1);
                                 break;
-                            case 7:
+                            case 14:
                                 rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(lightning_slash_tex_1);
                                 break;
                             case 22:
@@ -11544,17 +11655,17 @@ int main()
                             default:
                                 rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(ultra_slash_tex_2);
                                 break;
-                            case 3:__fallthrough;
-                            case 4:__fallthrough;
-                            case 6:
+                            case 6:__fallthrough;
+                            case 8:__fallthrough;
+                            case 12:
                                 rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(normal_slash_tex_2);
                                 break;
-                            case 8:__fallthrough;
-                            case 12:__fallthrough;
-                            case 13:
+                            case 16:__fallthrough;
+                            case 24:__fallthrough;
+                            case 26:
                                 rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(heavy_slash_tex_2);
                                 break;
-                            case 7:
+                            case 14:
                                 rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(lightning_slash_tex_2);
                                 break;
                             case 22:
@@ -11570,17 +11681,17 @@ int main()
                             default:
                                 rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(ultra_slash_tex_3);
                                 break;
-                            case 3:__fallthrough;
-                            case 4:__fallthrough;
-                            case 6:
+                            case 6:__fallthrough;
+                            case 8:__fallthrough;
+                            case 12:
                                 rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(normal_slash_tex_3);
                                 break;
-                            case 8:__fallthrough;
-                            case 12:__fallthrough;
-                            case 13:
+                            case 16:__fallthrough;
+                            case 24:__fallthrough;
+                            case 26:
                                 rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(heavy_slash_tex_3);
                                 break;
-                            case 7:
+                            case 14:
                                 rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(lightning_slash_tex_3);
                                 break;
                             case 22:
