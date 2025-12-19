@@ -31,7 +31,7 @@ int bandit_choice1 = 0;
 int draw_mult = 5;
 //
 
-bool global_debug = false;
+bool global_debug = true;
 
 bool debug_invincibility = false;
 
@@ -562,6 +562,69 @@ void draw_text_NT(sf::Text text, sf::RenderTexture &renderer) {
 
 
 
+void play_sound_relative_to_player(sound_ID sound_id, float x, float y) {
+    if (player_alive) {
+        play_sounds_this_frame_pos[sound_id].x += x - allObjects[0].position.x;
+        play_sounds_this_frame_pos[sound_id].y += y - allObjects[0].position.y;
+    }
+    else {
+        play_sounds_this_frame_pos[sound_id].x += x - allObjects[player_corpse_id].position.x;
+        play_sounds_this_frame_pos[sound_id].y += y - allObjects[player_corpse_id].position.y;
+    }
+    play_sounds_this_frame_count[sound_id]++;
+}
+
+void play_sound_on_player(sound_ID sound_id) {
+    play_sounds_this_frame_pos[sound_id].x = 0;
+    play_sounds_this_frame_pos[sound_id].y = 0;
+    play_sounds_this_frame_count[sound_id]++;
+}
+
+void stop_looping_sound(sound_ID sound_id) {
+    play_sounds_this_frame_pos[sound_id].x = 0;
+    play_sounds_this_frame_pos[sound_id].y = 0;
+    play_sounds_this_frame_count[sound_id] = -1;
+}
+
+int add_new_sound(enum sound_ID sound_id, std::string filename_path, sound_sound_buffer all_sounds[], enum sound_ID sound_buffer_id, sf::SoundBuffer all_extra_sound_buffers[], float pitch_variance, float attenuation = 1.0f, float volume = 100.0f) {
+    if (!all_extra_sound_buffers[sound_buffer_id].loadFromFile(filename_path)) {
+        EXIT_PROGRAM_NOW = sound_id;
+        return -1;
+    }
+    all_sounds[sound_id].sound.setBuffer(all_extra_sound_buffers[sound_buffer_id]);
+    all_sounds[sound_id].sound.setAttenuation(attenuation);
+    all_sounds[sound_id].sound.setVolume(volume);
+    all_sounds[sound_id].pitch_variance = pitch_variance;
+    return 1;
+}
+
+int change_sound_buffer(enum sound_ID sound_id, sound_sound_buffer all_sounds[], enum sound_ID sound_buffer_id, sf::SoundBuffer all_extra_sound_buffers[], float pitch_variance, float attenuation = 1.0f, float volume = 100.0f) {
+    all_sounds[sound_id].sound.stop();
+
+    all_sounds[sound_id].sound.setBuffer(all_extra_sound_buffers[sound_buffer_id]);
+    all_sounds[sound_id].sound.setAttenuation(attenuation);
+    all_sounds[sound_id].sound.setVolume(volume);
+    all_sounds[sound_id].pitch_variance = pitch_variance;
+    return 1;
+}
+
+int add_new_sound_buffer(enum sound_ID sound_id, std::string filename_path, sf::SoundBuffer all_extra_sound_buffers[]) {
+    if (!all_extra_sound_buffers[sound_id].loadFromFile(filename_path)) {
+        return -1;
+    }
+
+    return 1;
+}
+
+void play_sound_random_pitch(sf::Sound& _sound, float variance, int i) {
+    float pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2.0f * variance))) - variance;
+    _sound.setPitch(1 + pitch_offset);
+    _sound.setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
+    _sound.play();
+}
+
+
+
 
 
 void draw_weapon_text(int wep_ID, sf::Vector2f pos, sf::Text text, sf::RenderTexture& renderer, sf::Sprite wep_arrow_sprite) {
@@ -582,6 +645,8 @@ void draw_weapon_text(int wep_ID, sf::Vector2f pos, sf::Text text, sf::RenderTex
     case 13:text.setString("PLASMA GUN");break;
     case 14:text.setString("PLASMA RIFLE");break;
     case 15:text.setString("PLASMA MINIGUN");break;
+    case 16:text.setString("GOLDEN PLASMA GUN");break;
+    case 17:text.setString("DEVASTATOR");break;
     }
     text.setPosition(int(pos.x - cameraPos.x) - text.getString().getSize() * 4, int(pos.y - cameraPos.y) - 28);
     wep_arrow_sprite.setPosition(int(pos.x - cameraPos.x), int(pos.y - cameraPos.y) - 16);
@@ -665,6 +730,23 @@ sound_ID get_shoot_sound(int wep_id) {
             return snd_plasma_mini_up_ID;
         }
         break;
+
+    case 16: /*gold plasma gun*/
+        if (laser_brain < 1.15f) {
+            return snd_gold_plasma_gun_ID;
+        }
+        else {
+            return snd_gold_plasma_gun_up_ID;
+        }
+        break;
+    case 17: /*devastator*/
+        if (laser_brain < 1.15f) {
+            return snd_devastator_ID;
+        }
+        else {
+            return snd_devastator_up_ID;
+        }
+        break;
     default:
         return snd_shoot_1_ID;
         break;
@@ -689,6 +771,8 @@ sf::Vector2f wep_get_origin(int wep_id) {
     case 13: /*plasma gun*/ return sf::Vector2f(4, 5); break;
     case 14: /*plasma rifle*/ return sf::Vector2f(4, 5); break;
     case 15: /*plasma minigun*/ return sf::Vector2f(4, 5); break;
+    case 16: /*gold plasma gun*/ return sf::Vector2f(4, 5); break;
+    case 17: /*devastator*/ return sf::Vector2f(4, 6); break;
     default:
         return sf::Vector2f(0, 0);
         break;
@@ -713,6 +797,29 @@ void play_swap_sound(int wep_id) {
     case 13:  /*plasma gun*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
     case 14:  /*plasma rifle*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
     case 15:  /*plasma minigun*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 16:  /*gold plasma gun*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 17:  /*devastator*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    default:
+        break;
+    }
+}
+
+void get_wep_reload_sound(int wep) {
+    switch (wep) {
+    case 11: //SPC
+    case 12: //PC
+    case 13: //plasma gun
+    case 14: //plasma rifle
+    case 15: //plasma minigun
+    case 16: //gold plasma gun
+    case 17: //devas
+        if (laser_brain < 1.1f) {
+            play_sound_on_player(snd_plasma_reload_ID);
+        }
+        else {
+            play_sound_on_player(snd_plasma_reload_upgrade_ID);
+        }
+        break;
     default:
         break;
     }
@@ -780,67 +887,6 @@ float LerpDegrees(float start, float end, float amount)
         return value;
 
     return (int(value) % int(rangeZero));
-}
-
-void play_sound_relative_to_player(sound_ID sound_id, float x, float y) {
-    if (player_alive) {
-        play_sounds_this_frame_pos[sound_id].x += x - allObjects[0].position.x;
-        play_sounds_this_frame_pos[sound_id].y += y - allObjects[0].position.y;
-    }
-    else {
-        play_sounds_this_frame_pos[sound_id].x += x - allObjects[player_corpse_id].position.x;
-        play_sounds_this_frame_pos[sound_id].y += y - allObjects[player_corpse_id].position.y;
-    }
-    play_sounds_this_frame_count[sound_id]++;
-}
-
-void play_sound_on_player(sound_ID sound_id) {
-    play_sounds_this_frame_pos[sound_id].x = 0;
-    play_sounds_this_frame_pos[sound_id].y = 0;
-    play_sounds_this_frame_count[sound_id]++;
-}
-
-void stop_looping_sound(sound_ID sound_id) {
-    play_sounds_this_frame_pos[sound_id].x = 0;
-    play_sounds_this_frame_pos[sound_id].y = 0;
-    play_sounds_this_frame_count[sound_id] = -1;
-}
-
-int add_new_sound(enum sound_ID sound_id, std::string filename_path, sound_sound_buffer all_sounds[], enum sound_ID sound_buffer_id, sf::SoundBuffer all_extra_sound_buffers[], float pitch_variance, float attenuation = 1.0f, float volume = 100.0f) {
-    if (!all_extra_sound_buffers[sound_buffer_id].loadFromFile(filename_path)) {
-        EXIT_PROGRAM_NOW = sound_id;
-        return -1;
-    }
-    all_sounds[sound_id].sound.setBuffer(all_extra_sound_buffers[sound_buffer_id]);
-    all_sounds[sound_id].sound.setAttenuation(attenuation);
-    all_sounds[sound_id].sound.setVolume(volume);
-    all_sounds[sound_id].pitch_variance = pitch_variance;
-    return 1;
-}
-
-int change_sound_buffer(enum sound_ID sound_id, sound_sound_buffer all_sounds[], enum sound_ID sound_buffer_id, sf::SoundBuffer all_extra_sound_buffers[], float pitch_variance, float attenuation = 1.0f, float volume = 100.0f) {
-    all_sounds[sound_id].sound.stop();
-
-    all_sounds[sound_id].sound.setBuffer(all_extra_sound_buffers[sound_buffer_id]);
-    all_sounds[sound_id].sound.setAttenuation(attenuation);
-    all_sounds[sound_id].sound.setVolume(volume);
-    all_sounds[sound_id].pitch_variance = pitch_variance;
-    return 1;
-}
-
-int add_new_sound_buffer(enum sound_ID sound_id, std::string filename_path, sf::SoundBuffer all_extra_sound_buffers[]) {
-    if (!all_extra_sound_buffers[sound_id].loadFromFile(filename_path)) {
-        return -1;
-    }
-
-    return 1;
-}
-
-void play_sound_random_pitch(sf::Sound &_sound, float variance, int i) {
-    float pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2.0f*variance))) - variance;
-    _sound.setPitch(1 + pitch_offset);
-    _sound.setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-    _sound.play();
 }
 
 bool is_within_camera(int currOBJ) {
@@ -1763,6 +1809,17 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].image_index = 0;
                 idpd_spawn_count++;
                 break;
+            case devastator_bullet:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].my_hitbox = enemy_bullet_hitbox;
+                allObjects[i].damage = 8;
+
+                allObjects[i].position = { x, y };
+                allObjects[i].speed = { xspd, yspd };
+                allObjects[i].image_index = 0;
+                allObjects[i].team = player_team;     //player team
+
+                break;
             case player_bullet:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].my_hitbox = enemy_bullet_hitbox;
@@ -1776,6 +1833,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 
                 allObjects[i].size = image_index;   //whether it is visually a player bullet or ally bullet
                 break;
+
             case player_bullet_destroy:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].my_hitbox = no_hitbox;
@@ -2465,21 +2523,6 @@ bool has_line_of_sight(float x, float y, float playerX = allObjects[0].position.
     return true;
 }
 
-void get_wep_reload_sound(int wep) {
-    switch (wep) {
-    case 11: //SPC
-        if (laser_brain < 1.1f) {
-            play_sound_on_player(snd_plasma_reload_ID);
-        }
-        else {
-            play_sound_on_player(snd_plasma_reload_upgrade_ID);
-        }
-        break;
-    default:
-        break;
-    }
-}
-
 void bounce_in_wall(int currOBJ) {
     bool bouncedV = false;
     bool bouncedH = false;
@@ -2788,6 +2831,14 @@ void destroy_projectile(int object_index) {
         allObjects[object_index].image_index = 0;
         allObjects[object_index].direction = random_360_degrees();
         break;
+    case devastator_bullet:
+        allObjects[object_index].my_id = nothing;
+        create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, 0, 0, portal_clear, 0, 0);
+        play_sound_relative_to_player(snd_devastator_explo_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
+        for (int I = 0; I < 5; I++) {
+            create_object(allObjects[object_index].position.x + random_float(32) - 16, allObjects[object_index].position.y + random_float(32) - 16, 0, 0, plasma_impact, 0, 0);
+        }
+        break;
     case player_bullet:
         allObjects[object_index].my_id = player_bullet_destroy;    //turn into a on hit effect
         allObjects[object_index].image_index = 0;
@@ -2876,6 +2927,8 @@ void destroy_projectile(int object_index) {
     case plasma:
         allObjects[object_index].my_id = plasma_impact;
         allObjects[object_index].image_index = -1;
+        allObjects[object_index].damage = 10;
+        allObjects[object_index].my_hitbox = plasma_impact_hitbox;
 
         for (int i = 0; i < 3; i++) {
             create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, 2, 2, smoke, 0, 0);    //smoke
@@ -3311,7 +3364,7 @@ void enemy_die(int ENEMY, int PROJ) {
         ammo_drop_function(ENEMY, 16);
 
         if (rand() % 20 == 0) {
-            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, weapon_drop, 0, rand() % 16);
+            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, weapon_drop, 0, rand() % 18);
         }
 
         //debug start
@@ -3847,6 +3900,19 @@ void basic_enemy_collision(int currOBJ, int i, int j) {
                             }
                         }
                         break;
+                    case devastator_bullet:
+                        if (allObjects[O].team != allObjects[currOBJ].team && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[currOBJ].my_hitbox + allObjects[O].my_hitbox)) {
+
+                            allObjects[currOBJ].my_hp -= allObjects[O].damage;
+
+                            if (allObjects[currOBJ].my_hp > 0) {
+                                enemy_hurt(currOBJ, O);
+                            }
+                            else {  //dead
+                                enemy_die(currOBJ, O);
+                            }
+                        }
+                        break;
                     case plant_tangle_seed:
                         if (is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[currOBJ].my_hitbox + allObjects[O].my_hitbox)) {
                             destroy_projectile(O);
@@ -4141,43 +4207,45 @@ void plasma_big_collison(int big_plasma, int i, int j) {
 }
 
 void plasma_collision(int plasma, int i, int j) {
-    for (int w = -1; w < 2; w++) {      //plasma collison
-        for (int h = -1; h < 2; h++) {
-            for (int O : game_area[i + w][j + h].object_indexes) {
-                switch (allObjects[O].my_id) {
-                case bandit:
-                case idpd_freak:
-                case prop:
-                    if (is_within_circle(allObjects[O].position, allObjects[plasma].position, (allObjects[O].my_hitbox + allObjects[plasma].scale * plasma_hitbox))) {
-                        plasma_hurt(plasma, O, 4);
-                        goto exit_plasma;
+    if (allObjects[plasma].image_index > 1) {
+        for (int w = -1; w < 2; w++) {      //plasma collison
+            for (int h = -1; h < 2; h++) {
+                for (int O : game_area[i + w][j + h].object_indexes) {
+                    switch (allObjects[O].my_id) {
+                    case bandit:
+                    case idpd_freak:
+                    case prop:
+                        if (is_within_circle(allObjects[O].position, allObjects[plasma].position, (allObjects[O].my_hitbox + allObjects[plasma].scale * plasma_hitbox))) {
+                            plasma_hurt(plasma, O, 4);
+                            goto exit_plasma;
+                        }
+                        break;
+                    case throne_2:
+                        if (allObjects[O].alarm1 < 0 && is_within_throne_2(allObjects[O].position, allObjects[plasma].position, allObjects[plasma].scale * plasma_hitbox)) {
+                            plasma_hurt(plasma, O, 4);
+                            goto exit_plasma;
+                        }
+                        break;
+                    default:
+                        break;
                     }
-                    break;
-                case throne_2:
-                    if (allObjects[O].alarm1 < 0 && is_within_throne_2(allObjects[O].position, allObjects[plasma].position, allObjects[plasma].scale * plasma_hitbox)) {
-                        plasma_hurt(plasma, O, 4);
-                        goto exit_plasma;
-                    }
-                    break;
-                default:
-                    break;
+                }
+                //collision with wall
+                if (game_area[i + w][j + h].my_grid_type == wall && is_within_circle(sf::Vector2f(((i + w) * 16) + 8, ((j + h) * 16) + 8), allObjects[plasma].position, (wall_hitbox + allObjects[plasma].alarm2 + allObjects[plasma].scale * plasma_hitbox))) {
+                    allObjects[plasma].scale -= 0.1f;
+                    allObjects[plasma].position -= allObjects[plasma].speed;
+                    create_object(allObjects[plasma].position.x, allObjects[plasma].position.y, 0.5, 0.5, dust, 0, 0);    //dust
+                    goto exit_plasma;
                 }
             }
-            //collision with wall
-            if (game_area[i + w][j + h].my_grid_type == wall && is_within_circle(sf::Vector2f(((i + w) * 16) + 8, ((j + h) * 16) + 8), allObjects[plasma].position, (wall_hitbox + allObjects[plasma].alarm2 + allObjects[plasma].scale * plasma_hitbox))) {
-                allObjects[plasma].scale -= 0.1f;
-                allObjects[plasma].position -= allObjects[plasma].speed;
-                create_object(allObjects[plasma].position.x, allObjects[plasma].position.y, 0.5, 0.5, dust, 0, 0);    //dust
-                goto exit_plasma;
-            }
         }
-    }
-    exit_plasma:
-    //create plasma trails
-    create_object(allObjects[plasma].position.x + rand() % 17 - 9, allObjects[plasma].position.y + rand() % 17 - 9, 0, 0, plasma_particle, 0, 0);
-    //more clear and not fp rounding reliant value compared to 0.5f
-    if (allObjects[plasma].scale < 0.45f) {
-        destroy_projectile(plasma);
+        exit_plasma:
+        //create plasma trails
+        create_object(allObjects[plasma].position.x + rand() % 17 - 9, allObjects[plasma].position.y + rand() % 17 - 9, 0, 0, plasma_particle, 0, 0);
+        //more clear and not fp rounding reliant value compared to 0.5f
+        if (allObjects[plasma].scale < 0.45f) {
+            destroy_projectile(plasma);
+        }
     }
 }
 
@@ -4635,6 +4703,17 @@ void throne_2_collision(int currOBJ, int i, int j) {
                             }
                         }
                         break;
+                    case devastator_bullet:
+                        if (allObjects[O].team != enemy_team && is_within_throne_2(allObjects[currOBJ].position, allObjects[O].position, enemy_bullet_hitbox)) {
+                            allObjects[currOBJ].my_hp -= allObjects[O].damage;
+                            if (allObjects[currOBJ].my_hp > 0) {
+                                enemy_hurt(currOBJ, O);
+                            }
+                            else {  //dead
+                                enemy_die(currOBJ, O);
+                            }
+                        }
+                        break;
                     case plant_tangle_seed:
                         if (is_within_throne_2(allObjects[currOBJ].position, allObjects[O].position, enemy_bullet_hitbox)) {
                             destroy_projectile(O);
@@ -4750,23 +4829,45 @@ void not_enough_energy() {
     wep_kick = 3;
 }
 
-void fire_energy_shot(int shots, bool skeleton_gamble, float direction, float gamble_reload, int free_shots, int cost, float reload, float proj_speed, objectID object_type, float player_KB, float wep_KB) {
+void fire_energy_shot(int shots, bool skeleton_gamble, float direction, float gamble_reload, int free_shots, int cost, float reload, float proj_speed, objectID object_type, float player_KB, float wep_KB, float acc_variation = 0.0f, bool automatic = false) {
     if ((LMB_pressed && wep_reload <= 0.0f && player_energy - cost * shots >= 0) || (skeleton_gamble && wep_reload <= 0.0f)) {
         reloaded = false;
 
         player_energy -= cost * shots * !(skeleton_gamble);
-        LMB_pressed = false;
+        LMB_pressed = automatic;
         wep_kick = wep_KB;
         motion_add_dir(direction, player_KB, 0);
         
         play_wep_sound();
 
         wep_reload += reload * shots * gamble_reload;
-        float Xspd = cos(direction) * proj_speed;
-        float Yspd = sin(direction) * proj_speed;
+
+        float Xspd = 0.0f;
+        float Yspd = 0.0f;
+
+        float inaccuracy = 0.0f;
+
+        acc_variation = acc_variation / degreestoradians;
 
         for (int j = 0; j < shots + free_shots; j++) {
-            create_object(allObjects[0].position.x + Xspd / 2, allObjects[0].position.y + Yspd / 2, Xspd, Yspd, object_type, direction, 0);
+
+            if (acc_variation != 0.0f) {
+                inaccuracy = random_float(acc_variation * 2.0f) - acc_variation;
+            }
+            Xspd = cos(direction + inaccuracy) * proj_speed;
+            Yspd = sin(direction + inaccuracy) * proj_speed;
+
+            if (wep == 16) {    //gold plasma gun
+                Xspd = cos(direction + inaccuracy + 0.1f) * proj_speed;
+                Yspd = sin(direction + inaccuracy + 0.1f) * proj_speed;
+                create_object(allObjects[0].position.x + Xspd / 2, allObjects[0].position.y + Yspd / 2, Xspd, Yspd, object_type, direction + inaccuracy + 0.1f, 0);
+                Xspd = cos(direction + inaccuracy - 0.1f) * proj_speed;
+                Yspd = sin(direction + inaccuracy - 0.1f) * proj_speed;
+                create_object(allObjects[0].position.x + Xspd / 2, allObjects[0].position.y + Yspd / 2, Xspd, Yspd, object_type, direction + inaccuracy - 0.1f, 0);
+            }
+            else {
+                create_object(allObjects[0].position.x + Xspd / 2, allObjects[0].position.y + Yspd / 2, Xspd, Yspd, object_type, direction + inaccuracy, 0);
+            }
 
             //laser brain fx
             for (int i = 0; i < ceil(cost / 2) * ((laser_brain > 1.1f) + 1); i++) {
@@ -4819,7 +4920,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
         float gamble_reload = 1.0f;
         if (player_character == skeleton) {
             accuracy_curr = 1.2f;
-            if (ultra_picked) {
+            if (ultra_picked && skeleton_gamble) {
                 gamble_reload = 0.2f;
             }
         }
@@ -5016,13 +5117,19 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 8, 40, 6.0f, plasma_big, -6, 10);
             break;
         case 13://plasma gun
-            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 16, 6.0f, plasma, -3, 5);
+            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 16, 6.0f, plasma, -3, 5, 4.0f * accuracy_curr, true);
             break;
         case 14://plasma rifle
-            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 10, 6.0f, plasma, -3, 7);
+            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 10, 6.0f, plasma, -3, 7, 6.0f * accuracy_curr, true);
             break;
         case 15://plasma mini
-            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 3, 6.0f, plasma, -2, 8);
+            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 3, 6.0f, plasma, -2, 8, 10.0f * accuracy_curr, true);
+            break;
+        case 16://gold plasma gun
+            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 16, 6.0f, plasma, -3, 5, 4.0f * accuracy_curr, true);
+            break;
+        case 17://devastator
+            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 8, 60, 15.99f * ((laser_brain < 1.15) * 0.4f + 0.6f), devastator_bullet, -5, 8, 4.0f * accuracy_curr, true);
             break;
         default:
             break;
@@ -5049,6 +5156,9 @@ void object_tunnel_corner(int currOBJ) {
         allObjects[currOBJ].position.y -= allObjects[currOBJ].speed.y / 1.5f;
         play_sound_relative_to_player(snd_hit_wall_ID, allObjects[currOBJ].position.x, allObjects[currOBJ].position.y);
         create_object(allObjects[currOBJ].position.x, allObjects[currOBJ].position.y, 0.5, 0.5, dust, 0, 0);    //dust
+        break;
+    case objectID::devastator_bullet:
+        destroy_projectile(currOBJ);
         break;
     case objectID::enemy_corpse:
     case objectID::idpd_freak_corpse:
@@ -6019,6 +6129,9 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                 eyes_tk_push(i);
             }
             break;
+        case devastator_bullet:
+            allObjects[i].position += allObjects[i].speed;
+            break;
         case horror_bullet:
             allObjects[i].position += allObjects[i].speed;
             allObjects[i].image_index++;
@@ -6439,6 +6552,11 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                     object_bounce_wall(O, h, w, idpd_freak_hitbox + 1, idpd_freak_hitbox + 1, i, j);
                                 }
                                 break;
+                            case objectID::devastator_bullet:
+                                if (w == 0 && h == 0) {
+                                    create_object(allObjects[O].position.x + random_float(32) - 16, allObjects[O].position.y + random_float(32) - 16, 0, 0, plasma_impact, 0, 0);
+                                }
+                                break;
                             case throne_2:
                                 if (w == 0 && h == 0) {
                                     throne_2_collision(O, i, j);
@@ -6574,6 +6692,9 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                         play_sound_relative_to_player(snd_hit_wall_ID, allObjects[currOBJ].position.x, allObjects[currOBJ].position.y);
                         create_object(allObjects[currOBJ].position.x, allObjects[currOBJ].position.y, 0.5, 0.5, dust, 0, 0);    //dust
                         break;       //bullet destroy particle
+                    case objectID::devastator_bullet:
+                        destroy_projectile(currOBJ);
+                        break;
                     case plasma_huge:       //same version but in wall
                         plasma_huge_collison(currOBJ, i, j);
                         allObjects[currOBJ].alarm2 = 99;
@@ -6736,6 +6857,9 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                 break;
                             }
                         }
+                        break;
+                    case objectID::devastator_bullet:
+                        create_object(allObjects[currOBJ].position.x + random_float(32) - 16, allObjects[currOBJ].position.y + random_float(32) - 16, 0, 0, plasma_impact, 0, 0);
                         break;
                     case objectID::crystal_shield:
                         crystal_shield_collision(currOBJ, i, j);
@@ -8021,6 +8145,12 @@ int main()
     add_new_sound_buffer(snd_plasma_rifle_up_ID, "snd/plasma_rifle_up.wav", all_extra_sound_buffers);
     add_new_sound_buffer(snd_plasma_mini_ID, "snd/plasma_mini.wav", all_extra_sound_buffers);
     add_new_sound_buffer(snd_plasma_mini_up_ID, "snd/plasma_mini_up.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_gold_plasma_gun_ID, "snd/gold_plasma_gun.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_gold_plasma_gun_up_ID, "snd/gold_plasma_gun_up.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_devastator_ID, "snd/devastator.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_devastator_up_ID, "snd/devastator_up.wav", all_extra_sound_buffers);
+
+    add_new_sound(snd_devastator_explo_ID, "snd/devastator_explo.wav", all_sounds, snd_devastator_explo_ID, all_extra_sound_buffers, 0.1f, 0.01f);
     
     //footsteps
     add_new_sound_buffer(snd_foot_metmetal_1_ID, "snd/footsteps/foot_metmetal_1.wav", all_extra_sound_buffers);
@@ -9239,7 +9369,7 @@ int main()
                 }
                 if (event.type == sf::Event::KeyPressed) {
                     //debug
-                    if (event.key.code == sf::Keyboard::Y) {
+                    if (event.key.code == sf::Keyboard::O) {
                         player_character = character(int(player_character) + 1);
                         if (player_character > 13) {
                             player_character = fish;
@@ -10080,7 +10210,7 @@ int main()
 
                 if (wep_reload < 0.0f && !reloaded) {
                     reloaded = true;
-                    if (wep < 11) {
+                    if (wep < melee_weps) {
                         play_sound_on_player(snd_melee_flip_ID);
                     }
                     else {
@@ -12585,7 +12715,7 @@ int main()
 
         sf::Text debug1;
 
-        debug1.setString("debug1: " + std::to_string(GLOBAL_DEBUG_INT));
+        debug1.setString("player_alive: " + std::to_string(player_alive));
         debug1.setCharacterSize(8);
         debug1.setFont(font);
         debug1.setColor(sf::Color::White);

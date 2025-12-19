@@ -24,6 +24,8 @@ enum objectID {
 	toxic_gas,
 	toxic_gas_destroy,
 
+	devastator_bullet,
+
 	the_wind,
 
 	flame,
@@ -232,6 +234,8 @@ enum sound_ID {
 	snd_player_shoot_A_ID,
 	snd_player_shoot_B_ID,
 
+	snd_devastator_explo_ID,
+
 	//end of sounds that will be used, not just in buffers
 
 	snd_music_ID,
@@ -386,6 +390,10 @@ enum sound_ID {
 	snd_plasma_rifle_up_ID,
 	snd_plasma_mini_ID,
 	snd_plasma_mini_up_ID,
+	snd_gold_plasma_gun_ID,
+	snd_gold_plasma_gun_up_ID,
+	snd_devastator_ID,
+	snd_devastator_up_ID,
 
 
 
