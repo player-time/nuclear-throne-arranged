@@ -33,7 +33,7 @@ int draw_mult = 5;
 
 bool global_debug = true;
 
-bool debug_invincibility = false;
+bool debug_invincibility = true;
 
 int EXIT_PROGRAM_NOW = 0;
 
@@ -190,7 +190,7 @@ int current_frame = 0;      //used for stuff like i-frames, reset this each area
 
 
 
-int LOOPS = 29;
+int LOOPS = 20;
 
 
 
@@ -647,6 +647,12 @@ void draw_weapon_text(int wep_ID, sf::Vector2f pos, sf::Text text, sf::RenderTex
     case 15:text.setString("PLASMA MINIGUN");break;
     case 16:text.setString("GOLDEN PLASMA GUN");break;
     case 17:text.setString("DEVASTATOR");break;
+    case 18:text.setString("LASER PISTOL");break;
+    case 19:text.setString("LASER RIFLE");break;
+    case 20:text.setString("LASER MINIGUN");break;
+    case 21:text.setString("GOLDEN LASER PISTOL");break;
+    case 22:text.setString("ULTRA LASER PISTOL");break;
+    case 23:text.setString("LASER CANNON");break;
     }
     text.setPosition(int(pos.x - cameraPos.x) - text.getString().getSize() * 4, int(pos.y - cameraPos.y) - 28);
     wep_arrow_sprite.setPosition(int(pos.x - cameraPos.x), int(pos.y - cameraPos.y) - 16);
@@ -696,56 +702,51 @@ sound_ID get_shoot_sound(int wep_id) {
     case 11: /*SPC*/ return snd_shoot_1_ID; break;
 
     case 12: /*PC*/
-        if (laser_brain < 1.15f) {
-            return snd_plasma_cannon_ID;
-        }
-        else {
-            return snd_plasma_cannon_up_ID;
-        }
+        if (laser_brain < 1.15f) {return snd_plasma_cannon_ID;}
+        else {return snd_plasma_cannon_up_ID;}
         break;
-
     case 13: /*plasma gun*/
-        if (laser_brain < 1.15f) {
-            return snd_plasma_gun_ID;
-        }
-        else {
-            return snd_plasma_gun_up_ID;
-        }
+        if (laser_brain < 1.15f) {return snd_plasma_gun_ID;}
+        else {return snd_plasma_gun_up_ID;}
         break;
-
     case 14: /*plasma rifle*/
-        if (laser_brain < 1.15f) {
-            return snd_plasma_rifle_ID;
-        }
-        else {
-            return snd_plasma_rifle_up_ID;
-        }
+        if (laser_brain < 1.15f) {return snd_plasma_rifle_ID;}
+        else {return snd_plasma_rifle_up_ID;}
         break;
-
     case 15: /*plasma mini*/
-        if (laser_brain < 1.15f) {
-            return snd_plasma_mini_ID;
-        }
-        else {
-            return snd_plasma_mini_up_ID;
-        }
+        if (laser_brain < 1.15f) {return snd_plasma_mini_ID;}
+        else {return snd_plasma_mini_up_ID;}
         break;
-
     case 16: /*gold plasma gun*/
-        if (laser_brain < 1.15f) {
-            return snd_gold_plasma_gun_ID;
-        }
-        else {
-            return snd_gold_plasma_gun_up_ID;
-        }
+        if (laser_brain < 1.15f) {return snd_gold_plasma_gun_ID;}
+        else {return snd_gold_plasma_gun_up_ID;}
         break;
     case 17: /*devastator*/
-        if (laser_brain < 1.15f) {
-            return snd_devastator_ID;
-        }
-        else {
-            return snd_devastator_up_ID;
-        }
+        if (laser_brain < 1.15f) {return snd_devastator_ID;}
+        else {return snd_devastator_up_ID;}
+        break;
+    case 18: /*laser pistol*/
+        if (laser_brain < 1.15f) { return snd_laser_ID; }
+        else { return snd_laser_up_ID; }
+        break;
+    case 19: /*laser rifle*/
+        if (laser_brain < 1.15f) { return snd_laser_ID; }
+        else { return snd_laser_up_ID; }
+        break;
+    case 20: /*laser minigun*/
+        if (laser_brain < 1.15f) { return snd_laser_ID; }
+        else { return snd_laser_up_ID; }
+        break;
+    case 21: /*golden laser pistol*/
+        if (laser_brain < 1.15f) { return snd_golden_laser_ID; }
+        else { return snd_golden_laser_up_ID; }
+        break;
+    case 22: /*ultra laser pistol*/
+        if (laser_brain < 1.15f) { return snd_ultra_laser_ID; }
+        else { return snd_ultra_laser_up_ID; }
+        break;
+    case 23: /*laser cannon*/
+        return snd_laser_cannon_charge_ID; 
         break;
     default:
         return snd_shoot_1_ID;
@@ -773,6 +774,12 @@ sf::Vector2f wep_get_origin(int wep_id) {
     case 15: /*plasma minigun*/ return sf::Vector2f(4, 5); break;
     case 16: /*gold plasma gun*/ return sf::Vector2f(4, 5); break;
     case 17: /*devastator*/ return sf::Vector2f(4, 6); break;
+    case 18: /*laser pistol*/return sf::Vector2f(-3, 3);break;
+    case 19: /*laser rifle*/return sf::Vector2f(6, 6);break;
+    case 20: /*laser minigun*/return sf::Vector2f(5, 7);break;
+    case 21: /*golden laser pistol*/return sf::Vector2f(-3, 3);break;
+    case 22: /*ultra laser pistol*/return sf::Vector2f(-3, 3);break;
+    case 23: /*laser cannon*/return sf::Vector2f(5, 5);break;
     default:
         return sf::Vector2f(0, 0);
         break;
@@ -799,6 +806,12 @@ void play_swap_sound(int wep_id) {
     case 15:  /*plasma minigun*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
     case 16:  /*gold plasma gun*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
     case 17:  /*devastator*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 18: /*laser pistol*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 19: /*laser rifle*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 20: /*laser minigun*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 21: /*golden laser pistol*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 22: /*ultra laser pistol*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 23: /*laser cannon*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
     default:
         break;
     }
@@ -806,6 +819,9 @@ void play_swap_sound(int wep_id) {
 
 void get_wep_reload_sound(int wep) {
     switch (wep) {
+    case 8: //esword
+    case 9: //ehammer
+    case 10: //esscrew
     case 11: //SPC
     case 12: //PC
     case 13: //plasma gun
@@ -1005,7 +1021,7 @@ void pickup_ammo() {
         }
     }
     else if (wep_choice < energy_weps) {    //energy weapons
-        player_energy += 10;
+        player_energy += 10 + (player_character == fish) * 3;
         if (player_energy > player_energy_max) {
             player_energy = player_energy_max;
             create_popuptext("MAX ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
@@ -1575,6 +1591,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 if (is_within_circle(allObjects[i].position, allObjects[0].position, 72)) {
                     allObjects[i].my_id = nothing;
                 }
+
+                play_sound_on_player(snd_revenge_bullet);
                 break;
 
             case large_guardian_bullet:
@@ -1811,12 +1829,29 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 break;
             case devastator_bullet:
                 allObjects[i].my_id = obj_id;
-                allObjects[i].my_hitbox = enemy_bullet_hitbox;
+                allObjects[i].my_hitbox = devastator_hitbox;
                 allObjects[i].damage = 8;
 
                 allObjects[i].position = { x, y };
                 allObjects[i].speed = { xspd, yspd };
                 allObjects[i].image_index = 0;
+                allObjects[i].team = player_team;     //player team
+
+                break;
+            case player_laser:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].my_hitbox = no_hitbox;
+                allObjects[i].damage = 2;
+
+                allObjects[i].position = { x, y };
+                allObjects[i].speed = { xspd, yspd };   //what direction the laser is facing
+                allObjects[i].direction = direction;
+                allObjects[i].image_index = 0;
+
+                allObjects[i].size = 0; //how many units the lasers length is
+
+                allObjects[i].scale = laser_brain * laser_brain * 1.4f; //close to orginal game logic whith room for different values of laser_brain
+
                 allObjects[i].team = player_team;     //player team
 
                 break;
@@ -1944,12 +1979,15 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].position = { x, y };
                 allObjects[i].speed = { 0, 0 };
                 allObjects[i].speeddir = 0;
-                allObjects[i].size = image_index;
+                allObjects[i].size = image_index;   //what wep it is
                 allObjects[i].friction = 0.4f;
 
                 allObjects[i].rotation = (1.0f + random_float(1.0f)) * (rand() % 2 * 2 - 1);
 
                 allObjects[i].growspeed = random_360_degrees();
+
+                allObjects[i].alarm1 = 1;   //has ammo
+
                 break;
             case scorch:
                 allObjects[i].my_id = obj_id;
@@ -3364,7 +3402,7 @@ void enemy_die(int ENEMY, int PROJ) {
         ammo_drop_function(ENEMY, 16);
 
         if (rand() % 20 == 0) {
-            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, weapon_drop, 0, rand() % 18);
+            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, weapon_drop, 0, rand() % 23);
         }
 
         //debug start
@@ -3487,21 +3525,8 @@ void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = 
 
     naitive_cursor_sprite.loadFromPixels(cursor_pixels.getPixelsPtr(), sf::Vector2u(16 * window_scale, 16 * window_scale), sf::Vector2u(8 * window_scale, 8 * window_scale));
 
-    /*if (window_size_x == 640) {
-        sf::Image cursor_pixels_1_32;
-        cursor_pixels_1_32.loadFromFile("res/player/sprCrosshair_1_32.png");
-        naitive_cursor_sprite.loadFromPixels(cursor_pixels_1_32.getPixelsPtr(), sf::Vector2u(32, 32), sf::Vector2u(16, 16));
-    }
-    if (window_size_x == 960) {
-        sf::Image cursor_pixels_1_48;
-        cursor_pixels_1_48.loadFromFile("res/player/sprCrosshair_1_48.png");
-        naitive_cursor_sprite.loadFromPixels(cursor_pixels_1_48.getPixelsPtr(), sf::Vector2u(48, 48), sf::Vector2u(24, 24));
-    }
-    if (window_size_x == 1280) {
-        sf::Image cursor_pixels_1_64;
-        cursor_pixels_1_64.loadFromFile("res/player/sprCrosshair_1_64.png");
-        naitive_cursor_sprite.loadFromPixels(cursor_pixels_1_64.getPixelsPtr(), sf::Vector2u(64, 64), sf::Vector2u(32, 32));
-    }*/
+    //TODO make it work with any screen size
+
     if (swap_fullscreen) {
         window.close();
         if (fullscreen_mode) {
@@ -3826,6 +3851,27 @@ void crystal_shield_collision(int currOBJ, int i, int j) {
     }
 }
 
+void add_ammo_chest_to_player(int the_wep) {
+    if (the_wep >= melee_weps) {
+        if (the_wep < energy_weps) {
+            player_energy += 20 + (player_character == fish) * 6;
+            if (player_energy > player_energy_max) {
+                player_energy = player_energy_max;
+                create_popuptext("MAX ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            else {
+                if (player_character == fish) {
+                    create_popuptext("+26 ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+                else {
+                    create_popuptext("+20 ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+            }
+        }
+
+    }
+}
+
 void wep_push(int currOBJ, int O) {
     if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, 12 + 12)) {
         float diffx = 0.0f;
@@ -3856,6 +3902,10 @@ void weapon_drop_collision(int currOBJ, int i, int j) {
                             nearest_wep_drop_ID = currOBJ;
                             nearest_wep_drop_distance = tmpdist;
                         }
+                    }
+                    if (allObjects[currOBJ].alarm1 == 1) {
+                        allObjects[currOBJ].alarm1 = 0;
+                        add_ammo_chest_to_player(allObjects[currOBJ].size);
                     }
                 }
             }
@@ -3986,7 +4036,7 @@ void plant_tangle_collision(int currOBJ, int i, int j) {
                         }
                         break;
                     case objectID::throne_2:
-                        if (is_within_throne_2(allObjects[O].position, allObjects[currOBJ].position, allObjects[currOBJ].my_hitbox)) {
+                        if (allObjects[O].alarm1 < 0 && is_within_throne_2(allObjects[O].position, allObjects[currOBJ].position, allObjects[currOBJ].my_hitbox)) {
                             allObjects[O].position.x -= allObjects[O].speed.x * 0.4f;
                             allObjects[O].position.y -= allObjects[O].speed.y * 0.4f;
                             if (has_throne_butt && allObjects[O].my_hp < allObjects[O].max_hp * 0.33f) {
@@ -4034,7 +4084,7 @@ void plasma_impact_collision(int currOBJ, int i, int j) {
                     break;
                 case throne_2:
                     impact_size_reduction = int(allObjects[currOBJ].image_index * 0.4f) * 8;
-                    if (allObjects[O].next_hurt < current_frame && is_within_throne_2(allObjects[O].position, allObjects[currOBJ].position, plasma_impact_hitbox)) {
+                    if (allObjects[O].alarm1 < 0 && allObjects[O].next_hurt < current_frame && is_within_throne_2(allObjects[O].position, allObjects[currOBJ].position, plasma_impact_hitbox)) {
                         plasma_impact_collision_2(currOBJ, O);
                     }
                     break;
@@ -4598,6 +4648,68 @@ void meat_explosion_collision(int currOBJ, int i, int j) {
     }
 }
 
+void player_laser_collision(int currOBJ) {
+    bool has_collided_with_wall = false;
+
+    std::vector<sf::Vector2i> tiles_to_check_collision_with;
+
+    float prev_x_pos = allObjects[currOBJ].position.x;
+    float prev_y_pos = allObjects[currOBJ].position.y;
+
+    float x = prev_x_pos;
+    float y = prev_y_pos;
+
+    float x_spd = allObjects[currOBJ].speed.x;
+    float y_spd = allObjects[currOBJ].speed.y;
+
+    //line_of_sight
+    while (!has_collided_with_wall) {
+        prev_x_pos = x;
+        prev_y_pos = y;
+
+        x += x_spd;
+        y += y_spd;
+
+
+
+        if (int(x / 16) != int(prev_x_pos / 16) && int(y / 16) != int(prev_y_pos / 16)) {
+
+            //add new tile to check collisions with later
+            tiles_to_check_collision_with.push_back(sf::Vector2i{int(x / 16), int(y / 16)});
+
+
+            if (game_area[int(prev_x_pos / 16)][int(y / 16)].my_grid_type == wall && game_area[int(x / 16)][int(prev_y_pos / 16)].my_grid_type == wall) {   //block diagonal
+                has_collided_with_wall = true;
+            }
+            //do smaller steps, could be faster
+            else if (game_area[int(prev_x_pos / 16)][int(y / 16)].my_grid_type == wall || game_area[int(x / 16)][int(prev_y_pos / 16)].my_grid_type == wall) {
+                for (int i = 0; i < 16; i++) {
+                    prev_x_pos += x_spd / 16;
+                    prev_y_pos += y_spd / 16;
+
+                    if (game_area[int(prev_x_pos / 16)][int(prev_y_pos / 16)].my_grid_type == wall) {
+                        has_collided_with_wall = true;
+                        x = prev_x_pos;
+                        y = prev_y_pos;
+                    }
+                }
+            }
+
+        }
+        if (game_area[int(x / 16)][int(y / 16)].my_grid_type == wall) {
+
+            has_collided_with_wall = true;
+        }
+    }
+
+    float xdiff = allObjects[currOBJ].position.x - x;
+    float ydiff = allObjects[currOBJ].position.y - y;
+
+    allObjects[currOBJ].size = int(sqrt(xdiff * xdiff + ydiff * ydiff));
+
+
+}
+
 void T2_bullet_step(int i) {
     float tempSpeedX = 0.0f;
     float tempSpeedY = 0.0f;
@@ -4857,7 +4969,7 @@ void fire_energy_shot(int shots, bool skeleton_gamble, float direction, float ga
             Xspd = cos(direction + inaccuracy) * proj_speed;
             Yspd = sin(direction + inaccuracy) * proj_speed;
 
-            if (wep == 16) {    //gold plasma gun
+            if (wep == 16 || wep == 21) {    //gold plasma gun / gold laser pistol
                 Xspd = cos(direction + inaccuracy + 0.1f) * proj_speed;
                 Yspd = sin(direction + inaccuracy + 0.1f) * proj_speed;
                 create_object(allObjects[0].position.x + Xspd / 2, allObjects[0].position.y + Yspd / 2, Xspd, Yspd, object_type, direction + inaccuracy + 0.1f, 0);
@@ -4865,9 +4977,24 @@ void fire_energy_shot(int shots, bool skeleton_gamble, float direction, float ga
                 Yspd = sin(direction + inaccuracy - 0.1f) * proj_speed;
                 create_object(allObjects[0].position.x + Xspd / 2, allObjects[0].position.y + Yspd / 2, Xspd, Yspd, object_type, direction + inaccuracy - 0.1f, 0);
             }
+            else if (wep == 22) {
+                for (int I = -2; I < 3; I++) {
+                    Xspd = cos(direction + inaccuracy + ((8.0f * I) / degreestoradians)) * proj_speed;
+                    Yspd = sin(direction + inaccuracy + ((8.0f * I) / degreestoradians)) * proj_speed;
+                    create_object(allObjects[0].position.x + Xspd / 2, allObjects[0].position.y + Yspd / 2, Xspd, Yspd, object_type, direction + inaccuracy + ((8.0f * I) / degreestoradians), 0);
+                }
+            }
             else {
                 create_object(allObjects[0].position.x + Xspd / 2, allObjects[0].position.y + Yspd / 2, Xspd, Yspd, object_type, direction + inaccuracy, 0);
             }
+
+
+
+
+            if (wep == 17) {    //devastator
+                create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, portal_clear, 0, 0);
+            }
+
 
             //laser brain fx
             for (int i = 0; i < ceil(cost / 2) * ((laser_brain > 1.1f) + 1); i++) {
@@ -5129,7 +5256,22 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 16, 6.0f, plasma, -3, 5, 4.0f * accuracy_curr, true);
             break;
         case 17://devastator
-            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 8, 60, 15.99f * ((laser_brain < 1.15) * 0.4f + 0.6f), devastator_bullet, -5, 8, 4.0f * accuracy_curr, true);
+            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 8, 60, 15.99f * ((laser_brain < 1.15) * 0.4f + 0.6f), devastator_bullet, -5, 8, 4.0f * accuracy_curr);
+            break;
+        case 18://laser pistol
+            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 10, 4.0f, player_laser, 0, 2, 1.0f * accuracy_curr);
+            break;
+        case 19://laser rifle
+            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 8, 4.0f, player_laser, 0, 5, 3.0f * accuracy_curr, true);
+            break;
+        case 20://laser mini
+            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 2, 4.0f, player_laser, -0.6f, 8, 12.0f * accuracy_curr, true);
+            break;
+        case 21://gold laser pistol
+            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 9, 4.0f, player_laser, -0.6f, 5, 1.0f * accuracy_curr);
+            break;
+        case 22://ultra laser pistol
+            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 9, 4.0f, player_laser, 0.0f, 7, 1.0f * accuracy_curr);
             break;
         default:
             break;
@@ -6122,6 +6264,13 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             create_object(allObjects[i].position.x + diffx, allObjects[i].position.y + diffy, cos(tmpdir) * -tempSpeedX, sin(tmpdir) * -tempSpeedX, idpd_portal_charge, (sqrt((diffx * diffx) + (diffy * diffy)) / tempSpeedX) + 1, rand() % 4);
 
             break;
+
+        case player_laser:
+            allObjects[i].scale -= 0.3f;
+            if (allObjects[i].scale < 0.0f) {
+                allObjects[i].my_id = nothing;
+            }
+            break;
         case player_bullet:
             allObjects[i].position += allObjects[i].speed;
             allObjects[i].image_index++;
@@ -6318,6 +6467,15 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                 allObjects[i].position += allObjects[i].speed;
             }
             allObjects[i].alarm1--;
+
+            if (allObjects[i].alarm1 < 1) {
+                create_object(allObjects[i].position.x, allObjects[i].position.y, 0.5, 0.5, dust, 0, 0);    //dust
+                allObjects[i].my_id = nothing;
+            }
+            if (allObjects[i].alarm2 < 1) {
+                create_object(allObjects[i].position.x, allObjects[i].position.y, 0.5, 0.5, dust, 0, 0);    //dust
+                allObjects[i].alarm2 = round(((rand() % 20) / allObjects[i].speeddir) + 1);
+            }
 
             break;
         case dust:
@@ -6785,6 +6943,9 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                     case T2_bullet:
                         T2_bullet_step(currOBJ);
                         break;
+                    case player_laser:
+                        player_laser_collision(currOBJ);
+                        break;
                     case objectID::player:
                         //do collisons with everything
                         player_collision(i, j, currOBJ);
@@ -6919,15 +7080,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                         }
                         break;
                     case debris:
-                        //do this here so random_float functions work
-                        if (allObjects[currOBJ].alarm1 < 1) {
-                            create_object(allObjects[currOBJ].position.x, allObjects[currOBJ].position.y, 0.5, 0.5, dust, 0, 0);    //dust
-                            allObjects[currOBJ].my_id = nothing;
-                        }
-                        if (allObjects[currOBJ].alarm2 < 1) {
-                            create_object(allObjects[currOBJ].position.x, allObjects[currOBJ].position.y, 0.5, 0.5, dust, 0, 0);    //dust
-                            allObjects[currOBJ].alarm2 = round(((rand() % 20) / allObjects[currOBJ].speeddir) + 1);
-                        }
+                        //
                         break;
                     default:
                         break;
@@ -7411,6 +7564,8 @@ void start_new_run(character chararcter_choice, sound_sound_buffer all_sounds[],
     laser_brain = 1.2f;
     player_alive = true;
     has_died = false;
+
+    allObjects[0].position = {24016,24016 };
 
     //reset global variables
     eyes_using_TK = false;
@@ -8150,7 +8305,22 @@ int main()
     add_new_sound_buffer(snd_devastator_ID, "snd/devastator.wav", all_extra_sound_buffers);
     add_new_sound_buffer(snd_devastator_up_ID, "snd/devastator_up.wav", all_extra_sound_buffers);
 
+    add_new_sound_buffer(snd_laser_ID, "snd/laser.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_laser_up_ID, "snd/laser_up.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_golden_laser_ID, "snd/gold_laser.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_golden_laser_up_ID, "snd/gold_laser_up.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_ultra_laser_ID, "snd/ultra_laser.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_ultra_laser_up_ID, "snd/ultra_laser_up.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_laser_cannon_ID, "snd/laser_cannon.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_laser_cannon_up_ID, "snd/laser_cannon_up.wav", all_extra_sound_buffers);
+
+    add_new_sound_buffer(snd_laser_cannon_charge_ID, "snd/laser_cannon_charge.wav", all_extra_sound_buffers);
+
+
+
     add_new_sound(snd_devastator_explo_ID, "snd/devastator_explo.wav", all_sounds, snd_devastator_explo_ID, all_extra_sound_buffers, 0.1f, 0.01f);
+
+    add_new_sound(snd_revenge_bullet, "snd/revenge_bullet.wav", all_sounds, snd_revenge_bullet, all_extra_sound_buffers, 0.01f, 0.0f, 65.0f);
     
     //footsteps
     add_new_sound_buffer(snd_foot_metmetal_1_ID, "snd/footsteps/foot_metmetal_1.wav", all_extra_sound_buffers);
@@ -8425,6 +8595,9 @@ int main()
 
         sf::Texture laserBrainFX_tex;
         laserBrainFX_tex.loadFromFile("res/sprLaserBrain.png");
+
+        sf::Texture laser_tex;
+        laser_tex.loadFromFile("res/player/laser.png");
 
         sf::Texture allPropSprites;
         allPropSprites.loadFromFile("res/allProps.png");
@@ -12331,21 +12504,24 @@ int main()
                     case idpd_freak:
                         add_sprite_48(shadow48_ArrayIndex, allObjects[idx].position - cameraPos + offset48, draw_shadow48s);
                         shadow48_ArrayIndex++;      //shadow
-                        if (allObjects[idx].gun_angle > 180.0f / degreestoradians) {
-                            allObjects[idx].gun_angle -= 180.0f / degreestoradians;
+
+                        //keep within -180 and 180 degrees
+                        tmp_wep_angle = allObjects[idx].gun_angle;
+                        if (tmp_wep_angle > 180.0f / degreestoradians) {
+                            tmp_wep_angle -= 360.0f / degreestoradians;
                         }
-                        if (allObjects[idx].gun_angle < -180.0f / degreestoradians) {
-                            allObjects[idx].gun_angle += 180.0f / degreestoradians;
+                        if (tmp_wep_angle < -180.0f / degreestoradians) {
+                            tmp_wep_angle += 360.0f / degreestoradians;
                         }
                         
-                        if (allObjects[idx].gun_angle <= 0) {
-                            sf::Vector2f gun_offset = { cos(allObjects[idx].gun_angle) * 3, sin(allObjects[idx].gun_angle) * 3 };
+                        if (tmp_wep_angle <= 0) {
+                            sf::Vector2f gun_offset = { cos(tmp_wep_angle) * 3, sin(tmp_wep_angle) * 3 };
                             rotateable_sprites_guns[rotateableSpriteGunIndex].setTexture(idpd_freak_guntex);
                             rotateable_sprites_guns[rotateableSpriteGunIndex].setColor({ 255, 255, 255, 255 });
                             rotateable_sprites_guns[rotateableSpriteGunIndex].setPosition(allObjects[idx].position + gun_offset - cameraPos);
                             rotateable_sprites_guns[rotateableSpriteGunIndex].setOrigin({ 16,16 });
-                            rotateable_sprites_guns[rotateableSpriteGunIndex].setRotation(allObjects[idx].gun_angle * degreestoradians);
-                            if (abs(allObjects[idx].gun_angle) > 90.0f / degreestoradians) {
+                            rotateable_sprites_guns[rotateableSpriteGunIndex].setRotation(tmp_wep_angle * degreestoradians);
+                            if (abs(tmp_wep_angle) > (90.0f / degreestoradians)) {
                                 rotateable_sprites_guns[rotateableSpriteGunIndex].setScale(1, -1);
                             }
                             else {
@@ -12355,12 +12531,12 @@ int main()
                         }
                         else {
                             rotateable_sprites_guns_top[rotateableSpriteGunTopIndex].setTexture(idpd_freak_guntex);
-                            sf::Vector2f gun_offset = { cos(allObjects[idx].gun_angle) * 3, sin(allObjects[idx].gun_angle) * 3 };
+                            sf::Vector2f gun_offset = { cos(tmp_wep_angle) * 3, sin(tmp_wep_angle) * 3 };
                             rotateable_sprites_guns_top[rotateableSpriteGunTopIndex].setColor({ 255, 255, 255, 255 });
                             rotateable_sprites_guns_top[rotateableSpriteGunTopIndex].setPosition(allObjects[idx].position + gun_offset - cameraPos);
                             rotateable_sprites_guns_top[rotateableSpriteGunTopIndex].setOrigin({ 16,16 });
-                            rotateable_sprites_guns_top[rotateableSpriteGunTopIndex].setRotation(allObjects[idx].gun_angle* degreestoradians);
-                            if (abs(allObjects[idx].gun_angle) > 90.0f / degreestoradians) {
+                            rotateable_sprites_guns_top[rotateableSpriteGunTopIndex].setRotation(tmp_wep_angle * degreestoradians);
+                            if (abs(tmp_wep_angle) > (90.0f / degreestoradians)) {
                                 rotateable_sprites_guns_top[rotateableSpriteGunTopIndex].setScale(1, -1);
                             }
                             else {
@@ -12469,6 +12645,17 @@ int main()
                         variable_textures[variableTexturesIndex].setTextureRect(sf::IntRect{ 16 * choice, 0, 16, 16 });
                         variable_textures[variableTexturesIndex].setOrigin(-3, 8);
                         variable_textures[variableTexturesIndex].setScale(1, allObjects[idx].scale);
+                        variableTexturesIndex++;
+                        break;
+
+                    case player_laser:
+                        variable_textures[variableTexturesIndex].setTexture(laser_tex);
+                        variable_textures[variableTexturesIndex].setColor({ 255, 255, 255, 255 });
+                        variable_textures[variableTexturesIndex].setPosition(allObjects[idx].position - cameraPos);
+                        variable_textures[variableTexturesIndex].setRotation(allObjects[idx].direction * degreestoradians);
+                        variable_textures[variableTexturesIndex].setTextureRect(sf::IntRect{ 0, 0, 1, 6 });
+                        variable_textures[variableTexturesIndex].setOrigin(0, 3);
+                        variable_textures[variableTexturesIndex].setScale(allObjects[idx].size, allObjects[idx].scale);
                         variableTexturesIndex++;
                         break;
                     case player_bullet:

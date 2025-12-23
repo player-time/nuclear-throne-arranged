@@ -45,6 +45,9 @@ enum objectID {
 
 	explosion,
 
+
+	player_laser,
+
 	player,
 	player_corpse,
 
@@ -236,6 +239,8 @@ enum sound_ID {
 
 	snd_devastator_explo_ID,
 
+	snd_revenge_bullet,
+
 	//end of sounds that will be used, not just in buffers
 
 	snd_music_ID,
@@ -395,7 +400,16 @@ enum sound_ID {
 	snd_devastator_ID,
 	snd_devastator_up_ID,
 
+	snd_laser_ID,
+	snd_laser_up_ID,
+	snd_golden_laser_ID,
+	snd_golden_laser_up_ID,
+	snd_ultra_laser_ID,
+	snd_ultra_laser_up_ID,
+	snd_laser_cannon_ID,
+	snd_laser_cannon_up_ID,
 
+	snd_laser_cannon_charge_ID,
 
 
 	snd_foot_metmetal_1_ID,
@@ -531,7 +545,10 @@ enum hitboxes {
 
 	weapon_hitbox = 8,
 
+	devastator_hitbox = 8,
+
 	revenge_bullet_hitbox = -2,
+
 };
  
 struct gameObject{
