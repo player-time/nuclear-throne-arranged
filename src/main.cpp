@@ -1838,6 +1838,22 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].team = player_team;     //player team
 
                 break;
+
+            case player_laser_burst:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].my_hitbox = no_hitbox;
+                allObjects[i].damage = 5 + int((laser_brain - 1.0f) * 10.1f);
+
+                allObjects[i].alarm1 = 10;
+
+                allObjects[i].position = { x, y };
+                allObjects[i].speed = { xspd, yspd };   //what direction the laser is facing
+                allObjects[i].direction = direction;
+                allObjects[i].image_index = 0;
+
+                allObjects[i].team = player_team;     //player team
+
+                break;
             case player_laser:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].my_hitbox = no_hitbox;
@@ -3402,11 +3418,11 @@ void enemy_die(int ENEMY, int PROJ) {
         ammo_drop_function(ENEMY, 16);
 
         if (rand() % 20 == 0) {
-            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, weapon_drop, 0, rand() % 23);
+            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, weapon_drop, 0, rand() % 24);
         }
 
         //debug start
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < 0; i++) {
             tmpdir = random_360_radians();
             tmpSpd = random_float(2.0f) + 3.0f;
             tempSpdx = cos(tmpdir) * tmpSpd;
@@ -4651,7 +4667,7 @@ void meat_explosion_collision(int currOBJ, int i, int j) {
 void player_laser_collision(int currOBJ) {
     bool has_collided_with_wall = false;
 
-    std::vector<sf::Vector2i> tiles_to_check_collision_with;
+    //std::vector<sf::Vector2i> tiles_to_check_collision_with;
 
     float prev_x_pos = allObjects[currOBJ].position.x;
     float prev_y_pos = allObjects[currOBJ].position.y;
@@ -4675,7 +4691,7 @@ void player_laser_collision(int currOBJ) {
         if (int(x / 16) != int(prev_x_pos / 16) && int(y / 16) != int(prev_y_pos / 16)) {
 
             //add new tile to check collisions with later
-            tiles_to_check_collision_with.push_back(sf::Vector2i{int(x / 16), int(y / 16)});
+            //tiles_to_check_collision_with.push_back(sf::Vector2i{int(x / 16), int(y / 16)});
 
 
             if (game_area[int(prev_x_pos / 16)][int(y / 16)].my_grid_type == wall && game_area[int(x / 16)][int(prev_y_pos / 16)].my_grid_type == wall) {   //block diagonal
@@ -4707,7 +4723,113 @@ void player_laser_collision(int currOBJ) {
 
     allObjects[currOBJ].size = int(sqrt(xdiff * xdiff + ydiff * ydiff));
 
+    //do collisions with enemies
+    int start_x = 0;
+    int start_y = 0;
+    int lowest_x = 0;
+    int lowest_y = 0;
 
+    int end_x = 0;
+    int end_y = 0;
+    int highest_x = 0;
+    int highest_y = 0;
+
+    if (allObjects[currOBJ].position.x < x) {
+        start_x = int(allObjects[currOBJ].position.x / 16.0f) - 3;
+        lowest_x = allObjects[currOBJ].position.x;
+
+        end_x = int(x / 16.0f) + 3;
+        highest_x = x;
+    }
+    else {
+        start_x = int(x / 16.0f) - 3;
+        lowest_x = x;
+
+        end_x = int(allObjects[currOBJ].position.x / 16.0f) + 3;
+        highest_x = allObjects[currOBJ].position.x;
+    }
+
+    if (allObjects[currOBJ].position.y < y) {
+        start_y = int(allObjects[currOBJ].position.y / 16.0f) - 3;
+        lowest_y = allObjects[currOBJ].position.y;
+
+        end_y = int(y / 16.0f) + 5;
+        highest_y = y;
+    }
+    else {
+        start_y = int(y / 16.0f) - 5;
+        lowest_y = y;
+
+        end_y = int(allObjects[currOBJ].position.y / 16.0f) + 3;
+        highest_y = allObjects[currOBJ].position.y;
+    }
+
+    float slope_x = y_spd / x_spd;
+    float slope_y = x_spd / y_spd;
+
+    float x_intercept = x - (y / slope_x);
+
+    float y_intercept = y - (x / slope_y);
+
+    float hitbox_mult = 1.0f;
+
+    float angle_tmp = atan2f(abs(y_spd), abs(x_spd)) * degreestoradians;
+
+    angle_tmp = abs(45.0f - angle_tmp);
+
+    hitbox_mult = 1.4142f - ((angle_tmp / 45.0f) * 0.4142f);
+
+    //get distance from nearest 45 degrees
+
+    float extra_hitbox = 0.0f;
+
+    for (int w = start_x; w < end_x; w++) {
+        for (int h = start_y; h < end_y; h++) {
+            for (int obj : game_area[w][h].object_indexes) {
+                switch (allObjects[obj].my_id) {
+                case bandit:__fallthrough;
+                case idpd_freak:
+                    extra_hitbox = allObjects[obj].my_hitbox + allObjects[currOBJ].scale * 4;
+                    if (allObjects[obj].position.x > lowest_x - extra_hitbox && allObjects[obj].position.x < highest_x + extra_hitbox &&
+                        allObjects[obj].position.y > lowest_y - extra_hitbox && allObjects[obj].position.y < highest_y + extra_hitbox) {
+                        float line_x_pos = slope_y * allObjects[obj].position.y + x_intercept;
+                        float line_y_pos = slope_x * allObjects[obj].position.x + y_intercept;
+                        float total_hitox = allObjects[obj].my_hitbox + allObjects[currOBJ].scale * 4 * hitbox_mult;
+                        if (abs(line_x_pos - allObjects[obj].position.x) < (total_hitox) || abs(line_y_pos - allObjects[obj].position.y) < (total_hitox)) {
+                            allObjects[obj].my_hp -= allObjects[currOBJ].damage;
+                            if (allObjects[obj].my_hp > 0) {
+                                enemy_hurt(obj, currOBJ);
+                            }
+                            else {  //dead
+                                enemy_die(obj, currOBJ);
+                            }
+                        }
+                    }
+                    break;
+                case throne_2:
+                    if (allObjects[obj].alarm1 < 0) {
+                        extra_hitbox = 48 + allObjects[currOBJ].scale * 4;
+                        if (allObjects[obj].position.x > lowest_x - extra_hitbox && allObjects[obj].position.x < highest_x + extra_hitbox &&
+                            allObjects[obj].position.y + 18.0f > lowest_y - extra_hitbox && allObjects[obj].position.y + 18.0f < highest_y + extra_hitbox) {
+                            float line_x_pos = slope_y * (allObjects[obj].position.y + 18.0f) + x_intercept;
+                            float line_y_pos = slope_x * allObjects[obj].position.x + y_intercept;
+                            float total_hitox = 48 + allObjects[currOBJ].scale * 4 * hitbox_mult;
+                            if (abs(line_x_pos - allObjects[obj].position.x) < (total_hitox) || abs(line_y_pos - (allObjects[obj].position.y + 18.0f)) < (total_hitox)) {
+                                allObjects[obj].my_hp -= allObjects[currOBJ].damage;
+                                if (allObjects[obj].my_hp > 0) {
+                                    enemy_hurt(obj, currOBJ);
+                                }
+                                else {  //dead
+                                    enemy_die(obj, currOBJ);
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
 }
 
 void T2_bullet_step(int i) {
@@ -4989,15 +5111,13 @@ void fire_energy_shot(int shots, bool skeleton_gamble, float direction, float ga
             }
 
 
-
-
             if (wep == 17) {    //devastator
                 create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, portal_clear, 0, 0);
             }
 
 
             //laser brain fx
-            for (int i = 0; i < ceil(cost / 2) * ((laser_brain > 1.1f) + 1); i++) {
+            for (int i = 0; i < ceil(cost / 2) * ((laser_brain > 1.05f) + 1); i++) {
                 create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, laser_brain_FX, random_360_degrees(), 0);
             }
         }
@@ -5272,6 +5392,9 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             break;
         case 22://ultra laser pistol
             fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 9, 4.0f, player_laser, 0.0f, 7, 1.0f * accuracy_curr);
+            break;
+        case 23://laser cannon
+            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 30, 4.0f, player_laser_burst, 0.0f, 0, 0.0f * accuracy_curr, true);
             break;
         default:
             break;
@@ -6265,6 +6388,23 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
 
             break;
 
+        case player_laser_burst:
+            allObjects[i].alarm1--;
+            if (allObjects[i].alarm1 < 0) {
+                allObjects[i].damage--;
+                if (allObjects[i].damage < 0) {
+                    allObjects[i].my_id = nothing;
+                }
+                create_object(allObjects[0].position.x, allObjects[0].position.y, allObjects[i].speed.x, allObjects[i].speed.y, player_laser, allObjects[i].direction, 0);
+
+                if (laser_brain < 1.15f) {
+                    play_sound_on_player(snd_laser_cannon_ID);
+                }
+                else {
+                    play_sound_on_player(snd_laser_cannon_up_ID);
+                }
+            }
+            break;
         case player_laser:
             allObjects[i].scale -= 0.3f;
             if (allObjects[i].scale < 0.0f) {
@@ -8311,8 +8451,9 @@ int main()
     add_new_sound_buffer(snd_golden_laser_up_ID, "snd/gold_laser_up.wav", all_extra_sound_buffers);
     add_new_sound_buffer(snd_ultra_laser_ID, "snd/ultra_laser.wav", all_extra_sound_buffers);
     add_new_sound_buffer(snd_ultra_laser_up_ID, "snd/ultra_laser_up.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_laser_cannon_ID, "snd/laser_cannon.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_laser_cannon_up_ID, "snd/laser_cannon_up.wav", all_extra_sound_buffers);
+
+    add_new_sound(snd_laser_cannon_ID, "snd/laser_cannon.wav", all_sounds, snd_laser_cannon_ID, all_extra_sound_buffers, 0.1f, 0.0f);
+    add_new_sound(snd_laser_cannon_up_ID, "snd/laser_cannon_up.wav", all_sounds, snd_laser_cannon_up_ID, all_extra_sound_buffers, 0.1f, 0.0f);
 
     add_new_sound_buffer(snd_laser_cannon_charge_ID, "snd/laser_cannon_charge.wav", all_extra_sound_buffers);
 
@@ -12649,14 +12790,14 @@ int main()
                         break;
 
                     case player_laser:
-                        variable_textures[variableTexturesIndex].setTexture(laser_tex);
-                        variable_textures[variableTexturesIndex].setColor({ 255, 255, 255, 255 });
-                        variable_textures[variableTexturesIndex].setPosition(allObjects[idx].position - cameraPos);
-                        variable_textures[variableTexturesIndex].setRotation(allObjects[idx].direction * degreestoradians);
-                        variable_textures[variableTexturesIndex].setTextureRect(sf::IntRect{ 0, 0, 1, 6 });
-                        variable_textures[variableTexturesIndex].setOrigin(0, 3);
-                        variable_textures[variableTexturesIndex].setScale(allObjects[idx].size, allObjects[idx].scale);
-                        variableTexturesIndex++;
+                        variable_textures_bloom[variableTexturesBloomIndex].setTexture(laser_tex);
+                        variable_textures_bloom[variableTexturesBloomIndex].setColor({ 255, 255, 255, 255 });
+                        variable_textures_bloom[variableTexturesBloomIndex].setPosition(allObjects[idx].position - cameraPos);
+                        variable_textures_bloom[variableTexturesBloomIndex].setRotation(allObjects[idx].direction * degreestoradians);
+                        variable_textures_bloom[variableTexturesBloomIndex].setTextureRect(sf::IntRect{ 0, 0, 1, 6 });
+                        variable_textures_bloom[variableTexturesBloomIndex].setOrigin(0, 3);
+                        variable_textures_bloom[variableTexturesBloomIndex].setScale(allObjects[idx].size, allObjects[idx].scale);
+                        variableTexturesBloomIndex++;
                         break;
                     case player_bullet:
                         if (allObjects[idx].image_index == 1) {

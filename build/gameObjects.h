@@ -47,6 +47,7 @@ enum objectID {
 
 
 	player_laser,
+	player_laser_burst,
 
 	player,
 	player_corpse,
@@ -241,6 +242,9 @@ enum sound_ID {
 
 	snd_revenge_bullet,
 
+	snd_laser_cannon_ID,
+	snd_laser_cannon_up_ID,
+
 	//end of sounds that will be used, not just in buffers
 
 	snd_music_ID,
@@ -406,8 +410,6 @@ enum sound_ID {
 	snd_golden_laser_up_ID,
 	snd_ultra_laser_ID,
 	snd_ultra_laser_up_ID,
-	snd_laser_cannon_ID,
-	snd_laser_cannon_up_ID,
 
 	snd_laser_cannon_charge_ID,
 
