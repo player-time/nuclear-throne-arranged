@@ -129,6 +129,9 @@ int wall_shadow_textures_max = 600;
 std::vector<sf::Sprite> variable_textures_bloom;
 int variable_textures_bloom_max = 4000;
 
+std::vector<sf::Sprite> lasers_bloom;
+int lasers_bloom_max = 500;
+
 int wall_textures_max = 600;
 std::vector<sf::Sprite> wall_textures;
 
@@ -6389,21 +6392,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             break;
 
         case player_laser_burst:
-            allObjects[i].alarm1--;
-            if (allObjects[i].alarm1 < 0) {
-                allObjects[i].damage--;
-                if (allObjects[i].damage < 0) {
-                    allObjects[i].my_id = nothing;
-                }
-                create_object(allObjects[0].position.x, allObjects[0].position.y, allObjects[i].speed.x, allObjects[i].speed.y, player_laser, allObjects[i].direction, 0);
 
-                if (laser_brain < 1.15f) {
-                    play_sound_on_player(snd_laser_cannon_ID);
-                }
-                else {
-                    play_sound_on_player(snd_laser_cannon_up_ID);
-                }
-            }
             break;
         case player_laser:
             allObjects[i].scale -= 0.3f;
@@ -6837,6 +6826,30 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                     }
                                 }
                                 break;
+                            case player_laser_burst:
+                                if (w == 0 && h == 0) {
+                                    allObjects[O].alarm1--;
+                                    if (allObjects[O].alarm1 < 0) {
+                                        allObjects[O].direction = direction_to_mouse;
+                                        allObjects[O].damage--;
+
+                                        tempSpdx = cos(direction_to_mouse) * 4.0f;
+                                        tempSpdy = sin(direction_to_mouse) * 4.0f;
+
+                                        if (allObjects[O].damage < 0) {
+                                            allObjects[O].my_id = nothing;
+                                        }
+                                        create_object(allObjects[0].position.x, allObjects[0].position.y, tempSpdx, tempSpdy, player_laser, allObjects[O].direction, 0);
+
+                                        if (laser_brain < 1.15f) {
+                                            play_sound_on_player(snd_laser_cannon_ID);
+                                        }
+                                        else {
+                                            play_sound_on_player(snd_laser_cannon_up_ID);
+                                        }
+                                    }
+                                }
+                                break;
                             case objectID::weapon_drop:
                                 collide_wall(O, i, j, h, w, allObjects[O].my_hitbox);
                                 break;
@@ -7082,6 +7095,28 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                         break;
                     case T2_bullet:
                         T2_bullet_step(currOBJ);
+                        break;
+                    case player_laser_burst:
+                        allObjects[currOBJ].alarm1--;
+                        if (allObjects[currOBJ].alarm1 < 0) {
+                            allObjects[currOBJ].direction = direction_to_mouse;
+                            allObjects[currOBJ].damage--;
+
+                            tempSpdx = cos(direction_to_mouse) * 4.0f;
+                            tempSpdy = sin(direction_to_mouse) * 4.0f;
+
+                            if (allObjects[currOBJ].damage < 0) {
+                                allObjects[currOBJ].my_id = nothing;
+                            }
+                            create_object(allObjects[0].position.x, allObjects[0].position.y, tempSpdx, tempSpdy, player_laser, allObjects[currOBJ].direction, 0);
+
+                            if (laser_brain < 1.15f) {
+                                play_sound_on_player(snd_laser_cannon_ID);
+                            }
+                            else {
+                                play_sound_on_player(snd_laser_cannon_up_ID);
+                            }
+                        }
                         break;
                     case player_laser:
                         player_laser_collision(currOBJ);
@@ -9515,6 +9550,12 @@ int main()
         variable_textures_bloom.push_back(temp);
     }
 
+    for (int i = 0; i < lasers_bloom_max; i++) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        lasers_bloom.push_back(temp);
+    }
+
     for (int i = 0; i < wall_shadow_textures_max; i++) {
         sf::Sprite temp;
         temp.setColor({ 0, 0, 0, 0 });
@@ -11161,6 +11202,8 @@ int main()
         int variableTexturesIndex = 0;
 
         int variableTexturesBloomIndex = 0;
+
+        int lasers_bloomIndex = 0;
         //int rotateableEffectsSmallNoRotBloomIndex = 0;
 
         int bullet_1_batchableIndex = 0;
@@ -12790,14 +12833,14 @@ int main()
                         break;
 
                     case player_laser:
-                        variable_textures_bloom[variableTexturesBloomIndex].setTexture(laser_tex);
-                        variable_textures_bloom[variableTexturesBloomIndex].setColor({ 255, 255, 255, 255 });
-                        variable_textures_bloom[variableTexturesBloomIndex].setPosition(allObjects[idx].position - cameraPos);
-                        variable_textures_bloom[variableTexturesBloomIndex].setRotation(allObjects[idx].direction * degreestoradians);
-                        variable_textures_bloom[variableTexturesBloomIndex].setTextureRect(sf::IntRect{ 0, 0, 1, 6 });
-                        variable_textures_bloom[variableTexturesBloomIndex].setOrigin(0, 3);
-                        variable_textures_bloom[variableTexturesBloomIndex].setScale(allObjects[idx].size, allObjects[idx].scale);
-                        variableTexturesBloomIndex++;
+                        lasers_bloom[lasers_bloomIndex].setTexture(laser_tex);
+                        lasers_bloom[lasers_bloomIndex].setColor({ 255, 255, 255, 255 });
+                        lasers_bloom[lasers_bloomIndex].setPosition(allObjects[idx].position - cameraPos);
+                        lasers_bloom[lasers_bloomIndex].setRotation(allObjects[idx].direction * degreestoradians);
+                        lasers_bloom[lasers_bloomIndex].setTextureRect(sf::IntRect{ 0, 0, 1, 6 });
+                        lasers_bloom[lasers_bloomIndex].setOrigin(0, 3);
+                        lasers_bloom[lasers_bloomIndex].setScale(allObjects[idx].size, allObjects[idx].scale);
+                        lasers_bloomIndex++;
                         break;
                     case player_bullet:
                         if (allObjects[idx].image_index == 1) {
@@ -13342,6 +13385,7 @@ int main()
 
             //bullets / bullet destroys
 
+
             //rotateable bullets_huge
             for (sf::Sprite spr : rotateable_sprites_bullets_huge) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -13422,6 +13466,13 @@ int main()
             }
             reset_rotateable_sprites(rotateable_sprites_guns_top, rotateableSpriteGunTopIndex);
 
+            for (sf::Sprite spr : lasers_bloom) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_over.draw(spr);
+            }
+
 
             if (!t2_draw_in_front) {
                 buffer_over.draw(T2_sprite);
@@ -13496,6 +13547,17 @@ int main()
 
 
             //  !!! BLOOM START !!!  //
+
+
+            for (sf::Sprite spr : lasers_bloom) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                spr.setScale(spr.getScale().x, spr.getScale().y * 2);
+                spr.setColor({ 255, 255, 255, 25 });
+                buffer_over.draw(spr, RendererBloom);
+            }
+            reset_rotateable_sprites(lasers_bloom, lasers_bloomIndex);
 
 
             for (sf::Sprite spr : variable_textures_bloom) {
