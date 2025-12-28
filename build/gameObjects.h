@@ -245,6 +245,9 @@ enum sound_ID {
 	snd_laser_cannon_ID,
 	snd_laser_cannon_up_ID,
 
+
+	snd_lightning_reload_ID,
+
 	//end of sounds that will be used, not just in buffers
 
 	snd_music_ID,
@@ -413,6 +416,15 @@ enum sound_ID {
 
 	snd_laser_cannon_charge_ID,
 
+	snd_lightning_pistol_ID,
+	snd_lightning_pistol_up_ID,
+	snd_lightning_rifle_ID,
+	snd_lightning_rifle_up_ID,
+	snd_lightning_shotgun_ID,
+	snd_lightning_shotgun_up_ID,
+	snd_lightning_cannon_ID,
+	snd_lightning_cannon_up_ID,
+
 
 	snd_foot_metmetal_1_ID,
 	snd_foot_metmetal_2_ID,
@@ -513,7 +525,7 @@ enum character{ fish, crystal, eyes, melting, plant, YV, steroids, robot, chicke
 
 enum weapon_types {		//cutoffs for weapon types
 	melee_weps = 8,
-	energy_weps = 41,
+	energy_weps = 28,
 };
 
 enum what_team {

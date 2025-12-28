@@ -31,9 +31,9 @@ int bandit_choice1 = 0;
 int draw_mult = 5;
 //
 
-bool global_debug = true;
+bool global_debug = false;
 
-bool debug_invincibility = true;
+bool debug_invincibility = false;
 
 int EXIT_PROGRAM_NOW = 0;
 
@@ -167,6 +167,8 @@ sf::Vector2f cameraPos = { 24000.0f, 24000.0f };
 sf::Image game_icon;
 
 bool fullscreen_mode = true;
+
+sf::VideoMode startup_fullscreen_size = sf::VideoMode::getDesktopMode();
 
 sf::Vector2f fullscreen_offset = { 0, 0 };
 
@@ -656,6 +658,11 @@ void draw_weapon_text(int wep_ID, sf::Vector2f pos, sf::Text text, sf::RenderTex
     case 21:text.setString("GOLDEN LASER PISTOL");break;
     case 22:text.setString("ULTRA LASER PISTOL");break;
     case 23:text.setString("LASER CANNON");break;
+    case 24:text.setString("LIGHTNING PISTOL");break;
+    case 25:text.setString("LIGHTNING RIFLE");break;
+    case 26:text.setString("LIGHTNING SHOTGUN");break;
+    case 27:text.setString("LIGHTNING SMG");break;
+    case 28:text.setString("LIGHTNING CANNON");break;
     }
     text.setPosition(int(pos.x - cameraPos.x) - text.getString().getSize() * 4, int(pos.y - cameraPos.y) - 28);
     wep_arrow_sprite.setPosition(int(pos.x - cameraPos.x), int(pos.y - cameraPos.y) - 16);
@@ -751,6 +758,26 @@ sound_ID get_shoot_sound(int wep_id) {
     case 23: /*laser cannon*/
         return snd_laser_cannon_charge_ID; 
         break;
+    case 24: /*lightning pistol*/
+        if (laser_brain < 1.15f) { return snd_lightning_pistol_ID; }
+        else { return snd_lightning_pistol_up_ID; }
+        break;
+    case 25: /*lightning rilfe*/
+        if (laser_brain < 1.15f) { return snd_lightning_rifle_ID; }
+        else { return snd_lightning_rifle_up_ID; }
+        break;
+    case 26: /*lightning shotgun*/
+        if (laser_brain < 1.15f) { return snd_lightning_shotgun_ID; }
+        else { return snd_lightning_shotgun_up_ID; }
+        break;
+    case 27: /*lightning SMG*/
+        if (laser_brain < 1.15f) { return snd_lightning_pistol_ID; }
+        else { return snd_lightning_pistol_up_ID; }
+        break;
+    case 28: /*lightning cannon*/
+        if (laser_brain < 1.15f) { return snd_lightning_cannon_ID; }
+        else { return snd_lightning_cannon_up_ID; }
+        break;
     default:
         return snd_shoot_1_ID;
         break;
@@ -783,6 +810,11 @@ sf::Vector2f wep_get_origin(int wep_id) {
     case 21: /*golden laser pistol*/return sf::Vector2f(-3, 3);break;
     case 22: /*ultra laser pistol*/return sf::Vector2f(-3, 3);break;
     case 23: /*laser cannon*/return sf::Vector2f(5, 5);break;
+    case 24: /*lightning pistol*/return sf::Vector2f(-1, 4);break;
+    case 25: /*lightning rifl*/return sf::Vector2f(5, 4);break;
+    case 26: /*lightning shotgun*/return sf::Vector2f(2, 4);break;
+    case 27: /*lightning SMG*/return sf::Vector2f(0, 4);break;
+    case 28: /*lightning cannon*/return sf::Vector2f(7, 6);break;
     default:
         return sf::Vector2f(0, 0);
         break;
@@ -815,6 +847,11 @@ void play_swap_sound(int wep_id) {
     case 21: /*golden laser pistol*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
     case 22: /*ultra laser pistol*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
     case 23: /*laser cannon*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 24: /*lightning*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 25: /*lightning*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 26: /*lightning*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 27: /*lightning*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
+    case 28: /*lightning*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
     default:
         break;
     }
@@ -838,6 +875,13 @@ void get_wep_reload_sound(int wep) {
         else {
             play_sound_on_player(snd_plasma_reload_upgrade_ID);
         }
+        break;
+    case 24:
+    case 25:
+    case 26:
+    case 27:
+    case 28:    //lightning
+        play_sound_on_player(snd_lightning_reload_ID);
         break;
     default:
         break;
@@ -3549,13 +3593,13 @@ void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = 
     if (swap_fullscreen) {
         window.close();
         if (fullscreen_mode) {
-            window.create({ (u_int)1920, (u_int)1080 }, "Nuclear Throne Arranged", sf::Style::Fullscreen);
+            window.create({ (u_int)startup_fullscreen_size.width, (u_int)startup_fullscreen_size.height }, "Nuclear Throne Arranged", sf::Style::Fullscreen);
 
             fullscreen_window_offset.x = (window.getSize().x - window_size_x) / 2;
             fullscreen_window_offset.y = (window.getSize().y - window_size_y) / 2;
 
             window.setPosition({ 0, 0 });
-            sf::View myView(sf::Vector2f(960, 540), sf::Vector2f(1920, 1080));
+            sf::View myView(sf::Vector2f(startup_fullscreen_size.width / 2, startup_fullscreen_size.height / 2), sf::Vector2f(startup_fullscreen_size.width, startup_fullscreen_size.height));
             window.setView(myView);
         }
         else {
@@ -8493,6 +8537,17 @@ int main()
     add_new_sound_buffer(snd_laser_cannon_charge_ID, "snd/laser_cannon_charge.wav", all_extra_sound_buffers);
 
 
+    add_new_sound_buffer(snd_lightning_pistol_ID, "snd/lightning_pistol.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_lightning_pistol_up_ID, "snd/lightning_pistol_up.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_lightning_rifle_ID, "snd/lightning_rifle.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_lightning_rifle_up_ID, "snd/lightning_rifle_up.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_lightning_shotgun_ID, "snd/lightning_shotgun.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_lightning_shotgun_up_ID, "snd/lightning_shotgun_up.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_lightning_cannon_ID, "snd/lightning_cannon.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_lightning_cannon_up_ID, "snd/lightning_cannon_up.wav", all_extra_sound_buffers);
+
+    add_new_sound(snd_lightning_reload_ID, "snd/lightning_reload.wav", all_sounds, snd_lightning_reload_ID, all_extra_sound_buffers, 0.1f, 0.0f);
+
 
     add_new_sound(snd_devastator_explo_ID, "snd/devastator_explo.wav", all_sounds, snd_devastator_explo_ID, all_extra_sound_buffers, 0.1f, 0.01f);
 
@@ -8599,8 +8654,26 @@ int main()
     all_sounds[snd_music_ID].sound.play();
     all_sounds[snd_music_ID].sound.setLoop(true);
     
+    //sf::VideoMode startup_fullscreen_size = sf::VideoMode::getDesktopMode();
+
+    int height_max_integer_scale = int(startup_fullscreen_size.height / 240);
+    int width_max_integer_scale = int(startup_fullscreen_size.width / 320);
+
+    int max_window_scale = 1;
+    if (height_max_integer_scale < width_max_integer_scale) {
+        window_scale = height_max_integer_scale;
+        max_window_scale = height_max_integer_scale;
+    }
+    else {
+        window_scale = width_max_integer_scale;
+        max_window_scale = width_max_integer_scale;
+    }
+
     //create fullscreen window by default
-    auto window = sf::RenderWindow({ (u_int)1920, (u_int)1080 }, "Nuclear Throne Arranged", sf::Style::Fullscreen);
+    sf::RenderWindow window = sf::RenderWindow({ (u_int)startup_fullscreen_size.width, (u_int)startup_fullscreen_size.height }, "Nuclear Throne Arranged", sf::Style::Fullscreen);
+
+    window_size_x = 320.0f * window_scale;
+    window_size_y = 240.0f * window_scale;
 
     
     //sf::RenderWindow(sf::VideoMode(), "app.exe", sf::Style::Fullscreen);
@@ -8609,7 +8682,7 @@ int main()
     game_icon.loadFromFile("res/NT icon arranged.png");
     window.setIcon(32, 32, game_icon.getPixelsPtr());
         
-    sf::View myView(sf::Vector2f(960, 540), sf::Vector2f(1920, 1080));
+    sf::View myView(sf::Vector2f(startup_fullscreen_size.width / 2, startup_fullscreen_size.height / 2), sf::Vector2f(startup_fullscreen_size.width, startup_fullscreen_size.height));
     window.setView(myView);
 
     window.setKeyRepeatEnabled(false);
@@ -9817,7 +9890,7 @@ int main()
                     }
                     //debug
                     if (event.key.code == sf::Keyboard::Add) {
-                        if (window_scale < 4) {
+                        if (window_scale < max_window_scale) {
                             window_scale++;
                             resize_window(1, window);
                         }
