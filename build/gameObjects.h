@@ -49,6 +49,10 @@ enum objectID {
 	player_laser,
 	player_laser_burst,
 
+	player_lightning,
+	player_lightning_spawn,
+	player_lightning_orb,
+
 	player,
 	player_corpse,
 
@@ -239,6 +243,7 @@ enum sound_ID {
 	snd_player_shoot_B_ID,
 
 	snd_devastator_explo_ID,
+	snd_lightning_orb_explo_ID,
 
 	snd_revenge_bullet,
 
