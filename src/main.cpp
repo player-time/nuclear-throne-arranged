@@ -120,14 +120,14 @@ int T2_object_index = 1;
 bool t2_draw_in_front = true;
 
 std::vector<sf::Sprite> variable_textures;
-int variable_textures_max = 4000;
+int variable_textures_max = 400;
 
 std::vector<sf::Sprite> wall_shadow_textures;
 int wall_shadow_textures_max = 600;
 
 
 std::vector<sf::Sprite> variable_textures_bloom;
-int variable_textures_bloom_max = 4000;
+int variable_textures_bloom_max = 6000;
 
 std::vector<sf::Sprite> lasers_bloom;
 int lasers_bloom_max = 500;
@@ -1931,7 +1931,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 break;
             case player_lightning:
                 allObjects[i].my_id = obj_id;
-                allObjects[i].my_hitbox = devastator_hitbox;
+                allObjects[i].my_hitbox = lightning_hitbox;
                 allObjects[i].damage = 7;
 
                 allObjects[i].position = { x, y };
@@ -1941,6 +1941,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 
                 allObjects[i].size = 0; 
 
+                allObjects[i].rotation = yspd;
+
                 allObjects[i].scale = xspd;
 
                 allObjects[i].team = player_team;     //player team
@@ -1948,7 +1950,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 break;
             case player_lightning_orb:
                 allObjects[i].my_id = obj_id;
-                allObjects[i].my_hitbox = devastator_hitbox;
+                allObjects[i].my_hitbox = lightning_hitbox;
                 allObjects[i].damage = 40 + ((laser_brain - 1.0f) * 50);
 
                 allObjects[i].position = { x, y };
@@ -3030,9 +3032,19 @@ void player_lightning_create(sf::Vector2f position, float direction, int length)
 
     nearest_enemy_id = find_nearest_LOS_enemy(position);
 
+    float ammo = length;
+
+    float IMAGE_IDX = 0.0f;
+
     for (int i = 0; i < length; i++) {
         length_lightning = random_float(4.0f) + 8.0f;
-        create_object(position.x, position.y, length_lightning, 0, player_lightning, direction, 0);
+        create_object(position.x, position.y, length_lightning, IMAGE_IDX, player_lightning, direction, 0);
+
+        if (ammo > 0.0f) {
+            IMAGE_IDX += 0.4f / ammo;
+        }
+
+        ammo -= 1.0f;
 
         position += {cos(direction)* length_lightning,
             sin(direction)* length_lightning};
@@ -4174,6 +4186,19 @@ void basic_enemy_collision(int currOBJ, int i, int j) {
                             }
                         }
                         break;
+                    case player_lightning:
+                        if (allObjects[currOBJ].next_hurt < current_frame && allObjects[O].team != enemy_team && is_within_throne_2(allObjects[currOBJ].position, allObjects[O].position, enemy_bullet_hitbox)) {
+                            destroy_projectile(O);
+                            allObjects[currOBJ].next_hurt++;    //lightning buff
+                            allObjects[currOBJ].my_hp -= allObjects[O].damage;
+                            if (allObjects[currOBJ].my_hp > 0) {
+                                enemy_hurt(currOBJ, O);
+                            }
+                            else {  //dead
+                                enemy_die(currOBJ, O);
+                            }
+                        }
+                        break;
                     case player_lightning_orb:
                         if (allObjects[O].team != allObjects[currOBJ].team && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[currOBJ].my_hitbox + allObjects[O].my_hitbox)) {
 
@@ -5146,6 +5171,19 @@ void throne_2_collision(int currOBJ, int i, int j) {
                             }
                         }
                         break;
+                    case player_lightning:
+                        if (allObjects[currOBJ].next_hurt < current_frame && allObjects[O].team != enemy_team && is_within_throne_2(allObjects[currOBJ].position, allObjects[O].position, enemy_bullet_hitbox)) {
+                            destroy_projectile(O);
+                            allObjects[currOBJ].next_hurt++;    //lightning buff
+                            allObjects[currOBJ].my_hp -= allObjects[O].damage;
+                            if (allObjects[currOBJ].my_hp > 0) {
+                                enemy_hurt(currOBJ, O);
+                            }
+                            else {  //dead
+                                enemy_die(currOBJ, O);
+                            }
+                        }
+                        break;
                     case devastator_bullet:
                         if (allObjects[O].team != enemy_team && is_within_throne_2(allObjects[currOBJ].position, allObjects[O].position, enemy_bullet_hitbox)) {
                             allObjects[currOBJ].my_hp -= allObjects[O].damage;
@@ -5642,7 +5680,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 7, 4.0f, player_lightning_spawn, 0.0f, 5, 30.0f * accuracy_curr, true);
             break;
         case 28://lightning cannon
-            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 8, 34, 3.0f, player_lightning_orb, 6.0f, 6, 1.0f * accuracy_curr);
+            fire_energy_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 8, 34, 3.0f, player_lightning_orb, -6.0f, 6, 1.0f * accuracy_curr);
             break;
         default:
             break;
@@ -6595,8 +6633,9 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             }
             break;
         case player_lightning:
+            allObjects[i].rotation += 0.4f;
             allObjects[i].image_index++;
-            if (allObjects[i].image_index > 15) {
+            if (allObjects[i].image_index > 7) {
                 allObjects[i].my_id = nothing;
             }
             break;
@@ -6631,6 +6670,8 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             if (rand() % 4 == 0) {
                 create_object(allObjects[i].position.x, allObjects[i].position.y, 0, 0, player_lightning_spawn, random_360_radians(), 14);
             }
+
+            play_sounds_this_frame_count[snd_lightning_cannon_loop_ID] = 1;
 
             break;
         case devastator_bullet:
@@ -8508,6 +8549,8 @@ int main()
     add_new_sound(snd_horror_beam_start_ID, "snd/horror_beam_start.wav", all_sounds, snd_horror_beam_start_ID, all_extra_sound_buffers, 0.02f, 0.0f, 70.0f);
 
     add_new_sound(snd_horror_beam_hold_ID, "snd/horror_beam_hold.wav", all_sounds, snd_horror_beam_hold_ID, all_extra_sound_buffers, 0.00f, 0.0f, 70.0f);
+
+    add_new_sound(snd_lightning_cannon_loop_ID, "snd/lightning_cannon_loop.wav", all_sounds, snd_lightning_cannon_loop_ID, all_extra_sound_buffers, 0.00f, 0.0f, 100.0f);
 
     
     add_new_sound(snd_hit_wall_ID, "snd/hit_wall.wav", all_sounds, snd_hit_wall_ID, all_extra_sound_buffers, 0.1f, 0.02f);
@@ -10994,7 +11037,11 @@ int main()
                     }
                 }
 
-
+                if (!all_sounds[snd_lightning_cannon_loop_ID].sound.getLoop()) {
+                    all_sounds[snd_lightning_cannon_loop_ID].sound.play();
+                    all_sounds[snd_lightning_cannon_loop_ID].sound.setLoop(true);
+                    all_sounds[snd_lightning_cannon_loop_ID].sound.setVolume(0.0f);
+                }
 
                 switch (player_character) {
                 case horror:
@@ -11279,6 +11326,9 @@ int main()
                         all_sounds[i].sound.setPitch(pitch_offset);
                         all_sounds[i].sound.play();
                         break;
+                    case snd_lightning_cannon_loop_ID:
+                        all_sounds[snd_lightning_cannon_loop_ID].sound.setVolume(100.0f);
+                        break;
                     case snd_horror_beam_hold_ID:
                         all_sounds[snd_horror_beam_hold_ID].sound.setVolume(70.0f);
                         break;
@@ -11313,6 +11363,9 @@ int main()
                 }
                 else if (play_sounds_this_frame_count[i] < 0) {
                     switch (i) {
+                    case snd_lightning_cannon_loop_ID:
+                        all_sounds[snd_lightning_cannon_loop_ID].sound.setVolume(0.0f);
+                        break;
                     case snd_horror_beam_hold_ID:
                         all_sounds[snd_horror_beam_hold_ID].sound.setVolume(0.0f);
                         break;
@@ -11327,6 +11380,9 @@ int main()
                     play_sounds_this_frame_pos[i].y = 0;
                 }
             }
+
+            //set looping sounds to not play if not set next frame
+            play_sounds_this_frame_count[snd_lightning_cannon_loop_ID] = -1;
 
             for (int b = 0; b < popup_texts_max; b++) {
                 if (popup_texts[b].getLineSpacing() > 20) {
@@ -13118,26 +13174,26 @@ int main()
                         lasers_bloomIndex++;
                         break;
                     case player_lightning:
-                        choice = 2;
-                        variable_textures[variableTexturesIndex].setTexture(player_lightning_tex);
-                        variable_textures[variableTexturesIndex].setColor({ 255, 255, 255, 255 });
-                        variable_textures[variableTexturesIndex].setPosition(allObjects[idx].position - cameraPos);
-                        variable_textures[variableTexturesIndex].setRotation(allObjects[idx].direction * degreestoradians);
-                        variable_textures[variableTexturesIndex].setTextureRect(sf::IntRect{ choice, 0, 1, 1 });
-                        variable_textures[variableTexturesIndex].setOrigin(0, 0);
-                        variable_textures[variableTexturesIndex].setScale(allObjects[idx].scale, 1);
-                        variableTexturesIndex++;
+                        choice = int(allObjects[idx].rotation) % 4;
+                        variable_textures_bloom[variableTexturesBloomIndex].setTexture(player_lightning_tex);
+                        variable_textures_bloom[variableTexturesBloomIndex].setColor({ 255, 255, 255, 255 });
+                        variable_textures_bloom[variableTexturesBloomIndex].setPosition(allObjects[idx].position - cameraPos);
+                        variable_textures_bloom[variableTexturesBloomIndex].setRotation(allObjects[idx].direction * degreestoradians);
+                        variable_textures_bloom[variableTexturesBloomIndex].setTextureRect(sf::IntRect{ choice, 0, 1, 1 });
+                        variable_textures_bloom[variableTexturesBloomIndex].setOrigin(0, 0);
+                        variable_textures_bloom[variableTexturesBloomIndex].setScale(allObjects[idx].scale, 2);
+                        variableTexturesBloomIndex++;
                         break;
                     case player_lightning_orb:
                         choice = int(allObjects[idx].image_index * 0.5f) % 4;
-                        variable_textures[variableTexturesIndex].setTexture(player_lightning_ball_tex);
-                        variable_textures[variableTexturesIndex].setColor({ 255, 255, 255, 255 });
-                        variable_textures[variableTexturesIndex].setPosition(allObjects[idx].position - cameraPos);
-                        variable_textures[variableTexturesIndex].setRotation(0);
-                        variable_textures[variableTexturesIndex].setTextureRect(sf::IntRect{ choice * 32, 0, 32, 32 });
-                        variable_textures[variableTexturesIndex].setOrigin(16, 16);
-                        variable_textures[variableTexturesIndex].setScale(1, 1);
-                        variableTexturesIndex++;
+                        variable_textures_bloom[variableTexturesBloomIndex].setTexture(player_lightning_ball_tex);
+                        variable_textures_bloom[variableTexturesBloomIndex].setColor({ 255, 255, 255, 255 });
+                        variable_textures_bloom[variableTexturesBloomIndex].setPosition(allObjects[idx].position - cameraPos);
+                        variable_textures_bloom[variableTexturesBloomIndex].setRotation(0);
+                        variable_textures_bloom[variableTexturesBloomIndex].setTextureRect(sf::IntRect{ choice * 32, 0, 32, 32 });
+                        variable_textures_bloom[variableTexturesBloomIndex].setOrigin(16, 16);
+                        variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
+                        variableTexturesBloomIndex++;
                         break;
                     case player_bullet:
                         if (allObjects[idx].image_index == 1) {
@@ -13383,7 +13439,7 @@ int main()
 
         sf::Text debug1;
 
-        debug1.setString("variableTexturesIndex: " + std::to_string(variableTexturesIndex));
+        debug1.setString("variableTexturesBloomIndex: " + std::to_string(variableTexturesBloomIndex));
         debug1.setCharacterSize(8);
         debug1.setFont(font);
         debug1.setColor(sf::Color::White);

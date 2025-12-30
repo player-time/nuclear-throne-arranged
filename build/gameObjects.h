@@ -253,6 +253,8 @@ enum sound_ID {
 
 	snd_lightning_reload_ID,
 
+	snd_lightning_cannon_loop_ID,
+
 	//end of sounds that will be used, not just in buffers
 
 	snd_music_ID,
@@ -530,7 +532,7 @@ enum character{ fish, crystal, eyes, melting, plant, YV, steroids, robot, chicke
 
 enum weapon_types {		//cutoffs for weapon types
 	melee_weps = 8,
-	energy_weps = 28,
+	energy_weps = 29,
 };
 
 enum what_team {
@@ -565,6 +567,8 @@ enum hitboxes {
 	weapon_hitbox = 8,
 
 	devastator_hitbox = 8,
+
+	lightning_hitbox = 5,
 
 	revenge_bullet_hitbox = -2,
 
