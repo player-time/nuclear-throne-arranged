@@ -432,6 +432,8 @@ enum sound_ID {
 	snd_lightning_cannon_ID,
 	snd_lightning_cannon_up_ID,
 
+	snd_revolver_ID,
+
 
 	snd_foot_metmetal_1_ID,
 	snd_foot_metmetal_2_ID,
@@ -533,6 +535,7 @@ enum character{ fish, crystal, eyes, melting, plant, YV, steroids, robot, chicke
 enum weapon_types {		//cutoffs for weapon types
 	melee_weps = 8,
 	energy_weps = 29,
+	bullet_weps= 99,
 };
 
 enum what_team {
