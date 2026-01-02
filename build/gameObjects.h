@@ -94,6 +94,9 @@ enum objectID {
 
 	player_bullet, player_bullet_destroy,
 	player_bouncer_bullet, player_bouncer_bullet_destroy,
+	player_bullet_burst,
+
+	rogue_bullet,
 
 	plasma_huge, plasma_big, 
 	plasma, plasma_impact,
@@ -250,6 +253,11 @@ enum sound_ID {
 	snd_laser_cannon_ID,
 	snd_laser_cannon_up_ID,
 
+	snd_machinegun_ID,
+	snd_gold_machinegun_ID,
+	snd_heavy_machinegun_ID,
+	snd_rogue_rifle_ID,
+	snd_hyper_rifle_ID,
 
 	snd_lightning_reload_ID,
 
@@ -433,6 +441,18 @@ enum sound_ID {
 	snd_lightning_cannon_up_ID,
 
 	snd_revolver_ID,
+	snd_gold_revolver_ID,
+	snd_rusty_revolver_ID,
+	snd_triple_machinegun_ID,
+	snd_minigun_ID,
+	snd_smart_gun_ID,
+	snd_quadruple_machinegun_ID,
+	snd_double_minigun_ID,
+	snd_heavy_revolver_ID,
+	snd_bouncer_SMG_ID,
+	snd_bouncer_shotgun_ID,
+	snd_ultra_revolver_ID,
+	snd_gold_frog_pistol_ID,
 
 
 	snd_foot_metmetal_1_ID,

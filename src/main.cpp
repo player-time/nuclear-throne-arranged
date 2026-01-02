@@ -803,6 +803,27 @@ sound_ID get_shoot_sound(int wep_id) {
         else { return snd_lightning_cannon_up_ID; }
         break;
     case 29: /*revolver*/return snd_revolver_ID;break;
+    case 30: /*golden revolver*/return snd_gold_revolver_ID;break;
+    case 31: /*rogue rifle*/return snd_rogue_rifle_ID;break;
+    case 32: /*rusty revolver*/return snd_rusty_revolver_ID;break;
+    case 33: /*assault rifle*/return snd_machinegun_ID;break;
+    case 34: /*machinegun*/return snd_machinegun_ID;break;
+    case 35: /*SMG*/return snd_revolver_ID;break;
+    case 36: /*triple machinegun*/return snd_triple_machinegun_ID;break;
+    case 37: /*minigun*/return snd_minigun_ID;break;
+    case 38: /*hyper rifle*/return snd_hyper_rifle_ID;break;
+    case 39: /*smart gun*/return snd_smart_gun_ID;break;
+    case 40: /*quadruple machinegun*/return snd_quadruple_machinegun_ID;break;
+    case 41: /*double minigun*/return snd_double_minigun_ID;break;
+    case 42: /*gold machinegun*/return snd_gold_machinegun_ID;break;
+    case 43: /*gold assault rifle*/return snd_gold_machinegun_ID;break;
+    case 44: /*heavy revolver*/return snd_heavy_revolver_ID; break;
+    case 45: /*heavy machine gun*/return snd_heavy_machinegun_ID;break;
+    case 46: /*heavy assault rifle*/return snd_heavy_machinegun_ID;break;
+    case 47: /*bouncer SMG*/return snd_bouncer_SMG_ID;break;
+    case 48: /*bouncer shotgun*/return snd_bouncer_shotgun_ID;break;
+    case 49: /*ultra revolver*/return snd_ultra_revolver_ID;break;
+    case 50: /*golden frog pistol*/return snd_gold_frog_pistol_ID;break;
     default:
         return snd_shoot_1_ID;
         break;
@@ -841,6 +862,27 @@ sf::Vector2f wep_get_origin(int wep_id) {
     case 27: /*lightning SMG*/return sf::Vector2f(0, 4);break;
     case 28: /*lightning cannon*/return sf::Vector2f(7, 6);break;
     case 29: /*revolver*/return sf::Vector2f(-2, 3);break;
+    case 30: /*golden revolver*/return sf::Vector2f(-2, 3); break;
+    case 31: /*rogue rifle*/return sf::Vector2f(3, 4); break;
+    case 32: /*rusty revolver*/return sf::Vector2f(-2, 3); break;
+    case 33: /*assault rifle*/return sf::Vector2f(5, 4); break;
+    case 34: /*machinegun*/return sf::Vector2f(2, 2); break;
+    case 35: /*SMG*/return sf::Vector2f(3, 4); break;
+    case 36: /*triple machinegun*/return sf::Vector2f(0, 5); break;
+    case 37: /*minigun*/return sf::Vector2f(3, 4); break;
+    case 38: /*hyper rifle*/return sf::Vector2f(7, 10); break;
+    case 39: /*smart gun*/return sf::Vector2f(7, 6); break;
+    case 40: /*quadruple machinegun*/return sf::Vector2f(5, 5); break;
+    case 41: /*double minigun*/return sf::Vector2f(3, 7); break;
+    case 42: /*gold machinegun*/return sf::Vector2f(2, 2); break;
+    case 43: /*gold assault rifle*/return sf::Vector2f(5, 4); break;
+    case 44: /*heavy revolver*/return sf::Vector2f(0, 4); break;
+    case 45: /*heavy machine gun*/return sf::Vector2f(4, 4); break;
+    case 46: /*heavy assault rifle*/return sf::Vector2f(4, 5); break;
+    case 47: /*bouncer SMG*/return sf::Vector2f(4, 4); break;
+    case 48: /*bouncer shotgun*/return sf::Vector2f(4, 4); break;
+    case 49: /*ultra revolver*/return sf::Vector2f(0, 5); break;
+    case 50: /*golden frog pistol*/return sf::Vector2f(-3, 5); break;
     default:
         return sf::Vector2f(0, 0);
         break;
@@ -879,6 +921,27 @@ void play_swap_sound(int wep_id) {
     case 27: /*lightning*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
     case 28: /*lightning*/play_sounds_this_frame_count[snd_energy_swap_ID] = 1; break;
     case 29: /*revolver*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 30: /*golden revolver*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 31: /*rogue rifle*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 32: /*rusty revolver*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 33: /*assault rifle*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 34: /*machinegun*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 35: /*SMG*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 36: /*triple machinegun*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 37: /*minigun*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 38: /*hyper rifle*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 39: /*smart gun*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 40: /*quadruple machinegun*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 41: /*double minigun*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 42: /*gold machinegun*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 43: /*gold assault rifle*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 44: /*heavy revolver*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 45: /*heavy machine gun*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 46: /*heavy assault rifle*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 47: /*bouncer SMG*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 48: /*bouncer shotgun*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 49: /*ultra revolver*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 50: /*golden frog pistol*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
     default:
         break;
     }
@@ -1106,6 +1169,21 @@ void pickup_ammo() {
             }
             else {
                 create_popuptext("+10 ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+        }
+    }
+    else if (wep_choice < bullet_weps) {    //bullet weapons
+        player_bullets += 32 + (player_character == fish) * 8;
+        if (player_bullets > player_bullets_max) {
+            player_bullets = player_bullets_max;
+            create_popuptext("MAX BULLETS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+        }
+        else {
+            if (player_character == fish) {
+                create_popuptext("+32 BULLETS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            else {
+                create_popuptext("+40 BULLETS", allObjects[0].position + sf::Vector2f{ 0, -8 });
             }
         }
     }
@@ -1699,6 +1777,17 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].alarm1 = 15;
                 allObjects[i].team = enemy_team;     //enemy team
                 break;
+            case rogue_bullet:
+                allObjects[i].my_id = idpd_bullet;
+                allObjects[i].my_hitbox = enemy_bullet_hitbox;
+                allObjects[i].damage = 3;
+
+                allObjects[i].position = { x, y };
+                allObjects[i].speed = { xspd, yspd };
+                allObjects[i].direction = direction * degreestoradians + 180.0f;
+                allObjects[i].image_index = 0;
+                allObjects[i].team = enemy_team;     //enemy team
+                break;
             case idpd_bullet:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].my_hitbox = enemy_bullet_hitbox;
@@ -1992,6 +2081,53 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].friction = 0.025f;
 
                 allObjects[i].team = player_team;     //player team
+
+                break;
+            case player_bullet_burst:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].my_hitbox = enemy_bullet_hitbox;
+                allObjects[i].damage = 3;
+
+
+                if (image_index == 1) {
+                    allObjects[i].damage = 3;   //normal
+                    allObjects[i].size = 3; //number of bullets
+                    allObjects[i].alarm1 = 2;   //delay between shots
+                    allObjects[i].alarm2 = 0;
+                }
+                if (image_index == 2) {
+                    allObjects[i].damage = 3;   //normal
+                    allObjects[i].size = 5; //number of bullets
+                    allObjects[i].alarm1 = 1;   //delay between shots
+                    allObjects[i].alarm2 = 0;
+                }
+                if (image_index == 3) {
+                    allObjects[i].damage = 7;   //heavy
+                    allObjects[i].size = 3; //number of bullets
+                    allObjects[i].alarm1 = 2;   //delay between shots
+                    allObjects[i].alarm2 = 0;
+                }
+                if (image_index == 4) {
+                    allObjects[i].damage = 3;   //normal
+                    allObjects[i].size = 3; //number of bullets
+                    allObjects[i].alarm1 = 2;   //delay between shots
+                    allObjects[i].alarm2 = 1;   //gold sound
+                }
+                if (image_index == 5) {
+                    allObjects[i].damage = 3;   //rogue
+                    allObjects[i].size = 2; //number of bullets
+                    allObjects[i].alarm1 = 3;   //delay between shots
+                    allObjects[i].alarm2 = 2;   //rogue
+                }
+
+
+                allObjects[i].position = { x, y };
+                allObjects[i].speed = { xspd, yspd };
+                allObjects[i].direction = direction;
+                allObjects[i].image_index = 0;
+                allObjects[i].team = player_team;     //player team
+
+                //allObjects[i].size = image_index;   //whether it is visually a player bullet or ally bullet
 
                 break;
             case player_bullet:
@@ -3679,7 +3815,7 @@ void enemy_die(int ENEMY, int PROJ) {
         ammo_drop_function(ENEMY, 16);
 
         if (rand() % 20 == 0) {
-            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, weapon_drop, 0, rand() % 30);
+            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, weapon_drop, 0, rand() % 51);
         }
 
         //debug start
@@ -4142,6 +4278,21 @@ void add_ammo_chest_to_player(int the_wep) {
                 }
                 else {
                     create_popuptext("+20 ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+            }
+        }
+        else if (the_wep < bullet_weps) {
+            player_bullets += 64 + (player_character == fish) * 16;
+            if (player_bullets > player_bullets_max) {
+                player_bullets = player_bullets_max;
+                create_popuptext("MAX BULLETS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            else {
+                if (player_character == fish) {
+                    create_popuptext("+80 BULLETS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+                else {
+                    create_popuptext("+64 BULLETS", allObjects[0].position + sf::Vector2f{ 0, -8 });
                 }
             }
         }
@@ -5434,7 +5585,73 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
             }
             else {
                 if (wep >= energy_weps && wep < bullet_weps) {  //bullet wep
-                    create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy, bullet_type);
+                    if (wep == 36) {    //triple machinegun
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy, bullet_type);
+                        Xspd = cos(direction + inaccuracy + 15.0f / degreestoradians) * proj_speed;
+                        Yspd = sin(direction + inaccuracy + 15.0f / degreestoradians) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy + 15.0f / degreestoradians, bullet_type);
+                        Xspd = cos(direction + inaccuracy - 15.0f / degreestoradians) * proj_speed;
+                        Yspd = sin(direction + inaccuracy - 15.0f / degreestoradians) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy - 15.0f / degreestoradians, bullet_type);
+                    }
+                    else if (wep == 40) {    //quadruple machinegun
+                        Xspd = cos(direction + inaccuracy + 18.0f / degreestoradians) * proj_speed;
+                        Yspd = sin(direction + inaccuracy + 18.0f / degreestoradians) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy + 18.0f / degreestoradians, bullet_type);
+                        Xspd = cos(direction + inaccuracy - 18.0f / degreestoradians) * proj_speed;
+                        Yspd = sin(direction + inaccuracy - 18.0f / degreestoradians) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy - 18.0f / degreestoradians, bullet_type);
+                        Xspd = cos(direction + inaccuracy + 6.0f / degreestoradians) * proj_speed;
+                        Yspd = sin(direction + inaccuracy + 6.0f / degreestoradians) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy + 6.0f / degreestoradians, bullet_type);
+                        Xspd = cos(direction + inaccuracy - 6.0f / degreestoradians) * proj_speed;
+                        Yspd = sin(direction + inaccuracy - 6.0f / degreestoradians) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy - 6.0f / degreestoradians, bullet_type);
+                    }
+                    else if (wep == 41) {    //double minigun
+                        Xspd = cos(direction + inaccuracy + 4.25f / degreestoradians) * proj_speed;
+                        Yspd = sin(direction + inaccuracy + 4.25f / degreestoradians) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy + 4.25f / degreestoradians, bullet_type);
+                        Xspd = cos(direction + inaccuracy - 4.25f / degreestoradians) * proj_speed;
+                        Yspd = sin(direction + inaccuracy - 4.25f / degreestoradians) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy - 4.25f / degreestoradians, bullet_type);
+                    }
+                    else if (wep == 42) {    //gold machinegun
+                        Xspd = cos(direction + inaccuracy + 2.5f / degreestoradians) * proj_speed;
+                        Yspd = sin(direction + inaccuracy + 2.5f / degreestoradians) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy + 2.5f / degreestoradians, bullet_type);
+                        Xspd = cos(direction + inaccuracy - 2.5f / degreestoradians) * proj_speed;
+                        Yspd = sin(direction + inaccuracy - 2.5f / degreestoradians) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy - 2.5f / degreestoradians, bullet_type);
+                    }
+                    else if (wep == 48) {    //bouncer shotgun
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy, bullet_type);
+                        Xspd = cos(direction + inaccuracy - 10.0f / degreestoradians) * proj_speed;
+                        Yspd = sin(direction + inaccuracy - 10.0f / degreestoradians) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy - 10.0f / degreestoradians, bullet_type);
+                        Xspd = cos(direction + inaccuracy + 10.0f / degreestoradians) * proj_speed;
+                        Yspd = sin(direction + inaccuracy + 10.0f / degreestoradians) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy + 10.0f / degreestoradians, bullet_type);
+                        Xspd = cos(direction + inaccuracy - 20.0f / degreestoradians) * proj_speed;
+                        Yspd = sin(direction + inaccuracy - 20.0f / degreestoradians) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy - 20.0f / degreestoradians, bullet_type);
+                        Xspd = cos(direction + inaccuracy + 20.0f / degreestoradians) * proj_speed;
+                        Yspd = sin(direction + inaccuracy + 20.0f / degreestoradians) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy + 20.0f / degreestoradians, bullet_type);
+                        Xspd = cos(direction + inaccuracy - 30.0f / degreestoradians) * proj_speed;
+                        Yspd = sin(direction + inaccuracy - 30.0f / degreestoradians) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy - 30.0f / degreestoradians, bullet_type);
+                        Xspd = cos(direction + inaccuracy + 30.0f / degreestoradians) * proj_speed;
+                        Yspd = sin(direction + inaccuracy + 30.0f / degreestoradians) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy + 30.0f / degreestoradians, bullet_type);
+                    }
+                    else if (wep == 50) {    //gold frog pistol
+                        //TODO
+                    }
+                    else {
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy, bullet_type);
+                    }
+
                 }
                 else {
                     create_object(allObjects[0].position.x + Xspd / 2, allObjects[0].position.y + Yspd / 2, Xspd, Yspd, object_type, direction + inaccuracy, 0);
@@ -5753,13 +5970,13 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 5, 16.0f, player_bullet, -0.0f, 4, 4.0f * accuracy_curr, false, player_bullets, 0);
             break;
         case 31://rogue rifle
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 6, 16.0f, player_bullet, -0.0f, 0, 5.0f * accuracy_curr, false, player_bullets, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 6, 16.0f, player_bullet_burst, -0.0f, 0, 5.0f * accuracy_curr, false, player_bullets, 5);
             break;
         case 32://rusty revolver
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 7, 16.0f, player_bullet, -0.0f, 4, 0.0f * accuracy_curr, false, player_bullets, 0);
             break;
         case 33://assault rifle
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 11, 16.0f, player_bullet, -0.0f, 2, 2.0f * accuracy_curr, false, player_bullets, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 11, 16.0f, player_bullet_burst, -0.0f, 2, 2.0f * accuracy_curr, false, player_bullets, 1);
             break;
         case 34://machinegun
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 5, 16.0f, player_bullet, -0.0f, 2, 6.0f * accuracy_curr, true, player_bullets, 0);
@@ -5774,13 +5991,13 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 1, 16.0f, player_bullet, -0.4f, 4, 13.0f * accuracy_curr, true, player_bullets, 0);
             break;
         case 38://hyper rifle
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 5, 3, 16.0f, player_bullet, -0.0f, 0, 2.0f * accuracy_curr, false, player_bullets, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 5, 3, 16.0f, player_bullet_burst, -0.0f, 0, 2.0f * accuracy_curr, false, player_bullets, 2);
             break;
         case 39://smart gun
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 3, 16.0f, player_bullet, -0.0f, 5, 5.0f * accuracy_curr, true, player_bullets, 0);
             break;
         case 40://quadruple machinegun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 4, 6, 16.0f, player_bullet, -0.0f, 8, 3.0f * accuracy_curr, true, player_bullets, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 4, 4, 16.0f, player_bullet, -0.0f, 8, 3.0f * accuracy_curr, true, player_bullets, 0);
             break;
         case 41://double minigun
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 1, 16.0f, player_bullet, -0.7f, 7, 9.5f * accuracy_curr, true, player_bullets, 0);
@@ -5789,7 +6006,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 4, 16.0f, player_bullet, -0.0f, 4, 4.0f * accuracy_curr, true, player_bullets, 0);
             break;
         case 43://golden assault rifle
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 9, 16.0f, player_bullet, -0.0f, 0, 2.0f * accuracy_curr, false, player_bullets, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 9, 16.0f, player_bullet_burst, -0.0f, 0, 2.0f * accuracy_curr, false, player_bullets, 4);
             break;
             
         case 44://heavy revolver
@@ -5799,7 +6016,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 5, 16.0f, player_bullet, -0.0f, 6, 3.0f * accuracy_curr, true, player_bullets, 3);
             break;
         case 46://heavy assault rifle
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 6, 9, 16.0f, player_bullet, -0.0f, 0, 1.0f * accuracy_curr, false, player_bullets, 3);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 6, 9, 16.0f, player_bullet_burst, -0.0f, 0, 1.0f * accuracy_curr, false, player_bullets, 3);
             break;
 
         case 47://bouncer SMG
@@ -7184,6 +7401,51 @@ void rogue_strike_strike(sf::Vector2f pos) {
     }
 }
 
+void player_bullet_burst_step(int obj) {
+    if (allObjects[obj].image_index % allObjects[obj].alarm1 == 0) {
+        if (allObjects[obj].alarm2 != 2) {
+            int IIDX = 0;
+            if (allObjects[obj].damage == 3) {
+                IIDX = 0;   //normal
+            }
+            else {
+                IIDX = 3;   //heavy
+            }
+            create_object(allObjects[0].position.x, allObjects[0].position.y, allObjects[obj].speed.x, allObjects[obj].speed.y, player_bullet, allObjects[obj].direction, IIDX);
+            allObjects[obj].size--;
+
+            if (allObjects[obj].damage == 3) {
+                if (allObjects[obj].alarm2 == 0) {
+                    if (allObjects[obj].alarm1 != 1) {
+                        play_sound_on_player(snd_machinegun_ID);
+                    }
+                    else {//hyper rifle
+                        play_sound_on_player(snd_hyper_rifle_ID);
+                    }
+                }
+                else {
+                    play_sound_on_player(snd_gold_machinegun_ID);
+                }
+            }
+            else {
+                play_sound_on_player(snd_heavy_machinegun_ID);
+            }
+            if (wep == 31 || wep == 33 || wep == 38 || wep == 43 || wep == 46) {
+                wep_kick = 4;
+            }
+        }
+        else {  //rogue burst
+            create_object(allObjects[0].position.x, allObjects[0].position.y, allObjects[obj].speed.x, allObjects[obj].speed.y, rogue_bullet, allObjects[obj].direction, 0);
+            allObjects[obj].size--;
+            play_sound_on_player(snd_rogue_rifle_ID);
+        }
+    }
+    allObjects[obj].image_index++;
+    if (allObjects[obj].size <= 0) {
+        allObjects[obj].my_id = nothing;
+    }
+}
+
 void do_object_collision(int start, int end, int threadNUM) {       //create objects at different offsets depending on the thread so work is more evenly spread and overlap in object creation is basically impossible
     std::random_device rd;
     // Initialize random_float number generator
@@ -7229,6 +7491,11 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                         player_bounce_wall(O, h, w, 5, 5, i, j);
                                         roll_direction = allObjects[O].direction;
                                     }
+                                }
+                                break;
+                            case player_bullet_burst:
+                                if (w == 0 && h == 0) {
+                                    player_bullet_burst_step(O);
                                 }
                                 break;
                             case player_lightning_spawn:
@@ -7389,6 +7656,9 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                 }
                 for (int currOBJ : game_area[i][j].object_indexes) {    //inside of wall
                     switch (allObjects[currOBJ].my_id) {
+                    case player_bullet_burst:
+                        player_bullet_burst_step(currOBJ);
+                        break;
                     case player_lightning_spawn:
                         player_lightning_create(allObjects[currOBJ].position, allObjects[currOBJ].direction, allObjects[currOBJ].size);
                         break;
@@ -7509,6 +7779,9 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                         break;
                     case T2_bullet:
                         T2_bullet_step(currOBJ);
+                        break;
+                    case player_bullet_burst:
+                        player_bullet_burst_step(currOBJ);
                         break;
                     case player_lightning_spawn:
                         player_lightning_create(allObjects[currOBJ].position, allObjects[currOBJ].direction, allObjects[currOBJ].size);
@@ -8829,6 +9102,25 @@ int main()
 
     add_new_sound(snd_plasma_split_upgrade_ID, "snd/plasma_split_upgrade.wav", all_sounds, snd_plasma_split_upgrade_ID, all_extra_sound_buffers, 0.15f, 0.01f);
 
+
+    add_new_sound(snd_machinegun_ID, "snd/machinegun.wav", all_sounds, snd_machinegun_ID, all_extra_sound_buffers, 0.1f, 0.0f);
+    add_new_sound(snd_gold_machinegun_ID, "snd/gold_machinegun.wav", all_sounds, snd_gold_machinegun_ID, all_extra_sound_buffers, 0.1f, 0.0f);
+    add_new_sound(snd_heavy_machinegun_ID, "snd/heavy_machinegun.wav", all_sounds, snd_heavy_machinegun_ID, all_extra_sound_buffers, 0.1f, 0.0f);
+    add_new_sound(snd_rogue_rifle_ID, "snd/rogue_rifle.wav", all_sounds, snd_rogue_rifle_ID, all_extra_sound_buffers, 0.1f, 0.0f);
+    add_new_sound(snd_hyper_rifle_ID, "snd/hyper_rifle.wav", all_sounds, snd_hyper_rifle_ID, all_extra_sound_buffers, 0.1f, 0.0f);
+
+    add_new_sound_buffer(snd_gold_revolver_ID, "snd/gold_revolver.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_rusty_revolver_ID, "snd/rusty_revolver.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_triple_machinegun_ID, "snd/triple_machinegun.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_minigun_ID, "snd/minigun.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_smart_gun_ID, "snd/smart_gun.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_quadruple_machinegun_ID, "snd/quadruple_machinegun.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_double_minigun_ID, "snd/double_minigun.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_heavy_revolver_ID, "snd/heavy_revolver.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_bouncer_SMG_ID, "snd/bouncer_SMG.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_bouncer_shotgun_ID, "snd/bouncer_shotgun.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_ultra_revolver_ID, "snd/ultra_revolver.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_gold_frog_pistol_ID, "snd/gold_frog_pistol.wav", all_extra_sound_buffers);
 
 
     add_new_sound(snd_pistol_swap_ID, "snd/pistol_swap.wav", all_sounds, snd_pistol_swap_ID, all_extra_sound_buffers, 0.005f, 0.0f);
