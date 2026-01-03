@@ -53,6 +53,8 @@ enum objectID {
 	player_lightning_spawn,
 	player_lightning_orb,
 
+	player_bolt_burst,
+
 	player,
 	player_corpse,
 
@@ -95,6 +97,9 @@ enum objectID {
 	player_bullet, player_bullet_destroy,
 	player_bouncer_bullet, player_bouncer_bullet_destroy,
 	player_bullet_burst,
+
+	player_bolt,
+	player_bolt_stick,
 
 	rogue_bullet,
 
@@ -262,6 +267,12 @@ enum sound_ID {
 	snd_lightning_reload_ID,
 
 	snd_lightning_cannon_loop_ID,
+
+	snd_bullet_bounce_ID,
+
+	snd_crossbow_reload_ID,
+
+	snd_super_splinter_ID,
 
 	//end of sounds that will be used, not just in buffers
 
@@ -454,6 +465,16 @@ enum sound_ID {
 	snd_ultra_revolver_ID,
 	snd_gold_frog_pistol_ID,
 
+	snd_crossbow_ID,
+	snd_super_crossbow_ID,
+	snd_gold_crossbow_ID,
+	snd_heavy_crossbow_ID,
+	snd_splinter_ID,
+	snd_splinter_pistol_ID,
+	
+	snd_gold_splinter_ID,
+	snd_ultra_crossbow_ID, 
+
 
 	snd_foot_metmetal_1_ID,
 	snd_foot_metmetal_2_ID,
@@ -555,7 +576,10 @@ enum character{ fish, crystal, eyes, melting, plant, YV, steroids, robot, chicke
 enum weapon_types {		//cutoffs for weapon types
 	melee_weps = 8,
 	energy_weps = 29,
-	bullet_weps= 99,
+	bullet_weps = 51,
+	bolt_weps = 65,
+	shell_weps = 100,
+	explosive_weps = 200,
 };
 
 enum what_team {
