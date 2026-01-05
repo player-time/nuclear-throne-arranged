@@ -34,7 +34,7 @@ int bandit_choice1 = 0;
 int draw_mult = 5;
 //
 
-bool global_debug = false;
+bool global_debug = true;
 
 bool debug_invincibility = false;
 
@@ -125,7 +125,10 @@ int T2_object_index = 1;
 bool t2_draw_in_front = true;
 
 std::vector<sf::Sprite> variable_textures;
-int variable_textures_max = 400;
+int variable_textures_max = 4000;
+
+std::vector<sf::Sprite> variable_textures_top;
+int variable_textures_top_max = 400;
 
 std::vector<sf::Sprite> wall_shadow_textures;
 int wall_shadow_textures_max = 600;
@@ -435,6 +438,8 @@ int bloodlust = 1;
 
 bool rabbit_paw = 1;
 
+bool bolt_marrow = false;
+
 bool has_spirit = true;
 bool can_recover_spirit = false;
 int spirit_anim_frame = 0;
@@ -687,18 +692,20 @@ void draw_weapon_text(int wep_ID, sf::Vector2f pos, sf::Text text, sf::RenderTex
     case 48:text.setString("BOUNCER SHOTGUN");break;
     case 49:text.setString("ULTRA REVOLVER");break;
     case 50:text.setString("GOLDEN FROG PISTOL");break;
-    case 51:text.setString("CROSSBOW");break;
-    case 52:text.setString("AUTO CROSSBOW");break;
-    case 53:text.setString("SUPER CROSSBOW");break;
-    case 54:text.setString("GOLDEN CROSSBOW");break;
-    case 55:text.setString("HEAVY CROSSBOW");break;
-    case 56:text.setString("HEAVY AUTO CROSSBOW");break;
-    case 57:text.setString("TOXIC BOW");break;
-    case 58:text.setString("SPLINTER GUN");break;
-    case 59:text.setString("SPLINTER PISTOL");break;
-    case 60:text.setString("SUPER SPLINTER GUN");break;
-    case 61:text.setString("GOLDEN SPLINTER GUN");break;
-    case 62:text.setString("ULTRA CROSSBOW");break;
+    case 51:text.setString("INCINERATOR");break;
+
+    case 52:text.setString("CROSSBOW");break;
+    case 53:text.setString("AUTO CROSSBOW");break;
+    case 54:text.setString("SUPER CROSSBOW");break;
+    case 55:text.setString("GOLDEN CROSSBOW");break;
+    case 56:text.setString("HEAVY CROSSBOW");break;
+    case 57:text.setString("HEAVY AUTO CROSSBOW");break;
+    case 58:text.setString("TOXIC BOW");break;
+    case 59:text.setString("SPLINTER GUN");break;
+    case 60:text.setString("SPLINTER PISTOL");break;
+    case 61:text.setString("SUPER SPLINTER GUN");break;
+    case 62:text.setString("GOLDEN SPLINTER GUN");break;
+    case 63:text.setString("ULTRA CROSSBOW");break;
     }
     text.setPosition(int(pos.x - cameraPos.x) - text.getString().getSize() * 4, int(pos.y - cameraPos.y) - 28);
     wep_arrow_sprite.setPosition(int(pos.x - cameraPos.x), int(pos.y - cameraPos.y) - 16);
@@ -836,18 +843,20 @@ sound_ID get_shoot_sound(int wep_id) {
     case 48: /*bouncer shotgun*/return snd_bouncer_shotgun_ID;break;
     case 49: /*ultra revolver*/return snd_ultra_revolver_ID;break;
     case 50: /*golden frog pistol*/return snd_gold_frog_pistol_ID;break;
-    case 51: /*crossbow*/return snd_crossbow_ID;break;
-    case 52: /*Auto Crossbow*/return snd_crossbow_ID;break;
-    case 53: /*Super Crossbow*/return snd_super_crossbow_ID;break;
-    case 54: /*Golden Crossbow*/return snd_gold_crossbow_ID;break;
-    case 55: /*Heavy Crossbow*/return snd_heavy_crossbow_ID;break;
-    case 56: /*Heavy Auto Crossbow*/return snd_heavy_crossbow_ID;break;
-    case 57: /*Toxic Bow*/return snd_crossbow_ID;break;
-    case 58: /*Splinter Gun*/return snd_splinter_ID;break;
-    case 59: /*Splinter Pistol*/return snd_splinter_pistol_ID;break;
-    case 60: /*Super Splinter Gun*/return snd_super_splinter_ID;break;
-    case 61: /*Golden Splinter Gun*/return snd_gold_splinter_ID;break;
-    case 62: /*Ultra Crossbow*/return snd_ultra_crossbow_ID;break;
+    case 51: /*incinerator*/return snd_incinerator_ID;break;
+
+    case 52: /*crossbow*/return snd_crossbow_ID;break;
+    case 53: /*Auto Crossbow*/return snd_crossbow_ID;break;
+    case 54: /*Super Crossbow*/return snd_super_crossbow_ID;break;
+    case 55: /*Golden Crossbow*/return snd_gold_crossbow_ID;break;
+    case 56: /*Heavy Crossbow*/return snd_heavy_crossbow_ID;break;
+    case 57: /*Heavy Auto Crossbow*/return snd_heavy_crossbow_ID;break;
+    case 58: /*Toxic Bow*/return snd_crossbow_ID;break;
+    case 59: /*Splinter Gun*/return snd_splinter_ID;break;
+    case 60: /*Splinter Pistol*/return snd_splinter_pistol_ID;break;
+    case 61: /*Super Splinter Gun*/return snd_super_splinter_ID;break;
+    case 62: /*Golden Splinter Gun*/return snd_gold_splinter_ID;break;
+    case 63: /*Ultra Crossbow*/return snd_ultra_crossbow_ID;break;
     default:
         return snd_shoot_1_ID;
         break;
@@ -909,19 +918,20 @@ sf::Vector2f wep_get_origin(int wep_id) {
     case 48: /*bouncer shotgun*/return sf::Vector2f(4, 4); break;
     case 49: /*ultra revolver*/return sf::Vector2f(0, 5); break;
     case 50: /*golden frog pistol*/return sf::Vector2f(-3, 5); break;
+    case 51: /*incinerator*/return sf::Vector2f(6, 6); break;
 
-    case 51: /*crossbow*/return sf::Vector2f(3, 4); break;
-    case 52: /*Auto Crossbow*/return sf::Vector2f(3, 4); break;
-    case 53: /*Super Crossbow*/return sf::Vector2f(6, 4); break;
-    case 54: /*Golden Crossbow*/return sf::Vector2f(3, 5); break;
-    case 55: /*Heavy Crossbow*/return sf::Vector2f(4, 5); break;
-    case 56: /*Heavy Auto Crossbow*/return sf::Vector2f(4, 5); break;
-    case 57: /*Toxic Bow*/return sf::Vector2f(4, 4); break;
-    case 58: /*Splinter Gun*/return sf::Vector2f(3, 4); break;
-    case 59: /*Splinter Pistol*/return sf::Vector2f(-2, 5); break;
-    case 60: /*Super Splinter Gun*/return sf::Vector2f(3, 5); break;
-    case 61: /*Golden Splinter Gun*/return sf::Vector2f(3, 4); break;
-    case 62: /*Ultra Crossbow*/return sf::Vector2f(1, 6); break;
+    case 52: /*crossbow*/return sf::Vector2f(3, 4); break;
+    case 53: /*Auto Crossbow*/return sf::Vector2f(3, 4); break;
+    case 54: /*Super Crossbow*/return sf::Vector2f(6, 4); break;
+    case 55: /*Golden Crossbow*/return sf::Vector2f(3, 5); break;
+    case 56: /*Heavy Crossbow*/return sf::Vector2f(4, 5); break;
+    case 57: /*Heavy Auto Crossbow*/return sf::Vector2f(4, 5); break;
+    case 58: /*Toxic Bow*/return sf::Vector2f(4, 4); break;
+    case 59: /*Splinter Gun*/return sf::Vector2f(3, 4); break;
+    case 60: /*Splinter Pistol*/return sf::Vector2f(-2, 5); break;
+    case 61: /*Super Splinter Gun*/return sf::Vector2f(3, 5); break;
+    case 62: /*Golden Splinter Gun*/return sf::Vector2f(3, 4); break;
+    case 63: /*Ultra Crossbow*/return sf::Vector2f(1, 6); break;
     default:
         return sf::Vector2f(0, 0);
         break;
@@ -983,19 +993,20 @@ void play_swap_sound(int wep_id) {
     case 48: /*bouncer shotgun*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
     case 49: /*ultra revolver*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
     case 50: /*golden frog pistol*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
+    case 51: /*incinerator*/play_sounds_this_frame_count[snd_pistol_swap_ID] = 1; break;
 
-    case 51: /*crossbow*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
-    case 52: /*Auto Crossbow*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
-    case 53: /*Super Crossbow*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
-    case 54: /*Golden Crossbow*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
-    case 55: /*Heavy Crossbow*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
-    case 56: /*Heavy Auto Crossbow*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
-    case 57: /*Toxic Bow*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
-    case 58: /*Splinter Gun*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
-    case 59: /*Splinter Pistol*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
-    case 60: /*Super Splinter Gun*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
-    case 61: /*Golden Splinter Gun*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
-    case 62: /*Ultra Crossbow*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
+    case 52: /*crossbow*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
+    case 53: /*Auto Crossbow*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
+    case 54: /*Super Crossbow*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
+    case 55: /*Golden Crossbow*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
+    case 56: /*Heavy Crossbow*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
+    case 57: /*Heavy Auto Crossbow*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
+    case 58: /*Toxic Bow*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
+    case 59: /*Splinter Gun*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
+    case 60: /*Splinter Pistol*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
+    case 61: /*Super Splinter Gun*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
+    case 62: /*Golden Splinter Gun*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
+    case 63: /*Ultra Crossbow*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
     default:
         break;
     }
@@ -1027,7 +1038,7 @@ void get_wep_reload_sound(int wep) {
     case 28:    //lightning
         play_sound_on_player(snd_lightning_reload_ID);
         break;
-    case 51:
+
     case 52:
     case 53:
     case 54:
@@ -1039,6 +1050,7 @@ void get_wep_reload_sound(int wep) {
     case 60:
     case 61:
     case 62:
+    case 63:
         break;
         play_sound_on_player(snd_crossbow_reload_ID);
         break;
@@ -2357,6 +2369,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 
                 if (image_index == 2) {
                     allObjects[i].damage = 4;   //boucning
+                    allObjects[i].my_hp = 1;
                 }
 
                 if (image_index == 3) {
@@ -2388,6 +2401,15 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].team = player_team;     //player team
 
                 allObjects[i].size = 6;
+                break;
+            case bolt_trail:
+                allObjects[i].my_id = obj_id;
+
+                allObjects[i].position = { x, y };
+                allObjects[i].direction = direction * degreestoradians;
+                allObjects[i].image_index = image_index;
+                allObjects[i].scale = 1.5f;
+
                 break;
             case player_bolt:
                 allObjects[i].my_id = obj_id;
@@ -2431,7 +2453,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].direction = direction;
                 allObjects[i].image_index = 2;
 
-                allObjects[i].alarm3 = xspd;    //what object its stuck to 0 if stuck in wall
+                allObjects[i].alarm3 = xspd;    //what object its stuck to, 0 if stuck in wall
 
                 allObjects[i].team = player_team;     //player team
 
@@ -2856,6 +2878,21 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 
                 allObjects[i].image_index = rand() % 3;
                 allObjects[i].direction = random_360_degrees();
+                break;
+            case shell_effect:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].my_hitbox = idpd_nade_hitbox;
+                allObjects[i].position = { x, y };
+                allObjects[i].speed = { 0, 0 };
+                allObjects[i].direction = direction;
+
+                allObjects[i].speeddir = xspd;
+
+                allObjects[i].rotation = random_360_degrees();
+
+                allObjects[i].size = image_index;   //offset on the sprite sheet
+
+                allObjects[i].alarm1 = 150 + rand() % 30;
                 break;
             case static_effect:
                 allObjects[i].my_id = obj_id;
@@ -3573,6 +3610,12 @@ void destroy_projectile(int object_index) {
         break;
     case player_bolt:
         allObjects[object_index].my_id = nothing;    //turn into a on hit effect
+        if (allObjects[object_index].damage == 16) {    //toxic
+            for (int i = 0; i < 21; i++) {
+                create_object(allObjects[object_index].position.x - allObjects[object_index].speed.x / 2, allObjects[object_index].position.y - allObjects[object_index].speed.y / 2, 0, 0, toxic_gas, 0.0f, 0);
+                play_sound_relative_to_player(snd_toxic_bolt_gas_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
+            }
+        }
         break;
     case player_bullet:
         allObjects[object_index].my_id = player_bullet_destroy;    //turn into a on hit effect
@@ -5914,6 +5957,15 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
             }
             else {
                 if (wep >= energy_weps && wep < bullet_weps) {  //bullet wep
+                    int shell_type_temp = 0;
+                    if (bullet_type == 3) { //heavy
+                        shell_type_temp = 1;
+                    }
+                    for (int CO = 0; CO < cost / (shell_type_temp + 1); CO++) {
+                        create_object(allObjects[0].position.x, allObjects[0].position.y, random_float(2) + 2, 0, shell_effect, direction + (random_float(60) - 30) / degreestoradians, shell_type_temp);
+                    }
+
+
                     if (wep == 36) {    //triple machinegun
                         create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy, bullet_type);
                         Xspd = cos(direction + inaccuracy + 15.0f / degreestoradians) * proj_speed;
@@ -5976,6 +6028,32 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
                     }
                     else if (wep == 50) {    //gold frog pistol
                         //TODO
+                    }
+                    else if (wep == 51) {    //incinerator
+                        float extra_innacc = random_float(7.0f) - 3.5f;
+                        Xspd = cos(direction + inaccuracy + 9.0f / degreestoradians + extra_innacc) * proj_speed;
+                        Yspd = sin(direction + inaccuracy + 9.0f / degreestoradians + extra_innacc) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy + extra_innacc, bullet_type);
+
+                        extra_innacc = random_float(7.0f) - 3.5f;
+                        Xspd = cos(direction + inaccuracy + 9.0f / degreestoradians + extra_innacc) * proj_speed;
+                        Yspd = sin(direction + inaccuracy + 9.0f / degreestoradians + extra_innacc) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy + 9.0f / degreestoradians + extra_innacc, bullet_type);
+
+                        extra_innacc = random_float(7.0f) - 3.5f;
+                        Xspd = cos(direction + inaccuracy - 9.0f / degreestoradians + extra_innacc) * proj_speed;
+                        Yspd = sin(direction + inaccuracy - 9.0f / degreestoradians + extra_innacc) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy - 9.0f / degreestoradians + extra_innacc, bullet_type);
+
+                        extra_innacc = random_float(7.0f) - 3.5f;
+                        Xspd = cos(direction + inaccuracy + 18.0f / degreestoradians + extra_innacc) * proj_speed;
+                        Yspd = sin(direction + inaccuracy + 18.0f / degreestoradians + extra_innacc) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy + 18.0f / degreestoradians + extra_innacc, bullet_type);
+
+                        extra_innacc = random_float(7.0f) - 3.5f;
+                        Xspd = cos(direction + inaccuracy - 18.0f / degreestoradians + extra_innacc) * proj_speed;
+                        Yspd = sin(direction + inaccuracy - 18.0f / degreestoradians + extra_innacc) * proj_speed;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy - 18.0f / degreestoradians + extra_innacc, bullet_type);
                     }
                     else {
                         create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy, bullet_type);
@@ -6440,40 +6518,44 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 6, 12.0f, player_bullet, -0.0f, 0, 6.0f * accuracy_curr, true, player_bullets, 5);
             break;
 
-        case 51://crossbow
+        case 51://incinerator
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 2, 16.0f, player_shell, -0.0f, 7, 5.0f * accuracy_curr, true, player_bullets, 1);
+            break;
+
+        case 52://crossbow
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 26, 24.0f, player_bolt, -0.0f, 4, 0.0f * accuracy_curr, false, player_bolts, 0);
             break;
-        case 52://auto crossbow
+        case 53://auto crossbow
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 8, 24.0f, player_bolt, -0.0f, 4, 5.0f * accuracy_curr, true, player_bolts, 0);
             break;
-        case 53://super crossbow
+        case 54://super crossbow
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 5, 30, 24.0f, player_bolt, -0.0f, 8, 0.0f * accuracy_curr, false, player_bolts, 0);
             break;
-        case 54://gold crossbow
+        case 55://gold crossbow
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 23, 24.0f, player_bolt, -0.0f, 4, 0.0f * accuracy_curr, false, player_bolts, 5);
             break;
-        case 55://heavy crossbow
+        case 56://heavy crossbow
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 40, 24.0f, player_bolt, -0.0f, 6, 0.0f * accuracy_curr, false, player_bolts, 1);
             break;
-        case 56://heavy auto crossbow
+        case 57://heavy auto crossbow
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 13, 24.0f, player_bolt, -0.0f, 6, 6.0f * accuracy_curr, true, player_bolts, 1);
             break;
-        case 57://toxic crossbow
+        case 58://toxic crossbow
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 29, 22.0f, player_bolt, -0.0f, 4, 0.0f * accuracy_curr, false, player_bolts, 4);
             break;
-        case 58://splinter gun
+        case 59://splinter gun
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 19, 24.0f, player_bolt, -0.0f, 3, 0.0f * accuracy_curr, false, player_bolts, 3);
             break;
-        case 59://splinter pistol
+        case 60://splinter pistol
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 8, 24.0f, player_bolt, -0.0f, 3, 0.0f * accuracy_curr, false, player_bolts, 3);
             break;
-        case 60://super splinter
+        case 61://super splinter
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 28, 24.0f, player_bolt, -0.0f, 3, 0.0f * accuracy_curr, false, player_bolts, 3);
             break;
-        case 61://gold splinter
+        case 62://gold splinter
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 19, 24.0f, player_bolt, -0.0f, 3, 0.0f * accuracy_curr, false, player_bolts, 3);
             break;
-        case 62://ultra crossbow
+        case 63://ultra crossbow
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 11, 24.0f, player_bolt, -0.0f, 7, 0.0f * accuracy_curr, false, player_bolts, 2);
             break;
         default:
@@ -6494,12 +6576,25 @@ void object_tunnel_corner(int currOBJ) {
     case objectID::revenge_bullet:
     case objectID::large_guardian_bullet:
     case objectID::bullet2:
-    case objectID::player_bullet:
     case objectID::horror_bullet:
         destroy_projectile(currOBJ);
         allObjects[currOBJ].position.x -= allObjects[currOBJ].speed.x / 1.5f;
         allObjects[currOBJ].position.y -= allObjects[currOBJ].speed.y / 1.5f;
         play_sound_relative_to_player(snd_hit_wall_ID, allObjects[currOBJ].position.x, allObjects[currOBJ].position.y);
+        create_object(allObjects[currOBJ].position.x, allObjects[currOBJ].position.y, 0.5, 0.5, dust, 0, 0);    //dust
+        break;
+    case objectID::player_bullet:
+        if (allObjects[currOBJ].size != 2 || allObjects[currOBJ].my_hp == 0) {
+            destroy_projectile(currOBJ);
+            allObjects[currOBJ].position.x -= allObjects[currOBJ].speed.x / 1.5f;
+            allObjects[currOBJ].position.y -= allObjects[currOBJ].speed.y / 1.5f;
+            play_sound_relative_to_player(snd_hit_wall_ID, allObjects[currOBJ].position.x, allObjects[currOBJ].position.y);
+        }
+        else {//bouncing
+            bounce_in_corner_wall(currOBJ);
+            allObjects[currOBJ].my_hp = 0;
+            play_sound_relative_to_player(snd_bullet_bounce_ID, allObjects[currOBJ].position.x, allObjects[currOBJ].position.y);
+        }
         create_object(allObjects[currOBJ].position.x, allObjects[currOBJ].position.y, 0.5, 0.5, dust, 0, 0);    //dust
         break;
     case objectID::devastator_bullet:
@@ -6510,6 +6605,18 @@ void object_tunnel_corner(int currOBJ) {
     case objectID::idpd_freak_corpse:
     case objectID::toxic_gas:
         bounce_in_corner_wall(currOBJ);
+        break;
+    case objectID::shell_effect:
+        bounce_in_wall(currOBJ);
+        allObjects[currOBJ].speeddir = allObjects[currOBJ].speeddir * 0.5;
+        if (allObjects[currOBJ].speeddir > 2 && allObjects[currOBJ].size == 4) {    //soda can
+            if (rand() % 2) {
+                play_sound_relative_to_player(snd_soda_hit_ID, allObjects[currOBJ].position.x, allObjects[currOBJ].position.y);
+            }
+            else {
+                play_sound_relative_to_player(snd_soda_hit_2_ID, allObjects[currOBJ].position.x, allObjects[currOBJ].position.y);
+            }
+        }
         break;
     case objectID::idpd_nade:
         bounce_in_wall(currOBJ);
@@ -7450,8 +7557,20 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                 allObjects[i].my_id = nothing;
             }
             break;
+        case bolt_trail:
+            allObjects[i].scale -= 0.2f;
+
+            if (bolt_marrow) {
+                allObjects[i].scale += 0.1f;
+            }
+
+            if (allObjects[i].scale < 0.0f) {
+                allObjects[i].my_id = nothing;
+            }
+
+            break;
         case player_bolt_stick:
-            if (allObjects[i].alarm3 != 0) {   //not ultra bullet
+            if (allObjects[i].alarm3 != 0) {   //stuck to enemy
                 if (is_stickable(allObjects[allObjects[i].alarm3].my_id)) {
                     allObjects[i].position = allObjects[allObjects[i].alarm3].position;
                 }
@@ -7803,6 +7922,24 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             allObjects[i].position += allObjects[i].speed;
 
             break;
+        case shell_effect:
+            allObjects[i].alarm1--;
+            if (allObjects[i].alarm1 < 0) {
+                allObjects[i].my_id = nothing;
+            }
+
+            allObjects[i].speeddir -= 0.2f;
+
+            if (allObjects[i].speeddir < 0.0f) {
+                allObjects[i].speeddir = 0.0f;
+            }
+
+            allObjects[i].speed.x = cos(allObjects[i].direction) * allObjects[i].speeddir;
+            allObjects[i].speed.y = sin(allObjects[i].direction) * allObjects[i].speeddir;
+
+            allObjects[i].position += allObjects[i].speed;
+
+            break;
         case static_effect:
             allObjects[i].image_index++;
 
@@ -7911,7 +8048,7 @@ void player_bullet_burst_step(int obj) {
                 if (allObjects[obj].alarm2 == 0) {
                     if (allObjects[obj].alarm1 != 1) {
                         play_sound_on_player(snd_machinegun_ID);
-                        inaccuracy = 0.0f;
+                        inaccuracy = random_float(2.0f) - 1.0f;
                     }
                     else {//hyper rifle
                         play_sound_on_player(snd_hyper_rifle_ID);
@@ -7925,7 +8062,7 @@ void player_bullet_burst_step(int obj) {
             }
             else {
                 play_sound_on_player(snd_heavy_machinegun_ID);
-                inaccuracy = random_float(2.0f) - 1.0f;
+                inaccuracy = 0.0f;
             }
             inaccuracy /= degreestoradians;
             inaccuracy_x = cos(direction_to_mouse + inaccuracy) * 16.0f;
@@ -7979,7 +8116,7 @@ void player_bolt_step(int obj) {
 
             if (allObjects[obj].damage != 45) {
                 destroy_projectile(obj);
-                create_object(allObjects[obj].position.x, allObjects[obj].position.y, 0, 0, player_bolt_stick, allObjects[obj].direction, allObjects[obj].damage);
+                create_object(allObjects[obj].position.x, allObjects[obj].position.y, 0.0f, 0, player_bolt_stick, allObjects[obj].direction, allObjects[obj].damage);
                 create_object(allObjects[obj].position.x, allObjects[obj].position.y, 0.5, 0.5, dust, 0, 0);    //dust
             }
             else {  //ultra bolt
@@ -7999,7 +8136,7 @@ void player_bolt_step(int obj) {
                 }
                 else {
                     destroy_projectile(obj);
-                    create_object(allObjects[obj].position.x, allObjects[obj].position.y, 0, 0, player_bolt_stick, allObjects[obj].direction, allObjects[obj].damage);
+                    create_object(allObjects[obj].position.x, allObjects[obj].position.y, 0.0f, 0, player_bolt_stick, allObjects[obj].direction, allObjects[obj].damage);
                     create_object(allObjects[obj].position.x, allObjects[obj].position.y, 0.5, 0.5, dust, 0, 0);    //dust
                 }
             }
@@ -8008,7 +8145,7 @@ void player_bolt_step(int obj) {
         if (game_area[int(X_ / 16)][int(Y_ / 16)].my_grid_type == wall) {
             if (allObjects[obj].damage != 45) {
                 destroy_projectile(obj);
-                create_object(allObjects[obj].position.x, allObjects[obj].position.y, 0, 0, player_bolt_stick, allObjects[obj].direction, allObjects[obj].damage);
+                create_object(allObjects[obj].position.x, allObjects[obj].position.y, 0.0f, 0, player_bolt_stick, allObjects[obj].direction, allObjects[obj].damage);
                 create_object(allObjects[obj].position.x, allObjects[obj].position.y, 0.5, 0.5, dust, 0, 0);    //dust
             }
             else {  //ultra bolt
@@ -8018,7 +8155,7 @@ void player_bolt_step(int obj) {
                 }
                 else {
                     destroy_projectile(obj);
-                    create_object(allObjects[obj].position.x, allObjects[obj].position.y, 0, 0, player_bolt_stick, allObjects[obj].direction, allObjects[obj].damage);
+                    create_object(allObjects[obj].position.x, allObjects[obj].position.y, 0.0f, 0, player_bolt_stick, allObjects[obj].direction, allObjects[obj].damage);
                     create_object(allObjects[obj].position.x, allObjects[obj].position.y, 0.5, 0.5, dust, 0, 0);    //dust
                 }
             }
@@ -8026,6 +8163,7 @@ void player_bolt_step(int obj) {
         }
         
         if (allObjects[obj].my_id != nothing) {
+
             int pierce_threashold = 1;
             switch (allObjects[obj].damage) {
             case 45:
@@ -8049,28 +8187,50 @@ void player_bolt_step(int obj) {
             default:
                 break;
             }
-                for (int w = -1; w < 2; w++) {      //each wall checks around it for possible collisions with objects that are supposed to be bigger than a single point
-                    for (int h = -1; h < 2; h++) {
+                for (int w = -7; w < 8; w++) {
+                    for (int h = -7; h < 8; h++) {
                         for (int obj_collide : game_area[int(X_ / 16) + w][int(Y_ / 16) + h].object_indexes) {
                             switch (allObjects[obj_collide].my_id) {
                             case bandit:__fallthrough;
                             case idpd_freak:__fallthrough;
                             case prop:
-                                if (allObjects[obj_collide].my_hp < pierce_threashold) {   //pierce
-                                    allObjects[obj_collide].my_hp = 0;
-                                    enemy_die(obj_collide, obj);
-                                }
-                                else {
-                                    allObjects[obj_collide].my_hp -= allObjects[obj].damage;
-                                    if (allObjects[obj_collide].my_hp > 0) {
-                                        enemy_hurt(obj_collide, obj);
-                                        create_object(allObjects[obj].position.x, allObjects[obj].position.y, obj_collide, 0, player_bolt_stick, allObjects[obj].direction, allObjects[obj].damage);
-                                    }
-                                    else {  //dead
+                                if (is_within_circle(allObjects[obj_collide].position, allObjects[obj].position, (allObjects[obj_collide].my_hitbox + allObjects[obj].my_hitbox))) {
+                                    if (allObjects[obj_collide].my_hp < pierce_threashold) {   //pierce
+                                        allObjects[obj_collide].my_hp = 0;
                                         enemy_die(obj_collide, obj);
                                     }
-                                    destroy_projectile(obj);
+                                    else {
+                                        allObjects[obj_collide].my_hp -= allObjects[obj].damage;
+                                        if (allObjects[obj_collide].my_hp > 0) {
+                                            enemy_hurt(obj_collide, obj);
+                                            create_object(allObjects[obj].position.x, allObjects[obj].position.y, obj_collide, 0, player_bolt_stick, allObjects[obj].direction, allObjects[obj].damage);
+                                        }
+                                        else {  //dead
+                                            enemy_die(obj_collide, obj);
+                                        }
+                                        destroy_projectile(obj);
+                                    }
                                 }
+                                break;
+                            case throne_2:
+                                if (allObjects[obj_collide].alarm1 < 0 && allObjects[obj].team != enemy_team && is_within_throne_2(allObjects[obj_collide].position, allObjects[obj].position, allObjects[obj].my_hitbox)) {
+                                    if (allObjects[obj_collide].my_hp < pierce_threashold) {   //pierce
+                                        allObjects[obj_collide].my_hp = 0;
+                                        enemy_die(obj_collide, obj);
+                                    }
+                                    else {
+                                        allObjects[obj_collide].my_hp -= allObjects[obj].damage;
+                                        if (allObjects[obj_collide].my_hp > 0) {
+                                            enemy_hurt(obj_collide, obj);
+                                            create_object(allObjects[obj].position.x, allObjects[obj].position.y, obj_collide, 0, player_bolt_stick, allObjects[obj].direction, allObjects[obj].damage);
+                                        }
+                                        else {  //dead
+                                            enemy_die(obj_collide, obj);
+                                        }
+                                        destroy_projectile(obj);
+                                    }
+                                }
+                                break;
                                 break;
                             default:
                                 break;
@@ -8078,6 +8238,17 @@ void player_bolt_step(int obj) {
                         }
                     }
                 }
+        }
+    }
+    if (allObjects[obj].image_index > 1) {
+        if (allObjects[obj].damage == 45) {//ultra
+            create_object(allObjects[obj].position.x - allObjects[obj].speed.x / 2, allObjects[obj].position.y - allObjects[obj].speed.y / 2, 0, 0, bolt_trail, (allObjects[obj].direction - 180) / degreestoradians, 2);
+        }
+        else if (allObjects[obj].damage > 10) { //normal
+            create_object(allObjects[obj].position.x - allObjects[obj].speed.x / 2, allObjects[obj].position.y - allObjects[obj].speed.y / 2, 0, 0, bolt_trail, (allObjects[obj].direction - 180) / degreestoradians, 0);
+        }
+        else {//splinter
+            create_object(allObjects[obj].position.x - allObjects[obj].speed.x / 2, allObjects[obj].position.y - allObjects[obj].speed.y / 2, 0, 0, bolt_trail, (allObjects[obj].direction - 180) / degreestoradians, 1);
         }
     }
 }
@@ -8386,7 +8557,6 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                     case objectID::revenge_bullet:
                     case objectID::large_guardian_bullet:
                     case objectID::bullet2:
-                    case objectID::player_bullet:
                     case objectID::horror_bullet:
                         destroy_projectile(currOBJ);
                         allObjects[currOBJ].position.x -= allObjects[currOBJ].speed.x / 1.5f;
@@ -8394,6 +8564,20 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                         play_sound_relative_to_player(snd_hit_wall_ID, allObjects[currOBJ].position.x, allObjects[currOBJ].position.y);
                         create_object(allObjects[currOBJ].position.x, allObjects[currOBJ].position.y, 0.5, 0.5, dust, 0, 0);    //dust
                         break;       //bullet destroy particle
+                    case objectID::player_bullet:
+                        if (allObjects[currOBJ].size != 2 || allObjects[currOBJ].my_hp == 0) {
+                            destroy_projectile(currOBJ);
+                            allObjects[currOBJ].position.x -= allObjects[currOBJ].speed.x / 1.5f;
+                            allObjects[currOBJ].position.y -= allObjects[currOBJ].speed.y / 1.5f;
+                            play_sound_relative_to_player(snd_hit_wall_ID, allObjects[currOBJ].position.x, allObjects[currOBJ].position.y);
+                        }
+                        else {//bouncing
+                            bounce_in_wall(currOBJ);
+                            allObjects[currOBJ].my_hp = 0;
+                            play_sound_relative_to_player(snd_bullet_bounce_ID, allObjects[currOBJ].position.x, allObjects[currOBJ].position.y);
+                        }
+                        create_object(allObjects[currOBJ].position.x, allObjects[currOBJ].position.y, 0.5, 0.5, dust, 0, 0);    //dust
+                        break;
                     case objectID::player_lightning_orb:
                     case objectID::devastator_bullet:
                         destroy_projectile(currOBJ);
@@ -8414,12 +8598,25 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                     case objectID::toxic_gas:
                         bounce_in_wall(currOBJ);
                         break;
+                    case objectID::shell_effect:
+                        bounce_in_wall(currOBJ);
+                        allObjects[currOBJ].speeddir = allObjects[currOBJ].speeddir * 0.5;
+                        if (allObjects[currOBJ].speeddir > 2 && allObjects[currOBJ].size == 4) {    //soda can
+                            if (rand() % 2) {
+                                play_sound_relative_to_player(snd_soda_hit_ID, allObjects[currOBJ].position.x, allObjects[currOBJ].position.y);
+                            }
+                            else {
+                                play_sound_relative_to_player(snd_soda_hit_2_ID, allObjects[currOBJ].position.x, allObjects[currOBJ].position.y);
+                            }
+                        }
+                        break;
                     case objectID::idpd_nade:
                         bounce_in_wall(currOBJ);
                         allObjects[currOBJ].speeddir = allObjects[currOBJ].speeddir * 0.5;
                         create_object(allObjects[currOBJ].position.x, allObjects[currOBJ].position.y, 0.5, 0.5, dust, 0, 0);    //dust
                         play_sound_relative_to_player(snd_nade_hit_wall_ID, allObjects[currOBJ].position.x, allObjects[currOBJ].position.y);
                         break;
+
                     case objectID::idpd_explosion:
                         if (allObjects[currOBJ].image_index == 3 || allObjects[currOBJ].image_index == 4) {
                             idpd_explosion_collision(currOBJ, i, j);
@@ -9792,6 +9989,9 @@ int main()
     add_new_sound(snd_generator_break_ID, "snd/generator_break.wav", all_sounds, snd_generator_break_ID, all_extra_sound_buffers, 0.1f, 0.02f);
     add_new_sound(snd_pillar_break_ID, "snd/pillar_break.wav", all_sounds, snd_pillar_break_ID, all_extra_sound_buffers, 0.1f, 0.02f);
 
+    add_new_sound(snd_soda_hit_ID, "snd/soda_hit.wav", all_sounds, snd_soda_hit_ID, all_extra_sound_buffers, 0.1f, 0.02f);
+    add_new_sound(snd_soda_hit_2_ID, "snd/soda_hit_2.wav", all_sounds, snd_soda_hit_2_ID, all_extra_sound_buffers, 0.1f, 0.02f);
+
 
     add_new_sound_buffer(snd_wall_break_rock_ID, "snd/wall_break_rock.wav", all_extra_sound_buffers);
     add_new_sound_buffer(snd_wall_break_brick_ID, "snd/wall_break_brick.wav", all_extra_sound_buffers);
@@ -9822,7 +10022,7 @@ int main()
     add_new_sound(snd_plasma_split_upgrade_ID, "snd/plasma_split_upgrade.wav", all_sounds, snd_plasma_split_upgrade_ID, all_extra_sound_buffers, 0.15f, 0.01f);
 
 
-    add_new_sound(snd_bullet_bounce_ID, "snd/bullet_bounce.wav", all_sounds, snd_bullet_bounce_ID, all_extra_sound_buffers, 0.15f, 0.01f);
+    add_new_sound(snd_bullet_bounce_ID, "snd/bullet_bounce.wav", all_sounds, snd_bullet_bounce_ID, all_extra_sound_buffers, 0.1f, 0.01f);
 
     add_new_sound(snd_machinegun_ID, "snd/machinegun.wav", all_sounds, snd_machinegun_ID, all_extra_sound_buffers, 0.1f, 0.0f);
     add_new_sound(snd_gold_machinegun_ID, "snd/gold_machinegun.wav", all_sounds, snd_gold_machinegun_ID, all_extra_sound_buffers, 0.1f, 0.0f);
@@ -9842,6 +10042,7 @@ int main()
     add_new_sound_buffer(snd_bouncer_shotgun_ID, "snd/bouncer_shotgun.wav", all_extra_sound_buffers);
     add_new_sound_buffer(snd_ultra_revolver_ID, "snd/ultra_revolver.wav", all_extra_sound_buffers);
     add_new_sound_buffer(snd_gold_frog_pistol_ID, "snd/gold_frog_pistol.wav", all_extra_sound_buffers);
+    add_new_sound_buffer(snd_incinerator_ID, "snd/incinerator.wav", all_extra_sound_buffers);
 
 
     //bolt weps
@@ -9884,6 +10085,8 @@ int main()
     add_new_sound(snd_idpd_freak_die_ID, "snd/IDPD_freak_die.wav", all_sounds, snd_idpd_freak_die_ID, all_extra_sound_buffers, 0.1f, 0.01f);
 
     add_new_sound(snd_grunt_fire_ID, "snd/grunt_fire.wav", all_sounds, snd_grunt_fire_ID, all_extra_sound_buffers, 0.1f, 0.01f);
+
+    add_new_sound(snd_toxic_bolt_gas_ID, "snd/toxic_bolt_gas.wav", all_sounds, snd_toxic_bolt_gas_ID, all_extra_sound_buffers, 0.1f, 0.01f);
 
 
     add_new_sound_buffer(snd_horror_hurt_ID, "snd/horror_hurt.wav", all_extra_sound_buffers);
@@ -10374,6 +10577,9 @@ int main()
         sf::Texture allPropSprites;
         allPropSprites.loadFromFile("res/allProps.png");
 
+        sf::Texture shells_tex;
+        shells_tex.loadFromFile("res/player/shells.png");
+
         sf::Texture allSmallEffectSprites;
         allSmallEffectSprites.loadFromFile("res/allSmallEffects.png");
         sf::Texture allMediumEffectSprites;
@@ -10658,6 +10864,8 @@ int main()
         sf::Texture player_bolts_tex;
         player_bolts_tex.loadFromFile("res/player/player_bolts.png");
 
+        sf::Texture bolt_trail_tex;
+        bolt_trail_tex.loadFromFile("res/player/bolt_trail.png");
 
         //rebel_ally bullet
         sf::Texture ally_bullettex;
@@ -11164,6 +11372,12 @@ int main()
         temp.setColor({ 0, 0, 0, 0 });
         variable_textures.push_back(temp);
     }
+    for (int i = 0; i < variable_textures_top_max; i++) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        variable_textures_top.push_back(temp);
+    }
+
     for (int i = 0; i < variable_textures_bloom_max; i++) {
         sf::Sprite temp;
         temp.setColor({ 0, 0, 0, 0 });
@@ -12857,6 +13071,7 @@ int main()
         int rotateableEffectsSmallBloomIndex = 0;
 
         int variableTexturesIndex = 0;
+        int variableTexturesTopIndex = 0;
 
         int variableTexturesBloomIndex = 0;
 
@@ -14506,6 +14721,18 @@ int main()
                         }
 
                         break;
+                    case shell_effect:
+                        choice = allObjects[idx].size * 5;
+                        variable_textures[variableTexturesIndex].setTexture(shells_tex);
+                        variable_textures[variableTexturesIndex].setColor({ 255, 255, 255, 255 });
+                        variable_textures[variableTexturesIndex].setPosition(allObjects[idx].position - cameraPos);
+                        variable_textures[variableTexturesIndex].setRotation(allObjects[idx].rotation);
+                        variable_textures[variableTexturesIndex].setTextureRect(sf::IntRect{ choice, 0, 5, 8 });
+                        variable_textures[variableTexturesIndex].setOrigin(2, 4);
+                        variable_textures[variableTexturesIndex].setScale(1, 1);
+                        variableTexturesIndex++;
+                        break;
+                        break;
                     case idpd_freak_revive:
                         choice = int(allObjects[idx].image_index * 0.4f);
                         variable_textures[variableTexturesIndex].setTexture(idpd_freak_revive_tex);
@@ -14595,9 +14822,21 @@ int main()
                         variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
                         variableTexturesBloomIndex++;
                         break;
+                    case bolt_trail:
+                        //line
+                        choice = allObjects[idx].image_index;
+                        variable_textures[variableTexturesIndex].setTexture(bolt_trail_tex);
+                        variable_textures[variableTexturesIndex].setColor({ 255, 255, 255, 255 });
+                        variable_textures[variableTexturesIndex].setPosition(allObjects[idx].position - cameraPos);
+                        variable_textures[variableTexturesIndex].setRotation(allObjects[idx].direction);
+                        variable_textures[variableTexturesIndex].setTextureRect(sf::IntRect{ choice, 0, 1, 2 });
+                        variable_textures[variableTexturesIndex].setOrigin(0, 1);
+                        variable_textures[variableTexturesIndex].setScale(24, allObjects[idx].scale);
+                        variableTexturesIndex++;
+                        break;
                     case player_bolt:__fallthrough;
                     case player_bolt_stick:
-
+                            choice = 0;
                             if (allObjects[idx].damage == 20) {
                                 choice = 0;
                             }
@@ -14623,14 +14862,14 @@ int main()
                             else {
                                 choice2 = 16;
                             }
-                            variable_textures[variableTexturesIndex].setTexture(player_bolts_tex);
-                            variable_textures[variableTexturesIndex].setColor({ 255, 255, 255, 255 });
-                            variable_textures[variableTexturesIndex].setPosition(allObjects[idx].position - cameraPos);
-                            variable_textures[variableTexturesIndex].setRotation(allObjects[idx].direction);
-                            variable_textures[variableTexturesIndex].setTextureRect(sf::IntRect{ choice2, choice, 16 + choice2, 16 });
-                            variable_textures[variableTexturesIndex].setOrigin(16 + choice2, 8);
-                            variable_textures[variableTexturesIndex].setScale(1, 1);
-                            variableTexturesIndex++;
+                            variable_textures_top[variableTexturesTopIndex].setTexture(player_bolts_tex);
+                            variable_textures_top[variableTexturesTopIndex].setColor({ 255, 255, 255, 255 });
+                            variable_textures_top[variableTexturesTopIndex].setPosition(allObjects[idx].position - cameraPos);
+                            variable_textures_top[variableTexturesTopIndex].setRotation(allObjects[idx].direction);
+                            variable_textures_top[variableTexturesTopIndex].setTextureRect(sf::IntRect{ choice2, choice, 16 + choice2, 16 });
+                            variable_textures_top[variableTexturesTopIndex].setOrigin(16 + choice2, 8);
+                            variable_textures_top[variableTexturesTopIndex].setScale(1, 1);
+                            variableTexturesTopIndex++;
 
                         break;
                     case player_bullet:
@@ -14897,7 +15136,7 @@ int main()
 
         sf::Text debug1;
 
-        debug1.setString("poll_move_total: " + std::to_string(poll_move_total));
+        debug1.setString("variableTexturesIndex: " + std::to_string(variableTexturesIndex));
         debug1.setCharacterSize(8);
         debug1.setFont(font);
         debug1.setColor(sf::Color::White);
@@ -15247,6 +15486,14 @@ int main()
                 buffer_over.draw(spr);
             }
             reset_rotateable_sprites(variable_textures, variableTexturesIndex);
+
+            for (sf::Sprite spr : variable_textures_top) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_over.draw(spr);
+            }
+            reset_rotateable_sprites(variable_textures_top, variableTexturesTopIndex);
 
             ////enemies////
             //bandit

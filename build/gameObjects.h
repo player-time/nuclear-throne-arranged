@@ -34,6 +34,8 @@ enum objectID {
 
 	static_effect,
 
+	shell_effect,
+
 
 	scorch,
 	idpd_explosion,
@@ -100,6 +102,9 @@ enum objectID {
 
 	player_bolt,
 	player_bolt_stick,
+	bolt_trail,
+
+	player_shell,
 
 	rogue_bullet,
 
@@ -273,6 +278,11 @@ enum sound_ID {
 	snd_crossbow_reload_ID,
 
 	snd_super_splinter_ID,
+
+	snd_soda_hit_ID,
+	snd_soda_hit_2_ID,
+
+	snd_toxic_bolt_gas_ID,
 
 	//end of sounds that will be used, not just in buffers
 
@@ -464,6 +474,7 @@ enum sound_ID {
 	snd_bouncer_shotgun_ID,
 	snd_ultra_revolver_ID,
 	snd_gold_frog_pistol_ID,
+	snd_incinerator_ID,
 
 	snd_crossbow_ID,
 	snd_super_crossbow_ID,
@@ -576,8 +587,8 @@ enum character{ fish, crystal, eyes, melting, plant, YV, steroids, robot, chicke
 enum weapon_types {		//cutoffs for weapon types
 	melee_weps = 8,
 	energy_weps = 29,
-	bullet_weps = 51,
-	bolt_weps = 65,
+	bullet_weps = 52,
+	bolt_weps = 66,
 	shell_weps = 100,
 	explosive_weps = 200,
 };
