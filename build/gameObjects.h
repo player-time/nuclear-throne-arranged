@@ -30,8 +30,6 @@ enum objectID {
 
 	flame,
 
-
-
 	static_effect,
 
 	shell_effect,
@@ -56,6 +54,8 @@ enum objectID {
 	player_lightning_orb,
 
 	player_bolt_burst,
+
+	player_flame,
 
 	player,
 	player_corpse,
@@ -104,7 +104,7 @@ enum objectID {
 	player_bolt_stick,
 	bolt_trail,
 
-	player_shell,
+	player_shell, player_shell_destroy,
 
 	rogue_bullet,
 
@@ -284,6 +284,24 @@ enum sound_ID {
 
 	snd_toxic_bolt_gas_ID,
 
+	snd_shotgun_hit_wall_ID,
+
+	snd_sewer_pipe_break_ID,
+	snd_toxic_barrel_gas_ID,
+	snd_car_explosion_ID,
+	snd_crystal_prop_break_ID,
+	snd_coccon_break_ID,
+	snd_icicle_break_ID,
+	snd_hydrant_break_ID,
+	snd_street_light_break_ID,
+	snd_vending_machine_break_ID,
+	snd_snowman_break_ID,
+	snd_server_break_ID,
+	snd_tube_break_ID,
+	snd_mutant_tube_break_ID,
+	snd_generator_break_ID,
+	snd_pillar_break_ID,
+
 	//end of sounds that will be used, not just in buffers
 
 	snd_music_ID,
@@ -334,22 +352,6 @@ enum sound_ID {
 	snd_hit_plant_ID,
 	snd_hit_metal_ID,
 	snd_hit_flesh_ID,
-
-	snd_sewer_pipe_break_ID,
-	snd_toxic_barrel_gas_ID,
-	snd_car_explosion_ID,
-	snd_crystal_prop_break_ID,
-	snd_coccon_break_ID,
-	snd_icicle_break_ID,
-	snd_hydrant_break_ID,
-	snd_street_light_break_ID,
-	snd_vending_machine_break_ID,
-	snd_snowman_break_ID,
-	snd_server_break_ID,
-	snd_tube_break_ID,
-	snd_mutant_tube_break_ID,
-	snd_generator_break_ID,
-	snd_pillar_break_ID,
 
 	snd_wall_break_rock_ID,
 	snd_wall_break_brick_ID,
