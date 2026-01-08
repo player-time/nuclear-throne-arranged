@@ -652,6 +652,7 @@ void draw_weapon_text(int wep_ID, sf::Vector2f pos, sf::Text text, sf::RenderTex
     case 8:text.setString("ENERGY SWORD");break;
     case 9:text.setString("ENERGY HAMMER");break;
     case 10:text.setString("ENERGY SCREWDRIVER");break;
+
     case 11:text.setString("SUPER PLASMA CANNON");break;
     case 12:text.setString("PLASMA CANNON");break;
     case 13:text.setString("PLASMA GUN");break;
@@ -670,6 +671,7 @@ void draw_weapon_text(int wep_ID, sf::Vector2f pos, sf::Text text, sf::RenderTex
     case 26:text.setString("LIGHTNING SHOTGUN");break;
     case 27:text.setString("LIGHTNING SMG");break;
     case 28:text.setString("LIGHTNING CANNON");break;
+
     case 29:text.setString("REVOLVER");break;
     case 30:text.setString("GOLDEN REVOLVER");break;
     case 31:text.setString("ROGUE RIFLE");break;
@@ -706,6 +708,28 @@ void draw_weapon_text(int wep_ID, sf::Vector2f pos, sf::Text text, sf::RenderTex
     case 61:text.setString("SUPER SPLINTER GUN");break;
     case 62:text.setString("GOLDEN SPLINTER GUN");break;
     case 63:text.setString("ULTRA CROSSBOW");break;
+
+    case 64:text.setString("SHOTGUN");break;
+    case 65:text.setString("DOUBLE SHOTGUN");break;
+    case 66:text.setString("AUTO SHOTGUN");break;
+    case 67:text.setString("SAWED-OFF SHOTGUN");break;
+    case 68:text.setString("ERASER");break;
+    case 69:text.setString("WAVE GUN");break;
+    case 70:text.setString("GOLDEN SHOTGUN");break;
+    case 71:text.setString("FLAME SHOTGUN");break;
+    case 72:text.setString("DOUBLE FLAME SHOTGUN");break;
+    case 73:text.setString("AUTO FLAME SHOTGUN");break;
+    case 74:text.setString("SLUGGER");break;
+    case 75:text.setString("ASSAULT SLUGGER");break;
+    case 76:text.setString("GATLING SLUGGER");break;
+    case 77:text.setString("SUPER SLUGGER");break;
+    case 78:text.setString("GOLDEN SLUGGER");break;
+    case 79:text.setString("HEAVY SLUGGER");break;
+    case 80:text.setString("HYPER SLUGGER");break;
+    case 81:text.setString("FLAK CANNON");break;
+    case 82:text.setString("SUPER FLAK CANNON");break;
+    case 83:text.setString("ULTRA SHOTGUN");break;
+
     }
     text.setPosition(int(pos.x - cameraPos.x) - text.getString().getSize() * 4, int(pos.y - cameraPos.y) - 28);
     wep_arrow_sprite.setPosition(int(pos.x - cameraPos.x), int(pos.y - cameraPos.y) - 16);
@@ -857,6 +881,27 @@ sound_ID get_shoot_sound(int wep_id) {
     case 61: /*Super Splinter Gun*/return snd_super_splinter_ID;break;
     case 62: /*Golden Splinter Gun*/return snd_gold_splinter_ID;break;
     case 63: /*Ultra Crossbow*/return snd_ultra_crossbow_ID;break;
+
+    case 64: /*shotgun*/return snd_shotgun_ID;break;
+    case 65: /*double shotgun*/return snd_double_shotgun_ID;break;
+    case 66: /*Auto Shotgun*/return snd_auto_shotgun_ID;break;
+    case 67: /*Sawed-Off Shotgun*/return snd_sawed_off_shotgun_ID;break;
+    case 68: /*Eraser*/return snd_eraser_ID;break;
+    case 69: /*Wave Gun*/return snd_wave_gun_ID;break;
+    case 70: /*Golden Shotgun*/return snd_golden_shotgun_ID;break;
+    case 71: /*Flame Shotgun*/return snd_flame_shotgun_ID;break;
+    case 72: /*Double Flame Shotgun*/return snd_double_flame_shotgun_ID;break;
+    case 73: /*Auto Flame Shotgun*/return snd_auto_flame_shotgun_ID;break;
+    case 74: /*Slugger*/return snd_slugger_ID;break;
+    case 75: /*Assault Slugger*/return snd_assault_slugger_ID;break;
+    case 76: /*Gatling Slugger*/return snd_gatling_slugger_ID;break;
+    case 77: /*Super Slugger*/return snd_super_slugger_ID;break;
+    case 78: /*Golden Slugger*/return snd_golden_slugger_ID;break;
+    case 79: /*Heavy Slugger*/return snd_heavy_slugger_ID;break;
+    case 80: /*Hyper Slugger*/return snd_hyper_slugger_ID;break;
+    case 81: /*Flak Cannon*/return snd_flak_cannon_ID;break;
+    case 82: /*Super Flak Cannon*/return snd_super_flak_cannon_ID;break;
+    case 83: /*Ultra Shotgun*/return snd_ultra_shotgun_ID;break;
     default:
         return snd_shoot_1_ID;
         break;
@@ -932,6 +977,27 @@ sf::Vector2f wep_get_origin(int wep_id) {
     case 61: /*Super Splinter Gun*/return sf::Vector2f(3, 5); break;
     case 62: /*Golden Splinter Gun*/return sf::Vector2f(3, 4); break;
     case 63: /*Ultra Crossbow*/return sf::Vector2f(1, 6); break;
+
+    case 64: /*shotgun*/return sf::Vector2f(4, 3); break;
+    case 65: /*double shotgun*/return sf::Vector2f(4, 3); break;
+    case 66: /*Auto Shotgun*/return sf::Vector2f(5, 3); break;
+    case 67: /*Sawed-Off Shotgun*/return sf::Vector2f(1, 3); break;
+    case 68: /*Eraser*/return sf::Vector2f(4, 4); break;
+    case 69: /*Wave Gun*/return sf::Vector2f(4, 5); break;
+    case 70: /*Golden Shotgun*/return sf::Vector2f(4, 3); break;
+    case 71: /*Flame Shotgun*/return sf::Vector2f(4, 4); break;
+    case 72: /*Double Flame Shotgun*/return sf::Vector2f(5, 4); break;
+    case 73: /*Auto Flame Shotgun*/return sf::Vector2f(3, 3); break;
+    case 74: /*Slugger*/return sf::Vector2f(2, 3); break;
+    case 75: /*Assault Slugger*/return sf::Vector2f(3, 3); break;
+    case 76: /*Gatling Slugger*/return sf::Vector2f(1, 3); break;
+    case 77: /*Super Slugger*/return sf::Vector2f(6, 5); break;
+    case 78: /*Golden Slugger*/return sf::Vector2f(2, 3); break;
+    case 79: /*Heavy Slugger*/return sf::Vector2f(4, 6); break;
+    case 80: /*Hyper Slugger*/return sf::Vector2f(4, 8); break;
+    case 81: /*Flak Cannon*/return sf::Vector2f(3, 3); break;
+    case 82: /*Super Flak Cannon*/return sf::Vector2f(4, 4); break;
+    case 83: /*Ultra Shotgun*/return sf::Vector2f(5, 3); break;
     default:
         return sf::Vector2f(0, 0);
         break;
@@ -1007,6 +1073,27 @@ void play_swap_sound(int wep_id) {
     case 61: /*Super Splinter Gun*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
     case 62: /*Golden Splinter Gun*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
     case 63: /*Ultra Crossbow*/play_sounds_this_frame_count[snd_bow_swap_ID] = 1; break;
+
+    case 64: /*shotgun*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 65: /*double shotgun*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 66: /*Auto Shotgun*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 67: /*Sawed-Off Shotgun*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 68: /*Eraser*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 69: /*Wave Gun*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 70: /*Golden Shotgun*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 71: /*Flame Shotgun*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 72: /*Double Flame Shotgun*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 73: /*Auto Flame Shotgun*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 74: /*Slugger*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 75: /*Assault Slugger*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 76: /*Gatling Slugger*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 77: /*Super Slugger*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 78: /*Golden Slugger*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 79: /*Heavy Slugger*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 80: /*Hyper Slugger*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 81: /*Flak Cannon*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 82: /*Super Flak Cannon*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+    case 83: /*Ultra Shotgun*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
     default:
         break;
     }
@@ -1051,8 +1138,29 @@ void get_wep_reload_sound(int wep) {
     case 61:
     case 62:
     case 63:
-        break;
         play_sound_on_player(snd_crossbow_reload_ID);
+        break;
+    case 64:
+    case 65:
+    case 66:
+    case 67:
+    case 68:
+    case 69:
+    case 70:
+    case 71:
+    case 72:
+    case 73:
+    case 74:
+    case 75:
+    case 76:
+    case 77:
+    case 78:
+    case 79:
+    case 80:
+    case 81:
+    case 82:
+    case 83:
+        play_sound_on_player(snd_shotgun_reload_ID);
         break;
     default:
         break;
