@@ -100,11 +100,14 @@ enum objectID {
 	player_bouncer_bullet, player_bouncer_bullet_destroy,
 	player_bullet_burst,
 
+	player_shell_burst,
+
 	player_bolt,
 	player_bolt_stick,
 	bolt_trail,
 
 	player_shell, player_shell_destroy,
+	player_shell_hyper,
 
 	rogue_bullet,
 
@@ -276,6 +279,7 @@ enum sound_ID {
 	snd_bullet_bounce_ID,
 
 	snd_crossbow_reload_ID,
+	snd_shotgun_reload_ID,
 
 	snd_super_splinter_ID,
 
@@ -301,6 +305,19 @@ enum sound_ID {
 	snd_mutant_tube_break_ID,
 	snd_generator_break_ID,
 	snd_pillar_break_ID,
+
+	snd_flak_explode_ID,
+	snd_super_flak_explode_ID,
+
+	snd_slugger_ID,
+
+	snd_wave_gun_ID,
+
+	snd_explosion_ID,
+	snd_explosion_s_ID,
+	snd_nade_hit_wall_ID,
+	snd_IDPD_nade_load_ID,
+	snd_IDPD_nade_almost_ID,
 
 	//end of sounds that will be used, not just in buffers
 
@@ -407,12 +424,6 @@ enum sound_ID {
 	snd_plasma_split_ID, snd_plasma_split_upgrade_ID,
 
 
-	snd_explosion_ID,
-	snd_explosion_s_ID,
-	snd_nade_hit_wall_ID,
-	snd_IDPD_nade_load_ID,
-	snd_IDPD_nade_almost_ID,
-
 	snd_idpd_spawn_ID,
 	snd_idpd_spawn_elite_ID,
 	
@@ -488,6 +499,20 @@ enum sound_ID {
 	snd_gold_splinter_ID,
 	snd_ultra_crossbow_ID, 
 
+	snd_shotgun_ID,
+	snd_double_shotgun_ID,
+	snd_sawed_off_shotgun_ID,
+	snd_eraser_ID,
+	snd_golden_shotgun_ID,
+	snd_flame_shotgun_ID,
+	snd_double_flame_shotgun_ID,
+	snd_super_slugger_ID,
+	snd_gold_slugger_ID,
+	snd_heavy_slugger_ID,
+	snd_hyper_slugger_ID,
+	snd_flak_cannon_ID,
+	snd_super_flak_cannon_ID,
+	snd_ultra_shotgun_ID,
 
 	snd_foot_metmetal_1_ID,
 	snd_foot_metmetal_2_ID,
@@ -591,7 +616,7 @@ enum weapon_types {		//cutoffs for weapon types
 	energy_weps = 29,
 	bullet_weps = 52,
 	bolt_weps = 66,
-	shell_weps = 100,
+	shell_weps = 86,
 	explosive_weps = 200,
 };
 
