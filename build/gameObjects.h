@@ -644,6 +644,8 @@ enum hitboxes {
 	portal_clear_hitbox = 32,
 	ammo_hitbox = 4,
 
+	hyper_slugger_hitbox = 1,
+
 	small_prop_hitbox = 7,
 	medium_prop_hitbox = 12,
 	crystal_shield_hitbox = 24,

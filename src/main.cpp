@@ -474,7 +474,8 @@ int player_character_hurt_frames = 3;
 std::vector<sf::Vector3f> play_sounds_this_frame_pos;
 std::vector<int> play_sounds_this_frame_count;
 
-
+sf::Sound sound_pool[32];
+sf::Sound sound_loop_pool[8];
 
 //portal spiral stuff
 
@@ -2447,7 +2448,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 break;
             case player_shell_hyper:
                 allObjects[i].my_id = obj_id;
-                allObjects[i].my_hitbox = enemy_bullet_hitbox;
+                allObjects[i].my_hitbox = hyper_slugger_hitbox;
 
                 allObjects[i].speed = { cos(direction) * xspd, sin(direction) * xspd };
 
@@ -2510,11 +2511,13 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 if (image_index == 5) {
                     allObjects[i].damage = 10;   //flak
                     allObjects[i].friction = 0.4f;
+                    allObjects[i].growspeed = 0.0f;
                 }
 
                 if (image_index == 6) {
                     allObjects[i].damage = 50;   //super flak
                     allObjects[i].friction = 0.4f;
+                    allObjects[i].growspeed = 0.0f;
                 }
 
                 if (image_index == 7) {
@@ -2529,7 +2532,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 //allObjects[i].speed = { xspd, yspd };
                 allObjects[i].speeddir = xspd;
                 allObjects[i].direction = direction;
-                allObjects[i].image_index = 0;
+                allObjects[i].image_index = -1;
                 allObjects[i].team = player_team;     //player team
 
                 allObjects[i].size = image_index;   //what type of shell
@@ -3765,29 +3768,25 @@ void player_shell_hyper_create(int obj) {
     bool collided = false;
     float X_prev = 0;
     float Y_prev = 0;
-    float X_ = 0;
-    float Y_ = 0;
+    float X_ = allObjects[0].position.x;
+    float Y_ = allObjects[0].position.y;
     while (!collided) {
-        X_prev = allObjects[obj].position.x;
-        Y_prev = allObjects[obj].position.y;
+        X_prev = X_;
+        Y_prev = Y_;
 
-        allObjects[obj].position.x += allObjects[obj].speed.x / 2;
-        allObjects[obj].position.y += allObjects[obj].speed.y / 2;
-
-        X_ = allObjects[obj].position.x;
-        Y_ = allObjects[obj].position.y;
+        X_ += allObjects[obj].speed.x / 8;
+        Y_ += allObjects[obj].speed.y / 8;
 
         if (int(X_prev / 16) != int(X_ / 16) && int(Y_prev / 16) != int(Y_ / 16) && //moved diagonal
             game_area[int(X_prev / 16)][int(Y_ / 16)].my_grid_type == wall &&
             game_area[int(X_ / 16)][int(Y_prev / 16)].my_grid_type == wall) {//tunneled diagonally
             collided = true;
-            X_ = X_prev;
-            Y_ = Y_prev;
         }
         else if (game_area[int(X_ / 16)][int(Y_ / 16)].my_grid_type == wall) {
             collided = true;
-            X_ = X_prev;
-            Y_ = Y_prev;
+        }
+        else if (game_area[int(X_ / 16)][int(Y_ / 16)].my_grid_type == T2_boarder) {
+            collided = true;
         }
 
         if (allObjects[obj].my_id != nothing) {
@@ -3798,17 +3797,13 @@ void player_shell_hyper_create(int obj) {
                         case bandit:__fallthrough;
                         case idpd_freak:__fallthrough;
                         case prop:
-                            if (is_within_circle(allObjects[obj_collide].position, allObjects[obj].position, (allObjects[obj_collide].my_hitbox + allObjects[obj].my_hitbox))) {
+                            if (is_within_circle(allObjects[obj_collide].position, { X_, Y_ }, (allObjects[obj_collide].my_hitbox + allObjects[obj].my_hitbox))) {
                                 collided = true;
-                                X_ = X_prev;
-                                Y_ = Y_prev;
                             }
                             break;
                         case throne_2:
-                            if (is_within_throne_2(allObjects[obj_collide].position, allObjects[obj].position, allObjects[obj].my_hitbox)) {
+                            if (is_within_throne_2(allObjects[obj_collide].position, { X_, Y_ }, allObjects[obj].my_hitbox)) {
                                 collided = true;
-                                X_ = X_prev;
-                                Y_ = Y_prev;
                             }
                             break;
                         default:
@@ -3818,8 +3813,9 @@ void player_shell_hyper_create(int obj) {
                 }
             }
         }
+
     }
-    create_object(X_, Y_, 18.0f, 0, player_shell, allObjects[obj].direction, 4);
+    create_object(X_prev, Y_prev, 18.0f, 0, player_shell, allObjects[obj].direction, 4);
 }
 
 void player_lightning_create(sf::Vector2f position, float direction, int length) {
@@ -5956,7 +5952,8 @@ void player_laser_collision(int currOBJ) {
             for (int obj : game_area[w][h].object_indexes) {
                 switch (allObjects[obj].my_id) {
                 case bandit:__fallthrough;
-                case idpd_freak:
+                case idpd_freak:__fallthrough;
+                case prop:
                     extra_hitbox = allObjects[obj].my_hitbox + allObjects[currOBJ].scale * 4;
                     if (allObjects[obj].position.x > lowest_x - extra_hitbox && allObjects[obj].position.x < highest_x + extra_hitbox &&
                         allObjects[obj].position.y > lowest_y - extra_hitbox && allObjects[obj].position.y < highest_y + extra_hitbox) {
@@ -6605,6 +6602,7 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
                     case 80://hyper slugger
                         inaccuracy = random_float(acc_variation * 2.0f) - acc_variation;
                         proj_speed = 18.0f;
+                        inaccuracy /= degreestoradians;
                         create_object(allObjects[0].position.x, allObjects[0].position.y, proj_speed, 0, object_type, direction + inaccuracy, bullet_type);
                         break;
                     case 81://flak cannon
@@ -7298,6 +7296,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             T2_sprite.setScale(1, 1);
             break;
         case throne_2:
+            GLOBAL_DEBUG_INT = allObjects[i].my_hp;
             allObjects[i].image_index++;
             allObjects[i].alarm1--;
             allObjects[i].alarm2--;
@@ -8153,6 +8152,9 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             if (allObjects[i].image_index == 0) {
                 allObjects[i].image_index = 1;
             }
+            if (allObjects[i].image_index == -1) {
+                allObjects[i].image_index = 0;
+            }
 
             if (allObjects[i].speeddir < 6.0f) {//fade away
                 allObjects[i].alarm2 = 1;
@@ -8164,6 +8166,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                     destroy_projectile(i);
                 }
             }
+            allObjects[i].growspeed += allObjects[i].speeddir / 2;
 
             allObjects[i].speeddir -= allObjects[i].friction;
 
@@ -8806,6 +8809,15 @@ void player_bolt_step(int obj) {
                     create_object(allObjects[obj].position.x, allObjects[obj].position.y, 0.5, 0.5, dust, 0, 0);    //dust
                 }
             }
+            if (allObjects[obj].damage == 45) {//ultra
+                create_object(allObjects[obj].position.x - allObjects[obj].speed.x / 2, allObjects[obj].position.y - allObjects[obj].speed.y / 2, 0, 0, bolt_trail, (allObjects[obj].direction - 180) / degreestoradians, 2);
+            }
+            else if (allObjects[obj].damage > 10) { //normal
+                create_object(allObjects[obj].position.x - allObjects[obj].speed.x / 2, allObjects[obj].position.y - allObjects[obj].speed.y / 2, 0, 0, bolt_trail, (allObjects[obj].direction - 180) / degreestoradians, 0);
+            }
+            else {//splinter
+                create_object(allObjects[obj].position.x - allObjects[obj].speed.x / 2, allObjects[obj].position.y - allObjects[obj].speed.y / 2, 0, 0, bolt_trail, (allObjects[obj].direction - 180) / degreestoradians, 1);
+            }
             return;
         }
         if (game_area[int(X_ / 16)][int(Y_ / 16)].my_grid_type == wall) {
@@ -8824,6 +8836,15 @@ void player_bolt_step(int obj) {
                     create_object(allObjects[obj].position.x, allObjects[obj].position.y, 0.0f, 0, player_bolt_stick, allObjects[obj].direction, allObjects[obj].damage);
                     create_object(allObjects[obj].position.x, allObjects[obj].position.y, 0.5, 0.5, dust, 0, 0);    //dust
                 }
+            }
+            if (allObjects[obj].damage == 45) {//ultra
+                create_object(allObjects[obj].position.x - allObjects[obj].speed.x / 2, allObjects[obj].position.y - allObjects[obj].speed.y / 2, 0, 0, bolt_trail, (allObjects[obj].direction - 180) / degreestoradians, 2);
+            }
+            else if (allObjects[obj].damage > 10) { //normal
+                create_object(allObjects[obj].position.x - allObjects[obj].speed.x / 2, allObjects[obj].position.y - allObjects[obj].speed.y / 2, 0, 0, bolt_trail, (allObjects[obj].direction - 180) / degreestoradians, 0);
+            }
+            else {//splinter
+                create_object(allObjects[obj].position.x - allObjects[obj].speed.x / 2, allObjects[obj].position.y - allObjects[obj].speed.y / 2, 0, 0, bolt_trail, (allObjects[obj].direction - 180) / degreestoradians, 1);
             }
             return;
         }
@@ -15931,7 +15952,7 @@ int main()
                                 else { rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(player_slug_shell_1); }
                                 break;
                             case 5:
-                                if (allObjects[idx].image_index == 0) { rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(player_flak_shell_0); }
+                                if (int(allObjects[idx].growspeed) % 2) { rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(player_flak_shell_0); }
                                 else { rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(player_flak_shell_1); }
                                 break;
                             case 6:
@@ -16131,7 +16152,7 @@ int main()
 
         sf::Text debug1;
 
-        debug1.setString("variableTexturesIndex: " + std::to_string(variableTexturesIndex));
+        debug1.setString("GLOBAL_DEBUG_INT: " + std::to_string(GLOBAL_DEBUG_INT));
         debug1.setCharacterSize(8);
         debug1.setFont(font);
         debug1.setColor(sf::Color::White);
