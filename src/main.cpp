@@ -34,7 +34,7 @@ int bandit_choice1 = 0;
 int draw_mult = 5;
 //
 
-bool global_debug = false;
+bool global_debug = true;
 
 bool debug_invincibility = false;
 
@@ -474,8 +474,6 @@ int player_character_hurt_frames = 3;
 std::vector<sf::Vector3f> play_sounds_this_frame_pos;
 std::vector<int> play_sounds_this_frame_count;
 
-sf::Sound sound_pool[32];
-sf::Sound sound_loop_pool[8];
 
 //portal spiral stuff
 
@@ -602,19 +600,18 @@ void stop_looping_sound(sound_ID sound_id) {
     play_sounds_this_frame_count[sound_id] = -1;
 }
 
-int add_new_sound(enum sound_ID sound_id, std::string filename_path, sound_sound_buffer all_sounds[], enum sound_ID sound_buffer_id, sf::SoundBuffer all_extra_sound_buffers[], float pitch_variance, float attenuation = 1.0f, float volume = 100.0f) {
-    if (!all_extra_sound_buffers[sound_buffer_id].loadFromFile(filename_path)) {
+int add_new_sound(enum sound_ID sound_id, std::string filename_path, sf::SoundBuffer (&all_sounds)[1000], sound_sound_buffer (&all_sounds_mirror)[1000], float pitch_variance, float attenuation = 1.0f, float volume = 100.0f) {
+    if (!all_sounds[sound_id].loadFromFile(filename_path)) {
         EXIT_PROGRAM_NOW = sound_id;
         return -1;
     }
-    all_sounds[sound_id].sound.setBuffer(all_extra_sound_buffers[sound_buffer_id]);
-    all_sounds[sound_id].sound.setAttenuation(attenuation);
-    all_sounds[sound_id].sound.setVolume(volume);
-    all_sounds[sound_id].pitch_variance = pitch_variance;
+    all_sounds_mirror[sound_id].attenuation = attenuation;
+    all_sounds_mirror[sound_id].volume = volume;
+    all_sounds_mirror[sound_id].pitch_variance = pitch_variance;
     return 1;
 }
 
-int change_sound_buffer(enum sound_ID sound_id, sound_sound_buffer all_sounds[], enum sound_ID sound_buffer_id, sf::SoundBuffer all_extra_sound_buffers[], float pitch_variance, float attenuation = 1.0f, float volume = 100.0f) {
+/*int change_sound_buffer(enum sound_ID sound_id, sound_sound_buffer all_sounds[], enum sound_ID sound_buffer_id, sf::SoundBuffer all_extra_sound_buffers[], float pitch_variance, float attenuation = 1.0f, float volume = 100.0f) {
     all_sounds[sound_id].sound.stop();
 
     all_sounds[sound_id].sound.setBuffer(all_extra_sound_buffers[sound_buffer_id]);
@@ -630,13 +627,38 @@ int add_new_sound_buffer(enum sound_ID sound_id, std::string filename_path, sf::
     }
 
     return 1;
-}
+}*/
 
 void play_sound_random_pitch(sf::Sound& _sound, float variance, int i) {
     float pitch_offset = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2.0f * variance))) - variance;
     _sound.setPitch(1 + pitch_offset);
     _sound.setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
     _sound.play();
+}
+
+void play_sound_in_pool(sound_ID sound, sound_sound_buffer all_sounds[], sf::Sound (&sound_pool_objs)[32], sound_ID (&sound_pool_ids_mirror)[32]) {
+    for (int i = 0; i < 32; i++) {
+        if (sound_pool_ids_mirror[i] == sound) {
+            float PV = all_sounds[sound].pitch_variance;
+            sound_pool_objs[i].setPitch(1.0f + random_float(2.0f * PV) - PV);
+            sound_pool_objs[i].setAttenuation(all_sounds[sound].attenuation);
+            sound_pool_objs[i].setPosition(play_sounds_this_frame_pos[sound].x / play_sounds_this_frame_count[sound], 0, play_sounds_this_frame_pos[sound].y / play_sounds_this_frame_count[sound]);
+            sound_pool_objs[i].play();
+            return;
+        }
+    }
+    //if no same sound is already playing
+    for (int i = 0; i < 32; i++) {
+        if (!sound_pool_objs[i].Playing) {
+            float PV = all_sounds[sound].pitch_variance;
+            sound_pool_objs[i].setPitch(1.0f + random_float(2.0f * PV) - PV);
+            sound_pool_objs[i].setAttenuation(all_sounds[sound].attenuation);
+            sound_pool_objs[i].setPosition(play_sounds_this_frame_pos[sound].x / play_sounds_this_frame_count[sound], 0, play_sounds_this_frame_pos[sound].y / play_sounds_this_frame_count[sound]);
+            sound_pool_objs[i].play();
+            sound_pool_ids_mirror[i] = sound;
+            return;
+        }
+    }
 }
 
 
@@ -778,7 +800,9 @@ sound_ID get_shoot_sound(int wep_id) {
         }
         break;
 
-    case 11: /*SPC*/ return snd_shoot_1_ID; break;
+    case 11: /*SPC*/ if (laser_brain < 1.15f) { return snd_plasma_huge_ID; }
+           else { return snd_plasma_huge_upgrade_ID; }
+           break;
 
     case 12: /*PC*/
         if (laser_brain < 1.15f) {return snd_plasma_cannon_ID;}
@@ -3250,7 +3274,7 @@ void corpse_step(int i) {
         allObjects[i].my_id = melt_splat;
         for (int j = 0; j < 1 + ((has_throne_butt || allObjects[i].size > 1) * 2); j++) {
             create_object(allObjects[i].position.x + random_float(2) - 1, allObjects[i].position.y + random_float(2) - 1, 0, 0, meat_explosion, 0, player_team);
-            play_sound_on_player(snd_player_specific_1_ID);
+            play_sound_on_player(snd_corpse_explode_ID);
             play_sound_on_player(snd_explosion_ID);
         }
         return;
@@ -3326,13 +3350,13 @@ void lust_proc() {
     }
 }
 
-void pick_throne_butt(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_buffers[]) {
+/*void pick_throne_butt(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_buffers[]) {
     switch (player_character) {
     case melting:
-        change_sound_buffer(snd_player_specific_1_ID, all_sounds, snd_corpse_explode_TB_ID, all_sound_buffers, 0.05f, 0.0f);
+        //change_sound_buffer(snd_player_specific_1_ID, all_sounds, snd_corpse_explode_TB_ID, all_sound_buffers, 0.05f, 0.0f);
         break;
     }
-}
+}*/
 
 bool has_line_of_sight(float x, float y, float playerX = allObjects[0].position.x, float playerY = allObjects[0].position.y) {
 
@@ -4111,6 +4135,35 @@ int create_floor(int x, int y, bool Btile) {
     return removedwall;
 }
 
+void play_wall_break_sound(float x, float y) {
+    switch (area) {
+    case 0:
+        play_sound_relative_to_player(snd_wall_break_rock_ID, x, y);
+        break;
+    case 1:
+        play_sound_relative_to_player(snd_wall_break_rock_ID, x, y);
+        break;
+    case 2:
+        play_sound_relative_to_player(snd_wall_break_brick_ID, x, y);
+        break;
+    case 3:
+        play_sound_relative_to_player(snd_wall_break_scrap_ID, x, y);
+        break;
+    case 4:
+        play_sound_relative_to_player(snd_wall_break_crystal_ID, x, y);
+        break;
+    case 5:
+        play_sound_relative_to_player(snd_wall_break_rock_ID, x, y);
+        break;
+    case 6:
+        play_sound_relative_to_player(snd_wall_break_labs_ID, x, y);
+        break;
+    case 7:
+        play_sound_relative_to_player(snd_wall_break_brick_ID, x, y);
+        break;
+    }
+}
+
 int create_explo_tile(int x, int y) {
     int removedwall = 0;
     if (game_area[x][y].my_grid_type == wall) {
@@ -4130,7 +4183,8 @@ int create_explo_tile(int x, int y) {
         top_physics = y;
     }
     //sound of wall breaking position, + 8 to center on block
-    play_sound_relative_to_player(snd_wall_break_ID, x * 16 + 8, y * 16 + 8);
+
+    play_wall_break_sound(x * 16 + 8, y * 16 + 8);
 
     create_object(x * 16 + 8, y * 16 + 8, 0, 0, debris, 0, 0);
     return removedwall;
@@ -4572,6 +4626,54 @@ void eyes_tk_pull_enemy(int i) {
         }
     }
 }
+void play_player_hurt_sound() {
+
+    switch (player_character) {
+    case fish:
+        play_sound_on_player(snd_fish_hurt_ID);
+        break;
+    case crystal:
+        play_sound_on_player(snd_crystal_hurt_ID);
+        break;
+    case eyes:
+        play_sound_on_player(snd_eyes_hurt_ID);
+        break;
+    case melting:
+        play_sound_on_player(snd_melting_hurt_ID);
+        break;
+    case plant:
+        play_sound_on_player(snd_plant_hurt_ID);
+        break;
+    case YV:
+        play_sound_on_player(snd_YV_hurt_ID);
+        break;
+    case steroids:
+        play_sound_on_player(snd_steroids_hurt_ID);
+        break;
+    case robot:
+        play_sound_on_player(snd_robot_hurt_ID);
+        break;
+    case chicken:
+        play_sound_on_player(snd_chicken_hurt_ID);
+        break;
+    case rebel:
+        play_sound_on_player(snd_rebel_hurt_ID);
+        break;
+    case horror:
+        play_sound_on_player(snd_horror_hurt_ID);
+        break;
+    case rogue:
+        play_sound_on_player(snd_rogue_hurt_ID);
+        break;
+    case frog:
+        play_sound_on_player(snd_frog_hurt_ID);
+        break;
+    case skeleton:
+        play_sound_on_player(snd_skeleton_hurt_ID);
+        break;
+    }
+}
+
 
 void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = false) {
 
@@ -4726,7 +4828,7 @@ void bullet_collide_player(int O, int currOBJ) {
         }
         destroy_projectile(O);
         if ((allObjects[currOBJ].next_hurt < current_frame || proj_ID == revenge_bullet) && player_invincible == 0) {
-            play_sound_on_player(snd_player_hurt_ID);
+            play_player_hurt_sound();
             player_hp -= allObjects[O].damage;
             allObjects[currOBJ].next_hurt = current_frame + 6;
             allObjects[currOBJ].image_index = 0;
@@ -4742,7 +4844,7 @@ void bullet_collide_player_ignore_iframes(int O, int currOBJ) {
         }
         destroy_projectile(O);
         if (player_invincible == 0) {
-            play_sound_on_player(snd_player_hurt_ID);
+            play_player_hurt_sound();
             player_hp -= allObjects[O].damage;
             allObjects[currOBJ].next_hurt = current_frame + 6;
             allObjects[currOBJ].image_index = 0;
@@ -4793,7 +4895,7 @@ void player_collision(int i, int j, int currOBJ) {
                             allObjects[O].position.x -= allObjects[O].speed.x / 2;
                             allObjects[O].position.y -= allObjects[O].speed.y / 2;
                             player_rads++;
-                            play_sounds_this_frame_count[snd_rad_pickup_ID]++;
+                            play_sound_on_player(snd_rad_pickup_ID);
                         }
                         break;
                     case objectID::ammo_pack:
@@ -4831,7 +4933,7 @@ void player_collision(int i, int j, int currOBJ) {
 
                             motion_add_dir(tmpdir, 1.0f, currOBJ);  //the bigger the enemy the more it pushes: speed = size * 0.5
                             if (allObjects[O].next_melee < current_frame && allObjects[currOBJ].next_hurt < current_frame && !player_invincible) { //melee cooldown
-                                play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
+                                play_player_hurt_sound();
                                 allObjects[O].next_melee = current_frame + 25;
                                 player_hp -= 5;
                                 allObjects[currOBJ].next_hurt = current_frame + 6;
@@ -4848,7 +4950,7 @@ void player_collision(int i, int j, int currOBJ) {
 
                             //motion_add_dir(tmpdir, 1.0f, currOBJ);  //the bigger the enemy the more it pushes: speed = size * 0.5
                             if (allObjects[O].alarm1 < 0 && allObjects[O].next_melee < current_frame && allObjects[currOBJ].next_hurt < current_frame && !player_invincible) { //melee cooldown
-                                play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
+                                play_player_hurt_sound();
                                 allObjects[O].next_melee = current_frame + 30;
                                 player_hp -= 10;
                                 allObjects[currOBJ].next_hurt = current_frame + 6;
@@ -4859,7 +4961,7 @@ void player_collision(int i, int j, int currOBJ) {
                         break;
                     case objectID::idpd_explosion:
                         if (allObjects[O].team != allObjects[0].team && player_invincible == 0 && (allObjects[O].image_index == 3 || allObjects[O].image_index == 4) && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox + player_hitbox)) {
-                            play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
+                            play_player_hurt_sound();
                             player_hp -= 8;
                             allObjects[currOBJ].next_hurt = current_frame + 6;
                             allObjects[currOBJ].image_index = 0;
@@ -4871,7 +4973,7 @@ void player_collision(int i, int j, int currOBJ) {
                         break;
                     case objectID::explosion:
                         if (player_invincible == 0 && (allObjects[O].image_index == 3 || allObjects[O].image_index == 4) && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox + player_hitbox)) {
-                            play_sound_relative_to_player(snd_player_hurt_ID, allObjects[0].position.x, allObjects[0].position.y);
+                            play_player_hurt_sound();
                             player_hp -= allObjects[O].damage;
                             allObjects[currOBJ].next_hurt = current_frame + 6;
                             allObjects[currOBJ].image_index = 0;
@@ -6220,8 +6322,10 @@ void swap_weapons() {
     bwep = tmp_wep;
 }
 
+
 void hurt_player(int damage) {
-    play_sound_on_player(snd_player_hurt_ID);
+
+    play_player_hurt_sound();
     player_hp -= damage;
     allObjects[0].next_hurt = current_frame + 6;
     allObjects[0].image_index = 0;
@@ -6234,12 +6338,7 @@ void YV_money() {
 }
 
 void play_wep_sound() {
-    if (current_player_weapon_sound == 0) {
-        play_sound_on_player(snd_player_shoot_A_ID);
-    }
-    else {
-        play_sound_on_player(snd_player_shoot_B_ID);
-    }
+    play_sound_on_player(get_shoot_sound(wep));
 }
 
 void swing_melee(float direction, float reload, float damage) {
@@ -6703,7 +6802,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
 
                     wep_kick = -6;
                     wep_angle *= -1;
-                    play_sounds_this_frame_count[snd_ultra_shovel_ID] = 1;
+                    play_sound_on_player(snd_ultra_shovel_ID);
                     player_rads -= 14;
                     wep_reload += 15.0f;
                     motion_add_dir(direction, 8, 0);
@@ -6849,7 +6948,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 LMB_pressed = false;
                 wep_kick = 7;
                 motion_add_dir(direction, -16, 0);
-                play_sounds_this_frame_count[snd_plasma_huge_ID] = 1;
+                play_wep_sound();
 
 
                 wep_reload += 260.0f * shots * gamble_reload;
@@ -7218,7 +7317,7 @@ bool is_stickable(objectID obj_id) {
     }
 }
 
-void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    //logic done on each obect every frame
+void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[]) {    //logic done on each obect every frame
     float tmpdir = 0.0f;
     float tempSpeedX = 0.0f;
     float tempSpeedY = 0.0f;
@@ -7305,8 +7404,8 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                 allObjects[i].image_index = 0;
                 //make all walls invisibe and not collide with bullets
                 make_T2_arena();
-                all_sounds[snd_music_ID].sound.setPlayingOffset(sf::milliseconds(0));
-                all_sounds[snd_music_ID].sound.setVolume(100.0f);
+                //all_sounds[snd_music_ID].sound.setPlayingOffset(sf::milliseconds(0));
+                //all_sounds[snd_music_ID].sound.setVolume(100.0f);
             }
 
             //half hp noise
@@ -8244,7 +8343,7 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
                 create_object(allObjects[i].position.x, allObjects[i].position.y, 0, 0, player_lightning_spawn, random_360_radians(), 14);
             }
 
-            play_sounds_this_frame_count[snd_lightning_cannon_loop_ID] = 1;
+            play_sound_on_player(snd_lightning_cannon_loop_ID);
 
             break;
         case devastator_bullet:
@@ -8262,7 +8361,12 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             //do this to delay a frame
             if (allObjects[i].alarm1 == 2) {
                 allObjects[i].my_id = nothing;
-                play_sound_relative_to_player(snd_plasma_split_ID, allObjects[i].position.x, allObjects[i].position.y);
+                if (laser_brain < 1.15f) {
+                    play_sound_relative_to_player(snd_plasma_split_ID, allObjects[i].position.x, allObjects[i].position.y);
+                }
+                else {
+                    play_sound_relative_to_player(snd_plasma_split_upgrade_ID, allObjects[i].position.x, allObjects[i].position.y);
+                }
             }
             if (allObjects[i].alarm1 == 1) {
                 allObjects[i].alarm1 = 2;
@@ -8277,7 +8381,12 @@ void do_object_logic(int start, int end, sound_sound_buffer all_sounds[]) {    /
             //do this to delay a frame
             if (allObjects[i].alarm1 == 2) {
                 allObjects[i].my_id = nothing;
-                play_sound_relative_to_player(snd_plasma_split_ID, allObjects[i].position.x, allObjects[i].position.y);
+                if (laser_brain < 1.15f) {
+                    play_sound_relative_to_player(snd_plasma_split_ID, allObjects[i].position.x, allObjects[i].position.y);
+                }
+                else {
+                    play_sound_relative_to_player(snd_plasma_split_upgrade_ID, allObjects[i].position.x, allObjects[i].position.y);
+                }
             }
             if (allObjects[i].alarm1 == 1) {
                 allObjects[i].alarm1 = 2;
@@ -10120,7 +10229,7 @@ void swap_player_textures(sf::Texture &player_tex, character new_character, bool
     }
 }
 
-void swap_sounds(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_buffers[]) {
+/* void swap_sounds(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_buffers[]) {
     switch (area) {
     case 0:
         change_sound_buffer(snd_wall_break_ID, all_sounds, snd_wall_break_rock_ID, all_sound_buffers, 0.1f, 0.0005f);
@@ -10147,9 +10256,9 @@ void swap_sounds(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_buff
         change_sound_buffer(snd_wall_break_ID, all_sounds, snd_wall_break_brick_ID, all_sound_buffers, 0.1f, 0.0005f);
         break;
     }
-}
+}*/
 
-void start_new_run(character chararcter_choice, sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_buffers[]) {
+void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[]) {
     player_character = chararcter_choice;
 
     player_max_speed = 4.0f;
@@ -10168,61 +10277,48 @@ void start_new_run(character chararcter_choice, sound_sound_buffer all_sounds[],
 
         player_max_hp = 8;
         player_hp = 8;
-        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_horror_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
         break;
     case fish:
 
         player_max_hp = 8;
         player_hp = 8;
-        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_fish_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
 
         //ability
-        change_sound_buffer(snd_player_specific_1_ID, all_sounds, snd_fish_roll_ID, all_sound_buffers, 0.05f, 0.0f);
         break;
     case crystal:
 
         player_max_hp = 10;
         player_hp = 10;
-        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_crystal_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
 
         //ability
-        change_sound_buffer(snd_player_specific_1_ID, all_sounds, snd_crystal_shield_ID, all_sound_buffers, 0.01f, 0.0f);
         break;
     case eyes:
 
         player_max_hp = 8;
         player_hp = 8;
-        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_eyes_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
-
         //ability
-        change_sound_buffer(snd_player_loop_1_ID, all_sounds, snd_eyes_TK_ID, all_sound_buffers, 0.01f, 0.0f);
         break;
     case melting:
 
         player_max_hp = 2;
         player_hp = 2;
-        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_melting_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
 
-        change_sound_buffer(snd_player_specific_1_ID, all_sounds, snd_corpse_explode_ID, all_sound_buffers, 0.05f, 0.0f);
         break;
     case plant:
 
         player_max_speed = 4.5f;
         player_max_hp = 8;
         player_hp = 8;
-        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_plant_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
         break;
     case YV:
 
         player_max_hp = 8;
         player_hp = 8;
-        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_YV_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
         break;
     case steroids:
 
         player_max_hp = 8;
         player_hp = 8;
-        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_steroids_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
         break;
     case robot:
 
@@ -10230,38 +10326,32 @@ void start_new_run(character chararcter_choice, sound_sound_buffer all_sounds[],
 
         player_max_hp = 8;
         player_hp = 8;
-        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_robot_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
         break;
     case chicken:
 
         player_max_hp = 8;
         player_hp = 8;
-        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_chicken_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
         break;
     case rebel:
 
         player_max_hp = 8;
         player_hp = 8;
-        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_rebel_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
         break;
     case rogue:
 
         player_max_hp = 8;
         player_hp = 8;
-        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_rogue_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
         break;
     case frog:
 
         player_max_hp = 8;
         player_hp = 8;
-        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_frog_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
         break;
     case skeleton:
 
         player_max_speed = 3.0f;
         player_max_hp = 4;
         player_hp = 4;
-        change_sound_buffer(snd_player_hurt_ID, all_sounds, snd_skeleton_hurt_ID, all_sound_buffers, 0.05f, 0.0f);
         break;
     }
     //debug
@@ -10269,7 +10359,7 @@ void start_new_run(character chararcter_choice, sound_sound_buffer all_sounds[],
     //debug
 }
 
-void generate_level(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_buffers[]) {
+void generate_level(sf::SoundBuffer all_sounds[]) {
 
     //reset area
     for (int i = left_physics - 2; i <= right_physics + 2; i++) {
@@ -10334,10 +10424,8 @@ void generate_level(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_b
 
     allObjects[0].position = { 24016.0f, 24016.0f };
 
-    swap_sounds(all_sounds, all_sound_buffers);
-
     if (area == 0) {    //throne 2
-        all_sounds[snd_music_ID].sound.setVolume(0.0f);
+        //all_sounds[snd_music_ID].sound.setVolume(0.0f);
         generate_floors(240, 0, 6, 1, 5, 19, 22, 1, 4);
 
         create_object(24016, 24016, 0, 0, weapon_drop, 0, 8);//debug
@@ -10745,443 +10833,456 @@ int main()
     font.loadFromFile("C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/src/PressStart2P-Regular.ttf");
 
     //sounds
-    play_sounds_this_frame_pos.reserve(255);
-    play_sounds_this_frame_count.reserve(255);
+    play_sounds_this_frame_pos.reserve(1001);
+    for (int i = 0; i < 1001; i++) {
+        play_sounds_this_frame_pos[i] = {0, 0, 0};
+    }
+    play_sounds_this_frame_count.reserve(1001);
+    for (int i = 0; i < 1001; i++) {
+        play_sounds_this_frame_count[i] = 0;
+    }
 
     //SOUND_START
-    const int all_sounds_max = 256;
-    sound_sound_buffer all_sounds[all_sounds_max];
+    sf::SoundBuffer all_sounds[1000];
+    sound_sound_buffer all_sounds_mirror[1000];
+    const int sound_pool_max = 64;
+    sf::Sound sound_pool[sound_pool_max];
 
-    const int all_sound_buffers_max = 1000;
-    sf::SoundBuffer all_extra_sound_buffers[all_sound_buffers_max];
+    sound_ID sound_pool_ids_mirror[sound_pool_max];
 
-    add_new_sound(snd_shoot_1_ID, "snd/shoot_1.wav", all_sounds, snd_shoot_1_ID, all_extra_sound_buffers, 0.1f, 0.015f);
+    //sf::Sound sound_loop_pool[8];
 
-    add_new_sound(snd_horror_portal_ID, "snd/horror_portal.wav", all_sounds, snd_horror_portal_ID, all_extra_sound_buffers, 0.1f);
+    //const int all_sound_buffers_max = 1000;
+    //sf::SoundBuffer all_extra_sound_buffers[all_sound_buffers_max];
 
-    add_new_sound(snd_horror_portal_pan_ID, "snd/horror_portal_pan.wav", all_sounds, snd_horror_portal_pan_ID, all_extra_sound_buffers, 0.1f, 0.005f);
+    add_new_sound(snd_shoot_1_ID, "snd/shoot_1.wav", all_sounds, all_sounds_mirror, 0.1f, 0.015f);
 
-    add_new_sound(snd_bandit_hurt_ID, "snd/bandit_hurt.wav", all_sounds, snd_bandit_hurt_ID, all_extra_sound_buffers, 0.1f, 0.04f);
+    add_new_sound(snd_horror_portal_ID, "snd/horror_portal.wav", all_sounds, all_sounds_mirror, 0.1f);
 
-    add_new_sound(snd_bandit_die_ID, "snd/bandit_die.wav", all_sounds, snd_bandit_die_ID, all_extra_sound_buffers, 0.1f, 0.04f);
+    add_new_sound(snd_horror_portal_pan_ID, "snd/horror_portal_pan.wav", all_sounds, all_sounds_mirror, 0.1f, 0.005f);
 
-    add_new_sound(snd_rad_pickup_ID, "snd/rad_pickup.wav", all_sounds, snd_rad_pickup_ID, all_extra_sound_buffers, 0.02f, 0.00f, 70.0f);
+    add_new_sound(snd_bandit_hurt_ID, "snd/bandit_hurt.wav", all_sounds, all_sounds_mirror, 0.1f, 0.04f);
 
-    add_new_sound(snd_horror_beam_start_ID, "snd/horror_beam_start.wav", all_sounds, snd_horror_beam_start_ID, all_extra_sound_buffers, 0.02f, 0.0f, 70.0f);
+    add_new_sound(snd_bandit_die_ID, "snd/bandit_die.wav", all_sounds, all_sounds_mirror, 0.1f, 0.04f);
 
-    add_new_sound(snd_horror_beam_hold_ID, "snd/horror_beam_hold.wav", all_sounds, snd_horror_beam_hold_ID, all_extra_sound_buffers, 0.00f, 0.0f, 70.0f);
+    add_new_sound(snd_rad_pickup_ID, "snd/rad_pickup.wav", all_sounds, all_sounds_mirror, 0.02f, 0.00f, 70.0f);
 
-    add_new_sound(snd_lightning_cannon_loop_ID, "snd/lightning_cannon_loop.wav", all_sounds, snd_lightning_cannon_loop_ID, all_extra_sound_buffers, 0.00f, 0.0f, 100.0f);
+    add_new_sound(snd_horror_beam_start_ID, "snd/horror_beam_start.wav", all_sounds, all_sounds_mirror, 0.02f, 0.0f, 70.0f);
+
+    add_new_sound(snd_horror_beam_hold_ID, "snd/horror_beam_hold.wav", all_sounds, all_sounds_mirror, 0.00f, 0.0f, 70.0f);
+
+    add_new_sound(snd_lightning_cannon_loop_ID, "snd/lightning_cannon_loop.wav", all_sounds, all_sounds_mirror, 0.00f, 0.0f, 100.0f);
 
     
-    add_new_sound(snd_hit_wall_ID, "snd/hit_wall.wav", all_sounds, snd_hit_wall_ID, all_extra_sound_buffers, 0.1f, 0.02f);
+    add_new_sound(snd_hit_wall_ID, "snd/hit_wall.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
 
-    add_new_sound(snd_hit_rock_ID, "snd/hit_rock.wav", all_sounds, snd_hit_rock_ID, all_extra_sound_buffers, 0.1f, 0.02f);
+    add_new_sound(snd_hit_rock_ID, "snd/hit_rock.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
 
-    add_new_sound(snd_hit_plant_ID, "snd/hit_plant.wav", all_sounds, snd_hit_plant_ID, all_extra_sound_buffers, 0.1f, 0.02f);
+    add_new_sound(snd_hit_plant_ID, "snd/hit_plant.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
 
-    add_new_sound(snd_hit_metal_ID, "snd/hit_metal.wav", all_sounds, snd_hit_metal_ID, all_extra_sound_buffers, 0.1f, 0.02f);
+    add_new_sound(snd_hit_metal_ID, "snd/hit_metal.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
 
-    add_new_sound(snd_hit_flesh_ID, "snd/hit_flesh.wav", all_sounds, snd_hit_flesh_ID, all_extra_sound_buffers, 0.1f, 0.02f);
+    add_new_sound(snd_hit_flesh_ID, "snd/hit_flesh.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
     //prop related
-    add_new_sound(snd_sewer_pipe_break_ID, "snd/sewer_pipe_break.wav", all_sounds, snd_sewer_pipe_break_ID, all_extra_sound_buffers, 0.1f, 0.02f);
-    add_new_sound(snd_toxic_barrel_gas_ID, "snd/toxic_barrel_gas.wav", all_sounds, snd_toxic_barrel_gas_ID, all_extra_sound_buffers, 0.1f, 0.02f);
-    add_new_sound(snd_car_explosion_ID, "snd/car_explosion.wav", all_sounds, snd_car_explosion_ID, all_extra_sound_buffers, 0.1f, 0.02f);
-    add_new_sound(snd_crystal_prop_break_ID, "snd/crystal_prop_break.wav", all_sounds, snd_crystal_prop_break_ID, all_extra_sound_buffers, 0.1f, 0.02f);
-    add_new_sound(snd_coccon_break_ID, "snd/coccon_break.wav", all_sounds, snd_coccon_break_ID, all_extra_sound_buffers, 0.1f, 0.02f);
-    add_new_sound(snd_icicle_break_ID, "snd/icicle_break.wav", all_sounds, snd_icicle_break_ID, all_extra_sound_buffers, 0.1f, 0.02f);
-    add_new_sound(snd_hydrant_break_ID, "snd/hydrant_break.wav", all_sounds, snd_hydrant_break_ID, all_extra_sound_buffers, 0.1f, 0.02f);
-    add_new_sound(snd_street_light_break_ID, "snd/street_light_break.wav", all_sounds, snd_street_light_break_ID, all_extra_sound_buffers, 0.1f, 0.02f);
-    add_new_sound(snd_vending_machine_break_ID, "snd/vending_machine_break.wav", all_sounds, snd_vending_machine_break_ID, all_extra_sound_buffers, 0.1f, 0.02f);
-    add_new_sound(snd_snowman_break_ID, "snd/snowman_break.wav", all_sounds, snd_snowman_break_ID, all_extra_sound_buffers, 0.1f, 0.02f);
-    add_new_sound(snd_server_break_ID, "snd/server_break.wav", all_sounds, snd_server_break_ID, all_extra_sound_buffers, 0.1f, 0.02f);
-    add_new_sound(snd_tube_break_ID, "snd/tube_break.wav", all_sounds, snd_tube_break_ID, all_extra_sound_buffers, 0.1f, 0.02f);
-    add_new_sound(snd_mutant_tube_break_ID, "snd/mutant_tube_break.wav", all_sounds, snd_mutant_tube_break_ID, all_extra_sound_buffers, 0.1f, 0.02f);
-    add_new_sound(snd_generator_break_ID, "snd/generator_break.wav", all_sounds, snd_generator_break_ID, all_extra_sound_buffers, 0.1f, 0.02f);
-    add_new_sound(snd_pillar_break_ID, "snd/pillar_break.wav", all_sounds, snd_pillar_break_ID, all_extra_sound_buffers, 0.1f, 0.02f);
+    add_new_sound(snd_sewer_pipe_break_ID, "snd/sewer_pipe_break.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
+    add_new_sound(snd_toxic_barrel_gas_ID, "snd/toxic_barrel_gas.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
+    add_new_sound(snd_car_explosion_ID, "snd/car_explosion.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
+    add_new_sound(snd_crystal_prop_break_ID, "snd/crystal_prop_break.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
+    add_new_sound(snd_coccon_break_ID, "snd/coccon_break.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
+    add_new_sound(snd_icicle_break_ID, "snd/icicle_break.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
+    add_new_sound(snd_hydrant_break_ID, "snd/hydrant_break.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
+    add_new_sound(snd_street_light_break_ID, "snd/street_light_break.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
+    add_new_sound(snd_vending_machine_break_ID, "snd/vending_machine_break.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
+    add_new_sound(snd_snowman_break_ID, "snd/snowman_break.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
+    add_new_sound(snd_server_break_ID, "snd/server_break.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
+    add_new_sound(snd_tube_break_ID, "snd/tube_break.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
+    add_new_sound(snd_mutant_tube_break_ID, "snd/mutant_tube_break.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
+    add_new_sound(snd_generator_break_ID, "snd/generator_break.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
+    add_new_sound(snd_pillar_break_ID, "snd/pillar_break.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
 
-    add_new_sound(snd_soda_hit_ID, "snd/soda_hit.wav", all_sounds, snd_soda_hit_ID, all_extra_sound_buffers, 0.1f, 0.02f);
-    add_new_sound(snd_soda_hit_2_ID, "snd/soda_hit_2.wav", all_sounds, snd_soda_hit_2_ID, all_extra_sound_buffers, 0.1f, 0.02f);
-
-
-    add_new_sound_buffer(snd_wall_break_rock_ID, "snd/wall_break_rock.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_wall_break_brick_ID, "snd/wall_break_brick.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_wall_break_scrap_ID, "snd/wall_break_scrap.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_wall_break_crystal_ID, "snd/wall_break_crystal.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_wall_break_labs_ID, "snd/wall_break_labs.wav", all_extra_sound_buffers);
-
-    add_new_sound(snd_IDPD_explosion_ID, "snd/IDPD_explosion.wav", all_sounds, snd_IDPD_explosion_ID, all_extra_sound_buffers, 0.1f, 0.01f);
-
-    add_new_sound(snd_flak_explode_ID, "snd/flak_explode.wav", all_sounds, snd_flak_explode_ID, all_extra_sound_buffers, 0.1f, 0.01f);
-    add_new_sound(snd_super_flak_explode_ID, "snd/super_flak_explode.wav", all_sounds, snd_super_flak_explode_ID, all_extra_sound_buffers, 0.1f, 0.01f);
+    add_new_sound(snd_soda_hit_ID, "snd/soda_hit.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
+    add_new_sound(snd_soda_hit_2_ID, "snd/soda_hit_2.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
 
 
-    add_new_sound(snd_wep_pickup_ID, "snd/wep_pickup.wav", all_sounds, snd_wep_pickup_ID, all_extra_sound_buffers, 0.02f, 0.0f);
+    add_new_sound(snd_wall_break_rock_ID, "snd/wall_break_rock.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0005f);
+    add_new_sound(snd_wall_break_brick_ID, "snd/wall_break_brick.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0005f);
+    add_new_sound(snd_wall_break_scrap_ID, "snd/wall_break_scrap.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0005f);
+    add_new_sound(snd_wall_break_crystal_ID, "snd/wall_break_crystal.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0005f);
+    add_new_sound(snd_wall_break_labs_ID, "snd/wall_break_labs.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0005f);
+
+    add_new_sound(snd_IDPD_explosion_ID, "snd/IDPD_explosion.wav", all_sounds, all_sounds_mirror, 0.1f, 0.001f);
+
+    add_new_sound(snd_flak_explode_ID, "snd/flak_explode.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
+    add_new_sound(snd_super_flak_explode_ID, "snd/super_flak_explode.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
 
-    add_new_sound(snd_explosion_ID, "snd/explosion.wav", all_sounds, snd_explosion_ID, all_extra_sound_buffers, 0.1f, 0.005f);
-
-    add_new_sound(snd_explosion_s_ID, "snd/explosion_s.wav", all_sounds, snd_explosion_s_ID, all_extra_sound_buffers, 0.1f, 0.005f);
-
-    add_new_sound(snd_plasma_hit_ID, "snd/plasma_hit.wav", all_sounds, snd_plasma_hit_ID, all_extra_sound_buffers, 0.15f, 0.02f);
-
-    add_new_sound(snd_ultra_shovel_ID, "snd/ultra_shovel.wav", all_sounds, snd_ultra_shovel_ID, all_extra_sound_buffers, 0.1f, 0.0f);
-
-    add_new_sound(snd_plasma_huge_ID, "snd/plasma_huge.wav", all_sounds, snd_plasma_huge_ID, all_extra_sound_buffers, 0.15f, 0.0f);
-
-    add_new_sound(snd_plasma_huge_upgrade_ID, "snd/plasma_huge_upgrade.wav", all_sounds, snd_plasma_huge_upgrade_ID, all_extra_sound_buffers, 0.15f, 0.0f);
-
-    add_new_sound(snd_plasma_split_ID, "snd/plasma_split.wav", all_sounds, snd_plasma_split_ID, all_extra_sound_buffers, 0.15f, 0.01f);
-
-    add_new_sound(snd_plasma_split_upgrade_ID, "snd/plasma_split_upgrade.wav", all_sounds, snd_plasma_split_upgrade_ID, all_extra_sound_buffers, 0.15f, 0.01f);
+    add_new_sound(snd_wep_pickup_ID, "snd/wep_pickup.wav", all_sounds, all_sounds_mirror, 0.02f, 0.0f);
 
 
-    add_new_sound(snd_bullet_bounce_ID, "snd/bullet_bounce.wav", all_sounds, snd_bullet_bounce_ID, all_extra_sound_buffers, 0.1f, 0.01f);
+    add_new_sound(snd_explosion_ID, "snd/explosion.wav", all_sounds, all_sounds_mirror, 0.1f, 0.003f);
 
-    add_new_sound(snd_machinegun_ID, "snd/machinegun.wav", all_sounds, snd_machinegun_ID, all_extra_sound_buffers, 0.1f, 0.0f);
-    add_new_sound(snd_gold_machinegun_ID, "snd/gold_machinegun.wav", all_sounds, snd_gold_machinegun_ID, all_extra_sound_buffers, 0.1f, 0.0f);
-    add_new_sound(snd_heavy_machinegun_ID, "snd/heavy_machinegun.wav", all_sounds, snd_heavy_machinegun_ID, all_extra_sound_buffers, 0.1f, 0.0f);
-    add_new_sound(snd_rogue_rifle_ID, "snd/rogue_rifle.wav", all_sounds, snd_rogue_rifle_ID, all_extra_sound_buffers, 0.1f, 0.0f);
-    add_new_sound(snd_hyper_rifle_ID, "snd/hyper_rifle.wav", all_sounds, snd_hyper_rifle_ID, all_extra_sound_buffers, 0.1f, 0.0f);
+    add_new_sound(snd_explosion_s_ID, "snd/explosion_s.wav", all_sounds, all_sounds_mirror, 0.1f, 0.003f);
 
-    add_new_sound_buffer(snd_gold_revolver_ID, "snd/gold_revolver.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_rusty_revolver_ID, "snd/rusty_revolver.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_triple_machinegun_ID, "snd/triple_machinegun.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_minigun_ID, "snd/minigun.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_smart_gun_ID, "snd/smart_gun.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_quadruple_machinegun_ID, "snd/quadruple_machinegun.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_double_minigun_ID, "snd/double_minigun.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_heavy_revolver_ID, "snd/heavy_revolver.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_bouncer_SMG_ID, "snd/bouncer_SMG.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_bouncer_shotgun_ID, "snd/bouncer_shotgun.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_ultra_revolver_ID, "snd/ultra_revolver.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_gold_frog_pistol_ID, "snd/gold_frog_pistol.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_incinerator_ID, "snd/incinerator.wav", all_extra_sound_buffers);
+    add_new_sound(snd_plasma_hit_ID, "snd/plasma_hit.wav", all_sounds, all_sounds_mirror, 0.15f, 0.02f);
+
+    add_new_sound(snd_ultra_shovel_ID, "snd/ultra_shovel.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+
+    add_new_sound(snd_plasma_huge_ID, "snd/plasma_huge.wav", all_sounds, all_sounds_mirror, 0.15f, 0.0f);
+
+    add_new_sound(snd_plasma_huge_upgrade_ID, "snd/plasma_huge_upgrade.wav", all_sounds, all_sounds_mirror, 0.15f, 0.0f);
+
+    add_new_sound(snd_plasma_split_ID, "snd/plasma_split.wav", all_sounds, all_sounds_mirror, 0.15f, 0.0001f);
+
+    add_new_sound(snd_plasma_split_upgrade_ID, "snd/plasma_split_upgrade.wav", all_sounds, all_sounds_mirror, 0.15f, 0.0001f);
+
+
+    add_new_sound(snd_bullet_bounce_ID, "snd/bullet_bounce.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
+
+    add_new_sound(snd_machinegun_ID, "snd/machinegun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_gold_machinegun_ID, "snd/gold_machinegun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_heavy_machinegun_ID, "snd/heavy_machinegun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_rogue_rifle_ID, "snd/rogue_rifle.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_hyper_rifle_ID, "snd/hyper_rifle.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+
+    add_new_sound(snd_gold_revolver_ID, "snd/gold_revolver.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_rusty_revolver_ID, "snd/rusty_revolver.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_triple_machinegun_ID, "snd/triple_machinegun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_minigun_ID, "snd/minigun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_smart_gun_ID, "snd/smart_gun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_quadruple_machinegun_ID, "snd/quadruple_machinegun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_double_minigun_ID, "snd/double_minigun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_heavy_revolver_ID, "snd/heavy_revolver.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_bouncer_SMG_ID, "snd/bouncer_SMG.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_bouncer_shotgun_ID, "snd/bouncer_shotgun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_ultra_revolver_ID, "snd/ultra_revolver.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_gold_frog_pistol_ID, "snd/gold_frog_pistol.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_incinerator_ID, "snd/incinerator.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
 
     //bolt weps
-    add_new_sound_buffer(snd_crossbow_ID, "snd/crossbow.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_super_crossbow_ID, "snd/super_crossbow.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_gold_crossbow_ID, "snd/gold_crossbow.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_heavy_crossbow_ID, "snd/heavy_crossbow.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_splinter_ID, "snd/splinter.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_splinter_pistol_ID, "snd/splinter_pistol.wav", all_extra_sound_buffers);
+    add_new_sound(snd_crossbow_ID, "snd/crossbow.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_super_crossbow_ID, "snd/super_crossbow.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_gold_crossbow_ID, "snd/gold_crossbow.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_heavy_crossbow_ID, "snd/heavy_crossbow.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_splinter_ID, "snd/splinter.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_splinter_pistol_ID, "snd/splinter_pistol.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
     //add_new_sound_buffer(snd_super_splinter_ID, "snd/super_splinter.wav", all_extra_sound_buffers);
-    add_new_sound(snd_super_splinter_ID, "snd/super_splinter.wav", all_sounds, snd_super_splinter_ID, all_extra_sound_buffers, 0.1f, 0.0f);
-    add_new_sound_buffer(snd_gold_splinter_ID, "snd/gold_splinter.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_ultra_crossbow_ID, "snd/ultra_crossbow.wav", all_extra_sound_buffers);
+    add_new_sound(snd_super_splinter_ID, "snd/super_splinter.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_gold_splinter_ID, "snd/gold_splinter.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_ultra_crossbow_ID, "snd/ultra_crossbow.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
 
-    add_new_sound(snd_pistol_swap_ID, "snd/pistol_swap.wav", all_sounds, snd_pistol_swap_ID, all_extra_sound_buffers, 0.005f, 0.0f);
-    add_new_sound(snd_machine_gun_swap_ID, "snd/machine_gun_swap.wav", all_sounds, snd_machine_gun_swap_ID, all_extra_sound_buffers, 0.005f, 0.0f);
-    add_new_sound(snd_hammer_swap_ID, "snd/hammer_swap.wav", all_sounds, snd_hammer_swap_ID, all_extra_sound_buffers, 0.005f, 0.0f);
-    add_new_sound(snd_shotgun_swap_ID, "snd/shotgun_swap.wav", all_sounds, snd_shotgun_swap_ID, all_extra_sound_buffers, 0.005f, 0.0f);
-    add_new_sound(snd_bow_swap_ID, "snd/bow_swap.wav", all_sounds, snd_bow_swap_ID, all_extra_sound_buffers, 0.005f, 0.0f);
-    add_new_sound(snd_guitar_swap_ID, "snd/guitar_swap.wav", all_sounds, snd_guitar_swap_ID, all_extra_sound_buffers, 0.005f, 0.0f);
-    add_new_sound(snd_explosive_swap_ID, "snd/explosive_swap.wav", all_sounds, snd_explosive_swap_ID, all_extra_sound_buffers, 0.005f, 0.0f);
-    add_new_sound(snd_energy_swap_ID, "snd/energy_swap.wav", all_sounds, snd_energy_swap_ID, all_extra_sound_buffers, 0.005f, 0.0f);
-    add_new_sound(snd_motorized_swap_ID, "snd/motorized_swap.wav", all_sounds, snd_motorized_swap_ID, all_extra_sound_buffers, 0.005f, 0.0f);
-    add_new_sound(snd_sword_swap_ID, "snd/sword_swap.wav", all_sounds, snd_sword_swap_ID, all_extra_sound_buffers, 0.005f, 0.0f);
-    add_new_sound(snd_flame_swap_ID, "snd/flame_swap.wav", all_sounds, snd_flame_swap_ID, all_extra_sound_buffers, 0.005f, 0.0f);
-    add_new_sound(snd_dragon_swap_ID, "snd/dragon_swap.wav", all_sounds, snd_dragon_swap_ID, all_extra_sound_buffers, 0.005f, 0.0f);
-    add_new_sound(snd_gold_swap_ID, "snd/gold_swap.wav", all_sounds, snd_gold_swap_ID, all_extra_sound_buffers, 0.005f, 0.0f);
+    add_new_sound(snd_pistol_swap_ID, "snd/pistol_swap.wav", all_sounds, all_sounds_mirror, 0.005f, 0.0f);
+    add_new_sound(snd_machine_gun_swap_ID, "snd/machine_gun_swap.wav", all_sounds, all_sounds_mirror, 0.005f, 0.0f);
+    add_new_sound(snd_hammer_swap_ID, "snd/hammer_swap.wav", all_sounds, all_sounds_mirror, 0.005f, 0.0f);
+    add_new_sound(snd_shotgun_swap_ID, "snd/shotgun_swap.wav", all_sounds, all_sounds_mirror, 0.005f, 0.0f);
+    add_new_sound(snd_bow_swap_ID, "snd/bow_swap.wav", all_sounds, all_sounds_mirror, 0.005f, 0.0f);
+    add_new_sound(snd_guitar_swap_ID, "snd/guitar_swap.wav", all_sounds, all_sounds_mirror, 0.005f, 0.0f);
+    add_new_sound(snd_explosive_swap_ID, "snd/explosive_swap.wav", all_sounds, all_sounds_mirror, 0.005f, 0.0f);
+    add_new_sound(snd_energy_swap_ID, "snd/energy_swap.wav", all_sounds, all_sounds_mirror, 0.005f, 0.0f);
+    add_new_sound(snd_motorized_swap_ID, "snd/motorized_swap.wav", all_sounds, all_sounds_mirror, 0.005f, 0.0f);
+    add_new_sound(snd_sword_swap_ID, "snd/sword_swap.wav", all_sounds, all_sounds_mirror, 0.005f, 0.0f);
+    add_new_sound(snd_flame_swap_ID, "snd/flame_swap.wav", all_sounds, all_sounds_mirror, 0.005f, 0.0f);
+    add_new_sound(snd_dragon_swap_ID, "snd/dragon_swap.wav", all_sounds, all_sounds_mirror, 0.005f, 0.0f);
+    add_new_sound(snd_gold_swap_ID, "snd/gold_swap.wav", all_sounds, all_sounds_mirror, 0.005f, 0.0f);
 
     //shell weps
-    add_new_sound_buffer(snd_shotgun_ID, "snd/shotgun.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_double_shotgun_ID, "snd/double_shotgun.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_sawed_off_shotgun_ID, "snd/sawed_off_shotgun.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_eraser_ID, "snd/eraser.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_golden_shotgun_ID, "snd/gold_shotgun.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_flame_shotgun_ID, "snd/flame_shotgun.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_double_flame_shotgun_ID, "snd/double_flame_shotgun.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_super_slugger_ID, "snd/super_slugger.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_gold_slugger_ID, "snd/gold_slugger.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_heavy_slugger_ID, "snd/heavy_slugger.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_hyper_slugger_ID, "snd/hyper_slugger.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_flak_cannon_ID, "snd/flak_cannon.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_super_flak_cannon_ID, "snd/super_flak_cannon.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_ultra_shotgun_ID, "snd/ultra_shotgun.wav", all_extra_sound_buffers);
+    add_new_sound(snd_shotgun_ID, "snd/shotgun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_double_shotgun_ID, "snd/double_shotgun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_sawed_off_shotgun_ID, "snd/sawed_off_shotgun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_eraser_ID, "snd/eraser.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_golden_shotgun_ID, "snd/gold_shotgun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_flame_shotgun_ID, "snd/flame_shotgun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_double_flame_shotgun_ID, "snd/double_flame_shotgun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_super_slugger_ID, "snd/super_slugger.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_gold_slugger_ID, "snd/gold_slugger.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_heavy_slugger_ID, "snd/heavy_slugger.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_hyper_slugger_ID, "snd/hyper_slugger.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_flak_cannon_ID, "snd/flak_cannon.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_super_flak_cannon_ID, "snd/super_flak_cannon.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_ultra_shotgun_ID, "snd/ultra_shotgun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
-    add_new_sound(snd_nade_hit_wall_ID, "snd/nade_hit_wall.wav", all_sounds, snd_nade_hit_wall_ID, all_extra_sound_buffers, 0.1f, 0.01f);
+    add_new_sound(snd_nade_hit_wall_ID, "snd/nade_hit_wall.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
-    add_new_sound(snd_IDPD_nade_load_ID, "snd/IDPD_nade_load.wav", all_sounds, snd_IDPD_nade_load_ID, all_extra_sound_buffers, 0.1f, 0.004f);
+    add_new_sound(snd_IDPD_nade_load_ID, "snd/IDPD_nade_load.wav", all_sounds, all_sounds_mirror, 0.1f, 0.004f);
 
-    add_new_sound(snd_IDPD_nade_almost_ID, "snd/IDPD_nade_almost.wav", all_sounds, snd_IDPD_nade_almost_ID, all_extra_sound_buffers, 0.1f, 0.003f);
+    add_new_sound(snd_IDPD_nade_almost_ID, "snd/IDPD_nade_almost.wav", all_sounds, all_sounds_mirror, 0.1f, 0.003f);
 
-    add_new_sound(snd_idpd_freak_hurt_ID, "snd/IDPD_freak_hurt.wav", all_sounds, snd_idpd_freak_hurt_ID, all_extra_sound_buffers, 0.1f, 0.01f);
+    add_new_sound(snd_idpd_freak_hurt_ID, "snd/IDPD_freak_hurt.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
-    add_new_sound(snd_idpd_freak_die_ID, "snd/IDPD_freak_die.wav", all_sounds, snd_idpd_freak_die_ID, all_extra_sound_buffers, 0.1f, 0.01f);
+    add_new_sound(snd_idpd_freak_die_ID, "snd/IDPD_freak_die.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
-    add_new_sound(snd_grunt_fire_ID, "snd/grunt_fire.wav", all_sounds, snd_grunt_fire_ID, all_extra_sound_buffers, 0.1f, 0.01f);
+    add_new_sound(snd_grunt_fire_ID, "snd/grunt_fire.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
-    add_new_sound(snd_toxic_bolt_gas_ID, "snd/toxic_bolt_gas.wav", all_sounds, snd_toxic_bolt_gas_ID, all_extra_sound_buffers, 0.1f, 0.01f);
+    add_new_sound(snd_toxic_bolt_gas_ID, "snd/toxic_bolt_gas.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
-    add_new_sound(snd_shotgun_hit_wall_ID, "snd/shotgun_hit_wall.wav", all_sounds, snd_shotgun_hit_wall_ID, all_extra_sound_buffers, 0.1f, 0.01f);
+    add_new_sound(snd_shotgun_hit_wall_ID, "snd/shotgun_hit_wall.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
 
-    add_new_sound_buffer(snd_horror_hurt_ID, "snd/horror_hurt.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_fish_hurt_ID, "snd/fish_hurt.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_crystal_hurt_ID, "snd/crystal_hurt.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_eyes_hurt_ID, "snd/eyes_hurt.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_melting_hurt_ID, "snd/melting_hurt.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_plant_hurt_ID, "snd/plant_hurt.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_YV_hurt_ID, "snd/YV_hurt.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_steroids_hurt_ID, "snd/steroids_hurt.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_robot_hurt_ID, "snd/robot_hurt.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_chicken_hurt_ID, "snd/chicken_hurt.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_rebel_hurt_ID, "snd/rebel_hurt.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_rogue_hurt_ID, "snd/rogue_hurt.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_frog_hurt_ID, "snd/frog_hurt.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_skeleton_hurt_ID, "snd/skeleton_hurt.wav", all_extra_sound_buffers);
+    add_new_sound(snd_horror_hurt_ID, "snd/horror_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_fish_hurt_ID, "snd/fish_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_crystal_hurt_ID, "snd/crystal_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_eyes_hurt_ID, "snd/eyes_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_melting_hurt_ID, "snd/melting_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_plant_hurt_ID, "snd/plant_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_YV_hurt_ID, "snd/YV_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_steroids_hurt_ID, "snd/steroids_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_robot_hurt_ID, "snd/robot_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_chicken_hurt_ID, "snd/chicken_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_rebel_hurt_ID, "snd/rebel_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_rogue_hurt_ID, "snd/rogue_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_frog_hurt_ID, "snd/frog_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_skeleton_hurt_ID, "snd/skeleton_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
 
     //player abilities
     //fish
-    add_new_sound_buffer(snd_fish_roll_ID, "snd/fish_roll.wav", all_extra_sound_buffers);
+    add_new_sound(snd_fish_roll_ID, "snd/fish_roll.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
     //crystal
-    add_new_sound_buffer(snd_crystal_shield_ID, "snd/crystal_shield.wav", all_extra_sound_buffers);
+    add_new_sound(snd_crystal_shield_ID, "snd/crystal_shield.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
     //melting
-    add_new_sound_buffer(snd_corpse_explode_ID, "snd/corpse_explode.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_corpse_explode_TB_ID, "snd/corpse_explode_TB.wav", all_extra_sound_buffers);
+    add_new_sound(snd_corpse_explode_ID, "snd/corpse_explode.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_corpse_explode_TB_ID, "snd/corpse_explode_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
 
 
-    add_new_sound(snd_pickup_disappear_ID, "snd/pickup_disappear.wav", all_sounds, snd_pickup_disappear_ID, all_extra_sound_buffers, 0.1f, 0.01f);
+    add_new_sound(snd_pickup_disappear_ID, "snd/pickup_disappear.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
-    add_new_sound(snd_ammo_pickup_ID, "snd/ammo_pickup.wav", all_sounds, snd_ammo_pickup_ID, all_extra_sound_buffers, 0.07f, 0.01f);
+    add_new_sound(snd_ammo_pickup_ID, "snd/ammo_pickup.wav", all_sounds, all_sounds_mirror, 0.07f, 0.01f);
 
-    add_new_sound(snd_hp_pickup_ID, "snd/hp_pickup.wav", all_sounds, snd_hp_pickup_ID, all_extra_sound_buffers, 0.07f, 0.01f);
+    add_new_sound(snd_hp_pickup_ID, "snd/hp_pickup.wav", all_sounds, all_sounds_mirror, 0.07f, 0.01f);
 
-    add_new_sound(snd_lust_proc_ID, "snd/lust_proc.wav", all_sounds, snd_lust_proc_ID, all_extra_sound_buffers, 0.07f, 0.01f);
+    add_new_sound(snd_lust_proc_ID, "snd/lust_proc.wav", all_sounds, all_sounds_mirror, 0.07f, 0.01f);
 
-    add_new_sound(snd_empty_ID, "snd/empty.wav", all_sounds, snd_empty_ID, all_extra_sound_buffers, 0.02f, 0.00f, 90.0f);
-
-
-
-    add_new_sound(snd_music_ID, "mus/musBoss4B.ogg", all_sounds, snd_music_ID, all_extra_sound_buffers, 0.0f, 0.0f, 0.0f);
+    add_new_sound(snd_empty_ID, "snd/empty.wav", all_sounds, all_sounds_mirror, 0.02f, 0.00f, 90.0f);
 
 
 
-    add_new_sound(snd_melee_flip_ID, "snd/melee_flip.wav", all_sounds, snd_melee_flip_ID, all_extra_sound_buffers, 0.07f, 0.0f, 50.0f);
+    add_new_sound(snd_music_ID, "mus/musBoss4B.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 0.0f);
 
-    add_new_sound(snd_plasma_reload_ID, "snd/plasma_reload.wav", all_sounds, snd_plasma_reload_ID, all_extra_sound_buffers, 0.07f, 0.0f, 90.0f);
 
-    add_new_sound(snd_plasma_reload_upgrade_ID, "snd/plasma_reload_upgrade.wav", all_sounds, snd_plasma_reload_upgrade_ID, all_extra_sound_buffers, 0.07f, 0.0f, 90.0f);
 
-    add_new_sound(snd_idpd_freak_enter_ID, "snd/idpd_freak_enter.wav", all_sounds, snd_idpd_freak_enter_ID, all_extra_sound_buffers, 0.15f, 0.004f);
+    add_new_sound(snd_melee_flip_ID, "snd/melee_flip.wav", all_sounds, all_sounds_mirror, 0.07f, 0.0f, 50.0f);
 
-    add_new_sound(snd_idpd_freak_revive_ID, "snd/idpd_freak_revive.wav", all_sounds, snd_idpd_freak_revive_ID, all_extra_sound_buffers, 0.05f, 0.01f);
+    add_new_sound(snd_plasma_reload_ID, "snd/plasma_reload.wav", all_sounds, all_sounds_mirror, 0.07f, 0.0f, 90.0f);
 
-    add_new_sound(snd_idpd_spawn_ID, "snd/idpd_spawn.wav", all_sounds, snd_idpd_spawn_ID, all_extra_sound_buffers, 0.05f, 0.001f);
-    add_new_sound(snd_idpd_spawn_elite_ID, "snd/idpd_spawn_elite.wav", all_sounds, snd_idpd_spawn_elite_ID, all_extra_sound_buffers, 0.05f, 0.0f);
+    add_new_sound(snd_plasma_reload_upgrade_ID, "snd/plasma_reload_upgrade.wav", all_sounds, all_sounds_mirror, 0.07f, 0.0f, 90.0f);
 
-    add_new_sound(snd_idpd_freak_revive_area_ID, "snd/idpd_freak_revive_area.wav", all_sounds, snd_idpd_freak_revive_area_ID, all_extra_sound_buffers, 0.05f, 0.0f);
+    add_new_sound(snd_idpd_freak_enter_ID, "snd/idpd_freak_enter.wav", all_sounds, all_sounds_mirror, 0.15f, 0.004f);
 
-    add_new_sound(snd_portal_open_ID, "snd/portal_open.wav", all_sounds, snd_portal_open_ID, all_extra_sound_buffers, 0.01f, 0.01f);
+    add_new_sound(snd_idpd_freak_revive_ID, "snd/idpd_freak_revive.wav", all_sounds, all_sounds_mirror, 0.05f, 0.01f);
 
-    add_new_sound(snd_portal_close_ID, "snd/portal_close.wav", all_sounds, snd_portal_close_ID, all_extra_sound_buffers, 0.01f, 0.01f);
+    add_new_sound(snd_idpd_spawn_ID, "snd/idpd_spawn.wav", all_sounds, all_sounds_mirror, 0.05f, 0.001f);
+    add_new_sound(snd_idpd_spawn_elite_ID, "snd/idpd_spawn_elite.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
 
-    add_new_sound(snd_portal_loop_ID, "snd/portal_loop.wav", all_sounds, snd_portal_loop_ID, all_extra_sound_buffers, 0.0f, 0.0f, 0.0f);
+    add_new_sound(snd_idpd_freak_revive_area_ID, "snd/idpd_freak_revive_area.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+
+    add_new_sound(snd_portal_open_ID, "snd/portal_open.wav", all_sounds, all_sounds_mirror, 0.01f, 0.01f);
+
+    add_new_sound(snd_portal_close_ID, "snd/portal_close.wav", all_sounds, all_sounds_mirror, 0.01f, 0.01f);
+
+    add_new_sound(snd_portal_loop_ID, "snd/portal_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 0.0f);
 
     //thrones
-    add_new_sound(snd_big_ball_fire_ID, "snd/big_ball_fire.wav", all_sounds, snd_big_ball_fire_ID, all_extra_sound_buffers, 0.01f, 0.01f);
+    add_new_sound(snd_big_ball_fire_ID, "snd/big_ball_fire.wav", all_sounds, all_sounds_mirror, 0.01f, 0.01f);
 
-    add_new_sound(snd_throne_2_appear_ID, "snd/throne_2_appear.wav", all_sounds, snd_throne_2_appear_ID, all_extra_sound_buffers, 0.01f, 0.01f);
+    add_new_sound(snd_throne_2_appear_ID, "snd/throne_2_appear.wav", all_sounds, all_sounds_mirror, 0.01f, 0.01f);
 
-    add_new_sound(snd_throne_2_hurt_ID, "snd/throne_2_hurt.wav", all_sounds, snd_throne_2_hurt_ID, all_extra_sound_buffers, 0.1f, 0.01f);
+    add_new_sound(snd_throne_2_hurt_ID, "snd/throne_2_hurt.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
-    add_new_sound(snd_throne_2_laser_ID, "snd/throne_2_laser.wav", all_sounds, snd_throne_2_laser_ID, all_extra_sound_buffers, 0.05f, 0.0f);
+    add_new_sound(snd_throne_2_laser_ID, "snd/throne_2_laser.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
 
-    add_new_sound(snd_throne_2_laser_fire_ID, "snd/throne_2_laser_fire.wav", all_sounds, snd_throne_2_laser_fire_ID, all_extra_sound_buffers, 0.01f, 0.0f);
+    add_new_sound(snd_throne_2_laser_fire_ID, "snd/throne_2_laser_fire.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
 
-    add_new_sound(snd_throne_2_half_hp_ID, "snd/throne_2_half_hp.wav", all_sounds, snd_throne_2_half_hp_ID, all_extra_sound_buffers, 0.01f, 0.0f);
+    add_new_sound(snd_throne_2_half_hp_ID, "snd/throne_2_half_hp.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
     
-    add_new_sound(snd_explo_guardian_fire_ID, "snd/explo_guardian_fire.wav", all_sounds, snd_explo_guardian_fire_ID, all_extra_sound_buffers, 0.01f, 0.01f);
+    add_new_sound(snd_explo_guardian_fire_ID, "snd/explo_guardian_fire.wav", all_sounds, all_sounds_mirror, 0.01f, 0.01f);
 
-    add_new_sound(snd_throne_2_dead_start_ID, "snd/throne_2_dead_start.wav", all_sounds, snd_throne_2_dead_start_ID, all_extra_sound_buffers, 0.01f, 0.0f);
+    add_new_sound(snd_throne_2_dead_start_ID, "snd/throne_2_dead_start.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
 
-    add_new_sound(snd_throne_2_dead_end_ID, "snd/throne_2_dead_end.wav", all_sounds, snd_throne_2_dead_end_ID, all_extra_sound_buffers, 0.01f, 0.0f);
+    add_new_sound(snd_throne_2_dead_end_ID, "snd/throne_2_dead_end.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
 
-    add_new_sound(snd_throne_2_explode_ID, "snd/throne_2_explode.wav", all_sounds, snd_throne_2_explode_ID, all_extra_sound_buffers, 0.01f, 0.0f);
+    add_new_sound(snd_throne_2_explode_ID, "snd/throne_2_explode.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
 
-    add_new_sound(snd_big_ball_explode_ID, "snd/big_ball_explode.wav", all_sounds, snd_big_ball_explode_ID, all_extra_sound_buffers, 0.01f, 0.0f);
+    add_new_sound(snd_big_ball_explode_ID, "snd/big_ball_explode.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
 
 
-    add_new_sound(snd_gain_strong_spirit_ID, "snd/gain_strong_spirit.wav", all_sounds, snd_gain_strong_spirit_ID, all_extra_sound_buffers, 0.01f, 0.0f);
+    add_new_sound(snd_gain_strong_spirit_ID, "snd/gain_strong_spirit.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
 
-    add_new_sound(snd_lose_strong_spirit_ID, "snd/lose_strong_spirit.wav", all_sounds, snd_lose_strong_spirit_ID, all_extra_sound_buffers, 0.01f, 0.0f);
+    add_new_sound(snd_lose_strong_spirit_ID, "snd/lose_strong_spirit.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
 
     //weapon shoot snds
-    add_new_sound(snd_player_shoot_A_ID, "snd/sword.wav", all_sounds, snd_sword_ID, all_extra_sound_buffers, 0.1f, 0.0f);
-    add_new_sound(snd_player_shoot_B_ID, "snd/sword.wav", all_sounds, snd_sword_ID, all_extra_sound_buffers, 0.1f, 0.0f);
+    //add_new_sound(snd_player_shoot_A_ID, "snd/sword.wav", all_sounds, snd_sword_ID, all_extra_sound_buffers, 0.1f, 0.0f);
+    //add_new_sound(snd_player_shoot_B_ID, "snd/sword.wav", all_sounds, snd_sword_ID, all_extra_sound_buffers, 0.1f, 0.0f);
 
-    add_new_sound_buffer(snd_sword_ID, "snd/sword.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_black_sword_ID, "snd/black_sword.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_wrench_ID, "snd/wrench.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_shovel_ID, "snd/shovel.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_sledge_ID, "snd/sledge.wav", all_extra_sound_buffers);
+    add_new_sound(snd_sword_ID, "snd/sword.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_black_sword_ID, "snd/black_sword.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_wrench_ID, "snd/wrench.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_shovel_ID, "snd/shovel.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_sledge_ID, "snd/sledge.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
-    add_new_sound_buffer(snd_guitar_ID, "snd/guitar.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_lightning_hammer_ID, "snd/lightning_hammer.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_energy_sword_ID, "snd/energy_sword.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_energy_sword_up_ID, "snd/energy_sword_up.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_energy_hammer_ID, "snd/energy_hammer.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_energy_hammer_up_ID, "snd/energy_hammer_up.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_energy_screw_ID, "snd/energy_screw.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_energy_screw_up_ID, "snd/energy_screw_up.wav", all_extra_sound_buffers);
+    add_new_sound(snd_guitar_ID, "snd/guitar.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_lightning_hammer_ID, "snd/lightning_hammer.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_energy_sword_ID, "snd/energy_sword.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_energy_sword_up_ID, "snd/energy_sword_up.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_energy_hammer_ID, "snd/energy_hammer.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_energy_hammer_up_ID, "snd/energy_hammer_up.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_energy_screw_ID, "snd/energy_screw.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_energy_screw_up_ID, "snd/energy_screw_up.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
-    add_new_sound_buffer(snd_plasma_cannon_ID, "snd/plasma_big.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_plasma_cannon_up_ID, "snd/plasma_big_up.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_plasma_gun_ID, "snd/plasma_gun.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_plasma_gun_up_ID, "snd/plasma_gun_up.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_plasma_rifle_ID, "snd/plasma_rifle.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_plasma_rifle_up_ID, "snd/plasma_rifle_up.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_plasma_mini_ID, "snd/plasma_mini.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_plasma_mini_up_ID, "snd/plasma_mini_up.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_gold_plasma_gun_ID, "snd/gold_plasma_gun.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_gold_plasma_gun_up_ID, "snd/gold_plasma_gun_up.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_devastator_ID, "snd/devastator.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_devastator_up_ID, "snd/devastator_up.wav", all_extra_sound_buffers);
+    add_new_sound(snd_plasma_cannon_ID, "snd/plasma_big.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_plasma_cannon_up_ID, "snd/plasma_big_up.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_plasma_gun_ID, "snd/plasma_gun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_plasma_gun_up_ID, "snd/plasma_gun_up.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_plasma_rifle_ID, "snd/plasma_rifle.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_plasma_rifle_up_ID, "snd/plasma_rifle_up.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_plasma_mini_ID, "snd/plasma_mini.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_plasma_mini_up_ID, "snd/plasma_mini_up.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_gold_plasma_gun_ID, "snd/gold_plasma_gun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_gold_plasma_gun_up_ID, "snd/gold_plasma_gun_up.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_devastator_ID, "snd/devastator.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_devastator_up_ID, "snd/devastator_up.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
-    add_new_sound_buffer(snd_laser_ID, "snd/laser.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_laser_up_ID, "snd/laser_up.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_golden_laser_ID, "snd/gold_laser.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_golden_laser_up_ID, "snd/gold_laser_up.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_ultra_laser_ID, "snd/ultra_laser.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_ultra_laser_up_ID, "snd/ultra_laser_up.wav", all_extra_sound_buffers);
+    add_new_sound(snd_laser_ID, "snd/laser.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_laser_up_ID, "snd/laser_up.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_golden_laser_ID, "snd/gold_laser.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_golden_laser_up_ID, "snd/gold_laser_up.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_ultra_laser_ID, "snd/ultra_laser.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_ultra_laser_up_ID, "snd/ultra_laser_up.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
-    add_new_sound(snd_laser_cannon_ID, "snd/laser_cannon.wav", all_sounds, snd_laser_cannon_ID, all_extra_sound_buffers, 0.1f, 0.0f);
-    add_new_sound(snd_laser_cannon_up_ID, "snd/laser_cannon_up.wav", all_sounds, snd_laser_cannon_up_ID, all_extra_sound_buffers, 0.1f, 0.0f);
+    add_new_sound(snd_laser_cannon_ID, "snd/laser_cannon.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_laser_cannon_up_ID, "snd/laser_cannon_up.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
-    add_new_sound_buffer(snd_laser_cannon_charge_ID, "snd/laser_cannon_charge.wav", all_extra_sound_buffers);
-
-
-    add_new_sound_buffer(snd_lightning_pistol_ID, "snd/lightning_pistol.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_lightning_pistol_up_ID, "snd/lightning_pistol_up.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_lightning_rifle_ID, "snd/lightning_rifle.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_lightning_rifle_up_ID, "snd/lightning_rifle_up.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_lightning_shotgun_ID, "snd/lightning_shotgun.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_lightning_shotgun_up_ID, "snd/lightning_shotgun_up.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_lightning_cannon_ID, "snd/lightning_cannon.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_lightning_cannon_up_ID, "snd/lightning_cannon_up.wav", all_extra_sound_buffers);
+    add_new_sound(snd_laser_cannon_charge_ID, "snd/laser_cannon_charge.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
 
-    add_new_sound_buffer(snd_revolver_ID, "snd/revolver.wav", all_extra_sound_buffers);
+    add_new_sound(snd_lightning_pistol_ID, "snd/lightning_pistol.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_lightning_pistol_up_ID, "snd/lightning_pistol_up.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_lightning_rifle_ID, "snd/lightning_rifle.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_lightning_rifle_up_ID, "snd/lightning_rifle_up.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_lightning_shotgun_ID, "snd/lightning_shotgun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_lightning_shotgun_up_ID, "snd/lightning_shotgun_up.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_lightning_cannon_ID, "snd/lightning_cannon.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_lightning_cannon_up_ID, "snd/lightning_cannon_up.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
 
-    add_new_sound(snd_lightning_reload_ID, "snd/lightning_reload.wav", all_sounds, snd_lightning_reload_ID, all_extra_sound_buffers, 0.1f, 0.0f);
-
-    add_new_sound(snd_crossbow_reload_ID, "snd/crossbow_reload.wav", all_sounds, snd_crossbow_reload_ID, all_extra_sound_buffers, 0.1f, 0.0f);
-
-    add_new_sound(snd_shotgun_reload_ID, "snd/shotgun_reload.wav", all_sounds, snd_shotgun_reload_ID, all_extra_sound_buffers, 0.1f, 0.0f);
-
-    add_new_sound(snd_wave_gun_ID, "snd/wave_gun.wav", all_sounds, snd_wave_gun_ID, all_extra_sound_buffers, 0.1f, 0.0f);
-    add_new_sound(snd_slugger_ID, "snd/slugger.wav", all_sounds, snd_slugger_ID, all_extra_sound_buffers, 0.1f, 0.0f);
+    add_new_sound(snd_revolver_ID, "snd/revolver.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
 
-    add_new_sound(snd_devastator_explo_ID, "snd/devastator_explo.wav", all_sounds, snd_devastator_explo_ID, all_extra_sound_buffers, 0.1f, 0.01f);
-    add_new_sound(snd_lightning_orb_explo_ID, "snd/lightning_cannon_end.wav", all_sounds, snd_lightning_orb_explo_ID, all_extra_sound_buffers, 0.1f, 0.01f);
+    add_new_sound(snd_lightning_reload_ID, "snd/lightning_reload.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
-    add_new_sound(snd_revenge_bullet, "snd/revenge_bullet.wav", all_sounds, snd_revenge_bullet, all_extra_sound_buffers, 0.01f, 0.0f, 65.0f);
+    add_new_sound(snd_crossbow_reload_ID, "snd/crossbow_reload.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+
+    add_new_sound(snd_shotgun_reload_ID, "snd/shotgun_reload.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+
+    add_new_sound(snd_wave_gun_ID, "snd/wave_gun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_slugger_ID, "snd/slugger.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+
+
+    add_new_sound(snd_devastator_explo_ID, "snd/devastator_explo.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
+    add_new_sound(snd_lightning_orb_explo_ID, "snd/lightning_cannon_end.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
+
+    add_new_sound(snd_revenge_bullet, "snd/revenge_bullet.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f, 65.0f);
     
     //footsteps
-    add_new_sound_buffer(snd_foot_metmetal_1_ID, "snd/footsteps/foot_metmetal_1.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_metmetal_2_ID, "snd/footsteps/foot_metmetal_2.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_metmetal_3_ID, "snd/footsteps/foot_metmetal_3.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_metmetal_4_ID, "snd/footsteps/foot_metmetal_4.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_metmetal_5_ID, "snd/footsteps/foot_metmetal_5.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_metmetal_6_ID, "snd/footsteps/foot_metmetal_6.wav", all_extra_sound_buffers);
+    float foot_step_vol = 22.0f;
+    add_new_sound(snd_foot_metmetal_1_ID, "snd/footsteps/foot_metmetal_1.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_metmetal_2_ID, "snd/footsteps/foot_metmetal_2.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_metmetal_3_ID, "snd/footsteps/foot_metmetal_3.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_metmetal_4_ID, "snd/footsteps/foot_metmetal_4.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_metmetal_5_ID, "snd/footsteps/foot_metmetal_5.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_metmetal_6_ID, "snd/footsteps/foot_metmetal_6.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
 
-    add_new_sound_buffer(snd_foot_metrock_1_ID, "snd/footsteps/foot_metrock_1.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_metrock_2_ID, "snd/footsteps/foot_metrock_2.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_metrock_3_ID, "snd/footsteps/foot_metrock_3.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_metrock_4_ID, "snd/footsteps/foot_metrock_4.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_metrock_5_ID, "snd/footsteps/foot_metrock_5.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_metrock_6_ID, "snd/footsteps/foot_metrock_6.wav", all_extra_sound_buffers);
+    add_new_sound(snd_foot_metrock_1_ID, "snd/footsteps/foot_metrock_1.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_metrock_2_ID, "snd/footsteps/foot_metrock_2.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_metrock_3_ID, "snd/footsteps/foot_metrock_3.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_metrock_4_ID, "snd/footsteps/foot_metrock_4.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_metrock_5_ID, "snd/footsteps/foot_metrock_5.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_metrock_6_ID, "snd/footsteps/foot_metrock_6.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
 
-    add_new_sound_buffer(snd_foot_metsand_1_ID, "snd/footsteps/foot_metsand_1.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_metsand_2_ID, "snd/footsteps/foot_metsand_2.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_metsand_3_ID, "snd/footsteps/foot_metsand_3.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_metsand_4_ID, "snd/footsteps/foot_metsand_4.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_metsand_5_ID, "snd/footsteps/foot_metsand_5.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_metsand_6_ID, "snd/footsteps/foot_metsand_6.wav", all_extra_sound_buffers);
+    add_new_sound(snd_foot_metsand_1_ID, "snd/footsteps/foot_metsand_1.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_metsand_2_ID, "snd/footsteps/foot_metsand_2.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_metsand_3_ID, "snd/footsteps/foot_metsand_3.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_metsand_4_ID, "snd/footsteps/foot_metsand_4.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_metsand_5_ID, "snd/footsteps/foot_metsand_5.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_metsand_6_ID, "snd/footsteps/foot_metsand_6.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
 
-    add_new_sound_buffer(snd_foot_orgmetal_1_ID, "snd/footsteps/foot_orgmetal_1.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_orgmetal_2_ID, "snd/footsteps/foot_orgmetal_2.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_orgmetal_3_ID, "snd/footsteps/foot_orgmetal_3.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_orgmetal_4_ID, "snd/footsteps/foot_orgmetal_4.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_orgmetal_5_ID, "snd/footsteps/foot_orgmetal_5.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_orgmetal_6_ID, "snd/footsteps/foot_orgmetal_6.wav", all_extra_sound_buffers);
+    add_new_sound(snd_foot_orgmetal_1_ID, "snd/footsteps/foot_orgmetal_1.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_orgmetal_2_ID, "snd/footsteps/foot_orgmetal_2.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_orgmetal_3_ID, "snd/footsteps/foot_orgmetal_3.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_orgmetal_4_ID, "snd/footsteps/foot_orgmetal_4.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_orgmetal_5_ID, "snd/footsteps/foot_orgmetal_5.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_orgmetal_6_ID, "snd/footsteps/foot_orgmetal_6.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
 
-    add_new_sound_buffer(snd_foot_orgrock_1_ID, "snd/footsteps/foot_orgrock_1.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_orgrock_2_ID, "snd/footsteps/foot_orgrock_2.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_orgrock_3_ID, "snd/footsteps/foot_orgrock_3.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_orgrock_4_ID, "snd/footsteps/foot_orgrock_4.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_orgrock_5_ID, "snd/footsteps/foot_orgrock_5.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_orgrock_6_ID, "snd/footsteps/foot_orgrock_6.wav", all_extra_sound_buffers);
+    add_new_sound(snd_foot_orgrock_1_ID, "snd/footsteps/foot_orgrock_1.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_orgrock_2_ID, "snd/footsteps/foot_orgrock_2.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_orgrock_3_ID, "snd/footsteps/foot_orgrock_3.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_orgrock_4_ID, "snd/footsteps/foot_orgrock_4.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_orgrock_5_ID, "snd/footsteps/foot_orgrock_5.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_orgrock_6_ID, "snd/footsteps/foot_orgrock_6.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
 
-    add_new_sound_buffer(snd_foot_orgsand_1_ID, "snd/footsteps/foot_orgsand_1.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_orgsand_2_ID, "snd/footsteps/foot_orgsand_2.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_orgsand_3_ID, "snd/footsteps/foot_orgsand_3.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_orgsand_4_ID, "snd/footsteps/foot_orgsand_4.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_orgsand_5_ID, "snd/footsteps/foot_orgsand_5.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_orgsand_6_ID, "snd/footsteps/foot_orgsand_6.wav", all_extra_sound_buffers);
+    add_new_sound(snd_foot_orgsand_1_ID, "snd/footsteps/foot_orgsand_1.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_orgsand_2_ID, "snd/footsteps/foot_orgsand_2.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_orgsand_3_ID, "snd/footsteps/foot_orgsand_3.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_orgsand_4_ID, "snd/footsteps/foot_orgsand_4.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_orgsand_5_ID, "snd/footsteps/foot_orgsand_5.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_orgsand_6_ID, "snd/footsteps/foot_orgsand_6.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
 
-    add_new_sound_buffer(snd_foot_plametal_1_ID, "snd/footsteps/foot_plametal_1.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_plametal_2_ID, "snd/footsteps/foot_plametal_2.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_plametal_3_ID, "snd/footsteps/foot_plametal_3.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_plametal_4_ID, "snd/footsteps/foot_plametal_4.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_plametal_5_ID, "snd/footsteps/foot_plametal_5.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_plametal_6_ID, "snd/footsteps/foot_plametal_6.wav", all_extra_sound_buffers);
+    add_new_sound(snd_foot_plametal_1_ID, "snd/footsteps/foot_plametal_1.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_plametal_2_ID, "snd/footsteps/foot_plametal_2.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_plametal_3_ID, "snd/footsteps/foot_plametal_3.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_plametal_4_ID, "snd/footsteps/foot_plametal_4.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_plametal_5_ID, "snd/footsteps/foot_plametal_5.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_plametal_6_ID, "snd/footsteps/foot_plametal_6.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
 
-    add_new_sound_buffer(snd_foot_plarock_1_ID, "snd/footsteps/foot_plarock_1.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_plarock_2_ID, "snd/footsteps/foot_plarock_2.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_plarock_3_ID, "snd/footsteps/foot_plarock_3.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_plarock_4_ID, "snd/footsteps/foot_plarock_4.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_plarock_5_ID, "snd/footsteps/foot_plarock_5.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_plarock_6_ID, "snd/footsteps/foot_plarock_6.wav", all_extra_sound_buffers);
+    add_new_sound(snd_foot_plarock_1_ID, "snd/footsteps/foot_plarock_1.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_plarock_2_ID, "snd/footsteps/foot_plarock_2.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_plarock_3_ID, "snd/footsteps/foot_plarock_3.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_plarock_4_ID, "snd/footsteps/foot_plarock_4.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_plarock_5_ID, "snd/footsteps/foot_plarock_5.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_plarock_6_ID, "snd/footsteps/foot_plarock_6.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
 
-    add_new_sound_buffer(snd_foot_plasand_1_ID, "snd/footsteps/foot_plasand_1.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_plasand_2_ID, "snd/footsteps/foot_plasand_2.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_plasand_3_ID, "snd/footsteps/foot_plasand_3.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_plasand_4_ID, "snd/footsteps/foot_plasand_4.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_plasand_5_ID, "snd/footsteps/foot_plasand_5.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_plasand_6_ID, "snd/footsteps/foot_plasand_6.wav", all_extra_sound_buffers);
+    add_new_sound(snd_foot_plasand_1_ID, "snd/footsteps/foot_plasand_1.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_plasand_2_ID, "snd/footsteps/foot_plasand_2.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_plasand_3_ID, "snd/footsteps/foot_plasand_3.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_plasand_4_ID, "snd/footsteps/foot_plasand_4.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_plasand_5_ID, "snd/footsteps/foot_plasand_5.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_plasand_6_ID, "snd/footsteps/foot_plasand_6.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
 
-    add_new_sound_buffer(snd_foot_shometal_1_ID, "snd/footsteps/foot_shometal_1.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_shometal_2_ID, "snd/footsteps/foot_shometal_2.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_shometal_3_ID, "snd/footsteps/foot_shometal_3.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_shometal_4_ID, "snd/footsteps/foot_shometal_4.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_shometal_5_ID, "snd/footsteps/foot_shometal_5.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_shometal_6_ID, "snd/footsteps/foot_shometal_6.wav", all_extra_sound_buffers);
+    add_new_sound(snd_foot_shometal_1_ID, "snd/footsteps/foot_shometal_1.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_shometal_2_ID, "snd/footsteps/foot_shometal_2.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_shometal_3_ID, "snd/footsteps/foot_shometal_3.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_shometal_4_ID, "snd/footsteps/foot_shometal_4.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_shometal_5_ID, "snd/footsteps/foot_shometal_5.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_shometal_6_ID, "snd/footsteps/foot_shometal_6.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
 
-    add_new_sound_buffer(snd_foot_shorock_1_ID, "snd/footsteps/foot_shorock_1.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_shorock_2_ID, "snd/footsteps/foot_shorock_2.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_shorock_3_ID, "snd/footsteps/foot_shorock_3.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_shorock_4_ID, "snd/footsteps/foot_shorock_4.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_shorock_5_ID, "snd/footsteps/foot_shorock_5.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_shorock_6_ID, "snd/footsteps/foot_shorock_6.wav", all_extra_sound_buffers);
+    add_new_sound(snd_foot_shorock_1_ID, "snd/footsteps/foot_shorock_1.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_shorock_2_ID, "snd/footsteps/foot_shorock_2.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_shorock_3_ID, "snd/footsteps/foot_shorock_3.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_shorock_4_ID, "snd/footsteps/foot_shorock_4.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_shorock_5_ID, "snd/footsteps/foot_shorock_5.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_shorock_6_ID, "snd/footsteps/foot_shorock_6.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
 
-    add_new_sound_buffer(snd_foot_shosand_1_ID, "snd/footsteps/foot_shosand_1.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_shosand_2_ID, "snd/footsteps/foot_shosand_2.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_shosand_3_ID, "snd/footsteps/foot_shosand_3.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_shosand_4_ID, "snd/footsteps/foot_shosand_4.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_shosand_5_ID, "snd/footsteps/foot_shosand_5.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_shosand_6_ID, "snd/footsteps/foot_shosand_6.wav", all_extra_sound_buffers);
+    add_new_sound(snd_foot_shosand_1_ID, "snd/footsteps/foot_shosand_1.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_shosand_2_ID, "snd/footsteps/foot_shosand_2.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_shosand_3_ID, "snd/footsteps/foot_shosand_3.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_shosand_4_ID, "snd/footsteps/foot_shosand_4.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_shosand_5_ID, "snd/footsteps/foot_shosand_5.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_shosand_6_ID, "snd/footsteps/foot_shosand_6.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
 
-    add_new_sound_buffer(snd_foot_slime_1_ID, "snd/footsteps/foot_slime_1.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_slime_2_ID, "snd/footsteps/foot_slime_2.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_slime_3_ID, "snd/footsteps/foot_slime_3.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_slime_4_ID, "snd/footsteps/foot_slime_4.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_slime_5_ID, "snd/footsteps/foot_slime_5.wav", all_extra_sound_buffers);
-    add_new_sound_buffer(snd_foot_slime_6_ID, "snd/footsteps/foot_slime_6.wav", all_extra_sound_buffers);
+    add_new_sound(snd_foot_slime_1_ID, "snd/footsteps/foot_slime_1.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_slime_2_ID, "snd/footsteps/foot_slime_2.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_slime_3_ID, "snd/footsteps/foot_slime_3.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_slime_4_ID, "snd/footsteps/foot_slime_4.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_slime_5_ID, "snd/footsteps/foot_slime_5.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
+    add_new_sound(snd_foot_slime_6_ID, "snd/footsteps/foot_slime_6.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
 
 
 
-    all_sounds[snd_portal_loop_ID].sound.play();
-    all_sounds[snd_portal_loop_ID].sound.setLoop(true);
+    //all_sounds[snd_portal_loop_ID].sound.play();
+    //all_sounds[snd_portal_loop_ID].sound.setLoop(true);
 
     //music
-    all_sounds[snd_music_ID].sound.play();
-    all_sounds[snd_music_ID].sound.setLoop(true);
+    //all_sounds[snd_music_ID].sound.play();
+    //all_sounds[snd_music_ID].sound.setLoop(true);
     
     //sf::VideoMode startup_fullscreen_size = sf::VideoMode::getDesktopMode();
 
@@ -12372,7 +12473,7 @@ int main()
 
     player_character = horror;
 
-    start_new_run(player_character, all_sounds, all_extra_sound_buffers);
+    start_new_run(player_character, all_sounds);
 
     switch (player_character) {
     case fish:
@@ -12446,7 +12547,7 @@ int main()
                         if (player_character > 13) {
                             player_character = fish;
                         }
-                        start_new_run(player_character, all_sounds, all_extra_sound_buffers);
+                        start_new_run(player_character, all_sounds);
 
                         switch (player_character) {
                         case fish:
@@ -12676,7 +12777,7 @@ int main()
                 bullet2_1BIGtex.loadFromFile("res/enemy_bullets/sprEnemyBullet2_1BIG.png");
             }
 
-            generate_level(all_sounds, all_extra_sound_buffers);
+            generate_level(all_sounds);
 
         }
         //debug to see where the background bleeds through
@@ -12800,7 +12901,7 @@ int main()
                             else {
                                 roll_direction = direction_to_mouse;
                             }
-                            play_sound_on_player(snd_player_specific_1_ID);
+                            play_sound_on_player(snd_fish_roll_ID);
                         }
                         break;
                     case crystal:
@@ -12808,7 +12909,7 @@ int main()
                             crystal_is_shielding = true;
                             crystal_shield_time = 0;
                             create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, crystal_shield, 0, 0);
-                            play_sound_on_player(snd_player_specific_1_ID);
+                            play_sound_on_player(snd_crystal_shield_ID);
                         }
                         break;
                     case melting:
@@ -12838,7 +12939,7 @@ int main()
                         //if picked riot or has alive allys the cost is 2
                         tmpXSPD = (ally_count != 0 || ultra_picked == 2) + 1;
                         if (player_hp > tmpXSPD) {
-                            play_sound_on_player(snd_player_hurt_ID);
+                            play_player_hurt_sound();
                             player_hp -= tmpXSPD;
                             allObjects[0].next_hurt = current_frame + 6;
                             allObjects[0].image_index = 0;
@@ -13150,11 +13251,9 @@ int main()
                         break;
                     }
                     if (foot_step_sound_to_play != no_footstep) {
-                        change_sound_buffer(static_cast<sound_ID>(snd_foot_1 + footstep_audio_offset), all_sounds, static_cast<sound_ID>(choice), all_extra_sound_buffers, 0.1f, 0.0f, 24);
-                        play_sound_on_player(static_cast<sound_ID>(snd_foot_1 + footstep_audio_offset));
+                        play_sound_on_player(static_cast<sound_ID>(choice + footstep_audio_offset));
                         if (player_walk_material == slime_rock_mat || player_walk_material == slime_sand_mat) {
-                            change_sound_buffer(static_cast<sound_ID>(snd_foot_3 + footstep_audio_offset_slime), all_sounds, static_cast<sound_ID>(choice2), all_extra_sound_buffers, 0.1f, 0.0f, 20);
-                            play_sound_on_player(static_cast<sound_ID>(snd_foot_3 + footstep_audio_offset_slime));
+                            play_sound_on_player(static_cast<sound_ID>(choice2 + footstep_audio_offset_slime));
                         }
                     }
                 }
@@ -13218,12 +13317,6 @@ int main()
                     allObjects[nearest_wep_drop_ID].growspeed = random_360_degrees();
                     //weapon_drop swap
 
-                    if (current_player_weapon_sound == 0) {
-                        change_sound_buffer(snd_player_shoot_A_ID, all_sounds, get_shoot_sound(wep), all_extra_sound_buffers, 0.1f, 0.0f);
-                    }
-                    else {
-                        change_sound_buffer(snd_player_shoot_B_ID, all_sounds, get_shoot_sound(wep), all_extra_sound_buffers, 0.1f, 0.0f);
-                    }
                 }
                 E_pressed = false;
 
@@ -13458,19 +13551,19 @@ int main()
                     }
                 }
 
-                if (!all_sounds[snd_lightning_cannon_loop_ID].sound.getLoop()) {
+                /*if (!all_sounds[snd_lightning_cannon_loop_ID].sound.getLoop()) {
                     all_sounds[snd_lightning_cannon_loop_ID].sound.play();
                     all_sounds[snd_lightning_cannon_loop_ID].sound.setLoop(true);
                     all_sounds[snd_lightning_cannon_loop_ID].sound.setVolume(0.0f);
-                }
+                }*/
 
                 switch (player_character) {
                 case horror:
-                    if (!all_sounds[snd_horror_beam_hold_ID].sound.getLoop()) {
+                    /*if (!all_sounds[snd_horror_beam_hold_ID].sound.getLoop()) {
                         all_sounds[snd_horror_beam_hold_ID].sound.play();
                         all_sounds[snd_horror_beam_hold_ID].sound.setLoop(true);
                         all_sounds[snd_horror_beam_hold_ID].sound.setVolume(0.0f);
-                    }
+                    }*/
                     if (ultra_picked == 2) {    //anomaly
                         int totalhp = 0;
                         for (int i = 1; i < max_objects; i++) {
@@ -13596,7 +13689,7 @@ int main()
             destroy_on_screen_corpses = false;
 
             if (global_stop_music) {
-                all_sounds[snd_music_ID].sound.setVolume(0.0f);
+                //all_sounds[snd_music_ID].sound.setVolume(0.0f);
                 global_stop_music = false;
             }
 
@@ -13736,9 +13829,39 @@ int main()
 
             //play sounds
             float pitch_offset = 0.0f;
-            for (int i = 0; i < 255; i++) {
+            for (int i = 0; i < 1000; i++) {
                 if (play_sounds_this_frame_count[i] > 0) {
-                    switch (i) {
+
+                    //play_sound_in_pool(sound_ID(i), all_sounds, sound_pool, sound_pool_ids_mirror);
+                    bool skip_next = false;
+                    for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
+                        if (sound_pool_ids_mirror[snd__] == sound_ID(i)) {
+                            float PV = all_sounds_mirror[i].pitch_variance;
+                            sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
+                            sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
+                            sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
+                            sound_pool[snd__].play();
+                            skip_next = true;
+                            break;
+                        }
+                    }
+                    //if no same sound is already playing
+                    if (!skip_next) {
+                        for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
+                            if (sound_pool[snd__].getStatus() != sf::Sound::Playing) {
+                                float PV = all_sounds_mirror[i].pitch_variance;
+                                sound_pool[snd__].setBuffer(all_sounds[i]);
+                                sound_pool[snd__].setVolume(all_sounds_mirror[i].volume);
+                                sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
+                                sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
+                                sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
+                                sound_pool[snd__].play();
+                                sound_pool_ids_mirror[snd__] = sound_ID(i);
+                                break;
+                            }
+                        }
+                    }
+                    /*switch (i) {
                     default:
                         play_sound_random_pitch(all_sounds[i].sound, all_sounds[i].pitch_variance, i);
                         break;
@@ -13777,12 +13900,12 @@ int main()
                     case snd_player_hurt_ID:
                         play_sound_random_pitch(all_sounds[snd_player_hurt_ID].sound, all_sounds[snd_player_hurt_ID].pitch_variance, snd_player_hurt_ID);
                         break;
-                    }
+                    }*/
                     play_sounds_this_frame_count[i] = 0;
                     play_sounds_this_frame_pos[i].x = 0;
                     play_sounds_this_frame_pos[i].y = 0;
                 }
-                else if (play_sounds_this_frame_count[i] < 0) {
+                /*else if (play_sounds_this_frame_count[i] < 0) {
                     switch (i) {
                     case snd_lightning_cannon_loop_ID:
                         all_sounds[snd_lightning_cannon_loop_ID].sound.setVolume(0.0f);
@@ -13799,7 +13922,7 @@ int main()
                     play_sounds_this_frame_count[i] = 0;
                     play_sounds_this_frame_pos[i].x = 0;
                     play_sounds_this_frame_pos[i].y = 0;
-                }
+                }*/
             }
 
             //set looping sounds to not play if not set next frame
@@ -16152,7 +16275,7 @@ int main()
 
         sf::Text debug1;
 
-        debug1.setString("GLOBAL_DEBUG_INT: " + std::to_string(GLOBAL_DEBUG_INT));
+        debug1.setString("sound_pool: " + std::to_string(sound_pool_ids_mirror[0]));
         debug1.setCharacterSize(8);
         debug1.setFont(font);
         debug1.setColor(sf::Color::White);

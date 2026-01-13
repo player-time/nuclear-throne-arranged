@@ -227,17 +227,7 @@ enum player_material {
 
 enum sound_ID {
 	snd_none_ID,
-
-	snd_foot_1,
-	snd_foot_2,
-	snd_foot_3,
-	snd_foot_4,
-
-	snd_wall_break_ID,
-
-	snd_player_specific_1_ID,
-
-	snd_player_loop_1_ID,
+	snd_none_2_ID,
 
 	snd_wep_pickup_ID,
 
@@ -762,8 +752,9 @@ struct level_generator {
 }; 
 
 struct sound_sound_buffer {
-	sf::Sound sound;
 	float pitch_variance = 0.0f;
+	float volume = 100.0f;
+	float attenuation = 0.0f;
 };
 
 struct portal_spiral {
