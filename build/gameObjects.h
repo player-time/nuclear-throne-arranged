@@ -311,7 +311,6 @@ enum sound_ID {
 
 	//end of sounds that will be used, not just in buffers
 
-	snd_music_ID,
 
 	snd_lose_strong_spirit_ID,
 	snd_gain_strong_spirit_ID,
@@ -621,7 +620,7 @@ enum what_team {
 enum hitboxes {
 	no_hitbox = 0,
 	player_hitbox = 4,	//4 default
-	bandit_hitbox = 8, enemy_bullet_hitbox = 3, plasma_hitbox = 5, guardian_bullet_hitbox = 4,
+	bandit_hitbox = 7, enemy_bullet_hitbox = 3, plasma_hitbox = 5, guardian_bullet_hitbox = 4,
 	plasma_impact_hitbox = 32,
 	idpd_explosion_hitbox = 48,
 	explosion_hitbox = 24,
