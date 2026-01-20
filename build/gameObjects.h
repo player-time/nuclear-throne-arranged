@@ -41,6 +41,8 @@ enum objectID {
 	idpd_portal_charge,
 	idpd_spawn,
 
+	nade,
+
 	rogue_strike,
 
 	explosion,
@@ -91,8 +93,7 @@ enum objectID {
 	laser_brain_FX,
 
 	bandit, enemy_corpse, 
-	scorpion,
-	gold_scorpion,
+	big_enemy,
 
 	idpd_freak, idpd_freak_corpse, idpd_freak_revive,
 

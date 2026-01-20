@@ -19,7 +19,7 @@
 #include <iostream>
 #include <chrono>
 
-#include <random>
+#include <random>A
 
 #include <stdint.h>
 
@@ -39,7 +39,7 @@ int fps_samples_idx = 0;
 
 bool global_debug = false;
 
-bool debug_invincibility = true;
+bool debug_invincibility = false;
 
 int EXIT_PROGRAM_NOW = 0;
 
@@ -133,7 +133,7 @@ std::vector<sf::Sprite> variable_textures;
 int variable_textures_max = 4000;
 
 std::vector<sf::Sprite> variable_textures_top;
-int variable_textures_top_max = 400;
+int variable_textures_top_max = 800;
 
 std::vector<sf::Sprite> wall_shadow_textures;
 int wall_shadow_textures_max = 600;
@@ -235,7 +235,7 @@ sf::Vector2f create_portal_POS = { 24016, 24016 };
 bool killed_throne_2 = false;
 bool can_move_outside_T2_arena = false;
 
-unsigned int MAXFPS = 300;
+unsigned int MAXFPS = 30;
 
 //contants
 float e_constant = 2.71828f;
@@ -441,7 +441,7 @@ int second_stomach = 0;
 float stress = 1.0f;
 int bloodlust = 1;
 
-bool rabbit_paw = 1;
+bool rabbit_paw = 0;
 
 bool bolt_marrow = false;
 
@@ -506,6 +506,7 @@ int portal_spiral_time = 0;
 int portal_spiral_wave = 0;
 
 debug_timer debug_timer_;
+debug_timer debug_timer_startup;
 debug_timer debug_timer_fps;
 
 void create_portal_spiral() {
@@ -614,6 +615,7 @@ int add_new_sound(enum sound_ID sound_id, std::string filename_path, sf::SoundBu
     all_sounds_mirror[sound_id].attenuation = attenuation;
     all_sounds_mirror[sound_id].volume = volume;
     all_sounds_mirror[sound_id].pitch_variance = pitch_variance;
+
     return 1;
 }
 
@@ -761,6 +763,8 @@ void draw_weapon_text(int wep_ID, sf::Vector2f pos, sf::Text text, sf::RenderTex
     case 83:text.setString("ULTRA SHOTGUN");break;
     case 84:text.setString("SHOTGUN"); break;
     case 85:text.setString("DOUBLE SHOTGUN"); break;
+
+    case 86:text.setString("GRENADE LAUNCHER"); break;
 
     }
     text.setPosition(int(pos.x - cameraPos.x) - text.getString().getSize() * 4, int(pos.y - cameraPos.y) - 28);
@@ -938,6 +942,8 @@ sound_ID get_shoot_sound(int wep_id) {
     case 81: /*Flak Cannon*/return snd_flak_cannon_ID;break;
     case 82: /*Super Flak Cannon*/return snd_super_flak_cannon_ID;break;
     case 83: /*Ultra Shotgun*/return snd_ultra_shotgun_ID;break;
+
+    //case 86: /*grenade launcher*/return snd_grenade_launcher_ID;break;
     default:
         return snd_shoot_1_ID;
         break;
@@ -1036,6 +1042,8 @@ sf::Vector2f wep_get_origin(int wep_id) {
     case 81: /*Flak Cannon*/return sf::Vector2f(3, 3); break;
     case 82: /*Super Flak Cannon*/return sf::Vector2f(4, 4); break;
     case 83: /*Ultra Shotgun*/return sf::Vector2f(5, 3); break;
+
+    case 86: /*grenade launcher*/return sf::Vector2f(3, 2); break;
     default:
         return sf::Vector2f(0, 0);
         break;
@@ -1134,6 +1142,8 @@ void play_swap_sound(int wep_id) {
     case 81: /*Flak Cannon*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
     case 82: /*Super Flak Cannon*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
     case 83: /*Ultra Shotgun*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
+
+    case 86: /*grenade launcher*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
     default:
         break;
     }
@@ -1203,6 +1213,9 @@ void get_wep_reload_sound(int wep) {
     case 82:
     case 83:
         play_sound_on_player(snd_shotgun_reload_ID);
+        break;
+    case 86:
+        //play_sound_on_player(snd_explosive_reload_ID);
         break;
     default:
         break;
@@ -2197,7 +2210,11 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].my_hitbox = enemy_bullet_hitbox;
 
                 allObjects[i].position = { x, y };
-                allObjects[i].speed = { xspd, yspd };
+                //allObjects[i].speed = { xspd, yspd };
+
+                allObjects[i].direction = random_360_radians();
+                allObjects[i].speeddir = xspd;
+
                 allObjects[i].image_index = 60 + ((150 + rand() % 30) / ((4 + LOOPS) / 4));   //60 is when the rad starts to blink
                 allObjects[i].alarm1 = rand() % 12;
                 allObjects[i].next_hurt = current_frame + 7 + rand() % 7;       //how much time to not be attracted to the player
@@ -2287,7 +2304,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].max_hp = allObjects[i].my_hp;
                 allObjects[i].image_index = rand() % 17;
                 allObjects[i].team = enemy_team;     //enemy team
-                allObjects[i].rad_drop = 1;
+                allObjects[i].rad_drop = 10;
 
                 allObjects[i].size = 1;
 
@@ -2320,7 +2337,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].max_hp = allObjects[i].my_hp;
                 allObjects[i].image_index = rand() % 17;
                 allObjects[i].team = enemy_team;     //enemy team
-                allObjects[i].rad_drop = 25;
+                allObjects[i].rad_drop = 24;    //25 base 24 with blood
 
                 allObjects[i].size = 2;
 
@@ -2648,6 +2665,9 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].position = { x, y };
                 allObjects[i].direction = direction * degreestoradians;
                 allObjects[i].image_index = image_index;
+
+                allObjects[i].size = xspd;
+
                 allObjects[i].scale = 1.5f;
 
                 break;
@@ -2909,6 +2929,57 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 if (image_index != 1) {
                     create_object(allObjects[i].position.x, allObjects[i].position.y, 0, 0, scorch, 0, 0);
                 }
+                break;
+            case nade:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].my_hitbox = idpd_nade_hitbox;
+
+                allObjects[i].damage = 15;
+
+                allObjects[i].position = { x, y };
+                allObjects[i].team = player_team;     //player team
+                allObjects[i].direction = direction;
+                allObjects[i].speeddir = xspd;
+                allObjects[i].alarm1 = 30;
+                allObjects[i].alarm2 = 0;
+                allObjects[i].alarm3 = image_index;
+
+                if (image_index == 1) {         //small explosion
+                    allObjects[i].damage = 3;
+                }
+                else if (image_index == 2) {    //green explosion
+                    allObjects[i].damage = 30;
+                }
+                else if (image_index == 3) {    //cluster
+                    allObjects[i].damage = 10;
+                }
+                else if (image_index == 4) {    //missile
+                    allObjects[i].damage = 20;
+                }
+                else if (image_index == 5) {    //nuke
+                    allObjects[i].damage = 60;
+                }
+                else if (image_index == 6) {    //blood
+                    allObjects[i].damage = 10;
+                }
+                else if (image_index == 7) {    //blood ball
+                    allObjects[i].damage = 45;
+                }
+                else if (image_index == 8) {    //flare
+                    allObjects[i].damage = 13;
+                }
+                else if (image_index == 9) {    //flame ball
+                    allObjects[i].damage = 16;
+                }
+                else if (image_index == 10) {    //hyper
+                    allObjects[i].damage = 25;
+                }
+                else if (image_index == 11) {    //ultra
+                    allObjects[i].damage = 40;
+                }
+
+                allObjects[i].friction = 0.1f;
+                allObjects[i].rotation = random_360_degrees(); //the random_float angle that the nade is drawn at
                 break;
             case idpd_nade:
                 allObjects[i].my_id = obj_id;
@@ -4059,6 +4130,15 @@ void destroy_projectile(int object_index) {
         }
         ammo_drop_function(object_index, 100);
         break;
+    case nade:
+        allObjects[object_index].my_id = nothing;
+        
+        create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, 0, 0, explosion, 0, allObjects[object_index].alarm3);
+
+        create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, 0, 0, flame, 0, 0);
+
+        play_sound_relative_to_player(snd_explosion_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
+        break;
     case idpd_nade:
         allObjects[object_index].my_id = idpd_explosion;
         allObjects[object_index].damage = 8;
@@ -4385,6 +4465,7 @@ void clear_all_bullets() {      //clear all enemy bullets
     objectID curr_id = nothing;
     for (int i = 1; i < max_objects; i++) {
         switch (allObjects[i].my_id) {
+        case nade:
         case idpd_nade:
             clear_idpd_nade(i);
             break;
@@ -4454,9 +4535,7 @@ void enemy_die(int ENEMY, int PROJ) {
 
     if (allObjects[ENEMY].my_id != throne_2) {
         for (int i = allObjects[ENEMY].rad_drop + (player_character == melting); i > 0; i--) {
-            tempSpdx = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 6.0f)) - 3.0f;
-            tempSpdy = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 6.0f)) - 3.0f;
-            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, tempSpdx, tempSpdy, rad, 0.0f, 0);
+            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, random_float(3.0f) + 3.0f, 0.0f, rad, 0.0f, 0);
         }
     }
 
@@ -4544,7 +4623,7 @@ void enemy_die(int ENEMY, int PROJ) {
         ammo_drop_function(ENEMY, 16);
 
         if (rand() % 20 == 0) {
-            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, weapon_drop, 0, rand() % 86);
+            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, weapon_drop, 0, rand() % 87);
         }
 
         //debug start
@@ -4898,7 +4977,7 @@ void player_collision(int i, int j, int currOBJ) {
                         }
                         break;
                     case objectID::rad:
-                        if (abs(allObjects[O].position.x - allObjects[0].position.x) < 8 && abs(allObjects[O].position.y - allObjects[0].position.y) < 8) {
+                        if (abs(allObjects[O].position.x - allObjects[0].position.x) < 8 && abs(allObjects[O].position.y - allObjects[0].position.y) < 8 && player_alive) {
                             allObjects[O].my_id = rad_destroy;
                             allObjects[O].image_index = -1;
                             allObjects[O].position.x -= allObjects[O].speed.x / 2;
@@ -5184,6 +5263,7 @@ void basic_enemy_collision(int currOBJ, int i, int j) {
                     case T2_bullet:
                     case large_guardian_bullet:
                     case toxic_gas:
+                    case nade:
                         if (allObjects[O].team != allObjects[currOBJ].team && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[currOBJ].my_hitbox + allObjects[O].my_hitbox)) {
 
                             allObjects[currOBJ].my_hp -= allObjects[O].damage;
@@ -5638,6 +5718,17 @@ void ultra_slash_collision(int currOBJ, int i, int j) {
                         }
                     }
                     break;
+                case nade:
+                    if (is_within_melee_slash(allObjects[currOBJ].position, allObjects[O].position, idpd_nade_hitbox, allObjects[currOBJ].direction)) {
+                        allObjects[O].direction = allObjects[currOBJ].direction;
+                        allObjects[O].speeddir = 12.0f;
+                        allObjects[O].alarm2 = 4;
+                        allObjects[O].friction = 0.1f;
+                        allObjects[O].team = no_team;    //reflected
+                        create_object(allObjects[O].position.x, allObjects[O].position.y, 0, 0, deflect, allObjects[currOBJ].direction * degreestoradians, 0);
+                    }
+
+                    break;
                 case idpd_nade:
                     if (is_within_melee_slash(allObjects[currOBJ].position, allObjects[O].position, idpd_nade_hitbox, allObjects[currOBJ].direction)) {
                         allObjects[O].direction = allObjects[currOBJ].direction;
@@ -5743,6 +5834,7 @@ void explosion_collision(int currOBJ, int i, int j) {
                             }
                         }
                         break;
+                    case nade:
                     case idpd_nade:
                         if (is_within_circle(allObjects[Other].position, allObjects[currOBJ].position, (idpd_nade_hitbox + allObjects[currOBJ].my_hitbox))) {
                             destroy_projectile(Other);
@@ -5810,6 +5902,7 @@ void idpd_explosion_collision(int currOBJ, int i, int j) {
                             }
                         }
                         break;
+                    case nade:
                     case idpd_nade:
                         if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (idpd_nade_hitbox + idpd_explosion_hitbox))) {
                             destroy_projectile(O);
@@ -6213,6 +6306,7 @@ void throne_2_collision(int currOBJ, int i, int j) {
                         break;
                     case player_bullet:__fallthrough;
                     case player_shell:__fallthrough;
+                    case nade:__fallthrough;
                     case idpd_bullet:
                         if (allObjects[O].team != enemy_team && is_within_throne_2(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox)) {
                             destroy_projectile(O);
@@ -6562,15 +6656,14 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
                     else if (wep == 59) {
                         for (int S = 0; S < 3; S++) {
                             inaccuracy = random_float(acc_variation * 2.0f) - acc_variation;
-                            inaccuracy /= degreestoradians;
                             proj_speed = random_float(4.0f) + 20.0f;
                             Xspd = cos(direction + inaccuracy) * proj_speed;
                             Yspd = sin(direction + inaccuracy) * proj_speed;
                             create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy, bullet_type);
                         }
+                        acc_variation /= 2.0f;
                         for (int S = 0; S < 2; S++) {
                             inaccuracy = random_float(acc_variation * 2.0f) - acc_variation;
-                            inaccuracy /= degreestoradians;
                             proj_speed = random_float(4.0f) + 20.0f;
                             Xspd = cos(direction + inaccuracy) * proj_speed;
                             Yspd = sin(direction + inaccuracy) * proj_speed;
@@ -6580,7 +6673,6 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
                     else if (wep == 60) {
                         for (int S = 0; S < 4; S++) {
                             inaccuracy = random_float(acc_variation * 2.0f) - acc_variation;
-                            inaccuracy /= degreestoradians;
                             proj_speed = random_float(8.0f) + 16.0f;
                             Xspd = cos(direction + inaccuracy) * proj_speed;
                             Yspd = sin(direction + inaccuracy) * proj_speed;
@@ -6593,7 +6685,6 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
                     else if (wep == 62) {
                         for (int S = 0; S < 3; S++) {
                             inaccuracy = random_float(acc_variation * 2.0f) - acc_variation;
-                            inaccuracy /= degreestoradians;
                             proj_speed = random_float(4.0f) + 20.0f;
                             Xspd = cos(direction + inaccuracy) * proj_speed;
                             Yspd = sin(direction + inaccuracy) * proj_speed;
@@ -6601,7 +6692,6 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
                         }
                         for (int S = 0; S < 4; S++) {
                             inaccuracy = random_float(acc_variation * 2.0f) - acc_variation;
-                            inaccuracy /= degreestoradians;
                             proj_speed = random_float(4.0f) + 20.0f;
                             Xspd = cos(direction + inaccuracy) * proj_speed;
                             Yspd = sin(direction + inaccuracy) * proj_speed;
@@ -6611,21 +6701,19 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
                     else if (wep == 64) {//seeker pistol
                         for (int S = 0; S < 2; S++) {
                             inaccuracy = random_float(acc_variation * 2.0f) - acc_variation;
-                            inaccuracy /= degreestoradians;
                             proj_speed = 6.0f;
                             Xspd = cos(direction + inaccuracy) * proj_speed;
                             Yspd = sin(direction + inaccuracy) * proj_speed;
-                            create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy, bullet_type);
+                            create_object(allObjects[0].position.x + cos(direction) * 12, allObjects[0].position.y + sin(direction) * 12, Xspd, Yspd, object_type, direction + inaccuracy, bullet_type);
                         }
                     }
                     else if (wep == 65) {//seeker shotgun
                         for (int S = 0; S < 6; S++) {
                             inaccuracy = random_float(acc_variation * 2.0f) - acc_variation;
-                            inaccuracy /= degreestoradians;
                             proj_speed = 6.0f;
                             Xspd = cos(direction + inaccuracy) * proj_speed;
                             Yspd = sin(direction + inaccuracy) * proj_speed;
-                            create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy, bullet_type);
+                            create_object(allObjects[0].position.x + cos(direction) * 12, allObjects[0].position.y + sin(direction) * 12, Xspd, Yspd, object_type, direction + inaccuracy, bullet_type);
                         }
                     }
                     else {
@@ -6679,7 +6767,7 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
                     case 70://gold shotgun
                         for (int S = 0; S < 15; S++) {
                             inaccuracy = random_float(acc_variation * 2.0f) - acc_variation;
-                            proj_speed = 18 + random_float(6);
+                            proj_speed = 11 + random_float(11);
                             create_object(allObjects[0].position.x, allObjects[0].position.y, proj_speed, 0, object_type, direction + inaccuracy, bullet_type);
                         }
                         break;
@@ -6760,6 +6848,13 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
                             proj_speed = 13.7f + random_float(6);
                             create_object(allObjects[0].position.x, allObjects[0].position.y, proj_speed, 0, object_type, direction + inaccuracy, bullet_type);
                         }
+                        break;
+                    }
+                }
+                else if (wep >= shell_weps && wep < explosive_weps) {
+                    switch (wep) {
+                    default:
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, 10.0f, 0, object_type, direction + inaccuracy, bullet_type);
                         break;
                     }
                 }
@@ -7170,16 +7265,16 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 29, 22.0f, player_bolt, -0.0f, 4, 0.0f * accuracy_curr, false, player_bolts, 4);
             break;
         case 59://splinter gun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 19, 24.0f, player_bolt, -0.0f, 3, 0.0f * accuracy_curr, false, player_bolts, 3);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 19, 24.0f, player_bolt, -0.0f, 3, 10.0f * accuracy_curr, false, player_bolts, 3);
             break;
         case 60://splinter pistol
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 8, 24.0f, player_bolt, -0.0f, 3, 0.0f * accuracy_curr, false, player_bolts, 3);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 8, 24.0f, player_bolt, -0.0f, 3, 4.0f * accuracy_curr, false, player_bolts, 3);
             break;
         case 61://super splinter
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 28, 24.0f, player_bolt, -0.0f, 3, 0.0f * accuracy_curr, false, player_bolts, 3);
             break;
         case 62://gold splinter
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 19, 24.0f, player_bolt, -0.0f, 3, 0.0f * accuracy_curr, false, player_bolts, 3);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 12, 24.0f, player_bolt, -0.0f, 3, 4.0f * accuracy_curr, false, player_bolts, 3);
             break;
         case 63://ultra crossbow
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 11, 24.0f, player_bolt, -0.0f, 7, 0.0f * accuracy_curr, false, player_bolts, 2);
@@ -7254,6 +7349,10 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
         case 83://ultra shotgun
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 11, 16.0f, player_shell, -0.0f, 5, 22.0f * accuracy_curr, true, player_shells, 7);
             break;
+
+        case 86://grenade launcher
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 20, 10.0f, nade, -0.0f, 5, 3.0f * accuracy_curr, false, player_explosives, 0);
+            break;
         default:
             break;
         }
@@ -7319,9 +7418,10 @@ void object_tunnel_corner(int currOBJ) {
             }
         }
         break;
+    case objectID::nade:
     case objectID::idpd_nade:
         bounce_in_wall(currOBJ);
-        allObjects[currOBJ].speeddir = allObjects[currOBJ].speeddir * 0.5;
+        allObjects[currOBJ].speeddir = allObjects[currOBJ].speeddir * 0.6;
         create_object(allObjects[currOBJ].position.x, allObjects[currOBJ].position.y, 0.5, 0.5, dust, 0, 0);    //dust
         play_sound_relative_to_player(snd_nade_hit_wall_ID, allObjects[currOBJ].position.x, allObjects[currOBJ].position.y);
         break;
@@ -7413,7 +7513,7 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                     tmpdir = random_360_radians();
                     tempSpeedX = cos(tmpdir) * tempSpeed;
                     tempSpeedY = sin(tmpdir) * tempSpeed;
-                    create_object(allObjects[i].position.x, allObjects[i].position.y, tempSpeedX, tempSpeedY, rad, 0.0f, 0);
+                    create_object(allObjects[i].position.x, allObjects[i].position.y, random_float(3.0f) + 3.0f, 0.0f, rad, 0.0f, 0);
                 }
                 for (int b = 0; b < 30; b++) {
                     create_object(allObjects[i].position.x + random_float(128) - 64, allObjects[i].position.y + random_float(100) - 50, 0, 0, explosion, 0, 2);
@@ -7819,11 +7919,60 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             }
 
             if (allObjects[i].next_hurt > current_frame) {
-                allObjects[i].speed.x *= 0.85f;
-                allObjects[i].speed.y *= 0.85f;
-                //allObjects[i].position += allObjects[i].speed;
+                allObjects[i].speeddir -= 0.2f;
+
+                if (allObjects[i].speeddir < 0.0f) {
+                    allObjects[i].speeddir = 0.0f;
+                }
+                
+                allObjects[i].speed.x = cos(allObjects[i].direction) * allObjects[i].speeddir;
+                allObjects[i].speed.y = sin(allObjects[i].direction) * allObjects[i].speeddir;
+
+                if (game_area[int((allObjects[i].position.x + allObjects[i].speed.x) / 16.0f)][int((allObjects[i].position.y + allObjects[i].speed.y) / 16.0f)].my_grid_type != wall) {
+                    allObjects[i].position += allObjects[i].speed;
+                }
             }
-            if (allObjects[i].next_hurt == current_frame || !player_alive) {
+
+            else if (player_alive) {
+                tmpdir = direction_to_player(i);
+                float tempSpdx = cos(tmpdir) * 12.0f;
+                float tempSpdy = sin(tmpdir) * 12.0f;
+
+                //previous position
+                //allObjects[i].speed = allObjects[O].position;
+
+                //corner starving isnt possible with this rad logic so maybe make enemies drop less rads, or lower rad attraction radius to make rad management harder
+
+                //potential step
+
+                if (game_area[int((allObjects[i].position.x + tempSpdx) / 16.0f)][int((allObjects[i].position.y + tempSpdy) / 16.0f)].my_grid_type == wall || 
+
+                    (game_area[int((allObjects[i].position.x + tempSpdx) / 16.0f)][int((allObjects[i].position.y) / 16.0f)].my_grid_type == wall) && game_area[int((allObjects[i].position.x) / 16.0f)][int((allObjects[i].position.y + tempSpdy) / 16.0f)].my_grid_type == wall
+
+                    ) {
+                    if (tempSpdx > tempSpdy) {
+
+                        if (game_area[int((allObjects[i].position.x + tempSpdx) / 16.0f)][int((allObjects[i].position.y) / 16.0f)].my_grid_type == wall) {
+                            if (tempSpdy > 6.0f && game_area[int((allObjects[i].position.x) / 16.0f)][int((allObjects[i].position.y + tempSpdy) / 16.0f)].my_grid_type != wall && is_within_circle(allObjects[i].position, allObjects[0].position, plutonium_hunger)) {
+                                allObjects[i].position = allObjects[i].position + sf::Vector2f{ 0.0f, tempSpdy };
+                            }
+                        }
+                    }
+                    else {
+                        if (game_area[int((allObjects[i].position.x) / 16.0f)][int((allObjects[i].position.y + tempSpdy) / 16.0f)].my_grid_type == wall) {
+                            if (tempSpdx > 6.0f && game_area[int((allObjects[i].position.x + tempSpdx) / 16.0f)][int((allObjects[i].position.y) / 16.0f)].my_grid_type != wall && is_within_circle(allObjects[i].position, allObjects[0].position, plutonium_hunger)) {
+                                allObjects[i].position = allObjects[i].position + sf::Vector2f{ tempSpdx, 0.0f };
+                            }
+                        }
+                    }
+                    allObjects[i].team = 1;
+                }
+                else if (is_within_circle(allObjects[i].position, allObjects[0].position, plutonium_hunger)) {
+                    allObjects[i].position = allObjects[i].position + sf::Vector2f{ tempSpdx, tempSpdy };
+                }
+            }
+
+            /*if (allObjects[i].next_hurt == current_frame || (!player_alive && allObjects[i].next_hurt < current_frame)) {
                 allObjects[i].speed.x = 0.0f;
                 allObjects[i].speed.y = 0.0f;
             }
@@ -7834,9 +7983,9 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                 tmpdir = atan2(diffy, diffx);
                 allObjects[i].speed.x = cos(tmpdir) * -12;
                 allObjects[i].speed.y = sin(tmpdir) * -12;
-            }
+            }*/
             if (allObjects[i].team == 0) {
-                allObjects[i].position += allObjects[i].speed;
+                //allObjects[i].position += allObjects[i].speed;
                 eyes_tk_pull(i);
             }
 
@@ -8513,6 +8662,7 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                 allObjects[i].my_id = nothing;
             }
             break;
+        case nade:
         case idpd_nade:
             allObjects[i].alarm1++;
             allObjects[i].alarm2++;
@@ -8520,21 +8670,27 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             if (allObjects[i].alarm1 > 90) {
                 destroy_projectile(i);
                 //play extra sound
-                play_sound_relative_to_player(snd_IDPD_explosion_ID, allObjects[i].position.x, allObjects[i].position.y);
+                if (allObjects[i].my_id == idpd_nade) {
+                    play_sound_relative_to_player(snd_IDPD_explosion_ID, allObjects[i].position.x, allObjects[i].position.y);
+                }
             }
-            if (allObjects[i].alarm1 == 69) {
+            if (allObjects[i].alarm1 == 69 && allObjects[i].my_id == idpd_nade) {
                 play_sound_relative_to_player(snd_IDPD_nade_almost_ID, allObjects[i].position.x, allObjects[i].position.y);
             }
             if (allObjects[i].alarm2 >= 10) {
-                allObjects[i].friction = 0.5f;
+                allObjects[i].friction = 0.4f;
+                if (allObjects[i].my_id == idpd_nade) {
+                    allObjects[i].friction = 0.5f;
+                }
                 if (allObjects[i].alarm2 == 10) {
                     for (int b = 0; b < 4; b++) {
                         create_object(allObjects[i].position.x, allObjects[i].position.y, 2, 2, smoke, 0, 0);    //smoke
+                    }
+                    if (allObjects[i].my_id == idpd_nade) {
                         play_sound_relative_to_player(snd_IDPD_nade_load_ID, allObjects[i].position.x, allObjects[i].position.y);
                     }
                 }
             }
-
             allObjects[i].speeddir -= allObjects[i].friction;
             if (allObjects[i].speeddir > 12.0f) {
                 allObjects[i].speeddir = 12.0f;
@@ -8542,13 +8698,14 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             if (allObjects[i].speeddir <= 0.0f) {
                 allObjects[i].speeddir = 0.0f;
                 //create portal charges
-                tempSpeedX = random_float(1) + 2;
-                diffx = rand() % 96 - 48;
-                diffy = rand() % 96 - 48;
-                tmpdir = atan2f(diffy, diffx);
-                create_object(allObjects[i].position.x + diffx, allObjects[i].position.y + diffy, cos(tmpdir) * -tempSpeedX, sin(tmpdir) * -tempSpeedX, idpd_portal_charge, (sqrt((diffx * diffx) + (diffy * diffy)) / tempSpeedX) + 1, rand() % 4);
+                if (allObjects[i].my_id == idpd_nade) {
+                    tempSpeedX = random_float(1) + 2;
+                    diffx = rand() % 96 - 48;
+                    diffy = rand() % 96 - 48;
+                    tmpdir = atan2f(diffy, diffx);
+                    create_object(allObjects[i].position.x + diffx, allObjects[i].position.y + diffy, cos(tmpdir) * -tempSpeedX, sin(tmpdir) * -tempSpeedX, idpd_portal_charge, (sqrt((diffx * diffx) + (diffy * diffy)) / tempSpeedX) + 1, rand() % 4);
+                }
             }
-
             allObjects[i].speed.x = cos(allObjects[i].direction) * allObjects[i].speeddir;
             allObjects[i].speed.y = sin(allObjects[i].direction) * allObjects[i].speeddir;
 
@@ -8890,7 +9047,7 @@ void player_shell_burst_step(int obj) {
 
             allObjects[obj].size--;
             play_sound_on_player(snd_wave_gun_ID);
-            inaccuracy = sin(allObjects[obj].size) * 20;
+            inaccuracy = sin((float)allObjects[obj].size / 4.0f) * 20;
             inaccuracy /= degreestoradians;
 
             create_object(allObjects[0].position.x, allObjects[0].position.y, 16.0f, 0, player_shell, direction_to_mouse + inaccuracy, 0);
@@ -8948,7 +9105,7 @@ void player_bolt_step(int obj) {
             allObjects[obj].speeddir = 6.0f;
             allObjects[obj].direction /= degreestoradians;
             tmpdir = atan2f(allObjects[closest_enemy].position.y - allObjects[obj].position.y, allObjects[closest_enemy].position.x - allObjects[obj].position.x);
-            motion_add_dir(tmpdir, 0.5f, obj);
+            motion_add_dir(tmpdir, 0.54f, obj);
             if (is_within_circle(allObjects[obj].position, allObjects[closest_enemy].position, 48 * (1 + bolt_marrow))) {
                 motion_add_dir(tmpdir, 4.0f, obj);
             }
@@ -9100,7 +9257,7 @@ void player_bolt_step(int obj) {
                                         allObjects[obj_collide].my_hp -= allObjects[obj].damage;
                                         if (allObjects[obj_collide].my_hp > 0) {
                                             enemy_hurt(obj_collide, obj);
-                                            create_object(allObjects[obj].position.x, allObjects[obj].position.y, obj_collide, 0, player_bolt_stick, allObjects[obj].direction, allObjects[obj].damage);
+                                            //create_object(allObjects[obj].position.x, allObjects[obj].position.y, obj_collide, 0, player_bolt_stick, allObjects[obj].direction, allObjects[obj].damage);
                                         }
                                         else {  //dead
                                             enemy_die(obj_collide, obj);
@@ -9119,13 +9276,16 @@ void player_bolt_step(int obj) {
     }
     if (allObjects[obj].image_index > 1) {
         if (allObjects[obj].damage == 45) {//ultra
-            create_object(allObjects[obj].position.x - allObjects[obj].speed.x / 2, allObjects[obj].position.y - allObjects[obj].speed.y / 2, 0, 0, bolt_trail, (allObjects[obj].direction - 180) / degreestoradians, 2);
+            create_object(allObjects[obj].position.x - allObjects[obj].speed.x / 2, allObjects[obj].position.y - allObjects[obj].speed.y / 2, 24, 0, bolt_trail, (allObjects[obj].direction - 180) / degreestoradians, 2);
         }
         else if (allObjects[obj].damage > 10) { //normal
-            create_object(allObjects[obj].position.x - allObjects[obj].speed.x / 2, allObjects[obj].position.y - allObjects[obj].speed.y / 2, 0, 0, bolt_trail, (allObjects[obj].direction - 180) / degreestoradians, 0);
+            create_object(allObjects[obj].position.x - allObjects[obj].speed.x / 2, allObjects[obj].position.y - allObjects[obj].speed.y / 2, 24, 0, bolt_trail, (allObjects[obj].direction - 180) / degreestoradians, 0);
+        }
+        else if (allObjects[obj].damage == 9) { //seeker
+            create_object(allObjects[obj].position.x - allObjects[obj].speed.x / 2, allObjects[obj].position.y - allObjects[obj].speed.y / 2, 6, 0, bolt_trail, (allObjects[obj].direction - 180) / degreestoradians, 0);
         }
         else {//splinter
-            create_object(allObjects[obj].position.x - allObjects[obj].speed.x / 2, allObjects[obj].position.y - allObjects[obj].speed.y / 2, 0, 0, bolt_trail, (allObjects[obj].direction - 180) / degreestoradians, 1);
+            create_object(allObjects[obj].position.x - allObjects[obj].speed.x / 2, allObjects[obj].position.y - allObjects[obj].speed.y / 2, 24, 0, bolt_trail, (allObjects[obj].direction - 180) / degreestoradians, 1);
         }
     }
 }
@@ -9495,13 +9655,41 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                         for (int O : game_area[i + w][j + h].object_indexes) {      //walls collisions and bounce
                             switch (allObjects[O].my_id) {
                             case objectID::rad:
-                                diffx = (allObjects[O].position.x + allObjects[O].speed.x) - ((i * 16) + 8);    //distance from the center of the wall
-                                diffy = (allObjects[O].position.y + allObjects[O].speed.y) - ((j * 16) + 8);    //distance from the center of the wall
-                                if (sqrt(pow(diffx, 2) + pow(diffy, 2)) < 16) {
-                                    if (sqrt(pow(diffx, 2) + pow(diffy, 2)) < sqrt(pow(allObjects[O].position.x, 2) + pow(allObjects[O].position.y, 2))) {      //if moving closer to the wall
-                                        allObjects[O].team = 1;     //doesnt move if team is 1
+                                /*if (allObjects[O].team == 0) {
+                                    allObjects[O].team = 1;
+                                    tmpdir = direction_to_player(O);
+                                    tempSpdx = cos(tmpdir) * 12.0f;
+                                    tempSpdy = sin(tmpdir) * 12.0f;
+
+                                    //previous position
+                                    allObjects[O].speed = allObjects[O].position;
+
+                                    //potential step
+                                    diffx = (allObjects[O].position.x + tempSpdx) - ((i * 16) + 8);    //distance from the center of the wall
+                                    diffy = (allObjects[O].position.y + tempSpdy) - ((j * 16) + 8);    //distance from the center of the wall
+                                    if (sqrt(pow(diffx, 2) + pow(diffy, 2)) < 16) {
+                                        if (sqrt(pow(diffx, 2) + pow(diffy, 2)) < sqrt(pow(allObjects[O].position.x, 2) + pow(allObjects[O].position.y, 2))) {      //if moving closer to the wall
+                                            allObjects[O].team = 1;     //doesnt move if team is 1
+                                        }
                                     }
-                                }
+                                    if (game_area[int((allObjects[O].position.x + tempSpdx) / 16.0f)][int((allObjects[O].position.y + tempSpdy) / 16.0f)].my_grid_type == wall) {
+                                        if (tempSpdx > tempSpdy) {
+
+                                            if (game_area[int((allObjects[O].position.x + tempSpdx) / 16.0f)][int((allObjects[O].position.y) / 16.0f)].my_grid_type == wall) {
+                                                if (tempSpdy > 6.0f && game_area[int((allObjects[O].position.x) / 16.0f)][int((allObjects[O].position.y + tempSpdy) / 16.0f)].my_grid_type != wall) {
+                                                    allObjects[O].position = allObjects[O].position + sf::Vector2f{ 0.0f, tempSpdy };
+                                                }
+                                            }
+                                        }
+                                        else {
+                                            if (game_area[int((allObjects[O].position.x) / 16.0f)][int((allObjects[O].position.y + tempSpdy) / 16.0f)].my_grid_type == wall) {
+                                                if (tempSpdx > 6.0f && game_area[int((allObjects[O].position.x + tempSpdx) / 16.0f)][int((allObjects[O].position.y) / 16.0f)].my_grid_type != wall) {
+                                                    allObjects[O].position = allObjects[O].position + sf::Vector2f{ tempSpdx, 0.0f };
+                                                }
+                                            }
+                                        }
+                                    }
+                                }*/
                                 break;
                             case objectID::player:
                                 if (!roll && !(player_character == frog)) {
@@ -9646,9 +9834,10 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                             }
                         }
                         break;
+                    case objectID::nade:
                     case objectID::idpd_nade:
                         bounce_in_wall(currOBJ);
-                        allObjects[currOBJ].speeddir = allObjects[currOBJ].speeddir * 0.5;
+                        allObjects[currOBJ].speeddir = allObjects[currOBJ].speeddir * 0.6;
                         create_object(allObjects[currOBJ].position.x, allObjects[currOBJ].position.y, 0.5, 0.5, dust, 0, 0);    //dust
                         play_sound_relative_to_player(snd_nade_hit_wall_ID, allObjects[currOBJ].position.x, allObjects[currOBJ].position.y);
                         break;
@@ -10994,6 +11183,8 @@ void poll_movement_inputs(int& poll_move_up, int& poll_move_down, int& poll_move
 
 int main()
 {
+
+    debug_timer_startup.timing_us_start();
     //font
     sf::Font font;
     font.loadFromFile("C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/src/PressStart2P-Regular.ttf");
@@ -11021,9 +11212,12 @@ int main()
     //const int all_sound_buffers_max = 1000;
     //sf::SoundBuffer all_extra_sound_buffers[all_sound_buffers_max];
 
+
     sf::Music current_music;
 
     current_music.openFromFile("mus/mus1.ogg");
+
+    add_new_sound(snd_bullet_bounce_ID, "snd/bullet_bounce.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
     add_new_sound(snd_shoot_1_ID, "snd/shoot_1.wav", all_sounds, all_sounds_mirror, 0.1f, 0.015f);
 
@@ -11106,7 +11300,6 @@ int main()
     add_new_sound(snd_plasma_split_upgrade_ID, "snd/plasma_split_upgrade.wav", all_sounds, all_sounds_mirror, 0.15f, 0.0001f);
 
 
-    add_new_sound(snd_bullet_bounce_ID, "snd/bullet_bounce.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
     add_new_sound(snd_machinegun_ID, "snd/machinegun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
     add_new_sound(snd_gold_machinegun_ID, "snd/gold_machinegun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
@@ -11441,7 +11634,7 @@ int main()
     add_new_sound(snd_foot_slime_5_ID, "snd/footsteps/foot_slime_5.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
     add_new_sound(snd_foot_slime_6_ID, "snd/footsteps/foot_slime_6.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
 
-
+    debug_timer_startup.timing_us_end();
 
     //all_sounds[snd_portal_loop_ID].sound.play();
     //all_sounds[snd_portal_loop_ID].sound.setLoop(true);
@@ -12694,6 +12887,8 @@ int main()
         break;
     }
 
+    
+
     resize_window(0, window);
 
     while (window.isOpen()){
@@ -12998,7 +13193,7 @@ int main()
         }
 
         sf::Text tO;
-        tO.setString("DEBUG_ENEMY_TELEPORT_TO X: " + std::to_string(allObjects[DEBUG_ENEMY_TELEPORT_TO].position.x));
+        tO.setString("curr_objcount_real: " + std::to_string(curr_objcount_real));
         tO.setCharacterSize(8);
         tO.setFont(font);
         tO.setColor(sf::Color::White);
@@ -13040,8 +13235,6 @@ int main()
             GAME_PAUSED = true;
             FRAME_ADVANCE = 0;
         }
-        //debug_timer_.timing_us_start();
-
         //start of things that shouldnt be done when paused
         if (!GAME_PAUSED) {
 
@@ -14422,7 +14615,7 @@ int main()
             }
         }
         
-        debug_timer_.timing_us_start();
+        //debug_timer_.timing_us_start();
 
         for (int i = cameraBoundsLeft; i < cameraBoundsRight; i++) {
             for (int j = cameraBoundsTop; j < cameraBoundsBottom; j++) {
@@ -15145,6 +15338,14 @@ int main()
                         weapon_sprites[weapon_spritesIndex].setRotation(allObjects[idx].growspeed);
                         weapon_sprites[weapon_spritesIndex].setTextureRect({ 0, allObjects[idx].size * 36, 36, 36 });
                         weapon_spritesIndex++;
+                        break;
+                    case nade:
+                        choice = (allObjects[idx].alarm1 > 69) * (int(allObjects[idx].alarm1 * 0.4f) % 2 + 1);
+                        rotateable_effects_small[rotateableEffectsSmallIndex].setColor({ 255, 255, 255, 255 });
+                        rotateable_effects_small[rotateableEffectsSmallIndex].setPosition(allObjects[idx].position - cameraPos);
+                        rotateable_effects_small[rotateableEffectsSmallIndex].setRotation(allObjects[idx].rotation);
+                        rotateable_effects_small[rotateableEffectsSmallIndex].setTextureRect(sf::IntRect{ choice * 8, 200, 8, 8 });
+                        rotateableEffectsSmallIndex++;
                         break;
                     case idpd_nade:
                         choice = (allObjects[idx].alarm1 > 69) * (int(allObjects[idx].alarm1 * 0.4f) % 2 + 1);
@@ -16066,7 +16267,7 @@ int main()
                         variable_textures[variableTexturesIndex].setRotation(allObjects[idx].direction);
                         variable_textures[variableTexturesIndex].setTextureRect(sf::IntRect{ choice, 0, 1, 2 });
                         variable_textures[variableTexturesIndex].setOrigin(0, 1);
-                        variable_textures[variableTexturesIndex].setScale(24, allObjects[idx].scale);
+                        variable_textures[variableTexturesIndex].setScale(allObjects[idx].size, allObjects[idx].scale);
                         variableTexturesIndex++;
                         break;
                     case player_bolt:__fallthrough;
@@ -16471,7 +16672,7 @@ int main()
                 }
             }
         }
-        debug_timer_.timing_us_end();
+        //debug_timer_.timing_us_end();
 
         //2nd_pass for larger objects and light sources
 
@@ -16507,7 +16708,7 @@ int main()
         //onscreen sprites drawn
         sf::Text tspr;
 
-        tspr.setString("rads: " + std::to_string(player_rads));
+        tspr.setString("debug_timer_startup: " + std::to_string(float(debug_timer_startup.time_elapsed) / 1000) + " ms");
         tspr.setCharacterSize(8);
         tspr.setFont(font);
         tspr.setColor(sf::Color::White);
