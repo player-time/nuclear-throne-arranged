@@ -3226,6 +3226,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].my_id = obj_id;
                 allObjects[i].my_hitbox = no_hitbox;
 
+                allObjects[i].direction = direction;
+
                 allObjects[i].position = { x, y };
                 allObjects[i].image_index = 0;
                 allObjects[i].scale = (rand() % 2) * 2 - 1;
@@ -4742,7 +4744,7 @@ void enemy_die(int ENEMY, int PROJ) {
         ammo_drop_function(ENEMY, 16);
 
         if (rand() % 20 == 0) {
-            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, weapon_drop, 0, rand() % 88);
+            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, weapon_drop, 0, rand() % 89);
         }
 
         //debug start
@@ -6614,9 +6616,9 @@ void swing_melee(float direction, float reload, float damage) {
     create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, melee_slash, direction, damage);
 }
 
-void not_enough_energy() {
+void not_enough_ammo(std::string string) {
     play_sound_on_player(snd_empty_ID);
-    create_popuptext("NOT ENOUGH ENERGY", allObjects[0].position);
+    create_popuptext(string, allObjects[0].position);
     LMB_pressed = false;
     wep_kick = 3;
 }
@@ -7035,8 +7037,21 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
     }
     if (LMB_pressed && wep_reload < 0.0f && ammo_type - cost * shots < 0) {
         if (wep < energy_weps) {
-            not_enough_energy();
+            not_enough_ammo("NOT ENOUGH ENERGY");
         }
+        else if (wep < bullet_weps) {
+            not_enough_ammo("NOT ENOUGH BULLETS");
+        }
+        else if (wep < bolt_weps) {
+            not_enough_ammo("NOT ENOUGH BOLTS");
+        }
+        else if (wep < shell_weps) {
+            not_enough_ammo("NOT ENOUGH SHELLS");
+        }
+        else if (wep < explosive_weps) {
+            not_enough_ammo("NOT ENOUGH EXPLOSIVES");
+        }
+
     }
 }
 
@@ -7191,7 +7206,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 }
             }
             if (LMB_pressed && wep_reload < 0.0f && player_energy - 2 < 0 && shots == 1 && !skeleton_gamble) {
-                not_enough_energy();
+                not_enough_ammo("NOT ENOUGH ENERGY");
             }
             break;
         case 9: //ehammer
@@ -7215,7 +7230,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 }
             }
             if (LMB_pressed && wep_reload < 0.0f && player_energy - 5 < 0 && shots == 1 && !skeleton_gamble) {
-                not_enough_energy();
+                not_enough_ammo("NOT ENOUGH ENERGY");
             }
             break;
         case 10://escrew
@@ -7257,7 +7272,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 }
             }
             if (LMB_pressed && wep_reload < 0.0f && player_energy - 24 * shots < 0) {
-                not_enough_energy();
+                not_enough_ammo("NOT ENOUGH ENERGY");
             }
 
             break;
@@ -7500,6 +7515,9 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             break;
         case 87://gold grenade launcher
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 18, 12.0f, nade, -0.0f, 7, 0.0f * accuracy_curr, false, player_explosives, 12);
+            break;
+        case 88://heavy grenade launcher
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 26, 10.0f + random_float(1.0f), nade, -0.0f, 8, 2.0f * accuracy_curr, false, player_explosives, 2);
             break;
         default:
             break;
@@ -15566,7 +15584,15 @@ int main()
                         rotateable_effects_small[rotateableEffectsSmallIndex].setColor({ 255, 255, 255, 255 });
                         rotateable_effects_small[rotateableEffectsSmallIndex].setPosition(allObjects[idx].position - cameraPos);
                         rotateable_effects_small[rotateableEffectsSmallIndex].setRotation(allObjects[idx].rotation);
-                        rotateable_effects_small[rotateableEffectsSmallIndex].setTextureRect(sf::IntRect{ choice * 8, 200, 8, 8 });
+                        switch (allObjects[idx].alarm3) {
+                        default:
+                            choice2 = 200;
+                            break;
+                        case 2://heavy nade
+                            choice2 = 208;
+                            break;
+                        }
+                        rotateable_effects_small[rotateableEffectsSmallIndex].setTextureRect(sf::IntRect{ choice * 8, choice2, 8, 8 });
                         rotateableEffectsSmallIndex++;
                         break;
                     case idpd_nade:
