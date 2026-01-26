@@ -42,6 +42,7 @@ enum objectID {
 	idpd_spawn,
 
 	nade,
+	explosive_burst,
 
 	rogue_strike,
 

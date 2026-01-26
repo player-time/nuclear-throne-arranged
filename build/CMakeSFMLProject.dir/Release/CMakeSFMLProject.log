@@ -1,5 +1,5 @@
 ﻿  Copy OpenAL DLL
   main.cpp
 C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\main.cpp(22,10): warning C4067: unexpected tokens following preprocessor directive - expected a newline
-C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\main.cpp(3433): warning C4715: 'create_object': not all control paths return a value
+C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\main.cpp(3436): warning C4715: 'create_object': not all control paths return a value
   CMakeSFMLProject.vcxproj -> C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\bin\Release\CMakeSFMLProject.exe

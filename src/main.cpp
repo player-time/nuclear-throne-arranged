@@ -208,7 +208,7 @@ int current_frame = 0;      //used for stuff like i-frames, reset this each area
 
 
 
-int LOOPS = 14;
+int LOOPS = 20;
 
 
 
@@ -2409,7 +2409,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 
                 allObjects[i].speeddir = 0.0f;
                 allObjects[i].direction = random_360_radians();
-                allObjects[i].friction = 0.2f;
+                allObjects[i].friction = 0.4f;
 
                 allObjects[i].alarm1 = 30 + rand() % 90;
 
@@ -2440,7 +2440,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].speeddir = 0.0f;
                 allObjects[i].walk_direction = random_360_radians();
                 allObjects[i].gun_angle = random_360_radians();
-                allObjects[i].friction = 0.2f;
+                allObjects[i].friction = 0.4f;
 
                 allObjects[i].alarm1 = 20 + rand() % 10;
                 allObjects[i].alarm2 = 0;
@@ -3092,6 +3092,9 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 }
                 else if (image_index == 11) {    //ultra
                     allObjects[i].damage = 40;
+                }
+                else if (image_index == 12) {   //gold
+                    allObjects[i].damage = 17;
                 }
 
                 allObjects[i].friction = 0.1f;
@@ -4739,7 +4742,7 @@ void enemy_die(int ENEMY, int PROJ) {
         ammo_drop_function(ENEMY, 16);
 
         if (rand() % 20 == 0) {
-            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, weapon_drop, 0, rand() % 87);
+            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, weapon_drop, 0, rand() % 88);
         }
 
         //debug start
@@ -6990,6 +6993,14 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
                     default:
                         create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, 10.0f, 0, object_type, direction + inaccuracy, bullet_type);
                         break;
+                    case 87://gold grenade
+                        Xspd = cos(direction + inaccuracy + 0.01f) * 12.0f;
+                        Yspd = sin(direction + inaccuracy + 0.01f) * 12.0f;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, 12.0f, 0, object_type, direction + inaccuracy + 0.01f, bullet_type);
+                        Xspd = cos(direction + inaccuracy - 0.01f) * 12.0f;
+                        Yspd = sin(direction + inaccuracy - 0.01f) * 12.0f;
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, 12.0f, 0, object_type, direction + inaccuracy - 0.01f, bullet_type);
+                        break;
                     }
                 }
                 else {
@@ -7486,6 +7497,9 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
 
         case 86://grenade launcher
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 20, 10.0f, nade, -0.0f, 5, 3.0f * accuracy_curr, false, player_explosives, 0);
+            break;
+        case 87://gold grenade launcher
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 18, 12.0f, nade, -0.0f, 7, 0.0f * accuracy_curr, false, player_explosives, 12);
             break;
         default:
             break;
@@ -8420,7 +8434,7 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             if (allObjects[i].walk_frames > 0)
             {
                 allObjects[i].walk_frames--;
-                if (allObjects[i].next_hurt > current_frame) {  //in iframes
+                if (allObjects[i].next_hurt <= current_frame) {  // not in iframes
                     motion_add_dir(allObjects[i].direction, 0.55f, i);
                 }
                 else {
@@ -8444,8 +8458,8 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                 else {
                     if (rand() % 4 == 0) {
                         allObjects[i].walk_frames = 20;
-                        motion_add_dir(random_360_radians(), 3.0f, i);
                     }
+                    motion_add_dir(random_360_radians(), 3.0f, i);
                 }
                 allObjects[i].walk_direction = allObjects[i].direction;
             }
@@ -8801,13 +8815,13 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             allObjects[i].alarm1++;
             allObjects[i].alarm2++;
 
-            if (allObjects[i].alarm1 > 90) {
+            /*if (allObjects[i].alarm1 > 90) {
                 destroy_projectile(i);
                 //play extra sound
                 if (allObjects[i].my_id == idpd_nade) {
                     play_sound_relative_to_player(snd_IDPD_explosion_ID, allObjects[i].position.x, allObjects[i].position.y);
                 }
-            }
+            }*/
             if (allObjects[i].alarm1 == 69 && allObjects[i].my_id == idpd_nade) {
                 play_sound_relative_to_player(snd_IDPD_nade_almost_ID, allObjects[i].position.x, allObjects[i].position.y);
             }
@@ -9583,7 +9597,15 @@ void idpd_freak_step(int i) {
         create_object(allObjects[i].position.x, allObjects[i].position.y, tempSpeedX, tempSpeedY, idpd_bullet, tmpdir, 0);
     }
 }
-
+void nade_step(int i) {
+    if (allObjects[i].alarm1 > 90) {
+        destroy_projectile(i);
+        //play extra sound
+        if (allObjects[i].my_id == idpd_nade) {
+            play_sound_relative_to_player(snd_IDPD_explosion_ID, allObjects[i].position.x, allObjects[i].position.y);
+        }
+    }
+}
 
 void do_object_collision(int start, int end, int threadNUM) {       //create objects at different offsets depending on the thread so work is more evenly spread and overlap in object creation is basically impossible
     std::random_device rd;
@@ -9630,6 +9652,12 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                         player_bounce_wall(O, h, w, 5, 5, i, j);
                                         roll_direction = allObjects[O].direction;
                                     }
+                                }
+                                break;
+                            case nade:
+                            case idpd_nade:
+                                if (w == 0 && h == 0) {
+                                    nade_step(O);
                                 }
                                 break;
                             case player_bolt:
@@ -9974,6 +10002,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                         allObjects[currOBJ].speeddir = allObjects[currOBJ].speeddir * 0.6;
                         create_object(allObjects[currOBJ].position.x, allObjects[currOBJ].position.y, 0.5, 0.5, dust, 0, 0);    //dust
                         play_sound_relative_to_player(snd_nade_hit_wall_ID, allObjects[currOBJ].position.x, allObjects[currOBJ].position.y);
+                        nade_step(currOBJ);
                         break;
 
                     case objectID::idpd_explosion:
@@ -10043,6 +10072,10 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                         break;
                     case T2_bullet:
                         T2_bullet_step(currOBJ);
+                        break;
+                    case nade:
+                    case idpd_nade:
+                        nade_step(currOBJ);
                         break;
                     case player_bolt:
                         player_bolt_step(currOBJ);
