@@ -609,7 +609,7 @@ void stop_looping_sound(sound_ID sound_id) {
 
 int add_new_sound(enum sound_ID sound_id, std::string filename_path, sf::SoundBuffer (&all_sounds)[1000], sound_sound_buffer (&all_sounds_mirror)[1000], float pitch_variance, float attenuation = 1.0f, float volume = 100.0f) {
     if (!all_sounds[sound_id].loadFromFile(filename_path)) {
-        EXIT_PROGRAM_NOW = sound_id;
+        EXIT_PROGRAM_NOW = (int)sound_id;
         return -1;
     }
     all_sounds_mirror[sound_id].attenuation = attenuation;
@@ -765,6 +765,29 @@ void draw_weapon_text(int wep_ID, sf::Vector2f pos, sf::Text text, sf::RenderTex
     case 85:text.setString("DOUBLE SHOTGUN"); break;
 
     case 86:text.setString("GRENADE LAUNCHER"); break;
+    case 87:text.setString("GOLDEN GRENADE LAUNCHER"); break;
+    case 88:text.setString("HEAVY GRENADE LAUNCHER"); break;
+    case 89:text.setString("TOXIC LAUNCHER"); break;
+    case 90:text.setString("STICKY LAUNCHER"); break;
+    case 91:text.setString("GRENADE SHOTGUN"); break;
+    case 92:text.setString("GRENADE RIFLE"); break;
+    case 93:text.setString("AUTO GRENADE SHOTGUN"); break;
+    case 94:text.setString("CLUSTER LAUNCHER"); break;
+    case 95:text.setString("BAZOOKA"); break;
+    case 96:text.setString("SUPER BAZOOKA"); break;
+    case 97:text.setString("GATLING BAZOOKA"); break;
+    case 98:text.setString("GOLDEN BAZOOKA"); break;
+    case 99:text.setString("NUKE LAUNCHER"); break;
+    case 100:text.setString("GOLDEN NUKE LAUNCHER"); break;
+    case 101:text.setString("BLOOD LAUNCHER"); break;
+    case 102:text.setString("BLOOD CANNON"); break;
+    case 103:text.setString("FLAMETHROWER"); break;
+    case 104:text.setString("DRAGON"); break;
+    case 105:text.setString("FLARE GUN"); break;
+    case 106:text.setString("FLAME CANNON"); break;
+    case 107:text.setString("HYPER LAUNCHER"); break;
+    case 108:text.setString("ULTRA GRENADE LAUNCHER"); break;
+    case 109:text.setString("JACKHAMMER"); break;
 
     }
     text.setPosition(int(pos.x - cameraPos.x) - text.getString().getSize() * 4, int(pos.y - cameraPos.y) - 28);
@@ -919,8 +942,8 @@ sound_ID get_shoot_sound(int wep_id) {
     case 61: /*Super Splinter Gun*/return snd_super_splinter_ID;break;
     case 62: /*Golden Splinter Gun*/return snd_gold_splinter_ID;break;
     case 63: /*Ultra Crossbow*/return snd_ultra_crossbow_ID;break;
-    //case 64: /*seeker pistol*/return snd_seeker_pistol_ID;break;
-    //case 65: /*seeker shotgun*/return snd_seeker_shotgun_ID;break;
+    case 64: /*seeker pistol*/return snd_seeker_pistol_ID;break;
+    case 65: /*seeker shotgun*/return snd_seeker_shotgun_ID;break;
 
     case 84: /*shotgun*/return snd_shotgun_ID;break;
     case 85: /*double shotgun*/return snd_double_shotgun_ID;break;
@@ -943,7 +966,30 @@ sound_ID get_shoot_sound(int wep_id) {
     case 82: /*Super Flak Cannon*/return snd_super_flak_cannon_ID;break;
     case 83: /*Ultra Shotgun*/return snd_ultra_shotgun_ID;break;
 
-    //case 86: /*grenade launcher*/return snd_grenade_launcher_ID;break;
+    case 86: /*grenade launcher*/return snd_grenade_launcher_ID;break;
+    case 87:/*Golden Grenade Launcher*/return snd_gold_grenade_launcher_ID; break;
+    case 88:/*Heavy Grenade Launcher*/return snd_heavy_grenade_launcher_ID; break;
+    case 89:/*Toxic Launcher*/return snd_toxic_launcher_ID; break;
+    case 90:/*Sticky Launcher*/return snd_grenade_launcher_ID; break;
+    case 91:/*Grenade Shotgun*/return snd_grenade_shotgun_ID; break;
+    case 92:/*Grenade Rifle*/return snd_grenade_rifle_ID; break;
+    case 93:/*Auto Grenade Shotgun*/return snd_grenade_shotgun_ID; break;
+    case 94:/*Cluster Launcher*/return snd_cluster_launcher_ID; break;
+    case 95:/*Bazooka*/return snd_bazooka_ID; break;
+    case 96:/*Super Bazooka*/return snd_super_bazooka_ID; break;
+    case 97:/*Gatling Bazooka*/return snd_bazooka_ID; break;
+    case 98:/*Golden Bazooka*/return snd_gold_bazooka_ID; break;
+    case 99:/*Nuke Launcher*/return snd_nuke_launcher_ID; break;
+    case 100:/*Golden Nuke Launcher*/return snd_gold_nuke_launcher_ID; break;
+    case 101:/*Blood Launcher*/return snd_blood_launcher_ID; break;
+    case 102:/*Blood Cannon*/return snd_blood_cannon_ID; break;
+    case 103:/*Flamethrower*/return snd_flamethrower_ID; break;
+    case 104:/*Dragon*/return snd_dragon_ID; break;
+    case 105:/*Flare Gun*/return snd_flare_gun_ID; break;
+    case 106:/*Flame Cannon*/return snd_flame_cannon_ID; break;
+    case 107:/*Hyper Launcher*/return snd_hyper_launcher_ID; break;
+    case 108:/*Ultra Grenade Launcher*/return snd_ultra_grenade_launcher_ID; break;
+    case 109:/*Jackhammer*/return snd_jackhammer_ID; break;
     default:
         return snd_shoot_1_ID;
         break;
@@ -1044,6 +1090,29 @@ sf::Vector2f wep_get_origin(int wep_id) {
     case 83: /*Ultra Shotgun*/return sf::Vector2f(5, 3); break;
 
     case 86: /*grenade launcher*/return sf::Vector2f(3, 2); break;
+    case 87:/*Golden Grenade Launcher*/return sf::Vector2f(3, 2); break;
+    case 88:/*Heavy Grenade Launcher*/return sf::Vector2f(3, 5); break;
+    case 89:/*Toxic Launcher*/return sf::Vector2f(5, 7); break;
+    case 90:/*Sticky Launcher*/return sf::Vector2f(3, 2); break;
+    case 91:/*Grenade Shotgun*/return sf::Vector2f(2, 3); break;
+    case 92:/*Grenade Rifle*/return sf::Vector2f(3, 3); break;
+    case 93:/*Auto Grenade Shotgun*/return sf::Vector2f(4, 4); break;
+    case 94:/*Cluster Launcher*/return sf::Vector2f(4, 4); break;
+    case 95:/*Bazooka*/return sf::Vector2f(12, 3); break;
+    case 96:/*Super Bazooka*/return sf::Vector2f(9, 7); break;
+    case 97:/*Gatling Bazooka*/return sf::Vector2f(11, 3); break;
+    case 98:/*Golden Bazooka*/return sf::Vector2f(12, 6); break;
+    case 99:/*Nuke Launcher*/return sf::Vector2f(8, 6); break;
+    case 100:/*Golden Nuke Launcher*/return sf::Vector2f(8, 6); break;
+    case 101:/*Blood Launcher*/return sf::Vector2f(2, 4); break;
+    case 102:/*Blood Cannon*/return sf::Vector2f(5, 6); break;
+    case 103:/*Flamethrower*/return sf::Vector2f(5, 4); break;
+    case 104:/*Dragon*/return sf::Vector2f(4, 5); break;
+    case 105:/*Flare Gun*/return sf::Vector2f(3, 4); break;
+    case 106:/*Flame Cannon*/return sf::Vector2f(5, 8); break;
+    case 107:/*Hyper Launcher*/return sf::Vector2f(4, 6); break;
+    case 108:/*Ultra Grenade Launcher*/return sf::Vector2f(3, 3); break;
+    case 109:/*Jackhammer*/return sf::Vector2f(4, 5); break;
     default:
         return sf::Vector2f(0, 0);
         break;
@@ -1144,6 +1213,30 @@ void play_swap_sound(int wep_id) {
     case 83: /*Ultra Shotgun*/play_sounds_this_frame_count[snd_shotgun_swap_ID] = 1; break;
 
     case 86: /*grenade launcher*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 87:/*Golden Grenade Launcher*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 88:/*Heavy Grenade Launcher*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 89:/*Toxic Launcher*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 90:/*Sticky Launcher*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 91:/*Grenade Shotgun*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 92:/*Grenade Rifle*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 93:/*Auto Grenade Shotgun*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 94:/*Cluster Launcher*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 95:/*Bazooka*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 96:/*Super Bazooka*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 97:/*Gatling Bazooka*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 98:/*Golden Bazooka*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 99:/*Nuke Launcher*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 100:/*Golden Nuke Launcher*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 101:/*Blood Launcher*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 102:/*Blood Cannon*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 103:/*Flamethrower*/play_sounds_this_frame_count[snd_flame_swap_ID] = 1; break;
+    case 104:/*Dragon*/play_sounds_this_frame_count[snd_dragon_swap_ID] = 1; break;
+    case 105:/*Flare Gun*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 106:/*Flame Cannon*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 107:/*Hyper Launcher*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 108:/*Ultra Grenade Launcher*/play_sounds_this_frame_count[snd_explosive_swap_ID] = 1; break;
+    case 109:/*Jackhammer*/play_sounds_this_frame_count[snd_motorized_swap_ID] = 1; break;
+
     default:
         break;
     }
@@ -1215,7 +1308,30 @@ void get_wep_reload_sound(int wep) {
         play_sound_on_player(snd_shotgun_reload_ID);
         break;
     case 86:
-        //play_sound_on_player(snd_explosive_reload_ID);
+    case 87:
+    case 88:
+    case 89:
+    case 90:
+    case 91:
+    case 92:
+    case 93:
+    case 94:
+    case 95:
+    case 96:
+    case 97:
+    case 98:
+    case 99:
+    case 100:
+    case 101:
+    case 102:
+    case 103:
+    case 104:
+    case 105:
+    case 106:
+    case 107:
+    case 108:
+    case 109:
+        play_sound_on_player(snd_explosive_reload_ID);
         break;
     default:
         break;
@@ -5542,13 +5658,19 @@ void plasma_huge_collison(int huge_plasma, int i, int j) {
                     }
                 }
                 //collision with wall
-                if (game_area[i + w][j + h].my_grid_type == wall && is_within_circle(sf::Vector2f(((i + w) * 16) + 8, ((j + h) * 16) + 8), allObjects[huge_plasma].position, (wall_hitbox + allObjects[huge_plasma].alarm2 + allObjects[huge_plasma].scale * plasma_hitbox))) {
+                if (game_area[i + w][j + h].my_grid_type == wall && is_within_circle(sf::Vector2f(((i + w) * 16) + 8, ((j + h) * 16) + 8), allObjects[huge_plasma].position, (wall_hitbox + allObjects[huge_plasma].scale * plasma_hitbox))) {
                     allObjects[huge_plasma].scale -= 0.1f;
                     allObjects[huge_plasma].position -= allObjects[huge_plasma].speed;      //only move back if its going into wall
                     create_object(allObjects[huge_plasma].position.x, allObjects[huge_plasma].position.y, 0.5, 0.5, dust, 0, 0);    //dust
                     goto exit_huge_plasma;
                 }
             }
+        }
+        if (allObjects[huge_plasma].alarm2 != 0 || game_area[i][j].my_grid_type == wall) {   //tunneled or in wall
+            allObjects[huge_plasma].scale -= 0.1f;
+            allObjects[huge_plasma].position -= allObjects[huge_plasma].speed;
+            create_object(allObjects[huge_plasma].position.x, allObjects[huge_plasma].position.y, 0.5, 0.5, dust, 0, 0);    //dust
+            allObjects[huge_plasma].alarm2 = 0;
         }
         exit_huge_plasma:
         //create plasma trails
@@ -5613,13 +5735,19 @@ void plasma_big_collison(int big_plasma, int i, int j) {
                     }
                 }
                 //collision with wall
-                if (game_area[i + w][j + h].my_grid_type == wall && is_within_circle(sf::Vector2f(((i + w) * 16) + 8, ((j + h) * 16) + 8), allObjects[big_plasma].position, (wall_hitbox + allObjects[big_plasma].alarm2 + allObjects[big_plasma].scale * plasma_hitbox))) {
+                if (game_area[i + w][j + h].my_grid_type == wall && is_within_circle(sf::Vector2f(((i + w) * 16) + 8, ((j + h) * 16) + 8), allObjects[big_plasma].position, (wall_hitbox + allObjects[big_plasma].scale * plasma_hitbox))) {
                     allObjects[big_plasma].scale -= 0.1f;
                     allObjects[big_plasma].position -= allObjects[big_plasma].speed;      //only move back if its going into wall
                     create_object(allObjects[big_plasma].position.x, allObjects[big_plasma].position.y, 0.5, 0.5, dust, 0, 0);    //dust
                     goto exit_big_plasma;
                 }
             }
+        }
+        if (allObjects[big_plasma].alarm2 != 0 || game_area[i][j].my_grid_type == wall) {   //tunneled or in wall
+            allObjects[big_plasma].scale -= 0.1f;
+            allObjects[big_plasma].position -= allObjects[big_plasma].speed;
+            create_object(allObjects[big_plasma].position.x, allObjects[big_plasma].position.y, 0.5, 0.5, dust, 0, 0);    //dust
+            allObjects[big_plasma].alarm2 = 0;
         }
         exit_big_plasma:
         //create plasma trails
@@ -5656,13 +5784,19 @@ void plasma_collision(int plasma, int i, int j) {
                     }
                 }
                 //collision with wall
-                if (game_area[i + w][j + h].my_grid_type == wall && is_within_circle(sf::Vector2f(((i + w) * 16) + 8, ((j + h) * 16) + 8), allObjects[plasma].position, (wall_hitbox + allObjects[plasma].alarm2 + allObjects[plasma].scale * plasma_hitbox))) {
+                if (game_area[i + w][j + h].my_grid_type == wall && is_within_circle(sf::Vector2f(((i + w) * 16) + 8, ((j + h) * 16) + 8), allObjects[plasma].position, (wall_hitbox + allObjects[plasma].scale * plasma_hitbox))) {
                     allObjects[plasma].scale -= 0.1f;
                     allObjects[plasma].position -= allObjects[plasma].speed;
                     create_object(allObjects[plasma].position.x, allObjects[plasma].position.y, 0.5, 0.5, dust, 0, 0);    //dust
                     goto exit_plasma;
                 }
             }
+        }
+        if (allObjects[plasma].alarm2 != 0 || game_area[i][j].my_grid_type == wall) {   //tunneled or in wall
+            allObjects[plasma].scale -= 0.1f;
+            allObjects[plasma].position -= allObjects[plasma].speed;
+            create_object(allObjects[plasma].position.x, allObjects[plasma].position.y, 0.5, 0.5, dust, 0, 0);    //dust
+            allObjects[plasma].alarm2 = 0;
         }
         exit_plasma:
         //create plasma trails
@@ -5734,7 +5868,7 @@ void ultra_slash_collision(int currOBJ, int i, int j) {
                         allObjects[O].direction = allObjects[currOBJ].direction;
                         allObjects[O].speeddir = 12.0f;
                         allObjects[O].alarm2 = 4;
-                        allObjects[O].friction = 0.0f;
+                        allObjects[O].friction = 0.1f;
                         allObjects[O].team = no_team;    //reflected
                         create_object(allObjects[O].position.x, allObjects[O].position.y, 0, 0, deflect, allObjects[currOBJ].direction * degreestoradians, 0);
                     }
@@ -7953,21 +8087,21 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                     if (tempSpdx > tempSpdy) {
 
                         if (game_area[int((allObjects[i].position.x + tempSpdx) / 16.0f)][int((allObjects[i].position.y) / 16.0f)].my_grid_type == wall) {
-                            if (tempSpdy > 6.0f && game_area[int((allObjects[i].position.x) / 16.0f)][int((allObjects[i].position.y + tempSpdy) / 16.0f)].my_grid_type != wall && is_within_circle(allObjects[i].position, allObjects[0].position, plutonium_hunger)) {
+                            if (tempSpdy > 6.0f && game_area[int((allObjects[i].position.x) / 16.0f)][int((allObjects[i].position.y + tempSpdy) / 16.0f)].my_grid_type != wall && (is_within_circle(allObjects[i].position, allObjects[0].position, plutonium_hunger) || created_portal)) {
                                 allObjects[i].position = allObjects[i].position + sf::Vector2f{ 0.0f, tempSpdy };
                             }
                         }
                     }
                     else {
                         if (game_area[int((allObjects[i].position.x) / 16.0f)][int((allObjects[i].position.y + tempSpdy) / 16.0f)].my_grid_type == wall) {
-                            if (tempSpdx > 6.0f && game_area[int((allObjects[i].position.x + tempSpdx) / 16.0f)][int((allObjects[i].position.y) / 16.0f)].my_grid_type != wall && is_within_circle(allObjects[i].position, allObjects[0].position, plutonium_hunger)) {
+                            if (tempSpdx > 6.0f && game_area[int((allObjects[i].position.x + tempSpdx) / 16.0f)][int((allObjects[i].position.y) / 16.0f)].my_grid_type != wall && (is_within_circle(allObjects[i].position, allObjects[0].position, plutonium_hunger) || created_portal)) {
                                 allObjects[i].position = allObjects[i].position + sf::Vector2f{ tempSpdx, 0.0f };
                             }
                         }
                     }
                     allObjects[i].team = 1;
                 }
-                else if (is_within_circle(allObjects[i].position, allObjects[0].position, plutonium_hunger)) {
+                else if (is_within_circle(allObjects[i].position, allObjects[0].position, plutonium_hunger) || created_portal) {
                     allObjects[i].position = allObjects[i].position + sf::Vector2f{ tempSpdx, tempSpdy };
                 }
             }
@@ -9803,15 +9937,15 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                         break;
                     case plasma_huge:       //same version but in wall
                         plasma_huge_collison(currOBJ, i, j);
-                        allObjects[currOBJ].alarm2 = 99;
+                        //allObjects[currOBJ].alarm2 = 99;
                         break;
                     case plasma_big:
                         plasma_big_collison(currOBJ, i, j);
-                        allObjects[currOBJ].alarm2 = 99;
+                        //allObjects[currOBJ].alarm2 = 99;
                         break;
                     case plasma:
                         plasma_collision(currOBJ, i, j);
-                        allObjects[currOBJ].alarm2 = 99;
+                        //allObjects[currOBJ].alarm2 = 99;
                         break;
                     case objectID::enemy_corpse:
                     case objectID::toxic_gas:
@@ -11329,10 +11463,11 @@ int main()
     add_new_sound(snd_heavy_crossbow_ID, "snd/heavy_crossbow.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
     add_new_sound(snd_splinter_ID, "snd/splinter.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
     add_new_sound(snd_splinter_pistol_ID, "snd/splinter_pistol.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
-    //add_new_sound_buffer(snd_super_splinter_ID, "snd/super_splinter.wav", all_extra_sound_buffers);
     add_new_sound(snd_super_splinter_ID, "snd/super_splinter.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
     add_new_sound(snd_gold_splinter_ID, "snd/gold_splinter.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
     add_new_sound(snd_ultra_crossbow_ID, "snd/ultra_crossbow.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_seeker_pistol_ID, "snd/seeker_pistol.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_seeker_shotgun_ID, "snd/seeker_shotgun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
 
     add_new_sound(snd_pistol_swap_ID, "snd/pistol_swap.wav", all_sounds, all_sounds_mirror, 0.005f, 0.0f);
@@ -11365,6 +11500,58 @@ int main()
     add_new_sound(snd_super_flak_cannon_ID, "snd/super_flak_cannon.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
     add_new_sound(snd_ultra_shotgun_ID, "snd/ultra_shotgun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
+
+    //explosive weps
+    add_new_sound(snd_grenade_launcher_ID, "snd/grenade_launcher.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_gold_grenade_launcher_ID, "snd/gold_grenade_launcher.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_heavy_grenade_launcher_ID, "snd/heavy_grenade_launcher.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_toxic_launcher_ID, "snd/toxic_launcher.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_grenade_shotgun_ID, "snd/grenade_shotgun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_grenade_rifle_ID, "snd/grenade_rifle.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_cluster_launcher_ID, "snd/cluster_launcher.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_cluster_open_ID, "snd/cluster_open.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
+
+    add_new_sound(snd_bazooka_ID, "snd/bazooka.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_rocket_fly_ID, "snd/rocket_fly.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_super_bazooka_ID, "snd/super_bazooka.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_gold_bazooka_ID, "snd/gold_bazooka.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_gold_rocket_fly_ID, "snd/gold_rocket_fly.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+
+    add_new_sound(snd_nuke_launcher_ID, "snd/nuke_launcher.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_nuke_explode_ID, "snd/nuke_explode.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_gold_nuke_launcher_ID, "snd/gold_nuke_launcher.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+
+    add_new_sound(snd_blood_launcher_ID, "snd/blood_launcher.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_blood_launcher_explode_ID, "snd/blood_launcher_explode.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
+
+    add_new_sound(snd_blood_cannon_ID, "snd/blood_cannon.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_blood_cannon_end_ID, "snd/blood_cannon_end.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
+    add_new_sound(snd_blood_cannon_loop_ID, "snd/blood_cannon_loop.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
+
+    add_new_sound(snd_flamethrower_ID, "snd/flamethrower_start.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_flamethrower_end_ID, "snd/flamethrower_stop.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_flamethrower_loop_ID, "snd/flamethrower_loop.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+
+    add_new_sound(snd_dragon_ID, "snd/dragon_start.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_dragon_end_ID, "snd/dragon_end.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_dragon_loop_ID, "snd/dragon_loop.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+
+    add_new_sound(snd_flare_gun_ID, "snd/flare_gun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_flare_explode_ID, "snd/flare_explode.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
+
+    add_new_sound(snd_flame_cannon_ID, "snd/flame_cannon.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_flame_cannon_end_ID, "snd/flame_cannon_end.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
+    add_new_sound(snd_flame_cannon_loop_ID, "snd/flame_cannon_loop.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
+
+    add_new_sound(snd_hyper_launcher_ID, "snd/hyper_launcher.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+
+    add_new_sound(snd_ultra_grenade_launcher_ID, "snd/ultra_grenade.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_ultra_grenade_launcher_suck_ID, "snd/ultra_grenade_suck.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
+
+    add_new_sound(snd_jackhammer_ID, "snd/jackhammer.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+
+
+    //other
     add_new_sound(snd_nade_hit_wall_ID, "snd/nade_hit_wall.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
     add_new_sound(snd_IDPD_nade_load_ID, "snd/IDPD_nade_load.wav", all_sounds, all_sounds_mirror, 0.1f, 0.004f);
@@ -11531,6 +11718,8 @@ int main()
     add_new_sound(snd_crossbow_reload_ID, "snd/crossbow_reload.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
     add_new_sound(snd_shotgun_reload_ID, "snd/shotgun_reload.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+
+    add_new_sound(snd_explosive_reload_ID, "snd/explosive_reload.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
     add_new_sound(snd_wave_gun_ID, "snd/wave_gun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
     add_new_sound(snd_slugger_ID, "snd/slugger.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);

@@ -488,6 +488,9 @@ enum sound_ID {
 	
 	snd_gold_splinter_ID,
 	snd_ultra_crossbow_ID, 
+	snd_seeker_pistol_ID,
+	snd_seeker_shotgun_ID,
+
 
 	snd_shotgun_ID,
 	snd_double_shotgun_ID,
@@ -503,6 +506,58 @@ enum sound_ID {
 	snd_flak_cannon_ID,
 	snd_super_flak_cannon_ID,
 	snd_ultra_shotgun_ID,
+
+
+	//explosives
+	snd_grenade_launcher_ID,
+    snd_gold_grenade_launcher_ID,
+    snd_heavy_grenade_launcher_ID,
+    snd_toxic_launcher_ID,
+    snd_grenade_shotgun_ID,
+    snd_grenade_rifle_ID,
+    snd_cluster_launcher_ID,
+    snd_cluster_open_ID,
+
+    snd_bazooka_ID,
+    snd_rocket_fly_ID,
+    snd_super_bazooka_ID,
+    snd_gold_bazooka_ID,
+    snd_gold_rocket_fly_ID,
+
+    snd_nuke_launcher_ID,
+    snd_nuke_explode_ID,
+    snd_gold_nuke_launcher_ID,
+
+    snd_blood_launcher_ID,
+    snd_blood_launcher_explode_ID,
+
+    snd_blood_cannon_ID,
+    snd_blood_cannon_end_ID,
+    snd_blood_cannon_loop_ID,
+
+    snd_flamethrower_ID,
+    snd_flamethrower_end_ID,
+    snd_flamethrower_loop_ID,
+
+    snd_dragon_ID,
+    snd_dragon_end_ID,
+    snd_dragon_loop_ID,
+
+    snd_flare_gun_ID,
+    snd_flare_explode_ID,
+
+    snd_flame_cannon_ID,
+    snd_flame_cannon_end_ID,
+    snd_flame_cannon_loop_ID,
+
+    snd_hyper_launcher_ID,
+
+    snd_ultra_grenade_launcher_ID,
+    snd_ultra_grenade_launcher_suck_ID,
+
+    snd_jackhammer_ID,
+
+	snd_explosive_reload_ID,
 
 	snd_foot_metmetal_1_ID,
 	snd_foot_metmetal_2_ID,
