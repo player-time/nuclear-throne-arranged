@@ -1,12 +1,9 @@
 //NUCLEAR THRONE ARRANGED
 
 //TODO !!!
-//1 sound system
-//2 aiming moves camera and works at different window sizes
-//3 multithreading
-//4 fully create everything needed for T2 fight
-//5 change everything to use friction and speed normally
-//6 add batching to high count objects
+
+//check whether going over sprite limit
+//replay system
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
@@ -19,7 +16,7 @@
 #include <iostream>
 #include <chrono>
 
-#include <random>A
+#include <random>
 
 #include <stdint.h>
 
@@ -28,7 +25,6 @@
 
 #include <SFML/SimpleSpriteBatcher.hpp>
 
-//temp debug variables
 
 int bandit_choice1 = 0;
 int draw_mult = 5;
@@ -39,11 +35,15 @@ int fps_samples_idx = 0;
 
 bool global_debug = false;
 
-bool debug_invincibility = false;
+bool debug_invincibility = true;
 
 int EXIT_PROGRAM_NOW = 0;
 
 int GLOBAL_DEBUG_INT = 0;
+
+std::string DEBUG_SPRITE_CAP = "none";
+
+sf::Vector2f debug_camera_offset = {0.0f, 0.0f};
 
 
 int seed = time(NULL);
@@ -101,7 +101,7 @@ std::vector<sf::Sprite> rotateable_effects_small_bloom;
 int rotateable_effects_small_bloom_max = 7500;
 //small effects 8x8
 std::vector<sf::Sprite> rotateable_effects_small;
-int rotateable_effects_small_max = 3000;
+int rotateable_effects_small_max = 7000;
 //small effects 8x8 underneath
 std::vector<sf::Sprite> under_effects_small;
 int under_effects_small_max = 500;
@@ -118,7 +118,7 @@ std::vector<sf::Sprite> prop_sprites;
 int prop_sprites_max = 50;
 
 std::vector<sf::Sprite> scorch_sprites;
-int scorch_sprites_max = 400;
+int scorch_sprites_max = 1000;
 
 std::vector<sf::Sprite> weapon_sprites;
 int weapon_sprites_max = 1000;
@@ -128,6 +128,9 @@ sf::Sprite portal_sprite;
 sf::Sprite T2_sprite;
 int T2_object_index = 1;
 bool t2_draw_in_front = true;
+
+std::vector<sf::Sprite> variable_textures_bottom;
+int variable_textures_bottom_max = 2000;
 
 std::vector<sf::Sprite> variable_textures;
 int variable_textures_max = 4000;
@@ -205,10 +208,10 @@ static int max_objects = 262144 / 4;
 int current_create_start = 1;
 //int curr_objcount = 1;   this is now redundant as threads break it   //important to keep this equal to the amount of objects active so increase when "adding" object and decrease when "removing" an object (setting it to "nothing" type) starts at one for the player object
 int current_frame = 0;      //used for stuff like i-frames, reset this each area
+int last_fire_frame = 0;
 
 
-
-int LOOPS = 20;
+int LOOPS = 30;
 
 
 
@@ -216,7 +219,7 @@ bool veryhard_mode = false;
 float revenge_bullet_offset = 1.0f;
 
 //game logic stuff
-int area = 7;
+int area = 0;
 int sub_area = 1;
 
 int idpd_spawn_count = 0;
@@ -235,7 +238,7 @@ sf::Vector2f create_portal_POS = { 24016, 24016 };
 bool killed_throne_2 = false;
 bool can_move_outside_T2_arena = false;
 
-unsigned int MAXFPS = 30;
+unsigned int MAXFPS = 300;
 
 //contants
 float e_constant = 2.71828f;
@@ -318,6 +321,7 @@ bool player_move_right = false;
 bool player_held_LMB = false;
 bool player_held_RMB = false;
 bool player_pressed_RMB_this_frame = false;
+bool player_pressed_LMB_this_frame = false;
 
 bool LMB_pressed = false;
 bool RMB_pressed = false;
@@ -2446,6 +2450,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].alarm2 = 0;
                 allObjects[i].alarm3 = 0;
 
+                allObjects[i].scale = 0.0f;
+
                 allObjects[i].next_melee = 0;
 
                 allObjects[i].next_hurt = 0;
@@ -3470,8 +3476,8 @@ void corpse_step(int i) {
         return;
     }
 
-    if (allObjects[i].speeddir > 12.0f) {
-        allObjects[i].speeddir = 12.0f;
+    if (allObjects[i].speeddir > 6.9f) {
+        allObjects[i].speeddir = 6.9f;
     }
     if (allObjects[i].speeddir > 0.0f) {
         allObjects[i].speeddir -= allObjects[i].friction;
@@ -4172,15 +4178,23 @@ void destroy_projectile(int object_index) {
                 allObjects[object_index].position.y -= sin(allObjects[object_index].direction) * allObjects[object_index].speeddir;
                 play_sound_relative_to_player(snd_flak_explode_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
                 for (int i = 0; i < 16; i++) {
-                    create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, random_float(6) + 12, 0, player_shell, i * (22.5 / degreestoradians), 0);
+                    create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, random_float(8.0f) + 8.0f, 0, player_shell, i * (22.5 / degreestoradians), 0);
+                }
+                for (int i = 0; i < 6; i++) {
+                    tmpspd = random_float(3.0f);
+                    create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspd, tmpspd, smoke, 0, 0);    //smoke
                 }
             }
-            if (allObjects[object_index].size == 6) {//suoer flak
+            if (allObjects[object_index].size == 6) {//super flak
                 allObjects[object_index].position.x -= cos(allObjects[object_index].direction) * allObjects[object_index].speeddir;
                 allObjects[object_index].position.y -= sin(allObjects[object_index].direction) * allObjects[object_index].speeddir;
                 play_sound_relative_to_player(snd_super_flak_explode_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
                 for (int i = 0; i < 5; i++) {
-                    create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, random_float(6) + 12, 0, player_shell, i * (72 / degreestoradians), 5);
+                    create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, 12.0f, 0, player_shell, i * (72 / degreestoradians), 5);
+                }
+                for (int i = 0; i < 12; i++) {
+                    tmpspd = random_float(3.0f);
+                    create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspd, tmpspd, smoke, 0, 0);    //smoke
                 }
             }
         }
@@ -4766,6 +4780,7 @@ void enemy_die(int ENEMY, int PROJ) {
 
         ammo_drop_function(ENEMY, 60);
 
+
         if (rand() % 4 == 0) {
             for (int i = 0; i < 3; i++) {
                 tmpdir = allObjects[ENEMY].direction;
@@ -4917,10 +4932,12 @@ void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = 
 
     //TODO make it work with any screen size
 
+    const sf::ContextSettings context_settings = sf::ContextSettings(0, 0, 0, 1, 1);
+
     if (swap_fullscreen) {
         window.close();
         if (fullscreen_mode) {
-            window.create({ (u_int)startup_fullscreen_size.width, (u_int)startup_fullscreen_size.height }, "Nuclear Throne Arranged", sf::Style::Fullscreen);
+            window.create({ (u_int)startup_fullscreen_size.width, (u_int)startup_fullscreen_size.height }, "Nuclear Throne Arranged", sf::Style::Fullscreen, context_settings);
 
             fullscreen_window_offset.x = (window.getSize().x - window_size_x) / 2;
             fullscreen_window_offset.y = (window.getSize().y - window_size_y) / 2;
@@ -4931,7 +4948,7 @@ void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = 
         }
         else {
             //if not fullscreen
-            window.create({ (u_int)window_size_x, (u_int)window_size_y }, "Nuclear Throne Arranged", sf::Style::Close);
+            window.create({ (u_int)window_size_x, (u_int)window_size_y }, "Nuclear Throne Arranged", sf::Style::Close, context_settings);
             window.setPosition(window.getPosition() - sf::Vector2i(160 * change, 120 * change));
 
             sf::View myView(sf::Vector2f(160, 120), sf::Vector2f(320, 240));
@@ -6627,6 +6644,8 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
     if ((LMB_pressed && wep_reload <= 0.0f && ammo_type - cost * shots >= 0) || (skeleton_gamble && wep_reload <= 0.0f)) {
         reloaded = false;
 
+        last_fire_frame = current_frame;
+
         ammo_type -= cost * shots * !(skeleton_gamble);
         LMB_pressed = automatic;
         wep_kick = wep_KB;
@@ -6861,6 +6880,9 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
                 }
                 else if (wep >= bolt_weps && wep < shell_weps) {  //shell weps
                     //player_shell
+                    for (int CO = 0; CO < cost; CO++) {
+                        create_object(allObjects[0].position.x, allObjects[0].position.y, random_float(2) + 2, 0, shell_effect, direction + (random_float(60) - 30) / degreestoradians, 2);
+                    }
                     switch (wep) {
                     default:
                         create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy, bullet_type);
@@ -7119,6 +7141,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                     Xoff = cos(direction) * (long_arms * 15.0f + 24.0f);
                     Yoff = sin(direction) * (long_arms * 15.0f + 24.0f);
                     create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, melee_slash, direction, 30);
+                    last_fire_frame = current_frame;
                 }
                 else {
                     //not enough rads
@@ -7128,16 +7151,19 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
         case 1: //chicken sword
             if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
                 swing_melee(direction, 18.0f, 6);
+                last_fire_frame = current_frame;
             }
             break;
         case 2: //black sword
             if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
                 swing_melee(direction, 16.0f, 12);
+                last_fire_frame = current_frame;
             }
             break;
         case 3: //wrench
             if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
                 swing_melee(direction, 22.0f, 8);
+                last_fire_frame = current_frame;
             }
             break;
         case 4: //shovel
@@ -7167,21 +7193,25 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 Xoff = cos(direction) * (long_arms * 15.0f + 24.0f);
                 Yoff = sin(direction) * (long_arms * 15.0f + 24.0f);
                 create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, melee_slash, direction, 16);
+                last_fire_frame = current_frame;
             }
             break;
         case 5: //sledge
             if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
                 swing_melee(direction, 35.0f, 24);
+                last_fire_frame = current_frame;
             }
             break;
         case 6: //guitar
             if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
                 swing_melee(direction, 21.0f, 26);
+                last_fire_frame = current_frame;
             }
             break;
         case 7: //lightning hammer
             if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
                 swing_melee(direction, 32.0f, 14);
+                last_fire_frame = current_frame;
             }
             break;
         case 8: //esword
@@ -7204,6 +7234,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 for (int i = 0; i < 2 * ((laser_brain > 1.1f) + 1); i++) {
                     create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, laser_brain_FX, random_360_degrees(), 0);
                 }
+                last_fire_frame = current_frame;
             }
             if (LMB_pressed && wep_reload < 0.0f && player_energy - 2 < 0 && shots == 1 && !skeleton_gamble) {
                 not_enough_ammo("NOT ENOUGH ENERGY");
@@ -7228,6 +7259,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 for (int i = 0; i < 3 * ((laser_brain > 1.1f) + 1); i++) {
                     create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, laser_brain_FX, random_360_degrees(), 0);
                 }
+                last_fire_frame = current_frame;
             }
             if (LMB_pressed && wep_reload < 0.0f && player_energy - 5 < 0 && shots == 1 && !skeleton_gamble) {
                 not_enough_ammo("NOT ENOUGH ENERGY");
@@ -7270,6 +7302,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 if (free_shots == 1) {
                     YV_money();
                 }
+                last_fire_frame = current_frame;
             }
             if (LMB_pressed && wep_reload < 0.0f && player_energy - 24 * shots < 0) {
                 not_enough_ammo("NOT ENOUGH ENERGY");
@@ -8535,6 +8568,7 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                 allObjects[i].image_index = 0;
             }
             if (allObjects[i].alarm2 == 0) {
+
                 create_object(allObjects[i].position.x, allObjects[i].position.y, 0, 0, idpd_freak, random_360_radians(), 0);
             }
             if (allObjects[i].alarm1 < -34) {
@@ -9750,15 +9784,28 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                 break;
                             case idpd_freak:
                                 if (!can_move_outside_T2_arena) {
+                                    
                                     object_bounce_wall(O, h, w, idpd_freak_hitbox, idpd_freak_hitbox, i, j);
                                 }
+
                                 if (w == 0 && h == 0) {
                                     idpd_freak_step(O);
+                                    if (!can_move_outside_T2_arena) {
+                                        if (GLOBAL_DEBUG_INT == 0) {
+                                            GAME_PAUSED = true;
+                                        }
+                                        GLOBAL_DEBUG_INT++;
+                                        for (int B = 1; B < max_objects; B++) {
+                                            if (B != O && allObjects[B].my_id == idpd_freak) {
+                                                allObjects[B].my_id = nothing;
+                                            }
+                                        }
+                                    }
                                 }
                                 break;
                             case objectID::idpd_freak_corpse:
                                 if (!can_move_outside_T2_arena) {
-                                    object_bounce_wall(O, h, w, idpd_freak_hitbox + 1, idpd_freak_hitbox + 1, i, j);
+                                    object_bounce_wall(O, h, w, idpd_freak_hitbox, idpd_freak_hitbox, i, j);
                                 }
                                 break;
                             case objectID::devastator_bullet:
@@ -9894,7 +9941,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                 object_bounce_wall(O, h, w, allObjects[O].my_hitbox, allObjects[O].my_hitbox, i, j);
                                 break;
                             case objectID::idpd_freak_corpse:
-                                object_bounce_wall(O, h, w, idpd_freak_hitbox + 1, idpd_freak_hitbox + 1, i, j);
+                                object_bounce_wall(O, h, w, 7, 7, i, j);
                                 break;
                             default:
                                 break;
@@ -9917,6 +9964,10 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                         break;
                     case idpd_freak:
                         idpd_freak_step(currOBJ);
+                        if (GLOBAL_DEBUG_INT == 0) {
+                            GAME_PAUSED = true;
+                        }
+                        GLOBAL_DEBUG_INT = 999;
                         break;
                     case player_bolt_burst:
                         player_bolt_burst_step(currOBJ);
@@ -12948,6 +12999,12 @@ int main()
         weapon_sprites.push_back(temp);
     }
 
+
+    for (int i = 0; i < variable_textures_bottom_max; i++) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        variable_textures_bottom.push_back(temp);
+    }
     for (int i = 0; i < variable_textures_max; i++) {
         sf::Sprite temp;
         temp.setColor({ 0, 0, 0, 0 });
@@ -13143,6 +13200,11 @@ int main()
                 }
                 if (event.type == sf::Event::KeyPressed) {
                     //debug
+                    if (event.key.code == sf::Keyboard::Up) { debug_camera_offset.y -= 10; }
+                    if (event.key.code == sf::Keyboard::Down) { debug_camera_offset.y += 10; }
+                    if (event.key.code == sf::Keyboard::Left) { debug_camera_offset.x -= 10; }
+                    if (event.key.code == sf::Keyboard::Right) { debug_camera_offset.x += 10; }
+
                     if (event.key.code == sf::Keyboard::O) {
                         player_character = character(int(player_character) + 1);
                         if (player_character > 13) {
@@ -13265,6 +13327,7 @@ int main()
                     if (event.key.code == sf::Mouse::Left && LMB_released) {
                         LMB_pressed = true;
                         LMB_released = false;
+                        player_pressed_LMB_this_frame = true;
                     }
                     if (event.key.code == sf::Mouse::Right && RMB_released) {
                         RMB_pressed = true;
@@ -13367,11 +13430,11 @@ int main()
         if (want_gen) {
             want_gen = false;
 
-            area++;
-            if (area > 7) {
-                area = 0;
-                LOOPS++;
-            }
+            //area++;
+            //if (area > 7) {
+            //    area = 0;
+            //    LOOPS++;
+            //}
 
             //change sprites
             if (area == 0) {
@@ -13599,6 +13662,14 @@ int main()
                     player_acceleration = 0;
                 }
 
+                if (player_pressed_LMB_this_frame) {
+                    player_acceleration = 0.0f;
+                    player_pressed_LMB_this_frame = false;
+                }
+
+                float hori_move = 0.0f;
+                float veri_move = 0.0f;
+
                 float dirto_add = 0.0f;
                 if ((PRECISE_MOVEMENT && player_character != frog) || horizontal_player_move || vertical_player_move || roll > 0 || (player_character == frog && !player_held_RMB)) {
 
@@ -13669,8 +13740,8 @@ int main()
                     //dirto_add = atan2f(((float)poll_move_down / (float)poll_move_total) - ((float)poll_move_up / (float)poll_move_total), ((float)poll_move_right / (float)poll_move_total) - ((float)poll_move_left / (float)poll_move_total)) * degreestoradians;
 
                     if (PRECISE_MOVEMENT && roll <= 0 && player_character != frog) {
-                        float hori_move = ((float)poll_move_right - (float)poll_move_left) / (float)poll_move_total;
-                        float veri_move = ((float)poll_move_down - (float)poll_move_up) / (float)poll_move_total;
+                        hori_move = ((float)poll_move_right - (float)poll_move_left) / (float)poll_move_total;
+                        veri_move = ((float)poll_move_down - (float)poll_move_up) / (float)poll_move_total;
 
                         dirto_add = atan2f(veri_move, hori_move);
 
@@ -13711,6 +13782,7 @@ int main()
 
                 //allObjects[0].friction = 0.45f;
                 float friction_player = 0.45f;
+                
                 if (SHIFT_held && allObjects[0].friction > 0.3f && allObjects[0].friction < 0.5f) {
                     friction_player = 2.0f;
                 }
@@ -13722,6 +13794,11 @@ int main()
                 //frog
                 if (player_character == frog && player_held_RMB) {
                     friction_player = 3.0f;
+                }
+
+                //more direct movement
+                if (player_acceleration < 0.1f && PRECISE_MOVEMENT && allObjects[0].next_hurt < current_frame && last_fire_frame < current_frame - 6) {
+                    friction_player *= 4;
                 }
 
                 allObjects[0].speeddir -= friction_player * player_friction_mult;
@@ -13901,8 +13978,8 @@ int main()
                 camera_want_y = floor(allObjects[0].position.y + cameraOffset.y + mouse_offset_window_center_y + portal_camera_offset.y);
                 portal_camera_offset = { 0, 0 };
 
-                cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x);
-                cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y);
+                cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x) + debug_camera_offset.x;
+                cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y) + debug_camera_offset.y;
 
                 //calualte direction to mouse
                 direction_to_mouse = atan2f(allObjects[0].position.y - (mousepos.y + cameraPos.y), allObjects[0].position.x - (mousepos.x + cameraPos.x)) + 180.0f / degreestoradians;
@@ -14038,6 +14115,12 @@ int main()
                 if (player_held_LMB) {      //player shooting logic
                     fire_weapon(wep, direction_to_mouse);
                 }
+                //debug
+                if (!GLOBAL_DEBUG_INT) {
+                    LMB_pressed = true;
+                    fire_weapon(wep, random_360_radians());
+                }
+                //debug
                 calculate_ammo_drop_mult(); //calculate ammo mult after firing
 
                 play_sounds_this_frame_count[snd_horror_beam_hold_ID] = -1;
@@ -14706,6 +14789,7 @@ int main()
 
         int rotateableEffectsSmallBloomIndex = 0;
 
+        int variableTexturesBottomIndex = 0;
         int variableTexturesIndex = 0;
         int variableTexturesTopIndex = 0;
 
@@ -14856,7 +14940,8 @@ int main()
         }
         
         //debug_timer_.timing_us_start();
-
+        cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x) + debug_camera_offset.x;
+        cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y) + debug_camera_offset.y;
         for (int i = cameraBoundsLeft; i < cameraBoundsRight; i++) {
             for (int j = cameraBoundsTop; j < cameraBoundsBottom; j++) {
                 if (game_area[i][j].my_grid_type == wall) {         //drawing walls, will have to make this draw different things based on the surrounding walls
@@ -16395,15 +16480,14 @@ int main()
                         break;
                     case shell_effect:
                         choice = allObjects[idx].size * 5;
-                        variable_textures[variableTexturesIndex].setTexture(shells_tex);
-                        variable_textures[variableTexturesIndex].setColor({ 255, 255, 255, 255 });
-                        variable_textures[variableTexturesIndex].setPosition(allObjects[idx].position - cameraPos);
-                        variable_textures[variableTexturesIndex].setRotation(allObjects[idx].rotation);
-                        variable_textures[variableTexturesIndex].setTextureRect(sf::IntRect{ choice, 0, 5, 8 });
-                        variable_textures[variableTexturesIndex].setOrigin(2, 4);
-                        variable_textures[variableTexturesIndex].setScale(1, 1);
-                        variableTexturesIndex++;
-                        break;
+                        variable_textures_bottom[variableTexturesBottomIndex].setTexture(shells_tex);
+                        variable_textures_bottom[variableTexturesBottomIndex].setColor({ 255, 255, 255, 255 });
+                        variable_textures_bottom[variableTexturesBottomIndex].setPosition(allObjects[idx].position - cameraPos);
+                        variable_textures_bottom[variableTexturesBottomIndex].setRotation(allObjects[idx].rotation);
+                        variable_textures_bottom[variableTexturesBottomIndex].setTextureRect(sf::IntRect{ choice, 0, 5, 8 });
+                        variable_textures_bottom[variableTexturesBottomIndex].setOrigin(2, 4);
+                        variable_textures_bottom[variableTexturesBottomIndex].setScale(1, 1);
+                        variableTexturesBottomIndex++;
                         break;
                     case idpd_freak_revive:
                         choice = int(allObjects[idx].image_index * 0.4f);
@@ -16964,7 +17048,7 @@ int main()
 
         sf::Text debug1;
 
-        debug1.setString("enemy_count: " + std::to_string(enemy_count));
+        debug1.setString("DEBUG_SPRITE_CAP: " + DEBUG_SPRITE_CAP);
         debug1.setCharacterSize(8);
         debug1.setFont(font);
         debug1.setColor(sf::Color::White);
@@ -16987,6 +17071,7 @@ int main()
         global_timer_text.setColor(sf::Color::White);
         global_timer_text.setPosition({ 2, 230 });
 
+        
 
         //area in which physics happen
         vector2D_reset(top_physics - extra_physics, bottom_physics + extra_physics, left_physics - extra_physics, right_physics + extra_physics);       //make sure these dont go out of bounds
@@ -17016,29 +17101,34 @@ int main()
 
             //portal spirals in background
 
-            spiral_cont_step();
-            portal_spiral_step();
+            debug_timer_.timing_us_start();
 
-            int portals_amount_left = all_portal_spirals_count;
-            int portals_sprital_position = all_portal_spirals_start;
+            if (area == 0) {
+                spiral_cont_step();
+                portal_spiral_step();
 
-            while (portals_amount_left > 0) {
-                portal_spiral_spr.setPosition(all_portal_spirals[portals_sprital_position].position);
-                portal_spiral_spr.setRotation(all_portal_spirals[portals_sprital_position].image_angle + 45);
-                portal_spiral_spr.setScale(all_portal_spirals[portals_sprital_position].image_scale, all_portal_spirals[portals_sprital_position].image_scale);
-                int darkness = 255 * (all_portal_spirals[portals_sprital_position].image_scale + 0.2f);
-                if (darkness > 255) {
-                    darkness = 255;
-                }
-                sf::Uint8 color_darkness = darkness;
-                portal_spiral_spr.setColor({ color_darkness, color_darkness, color_darkness });
-                buffer_under.draw(portal_spiral_spr);
-                portals_amount_left--;
-                portals_sprital_position--;
-                if (portals_sprital_position < 0) {
-                    portals_sprital_position = 999;
+                int portals_amount_left = all_portal_spirals_count;
+                int portals_sprital_position = all_portal_spirals_start;
+
+                while (portals_amount_left > 0) {
+                    portal_spiral_spr.setPosition(all_portal_spirals[portals_sprital_position].position);
+                    portal_spiral_spr.setRotation(all_portal_spirals[portals_sprital_position].image_angle + 45);
+                    portal_spiral_spr.setScale(all_portal_spirals[portals_sprital_position].image_scale, all_portal_spirals[portals_sprital_position].image_scale);
+                    int darkness = 255 * (all_portal_spirals[portals_sprital_position].image_scale + 0.2f);
+                    if (darkness > 255) {
+                        darkness = 255;
+                    }
+                    sf::Uint8 color_darkness = darkness;
+                    portal_spiral_spr.setColor({ color_darkness, color_darkness, color_darkness });
+                    buffer_under.draw(portal_spiral_spr);
+                    portals_amount_left--;
+                    portals_sprital_position--;
+                    if (portals_sprital_position < 0) {
+                        portals_sprital_position = 999;
+                    }
                 }
             }
+            debug_timer_.timing_us_end();
 
             //throne 2 floors underneath floors
 
@@ -17133,6 +17223,10 @@ int main()
             }
             reset_rotateable_sprites(under_effects_small, underEffectsSmallIndex);
 
+            if (underEffectsSmallIndex >= under_effects_small_max) {
+                DEBUG_SPRITE_CAP = "under_effects_small";
+            }
+
             //scorches
             for (sf::Sprite spr : scorch_sprites) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17149,6 +17243,10 @@ int main()
             }
             reset_rotateable_sprites(scorch_sprites, scorch_spritesIndex);
 
+            if (scorch_spritesIndex >= scorch_sprites_max) {
+                DEBUG_SPRITE_CAP = "scorch_sprites";
+            }
+
             //enemy corpses
             for (sf::Sprite spr : all_enemy_corpses) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17159,8 +17257,25 @@ int main()
 
             reset_rotateable_sprites(all_enemy_corpses, allEnemyCorpsesIndex);
 
+            if (allEnemyCorpsesIndex >= all_enemy_corpses_max) {
+                DEBUG_SPRITE_CAP = "all_enemy_corpses";
+            }
+
             if(!player_alive) {
                 buffer_under.draw(player_corpse_sprite);
+            }
+
+
+            for (sf::Sprite spr : variable_textures_bottom) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_under.draw(spr);
+            }
+            reset_rotateable_sprites(variable_textures_bottom, variableTexturesBottomIndex);
+
+            if (variableTexturesBottomIndex >= variable_textures_bottom_max) {
+                DEBUG_SPRITE_CAP = "variable_textures_bottom";
             }
 
             buffer_under.display();
@@ -17223,6 +17338,10 @@ int main()
             }
             reset_rotateable_sprites(weapon_sprites, weapon_spritesIndex);
 
+            if (weapon_spritesIndex >= weapon_sprites_max) {
+                DEBUG_SPRITE_CAP = "weapon_sprites";
+            }
+
             //props
             for (sf::Sprite spr : prop_sprites) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17231,6 +17350,10 @@ int main()
                 buffer_over.draw(spr);
             }
             reset_rotateable_sprites(prop_sprites, prop_spritesIndex);
+
+            if (prop_spritesIndex >= prop_sprites_max) {
+                DEBUG_SPRITE_CAP = "prop_sprites";
+            }
 
             //dust
             for (sf::Sprite spr : rotateable_effects_medium) {
@@ -17241,6 +17364,10 @@ int main()
             }
             reset_rotateable_sprites(rotateable_effects_medium, rotateableEffectsMediumIndex);
 
+            if (rotateableEffectsMediumIndex >= rotateable_effects_medium_max) {
+                DEBUG_SPRITE_CAP = "rotateable_effects_medium";
+            }
+
             //smoke
             for (sf::Sprite spr : rotateable_effects_large) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17250,6 +17377,10 @@ int main()
             }
             reset_rotateable_sprites(rotateable_effects_large, rotateableEffectsLargeIndex);
 
+            if (rotateableEffectsLargeIndex >= rotateable_effects_large_max) {
+                DEBUG_SPRITE_CAP = "rotateable_effects_large";
+            }
+
             //debris
             for (sf::Sprite spr : rotateable_effects_small) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17258,6 +17389,10 @@ int main()
                 buffer_over.draw(spr);
             }
             reset_rotateable_sprites(rotateable_effects_small, rotateableEffectsSmallIndex);
+
+            if (rotateableEffectsSmallIndex >= rotateable_effects_small_max) {
+                DEBUG_SPRITE_CAP = "rotateable_effects_small";
+            }
 
 
             //bloom small effects
@@ -17282,6 +17417,10 @@ int main()
             }
             reset_rotateable_sprites(rotateable_sprites_bullets_huge, rotateableSpriteBulletHugeIndex);
 
+            if (rotateableSpriteBulletHugeIndex >= rotateable_sprites_bullets_huge_max) {
+                DEBUG_SPRITE_CAP = "rotateable_sprites_bullets_huge";
+            }
+
             //rotateable bullets_big
             for (sf::Sprite spr : rotateable_sprites_bullets_big) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17290,6 +17429,10 @@ int main()
                 buffer_over.draw(spr);
             }
             reset_rotateable_sprites(rotateable_sprites_bullets_big, rotateableSpriteBulletBigIndex);
+
+            if (rotateableSpriteBulletBigIndex >= rotateable_sprites_bullets_big_max) {
+                DEBUG_SPRITE_CAP = "rotateable_sprites_bullets_big";
+            }
 
 
             //rotateable bullets
@@ -17324,6 +17467,10 @@ int main()
             }
             reset_rotateable_sprites(variable_textures, variableTexturesIndex);
 
+            if (variableTexturesIndex >= variable_textures_max) {
+                DEBUG_SPRITE_CAP = "variable_textures";
+            }
+
             for (sf::Sprite spr : variable_textures_top) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
                     break;
@@ -17331,6 +17478,10 @@ int main()
                 buffer_over.draw(spr);
             }
             reset_rotateable_sprites(variable_textures_top, variableTexturesTopIndex);
+
+            if (variableTexturesTopIndex >= variable_textures_top_max) {
+                DEBUG_SPRITE_CAP = "variable_textures_top";
+            }
 
             ////enemies////
             //bandit
@@ -17344,6 +17495,10 @@ int main()
             }
             reset_rotateable_sprites(rotateable_sprites_guns, rotateableSpriteGunIndex);
 
+            if (rotateableSpriteGunIndex >= rotateable_sprites_guns_max) {
+                DEBUG_SPRITE_CAP = "rotateable_sprites_guns";
+            }
+
             for (sf::Sprite spr : all_enemy_sprites) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
                     break;
@@ -17353,6 +17508,10 @@ int main()
 
             reset_rotateable_sprites(all_enemy_sprites, allEnemySpritesIndex);
 
+            if (allEnemySpritesIndex >= all_enemy_sprites_max) {
+                DEBUG_SPRITE_CAP = "all_enemy_sprites";
+            }
+
             for (sf::Sprite spr : rotateable_sprites_guns_top) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
                     break;
@@ -17360,6 +17519,10 @@ int main()
                 buffer_over.draw(spr);
             }
             reset_rotateable_sprites(rotateable_sprites_guns_top, rotateableSpriteGunTopIndex);
+
+            if (rotateableSpriteGunTopIndex >= rotateable_sprites_guns_top_max) {
+                DEBUG_SPRITE_CAP = "rotateable_sprites_guns_top";
+            }
 
             for (sf::Sprite spr : lasers_bloom) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17454,6 +17617,10 @@ int main()
             }
             reset_rotateable_sprites(lasers_bloom, lasers_bloomIndex);
 
+            if (lasers_bloomIndex >= lasers_bloom_max) {
+                DEBUG_SPRITE_CAP = "lasers_bloom";
+            }
+
 
             for (sf::Sprite spr : variable_textures_bloom) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17464,6 +17631,10 @@ int main()
                 buffer_over.draw(spr, RendererBloom);
             }
             reset_rotateable_sprites(variable_textures_bloom, variableTexturesBloomIndex);
+
+            if (variableTexturesBloomIndex >= variable_textures_bloom_max) {
+                DEBUG_SPRITE_CAP = "variable_textures_bloom";
+            }
 
 
             portal_sprite.setScale(2, 2);
@@ -17484,6 +17655,10 @@ int main()
             }
             reset_rotateable_sprites(explosions_sprites, explosionIndex);
 
+            if (explosionIndex >= explosions_sprites_max) {
+                DEBUG_SPRITE_CAP = "explosions_sprites";
+            }
+
 
             for (sf::Sprite spr : plasma_impact_sprites) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17497,6 +17672,10 @@ int main()
             }
             reset_rotateable_sprites(plasma_impact_sprites, plasmaImpactIDX);
 
+            if (plasmaImpactIDX >= plasma_impact_sprites_max) {
+                DEBUG_SPRITE_CAP = "plasma_impact_sprites";
+            }
+
             //bullets bloom order  doesnt really matter since they have add blending
             //enemy
 
@@ -17509,6 +17688,10 @@ int main()
                 buffer_over.draw(spr, RendererBloom);
             }
             reset_rotateable_sprites(rotateable_effects_small_bloom, rotateableEffectsSmallBloomIndex);
+
+            if (rotateableEffectsSmallBloomIndex >= rotateable_effects_small_bloom_max) {
+                DEBUG_SPRITE_CAP = "rotateable_effects_small_bloom";
+            }
 
             //rotateable bullets bloom / destroy blooms
             for (sf::Sprite spr : rotateable_sprites_bullets) {
@@ -17524,6 +17707,10 @@ int main()
 
             reset_rotateable_sprites(rotateable_sprites_bullets, rotateableSpriteBulletIndex);
 
+            if (rotateableSpriteBulletIndex >= rotateable_sprites_bullets_max) {
+                DEBUG_SPRITE_CAP = "rotateable_sprites_bullets";
+            }
+
             //rotateable bullets_huge
             for (sf::Sprite spr : rotateable_sprites_bullets_huge_bloom) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17532,6 +17719,10 @@ int main()
                 buffer_over.draw(spr, RendererBloom);
             }
             reset_rotateable_sprites(rotateable_sprites_bullets_huge_bloom, rotateableSpriteBulletHugeBloomIndex);
+
+            if (rotateableSpriteBulletHugeBloomIndex >= rotateable_sprites_bullets_huge_bloom_max) {
+                DEBUG_SPRITE_CAP = "rotateable_sprites_bullets_huge_bloom";
+            }
 
             //rotateable bullets_big
             for (sf::Sprite spr : rotateable_sprites_bullets_big_bloom) {
@@ -17542,16 +17733,28 @@ int main()
             }
             reset_rotateable_sprites(rotateable_sprites_bullets_big_bloom, rotateableSpriteBulletBigBloomIndex);
 
+            if (rotateableSpriteBulletBigBloomIndex >= rotateable_sprites_bullets_big_bloom_max) {
+                DEBUG_SPRITE_CAP = "rotateable_sprites_bullets_big_bloom";
+            }
+
             //bullet2 bloom
             batcher_bullet2.texture = &bullet2_1BIGtex;
             //batcher_bullet2.batchSprites(bullet_2_batchable); //dont need to rebatch
             buffer_over.draw(batcher_bullet2, RendererBloom);
             reset_rotateable_sprites(bullet_2_batchable, bullet_2_batchableIndex);
 
+            if (bullet_2_batchableIndex >= bullet_2_batchable_max) {
+                DEBUG_SPRITE_CAP = "bullet_2_batchable";
+            }
+
             batcher_bullet1.texture = &bullet1_2BIGtex;
             //batcher_bullet1.batchSprites(bullet_1_batchable);//dont need to rebatch
             buffer_over.draw(batcher_bullet1, RendererBloom);
             reset_rotateable_sprites(bullet_1_batchable, bullet_1_batchableIndex);
+
+            if (bullet_1_batchableIndex >= bullet_1_batchable_max) {
+                DEBUG_SPRITE_CAP = "bullet_1_batchable";
+            }
 
             //player
             //buffer_over.draw(c);
@@ -17565,6 +17768,10 @@ int main()
             }
             reset_rotateable_sprites(wall_boarder_textures, wallBoardeArrayIndex);
 
+            if (wallBoardeArrayIndex >= wall_boarder_textures_max) {
+                DEBUG_SPRITE_CAP = "wall_boarder_textures";
+            }
+
             for (sf::Sprite spr : wall_textures) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
                     break;
@@ -17572,6 +17779,10 @@ int main()
                 buffer_over.draw(spr);
             }
             reset_rotateable_sprites(wall_textures, wall_texturesArrayIndex);
+
+            if (wall_texturesArrayIndex >= wall_textures_max) {
+                DEBUG_SPRITE_CAP = "wall_textures";
+            }
 
             buffer_over.draw(strong_spirit_sprite);
 
@@ -17582,6 +17793,10 @@ int main()
                 buffer_over.draw(spr);
             }
             reset_rotateable_sprites(rain_textures, rain_texturesIndex);
+
+            if (rain_texturesIndex >= rain_textures_max) {
+                DEBUG_SPRITE_CAP = "rain_textures";
+            }
 
             if (t2_draw_in_front) {
                 buffer_over.draw(T2_sprite);

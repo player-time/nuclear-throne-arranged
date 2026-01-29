@@ -61,25 +61,25 @@
     <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\bin\Debug\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CMakeSFMLProject.dir\Debug\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CMakeSFMLProject</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">nuclear throne arranged</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\bin\Release\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CMakeSFMLProject.dir\Release\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CMakeSFMLProject</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">nuclear throne arranged</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\bin\MinSizeRel\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">CMakeSFMLProject.dir\MinSizeRel\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">CMakeSFMLProject</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">nuclear throne arranged</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\bin\RelWithDebInfo\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CMakeSFMLProject.dir\RelWithDebInfo\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CMakeSFMLProject</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">nuclear throne arranged</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</GenerateManifest>
@@ -133,8 +133,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/Debug/CMakeSFMLProject.lib</ImportLibrary>
-      <ProgramDataBaseFile>C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/bin/Debug/CMakeSFMLProject.pdb</ProgramDataBaseFile>
+      <ImportLibrary>C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/Debug/nuclear throne arranged.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/bin/Debug/nuclear throne arranged.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -189,8 +189,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/Release/CMakeSFMLProject.lib</ImportLibrary>
-      <ProgramDataBaseFile>C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/bin/Release/CMakeSFMLProject.pdb</ProgramDataBaseFile>
+      <ImportLibrary>C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/Release/nuclear throne arranged.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/bin/Release/nuclear throne arranged.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -245,8 +245,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/MinSizeRel/CMakeSFMLProject.lib</ImportLibrary>
-      <ProgramDataBaseFile>C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/bin/MinSizeRel/CMakeSFMLProject.pdb</ProgramDataBaseFile>
+      <ImportLibrary>C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/MinSizeRel/nuclear throne arranged.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/bin/MinSizeRel/nuclear throne arranged.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -301,8 +301,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/RelWithDebInfo/CMakeSFMLProject.lib</ImportLibrary>
-      <ProgramDataBaseFile>C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/bin/RelWithDebInfo/CMakeSFMLProject.pdb</ProgramDataBaseFile>
+      <ImportLibrary>C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/RelWithDebInfo/nuclear throne arranged.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/bin/RelWithDebInfo/nuclear throne arranged.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>

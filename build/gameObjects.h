@@ -708,8 +708,8 @@ enum hitboxes {
 };
  
 struct gameObject{
-	sf::Vector2f position;
-	sf::Vector2f speed;
+	sf::Vector2f position = {0, 0};
+	sf::Vector2f speed = { 0, 0 };
 
 	float direction = 0.0f;
 	float speeddir = 0.0f;	//speed based on direction
@@ -736,10 +736,10 @@ struct gameObject{
 
 	int corpse_id = 0;
 
-	enum hitboxes my_hitbox;
+	enum hitboxes my_hitbox = no_hitbox;
 
-	enum sound_ID hurt_ID;
-	enum sound_ID die_ID;
+	enum sound_ID hurt_ID = snd_bandit_hurt_ID;
+	enum sound_ID die_ID = snd_bandit_die_ID;
 
 	int alarm1 = 0;
 	int alarm2 = 0;
@@ -794,15 +794,15 @@ struct wallTile {
 };
 
 struct coordPair {
-	float x;
-	float y;
+	float x = 0.0f;
+	float y = 0.0f;
 };
 
 struct level_generator {
-	int x;
-	int y;
-	int spdx;
-	int spdy;
+	int x = 0;
+	int y = 0;
+	int spdx = 0;
+	int spdy = 0;
 	bool active = false;
 	bool Btile = false;
 }; 
