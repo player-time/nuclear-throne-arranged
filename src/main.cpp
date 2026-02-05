@@ -8,12 +8,15 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 
+#include <SFML/Network.hpp>
+
 #include <windows.h>
 #include <ctime>
 #include <cstdlib>
 #include <thread>
 
 #include <iostream>
+#include <fstream>
 #include <chrono>
 
 #include <random>
@@ -35,20 +38,36 @@ int fps_samples_idx = 0;
 
 bool global_debug = false;
 
-bool debug_invincibility = true;
+bool debug_invincibility = false;
 
 int EXIT_PROGRAM_NOW = 0;
 
 int GLOBAL_DEBUG_INT = 0;
 
-std::string DEBUG_SPRITE_CAP = "none";
+std::string DEBUG_SPRITE_MIN[64];
+sf::Vector2i proportion_min[64];
+int samllest_proportion = 0;
+int samllest_proportion_value = 10.0f;
+int largest_proportion = 0;
+int largest_proportion_value = 0.0f;
+
+bool DEBUG_DO_RANDOM_INPUTS = false;
+
+
+
+//network stuff
+int GLOBAL_is_host = 0;
+
+bool attempt_upload_score = false;
+bool U_pressed = false;
+
 
 sf::Vector2f debug_camera_offset = {0.0f, 0.0f};
 
 
 int seed = time(NULL);
 
-bool PRECISE_MOVEMENT = true;
+bool PRECISE_MOVEMENT = false;
 
 int DEBUG_ENEMY_TELEPORT_TO = 0;
 
@@ -91,10 +110,10 @@ std::vector<sf::Sprite> plasma_impact_sprites;
 int plasma_impact_sprites_max = 1800;
 
 std::vector<sf::Sprite> rotateable_sprites_guns;
-int rotateable_sprites_guns_max = 500 * draw_mult;
+int rotateable_sprites_guns_max = 4000;
 
 std::vector<sf::Sprite> rotateable_sprites_guns_top;
-int rotateable_sprites_guns_top_max = 500 * draw_mult;
+int rotateable_sprites_guns_top_max = 1000;
 
 //small effects 8x8 unrotateable
 std::vector<sf::Sprite> rotateable_effects_small_bloom;
@@ -211,7 +230,7 @@ int current_frame = 0;      //used for stuff like i-frames, reset this each area
 int last_fire_frame = 0;
 
 
-int LOOPS = 30;
+int LOOPS = 25;
 
 
 
@@ -238,7 +257,7 @@ sf::Vector2f create_portal_POS = { 24016, 24016 };
 bool killed_throne_2 = false;
 bool can_move_outside_T2_arena = false;
 
-unsigned int MAXFPS = 300;
+unsigned int MAXFPS = 30;
 
 //contants
 float e_constant = 2.71828f;
@@ -459,6 +478,7 @@ float scarier_face = 0.8f;
 bool has_throne_butt = true;
 
 bool player_alive = true;
+std::int32_t kill_count = 0;
 bool has_died = false;
 int player_corpse_id = 0;
 
@@ -2447,7 +2467,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].friction = 0.4f;
 
                 allObjects[i].alarm1 = 20 + rand() % 10;
-                allObjects[i].alarm2 = 0;
+                allObjects[i].alarm2 = -1;  //shoot
                 allObjects[i].alarm3 = 0;
 
                 allObjects[i].scale = 0.0f;
@@ -4668,6 +4688,8 @@ void enemy_die(int ENEMY, int PROJ) {
     float tempSpdx = 0.0f;
     float tempSpdy = 0.0f;
 
+    kill_count++;
+
     if (allObjects[ENEMY].my_id != throne_2) {
         for (int i = allObjects[ENEMY].rad_drop + (player_character == melting); i > 0; i--) {
             create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, random_float(3.0f) + 3.0f, 0.0f, rad, 0.0f, 0);
@@ -4932,12 +4954,10 @@ void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = 
 
     //TODO make it work with any screen size
 
-    const sf::ContextSettings context_settings = sf::ContextSettings(0, 0, 0, 1, 1);
-
     if (swap_fullscreen) {
         window.close();
         if (fullscreen_mode) {
-            window.create({ (u_int)startup_fullscreen_size.width, (u_int)startup_fullscreen_size.height }, "Nuclear Throne Arranged", sf::Style::Fullscreen, context_settings);
+            window.create({ (u_int)startup_fullscreen_size.width, (u_int)startup_fullscreen_size.height }, "Nuclear Throne Arranged", sf::Style::Fullscreen);
 
             fullscreen_window_offset.x = (window.getSize().x - window_size_x) / 2;
             fullscreen_window_offset.y = (window.getSize().y - window_size_y) / 2;
@@ -4948,7 +4968,7 @@ void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = 
         }
         else {
             //if not fullscreen
-            window.create({ (u_int)window_size_x, (u_int)window_size_y }, "Nuclear Throne Arranged", sf::Style::Close, context_settings);
+            window.create({ (u_int)window_size_x, (u_int)window_size_y }, "Nuclear Throne Arranged", sf::Style::Default);
             window.setPosition(window.getPosition() - sf::Vector2i(160 * change, 120 * change));
 
             sf::View myView(sf::Vector2f(160, 120), sf::Vector2f(320, 240));
@@ -4980,7 +5000,7 @@ void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = 
         fullscreen_window_offset.x = (window.getSize().x - window_size_x) / 2;
         fullscreen_window_offset.y = (window.getSize().y - window_size_y) / 2;
     }
-    window.setMouseCursorGrabbed(true);
+    window.setMouseCursorGrabbed(false);
     window.requestFocus();
 }
 
@@ -11332,6 +11352,8 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
     return;
 }
 
+
+
 void preciseSleep(double seconds) {
     using namespace std;
     using namespace std::chrono;
@@ -11361,6 +11383,76 @@ void preciseSleep(double seconds) {
     auto start = high_resolution_clock::now();
     while ((high_resolution_clock::now() - start).count() / 1e9 < seconds);
 }
+
+
+
+
+
+void do_network_stuff() {
+
+    while (1) {
+        if (attempt_upload_score) {
+
+
+            bool is_host = true;
+
+            GLOBAL_is_host = 0;
+
+            //network stuff
+
+            //connecting to main port to get unique port to connect to
+            sf::TcpSocket socket;
+            sf::Socket::Status status = socket.connect({ 127, 0, 0, 1 }, 53000);
+
+            GLOBAL_is_host = socket.getRemotePort();
+
+            sf::Packet port_to_connect_to;
+            socket.receive(port_to_connect_to);
+
+            std::int32_t port_to_connect_to_num;
+            port_to_connect_to >> port_to_connect_to_num;
+
+            socket.disconnect();
+
+            //now connect to the port number that was given
+            sf::Socket::Status status_other = socket.connect({ 127, 0, 0, 1 }, port_to_connect_to_num);
+
+            GLOBAL_is_host = socket.getRemotePort();
+
+
+
+            if (status != sf::Socket::Status::Done) {
+                //return -666;
+            }
+
+            bool sent_data = false;
+
+            std::int32_t data = kill_count;
+            sf::Packet packet;
+            packet << data;
+            if (socket.send(packet) != sf::Socket::Status::Done)
+            {
+                // error...
+                //return -666;
+            }
+            else {
+                sent_data = true;
+                socket.disconnect();
+                GLOBAL_is_host = 0;
+            }
+
+            attempt_upload_score = false;
+        }
+        else {
+            sf::sleep(sf::seconds(1));
+        }
+    }
+}
+
+
+
+
+
 
 void poll_movement_inputs(int& poll_move_up, int& poll_move_down, int& poll_move_left, int& poll_move_right, int &poll_move_total) {
     bool poll_move_up_pressed = false;
@@ -11417,8 +11509,11 @@ void poll_movement_inputs(int& poll_move_up, int& poll_move_down, int& poll_move
 //no debug window
 #pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 
-int main()
+int main(int argc, char* argv[])
 {
+
+
+
 
     debug_timer_startup.timing_us_start();
     //font
@@ -11964,6 +12059,18 @@ int main()
     std::thread movement_poll_thread = std::thread(poll_movement_inputs, std::ref(poll_move_up), std::ref(poll_move_down), std::ref(poll_move_left), std::ref(poll_move_right), std::ref(poll_move_total));
     movement_poll_thread.detach();
 
+    //network stuff
+    char temp_char = '0';
+    if (argc > 0) {
+        temp_char = argv[argc - 1][0];
+    }
+    std::thread network_thread = std::thread(do_network_stuff);
+    network_thread.detach();
+
+    std::string IPaddress = sf::IpAddress::getLocalAddress().toString();
+
+    std::cout << IPaddress << std::endl;
+
     
     //sf::RenderWindow(sf::VideoMode(), "app.exe", sf::Style::Fullscreen);
     window.setFramerateLimit(MAXFPS);
@@ -11977,7 +12084,12 @@ int main()
     window.setKeyRepeatEnabled(false);
 
     
+    for (int i = 0; i < 64; i++) {
+        proportion_min[i].x = 0;
+        proportion_min[i].y = 1;
 
+        DEBUG_SPRITE_MIN[i] = "none";
+    }
 
      //sprites drawn over shadows
     sf::RenderTexture buffer_under;
@@ -13190,6 +13302,13 @@ int main()
 
     while (window.isOpen()){
 
+        if (GetAsyncKeyState('U') && !U_pressed) {
+            attempt_upload_score = true;
+            U_pressed = true;
+        }
+        else if (!GetAsyncKeyState('U')) {
+            U_pressed = false;
+        }
 
         for (auto event = sf::Event(); window.pollEvent(event);){
             if (window.hasFocus()) {
@@ -13200,6 +13319,7 @@ int main()
                 }
                 if (event.type == sf::Event::KeyPressed) {
                     //debug
+
                     if (event.key.code == sf::Keyboard::Up) { debug_camera_offset.y -= 10; }
                     if (event.key.code == sf::Keyboard::Down) { debug_camera_offset.y += 10; }
                     if (event.key.code == sf::Keyboard::Left) { debug_camera_offset.x -= 10; }
@@ -13400,9 +13520,62 @@ int main()
             }
         }
 
+
         //find the direction from the player to the mouse on this frame
         mousepos.x = (sf::Mouse::getPosition(window).x - fullscreen_window_offset.x) / window_scale;
         mousepos.y = (sf::Mouse::getPosition(window).y - fullscreen_window_offset.y) / window_scale;
+
+        if (DEBUG_DO_RANDOM_INPUTS && rand() % 5) {
+            player_held_LMB = rand() % 2;
+            LMB_released = rand() % 2;
+            LMB_pressed = rand() % 2;
+            player_pressed_LMB_this_frame = rand() % 2;
+            mousepos.x = rand() % 320;
+            mousepos.y = rand() % 240;
+            if (rand() % 2) {
+                player_move_up = rand() % 2;
+                player_move_down = rand() % 2;
+                player_move_left = rand() % 2;
+                player_move_right = rand() % 2;
+            }
+            else {//move towards nearest enemy
+                sf::Vector2f enemy_off = allObjects[enemy_index_fire_at].position - allObjects[0].position;
+
+                if (enemy_index_fire_at == 0 && created_portal) {
+                    enemy_off = create_portal_POS - allObjects[0].position;
+                }
+                else if (enemy_index_fire_at == 0) {
+                    player_move_up = rand() % 2;
+                    player_move_down = rand() % 2;
+                    player_move_left = rand() % 2;
+                    player_move_right = rand() % 2;
+                }
+                else {
+
+                    float temp_ang = atan2f(enemy_off.y, enemy_off.x) * degreestoradians;
+
+                    if (temp_ang > 30.0f && temp_ang < 150.0f) { player_move_down = true; }
+                    else { player_move_down = false; }
+                    if (temp_ang < -30.0f && temp_ang > -150.0f) { player_move_up = true; }
+                    else { player_move_up = false; }
+                    if (temp_ang < 60.0f && temp_ang > -60.0f) { player_move_right = true; }
+                    else { player_move_right = false; }
+                    if (temp_ang > 120.0f || temp_ang < -120.0f) { player_move_left = true; }
+                    else { player_move_left = false; }
+                }
+            }
+            //E_pressed = rand() % 2;
+            SPACE_pressed = rand() % 2;
+            player_energy = player_energy_max;
+            player_bullets = player_bullets_max;
+            player_bolts = player_energy_max;
+            player_shells = player_energy_max;
+            player_explosives = player_energy_max;
+            player_rads = 9999;
+            if (current_frame % 5000 == 0) {
+                want_gen = true;
+            }
+        }
 
         if (mousepos.x > 320) {
             mousepos.x = 320;
@@ -13430,11 +13603,11 @@ int main()
         if (want_gen) {
             want_gen = false;
 
-            //area++;
-            //if (area > 7) {
-            //    area = 0;
-            //    LOOPS++;
-            //}
+            area++;
+            if (area > 7) {
+                area = 0;
+                LOOPS++;
+            }
 
             //change sprites
             if (area == 0) {
@@ -13797,7 +13970,10 @@ int main()
                 }
 
                 //more direct movement
-                if (player_acceleration < 0.1f && PRECISE_MOVEMENT && allObjects[0].next_hurt < current_frame && last_fire_frame < current_frame - 6) {
+                if (player_acceleration < 0.1f && PRECISE_MOVEMENT && allObjects[0].next_hurt < current_frame && last_fire_frame < current_frame - 7) {
+                    friction_player *= 4;
+                }
+                else if (!PRECISE_MOVEMENT && horizontal_player_move == 0 && vertical_player_move == 0 && allObjects[0].next_hurt < current_frame && last_fire_frame < current_frame - 7) {
                     friction_player *= 4;
                 }
 
@@ -13978,8 +14154,8 @@ int main()
                 camera_want_y = floor(allObjects[0].position.y + cameraOffset.y + mouse_offset_window_center_y + portal_camera_offset.y);
                 portal_camera_offset = { 0, 0 };
 
-                cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x) + debug_camera_offset.x;
-                cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y) + debug_camera_offset.y;
+                cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x);// +debug_camera_offset.x;
+                cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y);// +debug_camera_offset.y;
 
                 //calualte direction to mouse
                 direction_to_mouse = atan2f(allObjects[0].position.y - (mousepos.y + cameraPos.y), allObjects[0].position.x - (mousepos.x + cameraPos.x)) + 180.0f / degreestoradians;
@@ -14115,12 +14291,7 @@ int main()
                 if (player_held_LMB) {      //player shooting logic
                     fire_weapon(wep, direction_to_mouse);
                 }
-                //debug
-                if (!GLOBAL_DEBUG_INT) {
-                    LMB_pressed = true;
-                    fire_weapon(wep, random_360_radians());
-                }
-                //debug
+
                 calculate_ammo_drop_mult(); //calculate ammo mult after firing
 
                 play_sounds_this_frame_count[snd_horror_beam_hold_ID] = -1;
@@ -14940,8 +15111,6 @@ int main()
         }
         
         //debug_timer_.timing_us_start();
-        cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x) + debug_camera_offset.x;
-        cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y) + debug_camera_offset.y;
         for (int i = cameraBoundsLeft; i < cameraBoundsRight; i++) {
             for (int j = cameraBoundsTop; j < cameraBoundsBottom; j++) {
                 if (game_area[i][j].my_grid_type == wall) {         //drawing walls, will have to make this draw different things based on the surrounding walls
@@ -17048,11 +17217,20 @@ int main()
 
         sf::Text debug1;
 
-        debug1.setString("DEBUG_SPRITE_CAP: " + DEBUG_SPRITE_CAP);
+        debug1.setString("IpAddress: " + IPaddress);
         debug1.setCharacterSize(8);
         debug1.setFont(font);
         debug1.setColor(sf::Color::White);
-        debug1.setPosition({ 2, 72 });
+        debug1.setPosition({ 2, 132 });
+
+        sf::Text host_text;
+
+        host_text.setString("host port: " + std::to_string(GLOBAL_is_host));
+        host_text.setCharacterSize(8);
+        host_text.setFont(font);
+        host_text.setColor(sf::Color::White);
+        host_text.setPosition({ 2, 172 });
+
 
         sf::Text debug2;
 
@@ -17062,6 +17240,7 @@ int main()
         debug2.setColor(sf::Color::White);
         debug2.setPosition({ 2, 92 });
 
+        sf::Text debug3;
 
         sf::Text global_timer_text;
 
@@ -17223,10 +17402,6 @@ int main()
             }
             reset_rotateable_sprites(under_effects_small, underEffectsSmallIndex);
 
-            if (underEffectsSmallIndex >= under_effects_small_max) {
-                DEBUG_SPRITE_CAP = "under_effects_small";
-            }
-
             //scorches
             for (sf::Sprite spr : scorch_sprites) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17243,10 +17418,6 @@ int main()
             }
             reset_rotateable_sprites(scorch_sprites, scorch_spritesIndex);
 
-            if (scorch_spritesIndex >= scorch_sprites_max) {
-                DEBUG_SPRITE_CAP = "scorch_sprites";
-            }
-
             //enemy corpses
             for (sf::Sprite spr : all_enemy_corpses) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17257,11 +17428,7 @@ int main()
 
             reset_rotateable_sprites(all_enemy_corpses, allEnemyCorpsesIndex);
 
-            if (allEnemyCorpsesIndex >= all_enemy_corpses_max) {
-                DEBUG_SPRITE_CAP = "all_enemy_corpses";
-            }
-
-            if(!player_alive) {
+            if (!player_alive) {
                 buffer_under.draw(player_corpse_sprite);
             }
 
@@ -17274,9 +17441,6 @@ int main()
             }
             reset_rotateable_sprites(variable_textures_bottom, variableTexturesBottomIndex);
 
-            if (variableTexturesBottomIndex >= variable_textures_bottom_max) {
-                DEBUG_SPRITE_CAP = "variable_textures_bottom";
-            }
 
             buffer_under.display();
 
@@ -17328,7 +17492,7 @@ int main()
                 buffer_over.draw(spr);
             }
             reset_rotateable_sprites(wall_textures_bot, wall_textures_botArrayIndex);
-            
+
             //weapon drops
             for (sf::Sprite spr : weapon_sprites) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17338,9 +17502,6 @@ int main()
             }
             reset_rotateable_sprites(weapon_sprites, weapon_spritesIndex);
 
-            if (weapon_spritesIndex >= weapon_sprites_max) {
-                DEBUG_SPRITE_CAP = "weapon_sprites";
-            }
 
             //props
             for (sf::Sprite spr : prop_sprites) {
@@ -17351,9 +17512,6 @@ int main()
             }
             reset_rotateable_sprites(prop_sprites, prop_spritesIndex);
 
-            if (prop_spritesIndex >= prop_sprites_max) {
-                DEBUG_SPRITE_CAP = "prop_sprites";
-            }
 
             //dust
             for (sf::Sprite spr : rotateable_effects_medium) {
@@ -17364,9 +17522,6 @@ int main()
             }
             reset_rotateable_sprites(rotateable_effects_medium, rotateableEffectsMediumIndex);
 
-            if (rotateableEffectsMediumIndex >= rotateable_effects_medium_max) {
-                DEBUG_SPRITE_CAP = "rotateable_effects_medium";
-            }
 
             //smoke
             for (sf::Sprite spr : rotateable_effects_large) {
@@ -17377,10 +17532,6 @@ int main()
             }
             reset_rotateable_sprites(rotateable_effects_large, rotateableEffectsLargeIndex);
 
-            if (rotateableEffectsLargeIndex >= rotateable_effects_large_max) {
-                DEBUG_SPRITE_CAP = "rotateable_effects_large";
-            }
-
             //debris
             for (sf::Sprite spr : rotateable_effects_small) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17389,10 +17540,6 @@ int main()
                 buffer_over.draw(spr);
             }
             reset_rotateable_sprites(rotateable_effects_small, rotateableEffectsSmallIndex);
-
-            if (rotateableEffectsSmallIndex >= rotateable_effects_small_max) {
-                DEBUG_SPRITE_CAP = "rotateable_effects_small";
-            }
 
 
             //bloom small effects
@@ -17417,9 +17564,6 @@ int main()
             }
             reset_rotateable_sprites(rotateable_sprites_bullets_huge, rotateableSpriteBulletHugeIndex);
 
-            if (rotateableSpriteBulletHugeIndex >= rotateable_sprites_bullets_huge_max) {
-                DEBUG_SPRITE_CAP = "rotateable_sprites_bullets_huge";
-            }
 
             //rotateable bullets_big
             for (sf::Sprite spr : rotateable_sprites_bullets_big) {
@@ -17429,10 +17573,6 @@ int main()
                 buffer_over.draw(spr);
             }
             reset_rotateable_sprites(rotateable_sprites_bullets_big, rotateableSpriteBulletBigIndex);
-
-            if (rotateableSpriteBulletBigIndex >= rotateable_sprites_bullets_big_max) {
-                DEBUG_SPRITE_CAP = "rotateable_sprites_bullets_big";
-            }
 
 
             //rotateable bullets
@@ -17467,9 +17607,6 @@ int main()
             }
             reset_rotateable_sprites(variable_textures, variableTexturesIndex);
 
-            if (variableTexturesIndex >= variable_textures_max) {
-                DEBUG_SPRITE_CAP = "variable_textures";
-            }
 
             for (sf::Sprite spr : variable_textures_top) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17479,9 +17616,6 @@ int main()
             }
             reset_rotateable_sprites(variable_textures_top, variableTexturesTopIndex);
 
-            if (variableTexturesTopIndex >= variable_textures_top_max) {
-                DEBUG_SPRITE_CAP = "variable_textures_top";
-            }
 
             ////enemies////
             //bandit
@@ -17495,9 +17629,6 @@ int main()
             }
             reset_rotateable_sprites(rotateable_sprites_guns, rotateableSpriteGunIndex);
 
-            if (rotateableSpriteGunIndex >= rotateable_sprites_guns_max) {
-                DEBUG_SPRITE_CAP = "rotateable_sprites_guns";
-            }
 
             for (sf::Sprite spr : all_enemy_sprites) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17508,9 +17639,6 @@ int main()
 
             reset_rotateable_sprites(all_enemy_sprites, allEnemySpritesIndex);
 
-            if (allEnemySpritesIndex >= all_enemy_sprites_max) {
-                DEBUG_SPRITE_CAP = "all_enemy_sprites";
-            }
 
             for (sf::Sprite spr : rotateable_sprites_guns_top) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17520,9 +17648,90 @@ int main()
             }
             reset_rotateable_sprites(rotateable_sprites_guns_top, rotateableSpriteGunTopIndex);
 
-            if (rotateableSpriteGunTopIndex >= rotateable_sprites_guns_top_max) {
-                DEBUG_SPRITE_CAP = "rotateable_sprites_guns_top";
+            int temp_var = 0;
+            if ((float)rotateableSpriteGunTopIndex / (float)rotateable_sprites_guns_top_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "rotateable_sprites_guns_top"; proportion_min[temp_var].x = rotateableSpriteGunTopIndex; proportion_min[temp_var].y = rotateable_sprites_guns_top_max; }
+            temp_var++;
+            if ((float)underEffectsSmallIndex / (float)under_effects_small_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "under_effects_small"; proportion_min[temp_var].x = underEffectsSmallIndex; proportion_min[temp_var].y = under_effects_small_max; }
+            temp_var++;
+            if ((float)scorch_spritesIndex / (float)scorch_sprites_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "scorch_sprites"; proportion_min[temp_var].x = scorch_spritesIndex; proportion_min[temp_var].y = scorch_sprites_max; }
+            temp_var++;
+            if ((float)allEnemyCorpsesIndex / (float)all_enemy_corpses_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "all_enemy_corpses"; proportion_min[temp_var].x = allEnemyCorpsesIndex; proportion_min[temp_var].y = all_enemy_corpses_max; }
+            temp_var++;
+            if ((float)variableTexturesBottomIndex / (float)variable_textures_bottom_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "variable_textures_bottom"; proportion_min[temp_var].x = variableTexturesBottomIndex; proportion_min[temp_var].y = variable_textures_bottom_max; }
+            temp_var++;
+            if ((float)weapon_spritesIndex / (float)weapon_sprites_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "weapon_sprites"; proportion_min[temp_var].x = weapon_spritesIndex; proportion_min[temp_var].y = weapon_sprites_max; }
+            temp_var++;
+            if ((float)prop_spritesIndex / (float)prop_sprites_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "prop_sprites"; proportion_min[temp_var].x = prop_spritesIndex; proportion_min[temp_var].y = prop_sprites_max; }
+            temp_var++;
+            if ((float)rotateableEffectsMediumIndex / (float)rotateable_effects_medium_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "rotateable_effects_medium"; proportion_min[temp_var].x = rotateableEffectsMediumIndex; proportion_min[temp_var].y = rotateable_effects_medium_max; }
+            temp_var++;
+            if ((float)rotateableEffectsLargeIndex / (float)rotateable_effects_large_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "rotateable_effects_large"; proportion_min[temp_var].x = rotateableEffectsLargeIndex; proportion_min[temp_var].y = rotateable_effects_large_max; }
+            temp_var++;
+            if ((float)rotateableEffectsSmallIndex / (float)rotateable_effects_small_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "rotateable_effects_small"; proportion_min[temp_var].x = rotateableEffectsSmallIndex; proportion_min[temp_var].y = rotateable_effects_small_max; }
+            temp_var++;
+            if ((float)rotateableSpriteBulletHugeIndex / (float)rotateable_sprites_bullets_huge_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "rotateable_sprites_bullets_huge"; proportion_min[temp_var].x = rotateableSpriteBulletHugeIndex; proportion_min[temp_var].y = rotateable_sprites_bullets_huge_max; }
+            temp_var++;
+            if ((float)rotateableSpriteBulletBigIndex / (float)rotateable_sprites_bullets_big_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "rotateable_sprites_bullets_big"; proportion_min[temp_var].x = rotateableSpriteBulletBigIndex; proportion_min[temp_var].y = rotateable_sprites_bullets_big_max; }
+            temp_var++;
+            if ((float)variableTexturesIndex / (float)variable_textures_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "variable_textures"; proportion_min[temp_var].x = variableTexturesIndex; proportion_min[temp_var].y = variable_textures_max; }
+            temp_var++;
+            if ((float)variableTexturesTopIndex / (float)variable_textures_top_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "variable_textures_top"; proportion_min[temp_var].x = variableTexturesTopIndex; proportion_min[temp_var].y = variable_textures_top_max; }
+            temp_var++;
+            if ((float)rotateableSpriteGunIndex / (float)rotateable_sprites_guns_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "rotateable_sprites_guns"; proportion_min[temp_var].x = rotateableSpriteGunIndex; proportion_min[temp_var].y = rotateable_sprites_guns_max; }
+            temp_var++;
+            if ((float)allEnemySpritesIndex / (float)all_enemy_sprites_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "all_enemy_sprites"; proportion_min[temp_var].x = allEnemySpritesIndex; proportion_min[temp_var].y = all_enemy_sprites_max; }
+            temp_var++;
+            if ((float)lasers_bloomIndex / (float)lasers_bloom_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "lasers_bloom"; proportion_min[temp_var].x = lasers_bloomIndex; proportion_min[temp_var].y = lasers_bloom_max; }
+            temp_var++;
+            if ((float)variableTexturesBloomIndex / (float)variable_textures_bloom_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "variable_textures_bloom"; proportion_min[temp_var].x = variableTexturesBloomIndex; proportion_min[temp_var].y = variable_textures_bloom_max; }
+            temp_var++;
+            if ((float)explosionIndex / (float)explosions_sprites_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "explosions_sprites"; proportion_min[temp_var].x = explosionIndex; proportion_min[temp_var].y = explosions_sprites_max; }
+            temp_var++;
+            if ((float)plasmaImpactIDX / (float)plasma_impact_sprites_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "plasma_impact_sprites"; proportion_min[temp_var].x = plasmaImpactIDX; proportion_min[temp_var].y = plasma_impact_sprites_max; }
+            temp_var++;
+            if ((float)rotateableEffectsSmallBloomIndex / (float)rotateable_effects_small_bloom_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "rotateable_effects_small_bloom"; proportion_min[temp_var].x = rotateableEffectsSmallBloomIndex; proportion_min[temp_var].y = rotateable_effects_small_bloom_max; }
+            temp_var++;
+            if ((float)rotateableSpriteBulletIndex / (float)rotateable_sprites_bullets_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "rotateable_sprites_bullets"; proportion_min[temp_var].x = rotateableSpriteBulletIndex; proportion_min[temp_var].y = rotateable_sprites_bullets_max; }
+            temp_var++;
+            if ((float)rotateableSpriteBulletHugeBloomIndex / (float)rotateable_sprites_bullets_huge_bloom_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "rotateable_sprites_bullets_huge_bloom"; proportion_min[temp_var].x = rotateableSpriteBulletHugeBloomIndex; proportion_min[temp_var].y = rotateable_sprites_bullets_huge_bloom_max; }
+            temp_var++;
+            if ((float)rotateableSpriteBulletBigBloomIndex / (float)rotateable_sprites_bullets_big_bloom_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "rotateable_sprites_bullets_big_bloom"; proportion_min[temp_var].x = rotateableSpriteBulletBigBloomIndex; proportion_min[temp_var].y = rotateable_sprites_bullets_big_bloom_max; }
+            temp_var++;
+            if ((float)bullet_2_batchableIndex / (float)bullet_2_batchable_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "bullet_2_batchable"; proportion_min[temp_var].x = bullet_2_batchableIndex; proportion_min[temp_var].y = bullet_2_batchable_max; }
+            temp_var++;
+            if ((float)bullet_1_batchableIndex / (float)bullet_1_batchable_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "bullet_1_batchable"; proportion_min[temp_var].x = bullet_1_batchableIndex; proportion_min[temp_var].y = bullet_1_batchable_max; }
+            temp_var++;
+            if ((float)wallBoardeArrayIndex / (float)wall_boarder_textures_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "wall_boarder_textures"; proportion_min[temp_var].x = wallBoardeArrayIndex; proportion_min[temp_var].y = wall_boarder_textures_max; }
+            temp_var++;
+            if ((float)wall_texturesArrayIndex / (float)wall_textures_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "wall_textures"; proportion_min[temp_var].x = wall_texturesArrayIndex; proportion_min[temp_var].y = wall_textures_max; }
+            temp_var++;
+            if ((float)rain_texturesIndex / (float)rain_textures_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "rain_textures"; proportion_min[temp_var].x = rain_texturesIndex; proportion_min[temp_var].y = rain_textures_max; }
+
+
+
+            for (int ii = 0; ii <= temp_var; ii++) {
+                if ((float)proportion_min[ii].x / (float)proportion_min[ii].y > largest_proportion_value) {
+                    largest_proportion_value = (float)proportion_min[ii].x / (float)proportion_min[ii].y;
+                    largest_proportion = ii;
+                }
+
             }
+
+            samllest_proportion_value = 10.0f;
+
+            for (int ii = 0; ii <= temp_var; ii++) {
+                if ((float)proportion_min[ii].x / (float)proportion_min[ii].y < samllest_proportion_value) {
+                    samllest_proportion_value = (float)proportion_min[ii].x / (float)proportion_min[ii].y;
+                    samllest_proportion = ii;
+                }
+            }
+
+            debug3.setString("kills: " + std::to_string(kill_count));
+            debug3.setCharacterSize(8);
+            debug3.setFont(font);
+            debug3.setColor(sf::Color::White);
+            debug3.setPosition({ 2, 152 });
+
 
             for (sf::Sprite spr : lasers_bloom) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17548,9 +17757,9 @@ int main()
             }
 
             //eyes tk
-            
+
             if (player_character == eyes) {
-                
+
                 if (eyes_using_TK) {
                     if (has_throne_butt) {
                         eyes_TK_sprite.setTexture(eyes_tk_TB_tex);
@@ -17617,10 +17826,6 @@ int main()
             }
             reset_rotateable_sprites(lasers_bloom, lasers_bloomIndex);
 
-            if (lasers_bloomIndex >= lasers_bloom_max) {
-                DEBUG_SPRITE_CAP = "lasers_bloom";
-            }
-
 
             for (sf::Sprite spr : variable_textures_bloom) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17631,10 +17836,6 @@ int main()
                 buffer_over.draw(spr, RendererBloom);
             }
             reset_rotateable_sprites(variable_textures_bloom, variableTexturesBloomIndex);
-
-            if (variableTexturesBloomIndex >= variable_textures_bloom_max) {
-                DEBUG_SPRITE_CAP = "variable_textures_bloom";
-            }
 
 
             portal_sprite.setScale(2, 2);
@@ -17655,10 +17856,6 @@ int main()
             }
             reset_rotateable_sprites(explosions_sprites, explosionIndex);
 
-            if (explosionIndex >= explosions_sprites_max) {
-                DEBUG_SPRITE_CAP = "explosions_sprites";
-            }
-
 
             for (sf::Sprite spr : plasma_impact_sprites) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17672,9 +17869,6 @@ int main()
             }
             reset_rotateable_sprites(plasma_impact_sprites, plasmaImpactIDX);
 
-            if (plasmaImpactIDX >= plasma_impact_sprites_max) {
-                DEBUG_SPRITE_CAP = "plasma_impact_sprites";
-            }
 
             //bullets bloom order  doesnt really matter since they have add blending
             //enemy
@@ -17689,9 +17883,6 @@ int main()
             }
             reset_rotateable_sprites(rotateable_effects_small_bloom, rotateableEffectsSmallBloomIndex);
 
-            if (rotateableEffectsSmallBloomIndex >= rotateable_effects_small_bloom_max) {
-                DEBUG_SPRITE_CAP = "rotateable_effects_small_bloom";
-            }
 
             //rotateable bullets bloom / destroy blooms
             for (sf::Sprite spr : rotateable_sprites_bullets) {
@@ -17707,9 +17898,6 @@ int main()
 
             reset_rotateable_sprites(rotateable_sprites_bullets, rotateableSpriteBulletIndex);
 
-            if (rotateableSpriteBulletIndex >= rotateable_sprites_bullets_max) {
-                DEBUG_SPRITE_CAP = "rotateable_sprites_bullets";
-            }
 
             //rotateable bullets_huge
             for (sf::Sprite spr : rotateable_sprites_bullets_huge_bloom) {
@@ -17720,9 +17908,6 @@ int main()
             }
             reset_rotateable_sprites(rotateable_sprites_bullets_huge_bloom, rotateableSpriteBulletHugeBloomIndex);
 
-            if (rotateableSpriteBulletHugeBloomIndex >= rotateable_sprites_bullets_huge_bloom_max) {
-                DEBUG_SPRITE_CAP = "rotateable_sprites_bullets_huge_bloom";
-            }
 
             //rotateable bullets_big
             for (sf::Sprite spr : rotateable_sprites_bullets_big_bloom) {
@@ -17733,9 +17918,6 @@ int main()
             }
             reset_rotateable_sprites(rotateable_sprites_bullets_big_bloom, rotateableSpriteBulletBigBloomIndex);
 
-            if (rotateableSpriteBulletBigBloomIndex >= rotateable_sprites_bullets_big_bloom_max) {
-                DEBUG_SPRITE_CAP = "rotateable_sprites_bullets_big_bloom";
-            }
 
             //bullet2 bloom
             batcher_bullet2.texture = &bullet2_1BIGtex;
@@ -17743,18 +17925,12 @@ int main()
             buffer_over.draw(batcher_bullet2, RendererBloom);
             reset_rotateable_sprites(bullet_2_batchable, bullet_2_batchableIndex);
 
-            if (bullet_2_batchableIndex >= bullet_2_batchable_max) {
-                DEBUG_SPRITE_CAP = "bullet_2_batchable";
-            }
 
             batcher_bullet1.texture = &bullet1_2BIGtex;
             //batcher_bullet1.batchSprites(bullet_1_batchable);//dont need to rebatch
             buffer_over.draw(batcher_bullet1, RendererBloom);
             reset_rotateable_sprites(bullet_1_batchable, bullet_1_batchableIndex);
 
-            if (bullet_1_batchableIndex >= bullet_1_batchable_max) {
-                DEBUG_SPRITE_CAP = "bullet_1_batchable";
-            }
 
             //player
             //buffer_over.draw(c);
@@ -17768,9 +17944,7 @@ int main()
             }
             reset_rotateable_sprites(wall_boarder_textures, wallBoardeArrayIndex);
 
-            if (wallBoardeArrayIndex >= wall_boarder_textures_max) {
-                DEBUG_SPRITE_CAP = "wall_boarder_textures";
-            }
+
 
             for (sf::Sprite spr : wall_textures) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -17779,10 +17953,6 @@ int main()
                 buffer_over.draw(spr);
             }
             reset_rotateable_sprites(wall_textures, wall_texturesArrayIndex);
-
-            if (wall_texturesArrayIndex >= wall_textures_max) {
-                DEBUG_SPRITE_CAP = "wall_textures";
-            }
 
             buffer_over.draw(strong_spirit_sprite);
 
@@ -17794,9 +17964,6 @@ int main()
             }
             reset_rotateable_sprites(rain_textures, rain_texturesIndex);
 
-            if (rain_texturesIndex >= rain_textures_max) {
-                DEBUG_SPRITE_CAP = "rain_textures";
-            }
 
             if (t2_draw_in_front) {
                 buffer_over.draw(T2_sprite);
@@ -17916,6 +18083,8 @@ int main()
             draw_text_NT(tspr, buffer_over);
             draw_text_NT(debug1, buffer_over);
             draw_text_NT(debug2, buffer_over);
+            draw_text_NT(debug3, buffer_over);
+            draw_text_NT(host_text, buffer_over);
         }
 
         draw_text_NT(global_timer_text, buffer_over);
@@ -17951,5 +18120,35 @@ int main()
         }
 
     }
+    bool sorted = false;
+    while (!sorted) {
+        bool swap_occured = false;
+        for (int i = 0; i < 64 - 1; i++) {
+            if ((float)proportion_min[i].x / (float)proportion_min[i].y < (float)proportion_min[i + 1].x / (float)proportion_min[i + 1].y) {
+                int temp_x = proportion_min[i].x;
+                int temp_y = proportion_min[i].y;
+                std::string temp_str = DEBUG_SPRITE_MIN[i];
+
+                proportion_min[i].x = proportion_min[i + 1].x;
+                proportion_min[i].y = proportion_min[i + 1].y;
+                DEBUG_SPRITE_MIN[i] = DEBUG_SPRITE_MIN[i + 1];
+
+                proportion_min[i + 1].x = temp_x;
+                proportion_min[i + 1].y = temp_y;
+                DEBUG_SPRITE_MIN[i + 1] = temp_str;
+                swap_occured = true;
+            }
+        }
+        if (!swap_occured) {
+            break;
+        }
+    }
+
+    std::ofstream myfile;
+    myfile.open("sprite_caps.txt");
+    for (int i = 0; i < 64; i++) {
+        myfile << DEBUG_SPRITE_MIN[i] + ": " + std::to_string(proportion_min[i].x) + " / " + std::to_string(proportion_min[i].y) + "\n";
+    }
+    myfile.close();
     return 0;
 }
