@@ -14,7 +14,8 @@ FetchContent_Declare(SFML
 FetchContent_MakeAvailable(SFML)
 
 add_executable(${PROJECT_NAME} src/main.cpp build/gameObjects.cpp)
-target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics PRIVATE sfml-audio)
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "nuclear throne arranged")
+target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics PRIVATE sfml-audio PRIVATE sfml-network)
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 
 if(WIN32)
