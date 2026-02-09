@@ -3077,6 +3077,34 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     create_object(allObjects[i].position.x, allObjects[i].position.y, 0, 0, scorch, 0, 0);
                 }
                 break;
+            case explosive_burst:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].my_hitbox = idpd_nade_hitbox;
+
+                allObjects[i].position = { x, y };
+                allObjects[i].direction = direction;
+
+                allObjects[i].image_index = 0;
+
+                switch (image_index) {
+                case 1: //small nade burst
+                    allObjects[i].alarm1 = 5;   //amount of shots
+                    allObjects[i].alarm2 = 1;   //delay between shots
+                    allObjects[i].damage = 3;
+                    break;
+                case 2: //flamethrower
+                    allObjects[i].alarm1 = 12;   //amount of shots
+                    allObjects[i].alarm2 = 1;   //delay between shots
+                    allObjects[i].damage = 3;
+                    break;
+                case 3: //dragon
+                    allObjects[i].alarm1 = 7;   //amount of shots
+                    allObjects[i].alarm2 = 1;   //delay between shots
+                    allObjects[i].damage = 3;
+                    break;
+                }
+
+                break;
             case nade:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].my_hitbox = idpd_nade_hitbox;
@@ -3124,8 +3152,20 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 else if (image_index == 11) {    //ultra
                     allObjects[i].damage = 40;
                 }
-                else if (image_index == 12) {   //gold
+                else if (image_index == 12) {   //gold nade
                     allObjects[i].damage = 17;
+                }
+                else if (image_index == 13) {   //toxic
+                    allObjects[i].damage = 0;
+                }
+                else if (image_index == 14) {   //sticky
+                    allObjects[i].damage = 1;
+                }
+                else if (image_index == 15) {   //gold missile
+                    allObjects[i].damage = 21;
+                }
+                else if (image_index == 16) {    //gold nuke
+                    allObjects[i].damage = 69;
                 }
 
                 allObjects[i].friction = 0.1f;
@@ -7050,6 +7090,29 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
                         Yspd = sin(direction + inaccuracy - 0.01f) * 12.0f;
                         create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, 12.0f, 0, object_type, direction + inaccuracy - 0.01f, bullet_type);
                         break;
+                    case 91://grenade shotgun
+                        for (int i = 0; i < 5; i++) {
+                            inaccuracy = random_float(acc_variation * 2.0f) - acc_variation;
+                            proj_speed = 10.0f + random_float(5.0f);
+                            create_object(allObjects[0].position.x, allObjects[0].position.y, proj_speed, 0, object_type, direction + inaccuracy, bullet_type);
+                        }
+                        break;
+                    case 96://super bazooka
+                        inaccuracy = -6.0f / degreestoradians;
+                        for (int i = 0; i < 5; i++) {
+                            inaccuracy += 3.0f / degreestoradians;
+                            proj_speed = 2.0f;
+                            create_object(allObjects[0].position.x, allObjects[0].position.y, proj_speed, 0, object_type, direction + inaccuracy, bullet_type);
+                        }
+                        break;
+                    case 98://golden bazooka
+
+                        inaccuracy = 1.0f / degreestoradians;
+                        proj_speed = 2.0f;
+                        create_object(allObjects[0].position.x, allObjects[0].position.y, proj_speed, 0, object_type, direction + inaccuracy, bullet_type);
+                        inaccuracy = -1.0f / degreestoradians;
+                        create_object(allObjects[0].position.x, allObjects[0].position.y, proj_speed, 0, object_type, direction + inaccuracy, bullet_type);
+                        break;
                     }
                 }
                 else {
@@ -7576,6 +7639,69 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             break;
         case 88://heavy grenade launcher
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 26, 10.0f + random_float(1.0f), nade, -0.0f, 8, 2.0f * accuracy_curr, false, player_explosives, 2);
+            break;
+        case 89://toxic grenade launcher
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 16, 9.0f, nade, -0.0f, 4, 3.0f * accuracy_curr, false, player_explosives, 13);
+            break;
+        case 90://sticky grenade launcher
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 25, 11.0f, nade, -0.0f, 5, 3.0f * accuracy_curr, false, player_explosives, 14);
+            break;
+        case 91://grenade shotgun
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 16, 10.0f + random_float(5.0f), nade, -0.0f, 5, 17.0f * accuracy_curr, false, player_explosives, 1);
+            break;
+        case 92://grenade rifle
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 10, 0, explosive_burst, -0.0f, 5, 0.0f * accuracy_curr, false, player_explosives, 1);
+            break;
+        case 93://auto grenade shotgun
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 8, 11.0f + random_float(4.0f), nade, -0.0f, 4, 14.0f * accuracy_curr, true, player_explosives, 1);
+            break;
+        case 94://grenade cluster
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 26, 10.0f, nade, -0.0f, 6, 4.0f * accuracy_curr, false, player_explosives, 3);
+            break;
+        case 95://bazooka
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 30, 2.0f, nade, -0.0f, 10, 1.0f * accuracy_curr, false, player_explosives, 4);
+            break;
+        case 96://super bazooka
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 5, 40, 2.0f, nade, -1.0f, 12, 0.0f * accuracy_curr, false, player_explosives, 4);
+            break;
+        case 97://gatling bazooka
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 10, 2.0f, nade, -0.0f, 9, 3.0f * accuracy_curr, true, player_explosives, 4);
+            break;
+        case 98://golden bazooka
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 27, 2.0f, nade, -0.0f, 10, 0.0f * accuracy_curr, false, player_explosives, 15);
+            break;
+        case 99://nuke launcher
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 50, 2.0f, nade, -0.0f, 10, 0.0f * accuracy_curr, false, player_explosives, 5);
+            break;
+        case 100://gold nuke launcher
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 40, 2.0f, nade, -0.0f, 10, 0.0f * accuracy_curr, false, player_explosives, 16);
+            break;
+        case 101://blood launcher
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 12, 10.0f, nade, -0.0f, 4, 4.0f * accuracy_curr, true, player_explosives, 6);
+            break;
+        case 102://blood cannon
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 4, 19, 5.0f, nade, -0.0f, 6, 3.0f * accuracy_curr, true, player_explosives, 7);
+            break;
+        case 103://flamethrower
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 12, 0, explosive_burst, -0.0f, 2, 5.0f * accuracy_curr, true, player_explosives, 2);
+            break;
+        case 104://dragon
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 7, 0, explosive_burst, -0.0f, 4, 5.0f * accuracy_curr, true, player_explosives, 3);
+            break;
+        case 105://flare gun
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 25, 9.0f, nade, -0.0f, 5, 1.0f * accuracy_curr, true, player_explosives, 8);
+            break;
+        case 106://flame cannon
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 4, 44, 3.0f, nade, -6.0f, 6, 1.0f * accuracy_curr, false, player_explosives, 9);
+            break;
+        case 107://hyper launcher
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 7, 0.0f, nade, -0.0f, 8, 0.0f * accuracy_curr, true, player_explosives, 10);
+            break;
+        case 108://ultra nade launcher
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 16, 10.0f, nade, -0.0f, 8, 2.0f * accuracy_curr, false, player_explosives, 11);
+            break;
+        case 109://jackhammer
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 12, 0.0f, explosive_burst, -0.0f, 8, 0.0f * accuracy_curr, true, player_explosives, 4);
             break;
         default:
             break;
@@ -9263,6 +9389,42 @@ void player_bullet_burst_step(int obj) {
     }
 }
 
+void player_explosive_burst_step(int obj) {
+    float inaccuracy = 0.0f;
+    float inaccuracy_x = 0.0f;
+    float inaccuracy_y = 0.0f;
+    if (allObjects[obj].image_index % allObjects[obj].alarm2 == 0) {
+        if (allObjects[obj].damage == 3) {//nade rifle
+
+            allObjects[obj].alarm1--;
+            play_sound_on_player(snd_grenade_rifle_ID);
+            inaccuracy = random_float(8.0f) - 4.0f;
+            inaccuracy /= degreestoradians;
+
+            create_object(allObjects[0].position.x, allObjects[0].position.y, 13.0f + random_float(2.0f), 0, nade, direction_to_mouse + inaccuracy, 1);
+
+            if (wep == 92) {
+                wep_kick = 5;
+            }
+        }
+        else {  //slug
+            allObjects[obj].alarm2--;
+            play_sound_on_player(snd_slugger_ID);
+            inaccuracy = random_float(10.0f) - 5.0f;
+            inaccuracy /= degreestoradians;
+
+            create_object(allObjects[0].position.x, allObjects[0].position.y, 18.0f, 0, player_shell, direction_to_mouse + inaccuracy, 2);
+            if (wep == 75) {
+                wep_kick = 8;
+            }
+        }
+    }
+    allObjects[obj].image_index++;
+    if (allObjects[obj].alarm1 <= 0) {
+        allObjects[obj].my_id = nothing;
+    }
+}
+
 void player_shell_burst_step(int obj) {
     float inaccuracy = 0.0f;
     float inaccuracy_x = 0.0f;
@@ -9759,6 +9921,11 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                     player_bullet_burst_step(O);
                                 }
                                 break;
+                            case explosive_burst:
+                                if (w == 0 && h == 0) {
+                                    player_explosive_burst_step(O);
+                                }
+                                break;
                             case player_shell_burst:
                                 if (w == 0 && h == 0) {
                                     player_shell_burst_step(O);
@@ -10000,6 +10167,9 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                     case player_bullet_burst:
                         player_bullet_burst_step(currOBJ);
                         break;
+                    case explosive_burst:
+                        player_explosive_burst_step(currOBJ);
+                        break;
                     case player_shell_burst:
                         player_shell_burst_step(currOBJ);
                         break;
@@ -10184,6 +10354,9 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                         break;
                     case player_bolt_burst:
                         player_bolt_burst_step(currOBJ);
+                        break;
+                    case explosive_burst:
+                        player_explosive_burst_step(currOBJ);
                         break;
                     case player_shell_burst:
                         player_shell_burst_step(currOBJ);
