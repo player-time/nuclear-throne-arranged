@@ -62,6 +62,11 @@ bool attempt_upload_score = false;
 bool U_pressed = false;
 
 
+//replay stuff
+bool PLAY_REPLAY = false;
+bool RECORD_REPLAY = false;
+
+
 sf::Vector2f debug_camera_offset = {0.0f, 0.0f};
 
 
@@ -238,7 +243,7 @@ bool veryhard_mode = false;
 float revenge_bullet_offset = 1.0f;
 
 //game logic stuff
-int area = 0;
+int area = 7;
 int sub_area = 1;
 
 int idpd_spawn_count = 0;
@@ -7700,10 +7705,10 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
 
     int _i = 0;
     int _j = 0;
-    std::random_device rd;
+    //std::random_device rd;
     // Initialize random_float number generator
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, RAND_MAX);
+    //std::mt19937 gen(rd());
+    //std::uniform_int_distribution<> dis(0, RAND_MAX);
     for (int i = start; i < end; i++) {
         switch (allObjects[i].my_id) {
         case throne_2_death:
@@ -9680,10 +9685,10 @@ void nade_step(int i) {
 }
 
 void do_object_collision(int start, int end, int threadNUM) {       //create objects at different offsets depending on the thread so work is more evenly spread and overlap in object creation is basically impossible
-    std::random_device rd;
+    //std::random_device rd;
     // Initialize random_float number generator
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, RAND_MAX);
+    //std::mt19937 gen(rd());
+    //std::uniform_int_distribution<> dis(0, RAND_MAX);
     
     for (int i = start; i < end; i++) {
         for (int j = top_physics - extra_physics; j < bottom_physics + extra_physics; j++) {    //the physics bounds should start and end at the highest and lowest explotile
@@ -10830,6 +10835,8 @@ void swap_player_textures(sf::Texture &player_tex, character new_character, bool
     }
 }*/
 
+
+//reset all global variables and set random seed to be randomized, or set to a specific seed if replay
 void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[]) {
     player_character = chararcter_choice;
 
@@ -10838,7 +10845,20 @@ void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[]) {
     player_alive = true;
     has_died = false;
 
+
+    current_frame = 0;
+
+
     allObjects[0].position = {24016,24016 };
+
+    if(PLAY_REPLAY){
+        //TODO set to replay seed
+        srand(0);
+    }
+    else {
+        //TODO set to a random seed
+        srand(0);
+    }
 
     //reset global variables
     eyes_using_TK = false;
@@ -11427,9 +11447,25 @@ void do_network_stuff() {
 
             bool sent_data = false;
 
+
+            int extra_area = 0;
+            switch (area) {
+            case 0: extra_area = 0;             break;
+            case 1: extra_area =     sub_area;  break;
+            case 2: extra_area = 4;             break;
+            case 3: extra_area = 4 + sub_area;  break;
+            case 4: extra_area = 8;             break;
+            case 5: extra_area = 8 + sub_area;  break;
+            case 6: extra_area = 12;            break;
+            case 7: extra_area = 12+ sub_area;  break;
+            }
+
+
             std::int32_t data = kill_count;
+            std::int8_t data_character = player_character;  //TODO change this later when how you upload a score is actually implemented
+            std::int16_t data_area = LOOPS * 16 + extra_area;
             sf::Packet packet;
-            packet << data;
+            packet << data << data_character << data_area;
             if (socket.send(packet) != sf::Socket::Status::Done)
             {
                 // error...
@@ -12059,11 +12095,49 @@ int main(int argc, char* argv[])
     std::thread movement_poll_thread = std::thread(poll_movement_inputs, std::ref(poll_move_up), std::ref(poll_move_down), std::ref(poll_move_left), std::ref(poll_move_right), std::ref(poll_move_total));
     movement_poll_thread.detach();
 
-    //network stuff
+
+    const int replay_size = 5184000 / 48;
+    replay_input replay_inputs[replay_size];
+
+    //replay stuff
     char temp_char = '0';
-    if (argc > 0) {
-        temp_char = argv[argc - 1][0];
+    if (argc > 1) {
+        PLAY_REPLAY = true;
+        std::ifstream get_replay_file;
+        get_replay_file.open("temp_replay.bin", std::iostream::binary);
+
+
+        char curr_replay_input[5];
+
+
+        for (int i = 0; i < replay_size; i++) {
+
+            //get_replay_file >> curr_replay_input.keyboard_n_mouse_input >> curr_replay_input.mouse_x >> curr_replay_input.mouse_y;
+            get_replay_file.read(curr_replay_input, sizeof(curr_replay_input));
+
+
+            unsigned int val_1 = (unsigned int)(unsigned char)curr_replay_input[1] << CHAR_BIT;
+            val_1 |= (unsigned int)(unsigned char)curr_replay_input[0];
+
+            replay_inputs[i].keyboard_n_mouse_input = val_1;
+
+            unsigned int val_2 = (unsigned int)(unsigned char)curr_replay_input[3] << CHAR_BIT;
+            val_2 |= (unsigned int)(unsigned char)curr_replay_input[2];
+
+            replay_inputs[i].mouse_x =                val_2;
+
+            replay_inputs[i].mouse_y =                (unsigned int)curr_replay_input[4];
+
+            if (replay_inputs[i].mouse_x == 0) {
+                //break;
+            }
+            //replay_inputs[i] = curr_replay_input;
+        }
+
+        //get_replay_file.close();
+
     }
+    //network stuff
     std::thread network_thread = std::thread(do_network_stuff);
     network_thread.detach();
 
@@ -12129,9 +12203,9 @@ int main(int argc, char* argv[])
     sf::Clock clock;
     float fps = 0.0f;
 
-    srand(std::time(NULL));
+    //srand(std::time(NULL));
     //uncomment if you want set seed
-    //srand(0);
+    srand(0);
     
     //player_sprite
     player_sprite.setOrigin(24,24);
@@ -13237,7 +13311,7 @@ int main(int argc, char* argv[])
 
     allObjects[0].friction = 0.45f;
 
-    seed = rand();
+    //seed = rand();
 
     player_character = horror;
 
@@ -13299,6 +13373,8 @@ int main(int argc, char* argv[])
     
 
     resize_window(0, window);
+
+
 
     while (window.isOpen()){
 
@@ -13525,6 +13601,63 @@ int main(int argc, char* argv[])
         mousepos.x = (sf::Mouse::getPosition(window).x - fullscreen_window_offset.x) / window_scale;
         mousepos.y = (sf::Mouse::getPosition(window).y - fullscreen_window_offset.y) / window_scale;
 
+
+        if (mousepos.x > 320) {
+            mousepos.x = 320;
+        }
+        else if (mousepos.x < 0) {
+            mousepos.x = 0;
+        }
+        if (mousepos.y > 240) {
+            mousepos.y = 240;
+        }
+        else if (mousepos.y < 0) {
+            mousepos.y = 0;
+        }
+
+
+        //if doing a replay, overwrite the players inputs with the inputs of the the replay file
+        if (PLAY_REPLAY) {
+            mousepos.x = replay_inputs[current_frame].mouse_x;
+            mousepos.y = replay_inputs[current_frame].mouse_y;
+
+            player_move_up = (replay_inputs[current_frame].keyboard_n_mouse_input &     0b0000000000000001) != 0;
+            player_move_down = (replay_inputs[current_frame].keyboard_n_mouse_input &             0b0000000000000010) != 0;
+            player_move_left = (replay_inputs[current_frame].keyboard_n_mouse_input &         0b0000000000000100) != 0;
+            player_move_right = (replay_inputs[current_frame].keyboard_n_mouse_input &        0b0000000000001000) != 0;
+
+            SHIFT_held = (replay_inputs[current_frame].keyboard_n_mouse_input &           0b0000000000010000) != 0;
+            SPACE_pressed = (replay_inputs[current_frame].keyboard_n_mouse_input &        0b0000000000100000) != 0;
+            E_pressed = (replay_inputs[current_frame].keyboard_n_mouse_input &        0b0000000001000000) != 0;
+            LMB_pressed = (replay_inputs[current_frame].keyboard_n_mouse_input &          0b0000000010000000) != 0;
+            RMB_pressed = (replay_inputs[current_frame].keyboard_n_mouse_input &          0b0000000100000000) != 0;
+            player_pressed_LMB_this_frame = (replay_inputs[current_frame].keyboard_n_mouse_input &        0b0000001000000000) != 0;
+            player_pressed_RMB_this_frame = (replay_inputs[current_frame].keyboard_n_mouse_input &        0b0000010000000000) != 0;
+            player_held_LMB = (replay_inputs[current_frame].keyboard_n_mouse_input &          0b0000100000000000) != 0;
+            player_held_RMB = (replay_inputs[current_frame].keyboard_n_mouse_input &          0b0001000000000000) != 0;
+        }
+        //TODO record replay for now but later have an option to not record or play
+        else {//record input
+            replay_inputs[current_frame].mouse_x = mousepos.x;
+            replay_inputs[current_frame].mouse_y = mousepos.y;
+
+            replay_inputs[current_frame].keyboard_n_mouse_input += (player_move_up * 0b0000000000000001);
+            replay_inputs[current_frame].keyboard_n_mouse_input += (player_move_down * 0b0000000000000010);
+            replay_inputs[current_frame].keyboard_n_mouse_input += (player_move_left * 0b0000000000000100);
+            replay_inputs[current_frame].keyboard_n_mouse_input += (player_move_right * 0b0000000000001000);
+
+            replay_inputs[current_frame].keyboard_n_mouse_input += (SHIFT_held * 0b0000000000010000);
+            replay_inputs[current_frame].keyboard_n_mouse_input += (SPACE_pressed * 0b0000000000100000);
+            replay_inputs[current_frame].keyboard_n_mouse_input += (E_pressed * 0b0000000001000000);
+            replay_inputs[current_frame].keyboard_n_mouse_input += (LMB_pressed * 0b0000000010000000);
+            replay_inputs[current_frame].keyboard_n_mouse_input += (RMB_pressed * 0b0000000100000000);
+            replay_inputs[current_frame].keyboard_n_mouse_input += (player_pressed_LMB_this_frame * 0b0000001000000000);
+            replay_inputs[current_frame].keyboard_n_mouse_input += (player_pressed_RMB_this_frame * 0b0000010000000000);
+            replay_inputs[current_frame].keyboard_n_mouse_input += (player_held_LMB * 0b0000100000000000);
+            replay_inputs[current_frame].keyboard_n_mouse_input += (player_held_RMB * 0b0001000000000000);
+        }
+
+
         if (DEBUG_DO_RANDOM_INPUTS && rand() % 5) {
             player_held_LMB = rand() % 2;
             LMB_released = rand() % 2;
@@ -13577,19 +13710,6 @@ int main(int argc, char* argv[])
             }
         }
 
-        if (mousepos.x > 320) {
-            mousepos.x = 320;
-        }
-        else if (mousepos.x < 0) {
-            mousepos.x = 0;
-        }
-        if (mousepos.y > 240) {
-            mousepos.y = 240;
-        }
-        else if (mousepos.y < 0) {
-            mousepos.y = 0;
-        }
-
         //area background color
         switch (area) {
         case 1:
@@ -13634,12 +13754,12 @@ int main(int argc, char* argv[])
         sf::Text tx;
         sf::Text ty;
         sf::Text ts;
-        tx.setString("x: " + std::to_string(allObjects[0].position.x));
+        tx.setString("x: " + std::to_string(cursor_sprite.getPosition().x));
         tx.setCharacterSize(8);
         tx.setFont(font);
         tx.setColor(sf::Color::White);
         tx.setPosition({ 2, 12 });
-        ty.setString("y: " + std::to_string(allObjects[0].position.y));
+        ty.setString("y: " + std::to_string(cursor_sprite.getPosition().y));
         ty.setCharacterSize(8);
         ty.setFont(font);
         ty.setColor(sf::Color::White);
@@ -15271,7 +15391,7 @@ int main(int argc, char* argv[])
                         //crosshair
 
                         //find the direction from the player to the mouse on this frame
-                        mousepos.x = (sf::Mouse::getPosition(window).x - fullscreen_window_offset.x) / window_scale;
+                        /*mousepos.x = (sf::Mouse::getPosition(window).x - fullscreen_window_offset.x) / window_scale;
                         mousepos.y = (sf::Mouse::getPosition(window).y - fullscreen_window_offset.y) / window_scale;
 
                         if (mousepos.x > 320) {
@@ -15285,7 +15405,7 @@ int main(int argc, char* argv[])
                         }
                         else if (mousepos.y < 0) {
                             mousepos.y = 0;
-                        }
+                        }*/
 
                         direction_to_mouse = atan2f(allObjects[0].position.y - (mousepos.y + cameraPos.y), allObjects[0].position.x - (mousepos.x + cameraPos.x)) + 180.0f / degreestoradians;
 
@@ -18089,7 +18209,7 @@ int main(int argc, char* argv[])
 
         draw_text_NT(global_timer_text, buffer_over);
 
-        if (!naitive_cursor_active) {
+        if (!naitive_cursor_active || PLAY_REPLAY) {
             buffer_over.draw(cursor_sprite);
         }
 
@@ -18150,5 +18270,34 @@ int main(int argc, char* argv[])
         myfile << DEBUG_SPRITE_MIN[i] + ": " + std::to_string(proportion_min[i].x) + " / " + std::to_string(proportion_min[i].y) + "\n";
     }
     myfile.close();
+
+    if (PLAY_REPLAY == false) {
+        //save replay file
+        std::ofstream get_replay_file;
+        get_replay_file.open("temp_replay.bin", std::ofstream::binary);
+
+        replay_input curr_replay_input;
+
+        if (get_replay_file.is_open()) {
+
+            for (int i = 0; i < replay_size; i++) {
+
+                curr_replay_input = replay_inputs[i];
+
+                if (curr_replay_input.mouse_x == 0) {
+                    //break;
+                }
+                get_replay_file.write(reinterpret_cast<char*>(&curr_replay_input.keyboard_n_mouse_input), sizeof(curr_replay_input.keyboard_n_mouse_input));
+                get_replay_file.write(reinterpret_cast<char*>(&curr_replay_input.mouse_x), sizeof(curr_replay_input.mouse_x));
+                get_replay_file.write(reinterpret_cast<char*>(&curr_replay_input.mouse_y), sizeof(curr_replay_input.mouse_y));
+
+            }
+            get_replay_file.close();
+        }
+        else {
+            return 6;
+        }
+    }
+
     return 0;
 }

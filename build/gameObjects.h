@@ -826,6 +826,14 @@ struct portal_spiral {
 	bool active = false;
 };
 
+
+struct replay_input {
+	std::uint16_t keyboard_n_mouse_input = 0x0000;
+	std::uint16_t mouse_x = 0x0000;
+	std::uint8_t mouse_y = 0x00;
+};
+
+
 struct debug_timer {
 	std::chrono::steady_clock::time_point start;
 
