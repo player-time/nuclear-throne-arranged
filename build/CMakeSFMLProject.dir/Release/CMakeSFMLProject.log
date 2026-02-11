@@ -1,3 +1,4 @@
 ﻿  Copy OpenAL DLL
   main.cpp
-C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\main.cpp(3096,21): error C2143: syntax error: missing ';' before 'break'
+C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\main.cpp(3533): warning C4715: 'create_object': not all control paths return a value
+  CMakeSFMLProject.vcxproj -> C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\bin\Release\nuclear throne arranged.exe

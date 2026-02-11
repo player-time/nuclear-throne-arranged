@@ -307,12 +307,12 @@ enum sound_ID {
 
 	snd_explosion_ID,
 	snd_explosion_s_ID,
+	snd_explosion_l_ID,
 	snd_nade_hit_wall_ID,
 	snd_IDPD_nade_load_ID,
 	snd_IDPD_nade_almost_ID,
 
-	//end of sounds that will be used, not just in buffers
-
+	snd_nade_stick_ID,
 
 	snd_lose_strong_spirit_ID,
 	snd_gain_strong_spirit_ID,
