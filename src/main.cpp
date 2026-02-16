@@ -2449,7 +2449,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].max_hp = allObjects[i].my_hp;
                 allObjects[i].image_index = rand() % 17;
                 allObjects[i].team = enemy_team;     //enemy team
-                allObjects[i].rad_drop = 10;
+                allObjects[i].rad_drop = 5;
 
                 allObjects[i].size = 1;
 
@@ -3147,6 +3147,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 else if (image_index == 5) {    //nuke
                     allObjects[i].damage = 60;
                     allObjects[i].friction = 0.0f;
+                    allObjects[i].speeddir = 2.0f;
                 }
                 else if (image_index == 6) {    //blood
                     allObjects[i].alarm1 = 60;
@@ -3189,6 +3190,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 }
                 else if (image_index == 16) {    //gold nuke
                     allObjects[i].friction = 0.0f;
+                    allObjects[i].speeddir = 2.0f;
                     allObjects[i].damage = 69;
                 }
 
@@ -4114,7 +4116,7 @@ void player_shell_hyper_create(int obj) {
                             }
                             break;
                         case throne_2:
-                            if (is_within_throne_2(allObjects[obj_collide].position, { X_, Y_ }, allObjects[obj].my_hitbox)) {
+                            if (allObjects[obj_collide].alarm1 < 0 && is_within_throne_2(allObjects[obj_collide].position, { X_, Y_ }, allObjects[obj].my_hitbox)) {
                                 collided = true;
                             }
                             break;
@@ -5019,7 +5021,7 @@ void enemy_die(int ENEMY, int PROJ) {
         }
 
         //debug start
-        for (int i = 0; i < 15; i++) {
+        for (int i = 0; i < 12; i++) {
             tmpdir = random_360_radians();
             tmpSpd = random_float(2.0f) + 3.0f;
             tempSpdx = cos(tmpdir) * tmpSpd;
@@ -6766,8 +6768,22 @@ void throne_2_collision(int currOBJ, int i, int j) {
                         break;
                     case player_bullet:__fallthrough;
                     case player_shell:__fallthrough;
-                    case nade:__fallthrough;
                     case idpd_bullet:
+                        if (allObjects[O].team != enemy_team && is_within_throne_2(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox)) {
+
+                            allObjects[currOBJ].my_hp -= allObjects[O].damage;
+
+                            destroy_projectile(O);
+
+                            if (allObjects[currOBJ].my_hp > 0) {
+                                enemy_hurt(currOBJ, O);
+                            }
+                            else {  //dead
+                                enemy_die(currOBJ, O);
+                            }
+                        }
+                        break;
+                    case nade:
                         if (allObjects[O].team != enemy_team && is_within_throne_2(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox)) {
 
                             if (allObjects[O].alarm3 != 13 && allObjects[O].alarm3 != 14) {
@@ -7348,10 +7364,17 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
                             create_object(allObjects[0].position.x, allObjects[0].position.y, proj_speed, 0, object_type, direction + inaccuracy, bullet_type);
                         }
                         break;
+                    case 93://auto grenade shotgun
+                        for (int i = 0; i < 4; i++) {
+                            inaccuracy = random_float(acc_variation * 2.0f) - acc_variation;
+                            proj_speed = 11.0f + random_float(4.0f);
+                            create_object(allObjects[0].position.x, allObjects[0].position.y, proj_speed, 0, object_type, direction + inaccuracy, bullet_type);
+                        }
+                        break;
                     case 96://super bazooka
-                        inaccuracy = -6.0f / degreestoradians;
+                        inaccuracy = -12.0f / degreestoradians;
                         for (int i = 0; i < 5; i++) {
-                            inaccuracy += 3.0f / degreestoradians;
+                            inaccuracy += 6.0f / degreestoradians;
                             proj_speed = 2.0f;
                             create_object(allObjects[0].position.x, allObjects[0].position.y, proj_speed, 0, object_type, direction + inaccuracy, bullet_type);
                         }
@@ -9277,20 +9300,33 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             if (allObjects[i].corpse_id != 0 && is_an_enemy(allObjects[allObjects[i].corpse_id].my_id)) {
                 allObjects[i].position = allObjects[allObjects[i].corpse_id].position;
             }
-
-        case idpd_nade:__fallthrough;
+            __fallthrough;
+        case idpd_nade:
             allObjects[i].alarm1++;
             allObjects[i].alarm2++;
 
-            if (allObjects[i].alarm2 == 5 && (allObjects[i].alarm3 == 4 || allObjects[i].alarm3 == 15)) {
+            if (allObjects[i].alarm2 >= 5 && (allObjects[i].alarm3 == 4 || allObjects[i].alarm3 == 15)) {//missile
                 tempSpeed = 0.5f + random_float(0.5f);
                 create_object(allObjects[i].position.x, allObjects[i].position.y, tempSpeed, tempSpeed, smoke, 0, 0);    //smoke
+            }
+            if (allObjects[i].alarm2 == 5 && (allObjects[i].alarm3 == 4 || allObjects[i].alarm3 == 15)) {
                 if (allObjects[i].alarm3 == 4) {
                     play_sound_on_player(snd_rocket_fly_ID);
                 }
                 else {
                     play_sound_on_player(snd_gold_rocket_fly_ID);
                 }
+            }
+
+            if (allObjects[i].alarm3 == 5 || allObjects[i].alarm3 == 16) {//nuke
+                tempSpeed = 0.5f + random_float(0.5f);
+                create_object(allObjects[i].position.x, allObjects[i].position.y, tempSpeed, tempSpeed, smoke, 0, 0);    //smoke
+
+                float dir_to_mouse = atan2f(mousepos.y + cameraPos.y - allObjects[i].position.y, mousepos.x + cameraPos.x - allObjects[i].position.x);
+
+                motion_add_dir(dir_to_mouse, 0.4f, i);
+
+                allObjects[i].speeddir = 5.0f;
             }
 
             /*if (allObjects[i].alarm1 > 90) {
@@ -10163,6 +10199,81 @@ void idpd_freak_step(int i) {
 }
 
 void nade_step(int i) {     //NOW
+    if (allObjects[i].alarm3 == 10) {//hyper
+        bool collided = false;
+        float X_prev = 0;
+        float Y_prev = 0;
+        float X_ = allObjects[0].position.x;
+        float Y_ = allObjects[0].position.y;
+        while (!collided) {
+            X_prev = X_;
+            Y_prev = Y_;
+
+            X_ += allObjects[i].speed.x / 8;
+            Y_ += allObjects[i].speed.y / 8;
+
+            if (int(X_prev / 16) != int(X_ / 16) && int(Y_prev / 16) != int(Y_ / 16) && //moved diagonal
+                game_area[int(X_prev / 16)][int(Y_ / 16)].my_grid_type == wall &&
+                game_area[int(X_ / 16)][int(Y_prev / 16)].my_grid_type == wall) {//tunneled diagonally
+                collided = true;
+            }
+            else if (game_area[int(X_ / 16)][int(Y_ / 16)].my_grid_type == wall) {
+                collided = true;
+            }
+            else if (game_area[int(X_ / 16)][int(Y_ / 16)].my_grid_type == T2_boarder) {
+                collided = true;
+                goto hyper_launcher_exit_no_explo;
+            }
+
+            if (allObjects[i].my_id != nothing) {
+                for (int w = -7; w < 8; w++) {
+                    for (int h = -7; h < 8; h++) {
+                        for (int obj_collide : game_area[int(X_ / 16) + w][int(Y_ / 16) + h].object_indexes) {
+                            switch (allObjects[obj_collide].my_id) {
+                            case bandit:__fallthrough;
+                            case idpd_freak:__fallthrough;
+                            case prop:
+                                if (is_within_circle(allObjects[obj_collide].position, { X_, Y_ }, (allObjects[obj_collide].my_hitbox + allObjects[i].my_hitbox))) {
+                                    collided = true;
+                                    allObjects[obj_collide].my_hp -= allObjects[i].damage;
+                                    if (allObjects[obj_collide].my_hp > 0) {
+                                        enemy_hurt(obj_collide, i);
+                                    }
+                                    else {  //dead
+                                        enemy_die(obj_collide, i);
+                                    }
+                                    goto hyper_launcher_exit;
+                                }
+                                break;
+                            case throne_2:
+                                if (allObjects[obj_collide].alarm1 < 0 && is_within_throne_2(allObjects[obj_collide].position, { X_, Y_ }, allObjects[i].my_hitbox)) {
+                                    collided = true;
+                                    allObjects[obj_collide].my_hp -= allObjects[i].damage;
+                                    if (allObjects[obj_collide].my_hp > 0) {
+                                        enemy_hurt(obj_collide, i);
+                                    }
+                                    else {  //dead
+                                        enemy_die(obj_collide, i);
+                                    }
+                                    goto hyper_launcher_exit;
+                                }
+                                break;
+                            default:
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+        hyper_launcher_exit:
+        create_object(X_prev, Y_prev, 0, 0, explosion, 0, 0);
+        hyper_launcher_exit_no_explo:
+        allObjects[i].my_id = nothing;
+        return;
+    }
+
     if (allObjects[i].alarm1 > 90 && allObjects[i].my_id == idpd_nade) {
         destroy_projectile(i);
         //play extra sound
@@ -14509,7 +14620,7 @@ int main(int argc, char* argv[])
                 //do player movement first
                 int horizontal_player_move = player_move_right - player_move_left;
                 int vertical_player_move = player_move_down - player_move_up;
-                float player_acceleration = 4.2f;
+                float player_acceleration = 4.2f + 10.0f * (allObjects[0].next_hurt < current_frame && last_fire_frame < current_frame - 7);
 
                 if (roll > 0) {
                     roll--;
@@ -14657,10 +14768,10 @@ int main(int argc, char* argv[])
 
                 //more direct movement
                 if (player_acceleration < 0.1f && PRECISE_MOVEMENT && allObjects[0].next_hurt < current_frame && last_fire_frame < current_frame - 7) {
-                    friction_player *= 4;
+                    friction_player *= 40;
                 }
                 else if (!PRECISE_MOVEMENT && horizontal_player_move == 0 && vertical_player_move == 0 && allObjects[0].next_hurt < current_frame && last_fire_frame < current_frame - 7) {
-                    friction_player *= 4;
+                    friction_player *= 40;
                 }
 
                 allObjects[0].speeddir -= friction_player * player_friction_mult;
