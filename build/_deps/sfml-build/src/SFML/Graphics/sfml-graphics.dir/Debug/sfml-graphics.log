@@ -1,34 +1,5 @@
-﻿  BlendMode.cpp
-  CircleShape.cpp
-  Color.cpp
-  ConvexShape.cpp
-  Font.cpp
-  GLCheck.cpp
-  GLExtensions.cpp
-  Glsl.cpp
-  Image.cpp
-  ImageLoader.cpp
-  RectangleShape.cpp
-  RenderStates.cpp
-  RenderTarget.cpp
-  RenderTexture.cpp
-  RenderTextureImpl.cpp
-  RenderTextureImplDefault.cpp
-  RenderTextureImplFBO.cpp
-  RenderWindow.cpp
-  Shader.cpp
-  Shape.cpp
-  Generating Code...
-  Compiling...
-  Sprite.cpp
+﻿  RenderWindow.cpp
   Text.cpp
   Texture.cpp
-  TextureSaver.cpp
-  Transform.cpp
-  Transformable.cpp
-  Vertex.cpp
-  VertexArray.cpp
-  VertexBuffer.cpp
-  View.cpp
   Generating Code...
   sfml-graphics.vcxproj -> C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\_deps\sfml-build\lib\Debug\sfml-graphics-s-d.lib

@@ -1,6 +1,7 @@
 //NUCLEAR THRONE ARRANGED
 
 //TODO !!!
+// make robot have more direct movement instead of soonter wep drops
 
 //check whether going over sprite limit
 //replay system
@@ -2974,6 +2975,19 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].friction = 0.1f;
                 allObjects[i].alarm3 = 0;
                 break;
+            case melee_shank:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].my_hitbox = no_hitbox;
+                allObjects[i].damage = image_index;
+
+                allObjects[i].position = { x, y };
+                allObjects[i].image_index = 0;
+                allObjects[i].team = player_team;     //player team
+                allObjects[i].direction = direction;
+                allObjects[i].speeddir = xspd;
+                allObjects[i].friction = 0.1f;
+                allObjects[i].alarm3 = 0;
+                break;
             case weapon_drop:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].my_hitbox = weapon_hitbox;
@@ -3166,6 +3180,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].alarm1 = -50;
                     allObjects[i].damage = 16;
                     allObjects[i].gun_angle = random_360_radians();
+                    allObjects[i].friction = 0.02f;
                 }
                 else if (image_index == 10) {    //hyper
                     allObjects[i].damage = 25;
@@ -4852,6 +4867,31 @@ bool is_within_melee_slash(sf::Vector2f melee_pos, sf::Vector2f otherpos, int ot
 }
 
 
+bool is_within_melee_shank(sf::Vector2f melee_pos, sf::Vector2f otherpos, int other_size, float melee_angle) {
+    //4 circles the should make up an acurate recreation of the original hitbox
+
+    int main_hitbox = 10;
+    int secondary_hitbox = 8;
+
+    if (is_within_circle(melee_pos, otherpos, (other_size + main_hitbox))) {
+        return true;
+    }
+
+    melee_pos.x += cos(melee_angle) * 13;
+    melee_pos.y += sin(melee_angle) * 13;
+    if (is_within_circle(melee_pos, otherpos, (other_size + secondary_hitbox))) {
+        return true;
+    }
+
+    melee_pos.x += cos(melee_angle) * -24;
+    melee_pos.y += sin(melee_angle) * -24;
+    if (is_within_circle(melee_pos, otherpos, (other_size + secondary_hitbox))) {
+        return true;
+    }
+    return false;
+}
+
+
 
 void clear_all_bullets() {      //clear all enemy bullets
     objectID curr_id = nothing;
@@ -6240,6 +6280,106 @@ void ultra_slash_collision(int currOBJ, int i, int j) {
     }
 }
 
+
+
+
+void melee_shank_collision(int currOBJ, int i, int j) {
+    for (int w = -6; w < 7; w++) {
+        for (int h = -6; h < 7; h++) {
+            for (int O : game_area[i + w][j + h].object_indexes) {
+                switch (allObjects[O].my_id) {
+                case throne_2:
+                    if (allObjects[O].alarm1 < 0 && allObjects[O].next_hurt < current_frame &&
+                        (is_within_melee_shank(allObjects[currOBJ].position, allObjects[O].position + sf::Vector2f{ 0, 8 }, 40, allObjects[currOBJ].direction)
+                            || is_within_melee_shank(allObjects[currOBJ].position, allObjects[O].position + sf::Vector2f{ 0, 31 }, 40, allObjects[currOBJ].direction))) {
+                        allObjects[O].my_hp -= allObjects[currOBJ].damage;
+                        if (allObjects[O].my_hp > 0) {
+                            enemy_hurt(O, currOBJ);
+                        }
+                        else {  //dead
+                            enemy_die(O, currOBJ);
+                        }
+                    }
+                    break;
+                case bandit:
+                case idpd_freak:
+                case prop:
+                    if (allObjects[O].next_hurt < current_frame && is_within_melee_shank(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox, allObjects[currOBJ].direction)) {
+                        allObjects[O].my_hp -= allObjects[currOBJ].damage;
+                        if (allObjects[O].my_hp > 0) {
+                            enemy_hurt(O, currOBJ);
+                        }
+                        else {  //dead
+                            enemy_die(O, currOBJ);
+                        }
+                    }
+                    break;
+                case nade:
+                    if (is_within_melee_shank(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox, allObjects[currOBJ].direction)) {
+                        destroy_projectile(O);
+                    }
+
+                    break;
+                case player_lightning_orb:
+                case plasma_big:
+                case plasma_huge:
+                    if (is_within_melee_shank(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox, allObjects[currOBJ].direction)) {
+                        if (allObjects[O].team != player_team) {
+                            destroy_projectile(O);
+                        }
+                    }
+                    break;
+                case plasma:
+                    if (is_within_melee_shank(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox, allObjects[currOBJ].direction)) {
+                        if (allObjects[O].team != player_team) {
+                            destroy_projectile(O);
+                        }
+                    }
+                    break;
+                case idpd_nade:
+                    if (is_within_melee_shank(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox, allObjects[currOBJ].direction)) {
+                        if (allObjects[O].team != player_team) {
+                            destroy_projectile(O);
+                        }
+                    }
+                    break;
+                case bullet1:
+                    if (is_within_melee_shank(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox, allObjects[currOBJ].direction)) {
+                        if (allObjects[O].team != player_team) {
+                            destroy_projectile(O);
+                        }
+                    }
+                    break;
+                case idpd_bullet:
+                    if (is_within_melee_shank(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox, allObjects[currOBJ].direction)) {
+                        if (allObjects[O].team != player_team) {
+                            destroy_projectile(O);
+                        }
+                    }
+                    break;
+                case bullet2:
+                case guardian_bullet:
+                case large_guardian_bullet:
+                case T2_bullet:
+                    if (is_within_melee_shank(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox, allObjects[currOBJ].direction)) {
+                        destroy_projectile(O);
+                    }
+                    break;
+                case toxic_gas:
+                    if (allObjects[O].alarm1 > 6 && is_within_melee_shank(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox, allObjects[currOBJ].direction)) {
+                        destroy_projectile(O);
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+    }
+}
+
+
+
 void explosion_collision(int currOBJ, int i, int j) {
     float tmpdir = 0.0f;
     float tmpdist = 0.0f;
@@ -6965,6 +7105,31 @@ void swing_melee(float direction, float reload, float damage) {
     create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, melee_slash, direction, damage);
 }
 
+
+void swing_shank(float direction, float reload, float damage) {
+    float Xspd = 0.0f;
+    float Xoff = 0.0f;
+    float Yoff = 0.0f;
+
+    if (damage != 6.0f) {
+        LMB_pressed = false;
+        reloaded = false;
+
+        wep_kick = -6;
+        wep_angle *= -1;
+        play_wep_sound();
+        wep_reload += reload;
+        motion_add_dir(direction, 8, 0);
+    }
+
+    Xspd = (3 + long_arms * 3.0f) - (damage == 22 || damage == 42);
+
+    float extra_off = 24.0f - (damage == 42) * 7;
+    Xoff = cos(direction) * (long_arms * 10.0f + extra_off);    //24.0f is to account for the offset
+    Yoff = sin(direction) * (long_arms * 10.0f + extra_off);
+    create_object(allObjects[0].position.x + Xoff, allObjects[0].position.y + Yoff, Xspd, 0, melee_shank, direction, damage);
+}
+
 void not_enough_ammo(std::string string) {
     play_sound_on_player(snd_empty_ID);
     create_popuptext(string, allObjects[0].position);
@@ -7628,6 +7793,30 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             }
             break;
         case 10://escrew
+            if ((LMB_pressed && wep_reload <= 0.0f && shots == 1 && player_energy - 2 >= 0) || (skeleton_gamble && wep_reload <= 0.0f)) {
+                swing_shank(direction, 12.0f, 22);
+                player_energy -= 2 * !(skeleton_gamble);
+
+                wep_reload *= gamble_reload;
+
+                if (skeleton_gamble && rand() % 10 < 2) {
+                    hurt_player(1);
+                    create_object(allObjects[0].position.x + Xspd * 2, allObjects[0].position.y + Yspd * 2, 0, 0, static_effect, direction * degreestoradians, 168);
+                }
+                if (player_hp == 0 && !has_spirit && skeleton_gamble) {
+                    create_popuptext("FUCK", allObjects[0].position);
+                    player_hp = -999;
+                }
+
+                //laser brain fx
+                for (int i = 0; i < 2 * ((laser_brain > 1.1f) + 1); i++) {
+                    create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, laser_brain_FX, random_360_degrees(), 0);
+                }
+                last_fire_frame = current_frame;
+            }
+            if (LMB_pressed && wep_reload < 0.0f && player_energy - 2 < 0 && shots == 1 && !skeleton_gamble) {
+                not_enough_ammo("NOT ENOUGH ENERGY");
+            }
             break;
         case 11:
             if ((LMB_pressed && wep_reload <= 0.0f && player_energy - 24 * shots >= 0)      ||    (skeleton_gamble && wep_reload <= 0.0f)) {
@@ -9271,6 +9460,22 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                 allObjects[i].my_id = nothing;
             }
             break;
+        case melee_shank:
+            allObjects[i].speeddir -= allObjects[i].friction;
+            allObjects[i].speed.x = cos(allObjects[i].direction) * allObjects[i].speeddir;
+            allObjects[i].speed.y = sin(allObjects[i].direction) * allObjects[i].speeddir;
+
+            allObjects[i].position += allObjects[i].speed;
+            allObjects[i].alarm3 = 0;
+
+            allObjects[i].image_index++;
+            if (is_energy_slash_with_brain(allObjects[i].damage) && current_frame % 2) {
+                allObjects[i].image_index--;
+            }
+            if (allObjects[i].image_index > 4) {
+                allObjects[i].my_id = nothing;
+            }
+            break;
         case rogue_strike:
             allObjects[i].image_index++;
             allObjects[i].position += allObjects[i].speed;
@@ -9760,21 +9965,14 @@ void player_explosive_burst_step(int obj) {
         }
         else if (allObjects[obj].damage == 6) {  //jackhammer //TODO
             allObjects[obj].alarm1--;
-            play_sound_on_player(snd_dragon_ID);
-            for (int j = -1; j < 2; j++) {
-                for (int i = 0; i < 2; i++) {
-                    inaccuracy = random_float(10.0f) - 5.0f + j * 8.0f;
+            play_sound_on_player(snd_jackhammer_ID);
+
+                    inaccuracy = random_float(30.0f) - 15.0f;
                     inaccuracy /= degreestoradians;
 
-                    float tmp_spd = 9.0f + random_float(3.0f) + float(j == 0);
+                    //player_shank
+                    swing_shank(direction_to_mouse + inaccuracy, 0.0f, 6.0f);
 
-                    inaccuracy_x = cos(direction_to_mouse + inaccuracy) * tmp_spd;
-                    inaccuracy_y = sin(direction_to_mouse + inaccuracy) * tmp_spd;
-
-                    //player_flame
-                    create_object(allObjects[0].position.x, allObjects[0].position.y, inaccuracy_x, inaccuracy_y, player_flame, direction_to_mouse + inaccuracy, 0);
-                }
-            }
             if (wep == 109) {
                 wep_kick = -8;
             }
@@ -10297,7 +10495,7 @@ void nade_step(int i) {     //NOW
         float inaccuracy = allObjects[i].alarm1 / 16.0f;
 
 
-        float tmp_spd = 5.0f + random_float(1.0f);
+        float tmp_spd = 4.0f + random_float(1.0f);
 
         float inaccuracy_x = cos(direction_to_mouse + inaccuracy) * tmp_spd;
         float inaccuracy_y = sin(direction_to_mouse + inaccuracy) * tmp_spd;
@@ -10510,6 +10708,11 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                             case melee_slash:
                                 if (allObjects[O].image_index < 5 && w == 0 && h == 0) {
                                     ultra_slash_collision(O, i, j);
+                                }
+                                break;
+                            case melee_shank:
+                                if (allObjects[O].image_index < 5 && w == 0 && h == 0) {
+                                    melee_shank_collision(O, i, j);
                                 }
                                 break;
                             case rogue_strike:
@@ -10788,6 +10991,11 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                             ultra_slash_collision(currOBJ,i, j);
                         }
                         break;
+                    case objectID::melee_shank:
+                        if (allObjects[currOBJ].image_index < 5) {
+                            melee_shank_collision(currOBJ, i, j);
+                        }
+                        break;
                     case objectID::debris:
                         bounce_in_wall(currOBJ);
                         allObjects[currOBJ].speeddir = allObjects[currOBJ].speeddir / 2;
@@ -11013,6 +11221,11 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                     case melee_slash:
                         if (allObjects[currOBJ].image_index < 5) {
                             ultra_slash_collision(currOBJ, i, j);
+                        }
+                        break;
+                    case melee_shank:
+                        if (allObjects[currOBJ].image_index < 5) {
+                            melee_shank_collision(currOBJ, i, j);
                         }
                         break;
                     case rogue_strike:
@@ -13535,6 +13748,22 @@ int main(int argc, char* argv[])
         lightning_slash_tex_3.loadFromFile("res/player/projectiles/melee/lightning_slash_3.png");
 
 
+        //shanks
+        sf::Texture shank_tex_1;
+        shank_tex_1.loadFromFile("res/player/projectiles/melee/shank_1.png");
+        sf::Texture shank_tex_2;
+        shank_tex_2.loadFromFile("res/player/projectiles/melee/shank_2.png");
+        sf::Texture shank_tex_3;
+        shank_tex_3.loadFromFile("res/player/projectiles/melee/shank_3.png");
+
+        sf::Texture energy_shank_tex_1;
+        energy_shank_tex_1.loadFromFile("res/player/projectiles/melee/energy_shank_1.png");
+        sf::Texture energy_shank_tex_2;
+        energy_shank_tex_2.loadFromFile("res/player/projectiles/melee/energy_shank_2.png");
+        sf::Texture energy_shank_tex_3;
+        energy_shank_tex_3.loadFromFile("res/player/projectiles/melee/energy_shank_3.png");
+
+
         sf::Texture idpd_freak_revive_area_tex;
         idpd_freak_revive_area_tex.loadFromFile("res/enemies/sprPopoReviveArea.png");
 
@@ -14616,11 +14845,12 @@ int main(int argc, char* argv[])
                 player_pressed_RMB_this_frame = false;
 
 
+                int robot_less_kb = ((player_character == robot) * 3) + ((player_character == robot && ultra_picked == 2) * 5);
 
                 //do player movement first
                 int horizontal_player_move = player_move_right - player_move_left;
                 int vertical_player_move = player_move_down - player_move_up;
-                float player_acceleration = 4.2f + 10.0f * (allObjects[0].next_hurt < current_frame && last_fire_frame < current_frame - 7);
+                float player_acceleration = 4.2f + 10.0f * (allObjects[0].next_hurt < current_frame + robot_less_kb && last_fire_frame < current_frame - 7 + robot_less_kb);
 
                 if (roll > 0) {
                     roll--;
@@ -14767,10 +14997,11 @@ int main(int argc, char* argv[])
                 }
 
                 //more direct movement
-                if (player_acceleration < 0.1f && PRECISE_MOVEMENT && allObjects[0].next_hurt < current_frame && last_fire_frame < current_frame - 7) {
+                
+                if (player_acceleration < 0.1f && PRECISE_MOVEMENT && allObjects[0].next_hurt < current_frame + robot_less_kb && last_fire_frame < current_frame - 7 + robot_less_kb) {
                     friction_player *= 40;
                 }
-                else if (!PRECISE_MOVEMENT && horizontal_player_move == 0 && vertical_player_move == 0 && allObjects[0].next_hurt < current_frame && last_fire_frame < current_frame - 7) {
+                else if (!PRECISE_MOVEMENT && horizontal_player_move == 0 && vertical_player_move == 0 && allObjects[0].next_hurt < current_frame + robot_less_kb && last_fire_frame < current_frame - 7 + robot_less_kb) {
                     friction_player *= 40;
                 }
 
@@ -16639,8 +16870,32 @@ int main(int argc, char* argv[])
                         default:
                             choice2 = 200;
                             break;
+                        case 1://small nade
+                            choice2 = 232;
+                            break;
                         case 2://heavy nade
                             choice2 = 208;
+                            break;
+                        case 3://cluster nade
+                            choice2 = 240;
+                            break;
+                        case 6://blood nade
+                            choice2 = 248;
+                            break;
+                        case 8://flare
+                            choice2 = 256;
+                            break;
+                        case 11://ultra nade
+                            choice2 = 264;
+                            break;
+                        case 12://gold nade
+                            choice2 = 272;
+                            break;
+                        case 13://toxic nade
+                            choice2 = 216;
+                            break;
+                        case 14://sticky nade
+                            choice2 = 224;
                             break;
                         }
                         rotateable_effects_small[rotateableEffectsSmallIndex].setTextureRect(sf::IntRect{ choice * 8, choice2, 8, 8 });
@@ -16804,6 +17059,46 @@ int main(int argc, char* argv[])
                         rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setColor({ 255, 255, 255, 255 });
                         rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setPosition(allObjects[idx].position - cameraPos);
                         rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setRotation(allObjects[idx].direction* degreestoradians);
+                        rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setScale(1, 1);
+                        rotateableSpriteBulletHugeIndex++;
+
+                        break;
+                    case melee_shank:
+                        choice = int(allObjects[idx].image_index * 0.4f);
+                        if (choice == 0) {
+                            switch (allObjects[idx].damage) {
+                            default:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(shank_tex_1);
+                                break;
+                            case 22:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(energy_shank_tex_1);
+                                break;
+                            }
+                        }
+                        if (choice == 1) {
+                            switch (allObjects[idx].damage) {
+                            default:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(shank_tex_2);
+                                break;
+                            case 22:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(energy_shank_tex_2);
+                                break;
+                            }
+                        }
+                        if (choice == 2) {
+                            switch (allObjects[idx].damage) {
+                            default:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(shank_tex_3);
+                                break;
+                            case 22:
+                                rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(energy_shank_tex_3);
+                                break;
+                            }
+                        }
+
+                        rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setColor({ 255, 255, 255, 255 });
+                        rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setPosition(allObjects[idx].position - cameraPos);
+                        rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setRotation(allObjects[idx].direction * degreestoradians);
                         rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setScale(1, 1);
                         rotateableSpriteBulletHugeIndex++;
 

@@ -1,13 +1,16 @@
 ﻿  ALCheck.cpp
   AlResource.cpp
   AudioDevice.cpp
-  InputSoundFile.cpp
   Listener.cpp
   Music.cpp
-  OutputSoundFile.cpp
   Sound.cpp
   SoundBuffer.cpp
   SoundBufferRecorder.cpp
+  InputSoundFile.cpp
+  OutputSoundFile.cpp
+  SoundRecorder.cpp
+  SoundSource.cpp
+  SoundStream.cpp
   SoundFileFactory.cpp
   SoundFileReaderFlac.cpp
   SoundFileReaderMp3.cpp
@@ -15,11 +18,8 @@
   SoundFileReaderWav.cpp
   SoundFileWriterFlac.cpp
   SoundFileWriterOgg.cpp
-  SoundFileWriterWav.cpp
-  SoundRecorder.cpp
-  SoundSource.cpp
   Generating Code...
   Compiling...
-  SoundStream.cpp
+  SoundFileWriterWav.cpp
   Generating Code...
   sfml-audio.vcxproj -> C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\_deps\sfml-build\lib\Debug\sfml-audio-s-d.lib
