@@ -2351,6 +2351,17 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].image_index = 0;
                 allObjects[i].team = enemy_team;     //enemy team
                 break;
+            case frog_bullet:
+                allObjects[i].my_id = bullet2;
+                allObjects[i].my_hitbox = enemy_bullet_hitbox;
+                allObjects[i].damage = 2;
+
+                allObjects[i].position = { x, y };
+                allObjects[i].speed = { xspd, yspd };
+                allObjects[i].direction = direction * degreestoradians + 180.0f;
+                allObjects[i].image_index = 0;
+                allObjects[i].team = player_team;     //player team
+                break;
             case rad:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].my_hitbox = enemy_bullet_hitbox;
@@ -3140,7 +3151,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].speeddir = xspd;
                 allObjects[i].alarm1 = 30;
                 allObjects[i].alarm2 = 0;
-                allObjects[i].alarm3 = image_index; //NOW
+                allObjects[i].alarm3 = image_index;
 
                 allObjects[i].friction = 0.1f;
 
@@ -7261,7 +7272,12 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
                         create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, Xspd, Yspd, object_type, direction + inaccuracy + 30.0f / degreestoradians, bullet_type);
                     }
                     else if (wep == 50) {    //gold frog pistol
-                        //TODO
+                        for (int II = 0; II < 3; II++) {
+                            inaccuracy = random_float(acc_variation * 2.0f) - acc_variation;
+                            Xspd = cos(direction + inaccuracy) * proj_speed;
+                            Yspd = sin(direction + inaccuracy) * proj_speed;
+                            create_object(allObjects[0].position.x, allObjects[0].position.y, Xspd, Yspd, frog_bullet, direction + inaccuracy, 0);
+                        }
                     }
                     else if (wep == 51) {    //incinerator
                         float extra_innacc = (random_float(7.0f) - 3.5f) / degreestoradians;
@@ -9512,7 +9528,7 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
 
             if (allObjects[i].alarm2 >= 5 && (allObjects[i].alarm3 == 4 || allObjects[i].alarm3 == 15)) {//missile
                 tempSpeed = 0.5f + random_float(0.5f);
-                create_object(allObjects[i].position.x, allObjects[i].position.y, tempSpeed, tempSpeed, smoke, 0, 0);    //smoke
+                create_object(allObjects[i].position.x - allObjects[i].speed.x, allObjects[i].position.y - allObjects[i].speed.y, tempSpeed, tempSpeed, smoke, 0, 0);    //smoke
             }
             if (allObjects[i].alarm2 == 5 && (allObjects[i].alarm3 == 4 || allObjects[i].alarm3 == 15)) {
                 if (allObjects[i].alarm3 == 4) {
@@ -9525,7 +9541,7 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
 
             if (allObjects[i].alarm3 == 5 || allObjects[i].alarm3 == 16) {//nuke
                 tempSpeed = 0.5f + random_float(0.5f);
-                create_object(allObjects[i].position.x, allObjects[i].position.y, tempSpeed, tempSpeed, smoke, 0, 0);    //smoke
+                create_object(allObjects[i].position.x - allObjects[i].speed.x * 4.5, allObjects[i].position.y - allObjects[i].speed.y * 4.5, tempSpeed, tempSpeed, smoke, 0, 0);    //smoke
 
                 float dir_to_mouse = atan2f(mousepos.y + cameraPos.y - allObjects[i].position.y, mousepos.x + cameraPos.x - allObjects[i].position.x);
 
@@ -16862,44 +16878,117 @@ int main(int argc, char* argv[])
                         weapon_spritesIndex++;
                         break;
                     case nade:
-                        choice = (allObjects[idx].alarm1 > 69) * (int(allObjects[idx].alarm1 * 0.4f) % 2 + 1);
-                        rotateable_effects_small[rotateableEffectsSmallIndex].setColor({ 255, 255, 255, 255 });
-                        rotateable_effects_small[rotateableEffectsSmallIndex].setPosition(allObjects[idx].position - cameraPos);
-                        rotateable_effects_small[rotateableEffectsSmallIndex].setRotation(allObjects[idx].rotation);
-                        switch (allObjects[idx].alarm3) {
-                        default:
-                            choice2 = 200;
-                            break;
-                        case 1://small nade
-                            choice2 = 232;
-                            break;
-                        case 2://heavy nade
-                            choice2 = 208;
-                            break;
-                        case 3://cluster nade
-                            choice2 = 240;
-                            break;
-                        case 6://blood nade
-                            choice2 = 248;
-                            break;
-                        case 8://flare
-                            choice2 = 256;
-                            break;
-                        case 11://ultra nade
-                            choice2 = 264;
-                            break;
-                        case 12://gold nade
-                            choice2 = 272;
-                            break;
-                        case 13://toxic nade
-                            choice2 = 216;
-                            break;
-                        case 14://sticky nade
-                            choice2 = 224;
-                            break;
+                        if (allObjects[idx].alarm3 != -1) {
+                            int A3 = allObjects[idx].alarm3;
+                            if (A3 == 0 || A3 == 1 || A3 == 2 || A3 == 3 || A3 == 6 || A3 == 8 || A3 == 11 || A3 == 12 || A3 == 13 || A3 == 14) {//small explosive sprite
+                                choice = (allObjects[idx].alarm1 > 69) * (int(allObjects[idx].alarm1 * 0.4f) % 2 + 1);
+                                rotateable_effects_small[rotateableEffectsSmallIndex].setColor({ 255, 255, 255, 255 });
+                                rotateable_effects_small[rotateableEffectsSmallIndex].setPosition(allObjects[idx].position - cameraPos);
+                                rotateable_effects_small[rotateableEffectsSmallIndex].setRotation(allObjects[idx].rotation);
+                                switch (allObjects[idx].alarm3) {
+                                default:
+                                    choice2 = 200;
+                                    break;
+                                case 1://small nade
+                                    choice2 = 232;
+                                    choice = 0;
+                                    break;
+                                case 2://heavy nade
+                                    choice2 = 208;
+                                    break;
+                                case 3://cluster nade
+                                    choice2 = 240;
+                                    break;
+                                case 6://blood nade
+                                    choice2 = 248;
+                                    break;
+                                case 8://flare
+                                    choice2 = 256;
+                                    break;
+                                case 11://ultra nade
+                                    choice2 = 264;
+                                    break;
+                                case 12://gold nade
+                                    choice2 = 272;
+                                    break;
+                                case 13://toxic nade
+                                    choice2 = 216;
+                                    break;
+                                case 14://sticky nade
+                                    choice2 = 224;
+                                    break;
+                                }
+                                rotateable_effects_small[rotateableEffectsSmallIndex].setTextureRect(sf::IntRect{ choice * 8, choice2, 8, 8 });
+                                rotateableEffectsSmallIndex++;
+                            }
+                            else if (A3 == 4 || A3 == 5 || A3 == 15 || A3 == 16) {//medium effects
+                                rotateable_effects_medium[rotateableEffectsMediumIndex].setColor({ 255, 255, 255, 255 });
+                                rotateable_effects_medium[rotateableEffectsMediumIndex].setPosition(allObjects[idx].position - cameraPos);
+                                rotateable_effects_medium[rotateableEffectsMediumIndex].setRotation(allObjects[idx].direction * degreestoradians);
+                                rotateable_effects_medium[rotateableEffectsMediumIndex].setScale(sf::Vector2f(1, 1));
+                                if (allObjects[idx].alarm3 == 4) {
+                                    choice = 0;
+                                    choice2 = 288;
+                                    //flame on back of rocket
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setColor({ 255, 255, 255, 255 });
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setPosition(allObjects[idx].position - cameraPos - sf::Vector2f(allObjects[idx].speed.x * 1.2, allObjects[idx].speed.y * 1.2));
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setRotation(allObjects[idx].direction * degreestoradians);
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ (int(allObjects[idx].alarm1 * 0.4f) % 3) * 24, 504, 24, 24 });
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setScale(sf::Vector2f(1, 1));
+                                    rotateableEffectsLargeIndex++;
+                                }
+                                if (allObjects[idx].alarm3 == 5) {
+                                    choice = 0;
+                                    choice2 = 304;
+                                    //flame on back of nuke
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setColor({ 255, 255, 255, 255 });
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setPosition(allObjects[idx].position - cameraPos - sf::Vector2f(allObjects[idx].speed.x * 4, allObjects[idx].speed.y * 4));
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setRotation(allObjects[idx].direction* degreestoradians);
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ (int(allObjects[idx].alarm1 * 0.4f) % 3) * 24, 528, 24, 24 });
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setScale(sf::Vector2f(1, 1));
+                                    rotateableEffectsLargeIndex++;
+                                }
+                                if (allObjects[idx].alarm3 == 15) {
+                                    choice = 1;
+                                    choice2 = 288;
+                                    //flame on back of rocket
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setColor({ 255, 255, 255, 255 });
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setPosition(allObjects[idx].position - cameraPos - sf::Vector2f(allObjects[idx].speed.x * 1.2, allObjects[idx].speed.y * 1.2));
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setRotation(allObjects[idx].direction* degreestoradians);
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ (int(allObjects[idx].alarm1 * 0.4f) % 3) * 24, 504, 24, 24 });
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setScale(sf::Vector2f(1, 1));
+                                    rotateableEffectsLargeIndex++;
+                                }
+                                if (allObjects[idx].alarm3 == 16) {
+                                    choice = 1;
+                                    choice2 = 304;
+                                    //flame on back of nuke
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setColor({ 255, 255, 255, 255 });
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setPosition(allObjects[idx].position - cameraPos - sf::Vector2f(allObjects[idx].speed.x * 4, allObjects[idx].speed.y * 4));
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setRotation(allObjects[idx].direction * degreestoradians);
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ (int(allObjects[idx].alarm1 * 0.4f) % 3) * 24, 528, 24, 24 });
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setScale(sf::Vector2f(1, 1));
+                                    rotateableEffectsLargeIndex++;
+                                }
+                                rotateable_effects_medium[rotateableEffectsMediumIndex].setTextureRect(sf::IntRect{ choice * 16, choice2, 16, 16 });
+                                rotateableEffectsMediumIndex++;
+                            }
+                            else { //large effects
+                                rotateable_effects_large[rotateableEffectsLargeIndex].setColor({ 255, 255, 255, 255 });
+                                rotateable_effects_large[rotateableEffectsLargeIndex].setPosition(allObjects[idx].position - cameraPos);
+                                rotateable_effects_large[rotateableEffectsLargeIndex].setRotation(allObjects[idx].direction * degreestoradians);
+                                rotateable_effects_large[rotateableEffectsLargeIndex].setScale(sf::Vector2f(1, 1));
+                                if (allObjects[idx].alarm3 == 7) {
+                                    choice2 = 456;
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ (int(allObjects[idx].alarm1 * 0.4f) % 3) * 24, choice2, 24, 24 });
+                                }
+                                else {
+                                    choice2 = 480;
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ (int(allObjects[idx].alarm1 * 0.4f) % 6) * 24, choice2, 24, 24 });
+                                }
+                                rotateableEffectsLargeIndex++;
+                            }
                         }
-                        rotateable_effects_small[rotateableEffectsSmallIndex].setTextureRect(sf::IntRect{ choice * 8, choice2, 8, 8 });
-                        rotateableEffectsSmallIndex++;
                         break;
                     case idpd_nade:
                         choice = (allObjects[idx].alarm1 > 69) * (int(allObjects[idx].alarm1 * 0.4f) % 2 + 1);
@@ -18605,15 +18694,6 @@ int main(int argc, char* argv[])
             reset_rotateable_sprites(prop_sprites, prop_spritesIndex);
 
 
-            //dust
-            for (sf::Sprite spr : rotateable_effects_medium) {
-                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
-                    break;
-                }
-                buffer_over.draw(spr);
-            }
-            reset_rotateable_sprites(rotateable_effects_medium, rotateableEffectsMediumIndex);
-
 
             //smoke
             for (sf::Sprite spr : rotateable_effects_large) {
@@ -18623,6 +18703,18 @@ int main(int argc, char* argv[])
                 buffer_over.draw(spr);
             }
             reset_rotateable_sprites(rotateable_effects_large, rotateableEffectsLargeIndex);
+
+
+
+            //dust
+            for (sf::Sprite spr : rotateable_effects_medium) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_over.draw(spr);
+            }
+            reset_rotateable_sprites(rotateable_effects_medium, rotateableEffectsMediumIndex);
+
 
             //debris
             for (sf::Sprite spr : rotateable_effects_small) {

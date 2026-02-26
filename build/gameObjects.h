@@ -17,6 +17,8 @@ enum objectID {
 	T2_bullet,
 	throne_beam_charge_particle,
 
+	frog_bullet,
+
 	revenge_bullet, revenge_bullet_spawner,
 
 	idpd_bullet, idpd_bullet_destroy,
