@@ -39,7 +39,7 @@ int fps_samples_idx = 0;
 
 bool global_debug = false;
 
-bool debug_invincibility = false;
+bool debug_invincibility = true;
 
 int EXIT_PROGRAM_NOW = 0;
 
@@ -98,9 +98,9 @@ int rotateable_sprites_bullets_max = 17000;
 
 //for SPC
 std::vector<sf::Sprite> rotateable_sprites_bullets_huge;
-int rotateable_sprites_bullets_huge_max = 100;
+int rotateable_sprites_bullets_huge_max = 200;
 std::vector<sf::Sprite> rotateable_sprites_bullets_huge_bloom;
-int rotateable_sprites_bullets_huge_bloom_max = 100;
+int rotateable_sprites_bullets_huge_bloom_max = 200;
 
 //for SPC
 std::vector<sf::Sprite> rotateable_sprites_bullets_big;
@@ -137,7 +137,7 @@ int rotateable_effects_medium_max = 6000;
 
 //large effects 24x24
 std::vector<sf::Sprite> rotateable_effects_large;
-int rotateable_effects_large_max = 4000;
+int rotateable_effects_large_max = 18000;
 
 std::vector<sf::Sprite> prop_sprites;
 int prop_sprites_max = 50;
@@ -168,7 +168,7 @@ int wall_shadow_textures_max = 600;
 
 
 std::vector<sf::Sprite> variable_textures_bloom;
-int variable_textures_bloom_max = 8000;
+int variable_textures_bloom_max = 38000;
 
 std::vector<sf::Sprite> lasers_bloom;
 int lasers_bloom_max = 500;
@@ -459,6 +459,13 @@ int mouse_offset_window_center_y = 0;
 
 int global_effects_alarm1 = 1;
 
+
+bool player_shot_flamethrower_this_frame = false;
+bool player_shot_flamethrower_prev_frame = false;
+bool player_shot_dragon_this_frame = false;
+bool player_shot_dragon_prev_frame = false;
+
+
 //mutations
 int plutonium_hunger = 140;       //set to 120 when mutation got 80 when not    nerfed from 140
 int plutonium_hunger_ammo = 70;  //set to 60 when mutation got 30 when not      nerfed from 70
@@ -696,6 +703,23 @@ void play_sound_in_pool(sound_ID sound, sound_sound_buffer all_sounds[], sf::Sou
             sound_pool_ids_mirror[i] = sound;
             return;
         }
+    }
+}
+
+bool is_looping_sound(int sound_id) {
+    switch (sound_id) {
+    default:
+        return false;
+        break;
+    case snd_portal_loop_ID:__fallthrough;
+    case snd_lightning_cannon_loop_ID:__fallthrough;
+    case snd_blood_cannon_loop_ID:__fallthrough;
+    case snd_flamethrower_loop_ID:__fallthrough;
+    case snd_dragon_loop_ID:__fallthrough;
+    case snd_flame_cannon_loop_ID:__fallthrough;
+    case snd_horror_beam_hold_ID:
+        return true;
+        break;
     }
 }
 
@@ -3120,12 +3144,12 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].damage = 3;
                     break;
                 case 2: //flamethrower
-                    allObjects[i].alarm1 = 12;   //amount of shots
+                    allObjects[i].alarm1 = 14;   //amount of shots
                     allObjects[i].alarm2 = 1;   //delay between shots
                     allObjects[i].damage = 4;
                     break;
                 case 3: //dragon
-                    allObjects[i].alarm1 = 7;   //amount of shots
+                    allObjects[i].alarm1 = 9;   //amount of shots
                     allObjects[i].alarm2 = 1;   //delay between shots
                     allObjects[i].damage = 5;
                     break;
@@ -4246,16 +4270,21 @@ void destroy_projectile(int object_index) {
         }
         break;
     case player_flame:
-        allObjects[object_index].my_id = smoke;
+        if (rand() % 2) {
+            allObjects[object_index].my_id = smoke;
 
-        tmpdir = random_360_radians();
-        allObjects[object_index].speed.x = cos(tmpdir) * 0.5;
-        allObjects[object_index].speed.y = sin(tmpdir) * 0.5;
-        allObjects[object_index].direction = random_360_degrees();
-        allObjects[object_index].rotation = (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (3.0f))) + 1.0f) * ((rand() % 2) * 2 - 1);  //rotation speed
-        allObjects[object_index].growspeed = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.005f)));  //growspeed
-        allObjects[object_index].scale = 0.8f;  //image scale
-        allObjects[object_index].image_index = rand() % 5;
+            tmpdir = random_360_radians();
+            allObjects[object_index].speed.x = cos(tmpdir) * 0.5;
+            allObjects[object_index].speed.y = sin(tmpdir) * 0.5;
+            allObjects[object_index].direction = random_360_degrees();
+            allObjects[object_index].rotation = (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (3.0f))) + 1.0f) * ((rand() % 2) * 2 - 1);  //rotation speed
+            allObjects[object_index].growspeed = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.005f)));  //growspeed
+            allObjects[object_index].scale = 0.8f;  //image scale
+            allObjects[object_index].image_index = rand() % 5;
+        }
+        else {
+            allObjects[object_index].my_id = nothing;
+        }
         break;
     case player_shell:
         if (allObjects[object_index].size == 0 || allObjects[object_index].size == 7) {
@@ -7091,7 +7120,12 @@ void YV_money() {
 }
 
 void play_wep_sound() {
-    play_sound_on_player(get_shoot_sound(wep));
+    if (wep == 103 || wep == 104) {
+        //elseware
+    }
+    else {
+        play_sound_on_player(get_shoot_sound(wep));
+    }
 }
 
 void swing_melee(float direction, float reload, float damage) {
@@ -7528,7 +7562,7 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
                 else if (wep >= shell_weps && wep < explosive_weps) {
                     switch (wep) {
                     default:
-                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, 10.0f, 0, object_type, direction + inaccuracy, bullet_type);
+                        create_object(allObjects[0].position.x + Xspd / 8, allObjects[0].position.y + Yspd / 8, proj_speed, 0, object_type, direction + inaccuracy, bullet_type);
                         break;
                     case 87://gold grenade
                         Xspd = cos(direction + inaccuracy + 0.01f) * 12.0f;
@@ -7810,7 +7844,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             break;
         case 10://escrew
             if ((LMB_pressed && wep_reload <= 0.0f && shots == 1 && player_energy - 2 >= 0) || (skeleton_gamble && wep_reload <= 0.0f)) {
-                swing_shank(direction, 12.0f, 22);
+                swing_shank(direction, 4.0f, 22);
                 player_energy -= 2 * !(skeleton_gamble);
 
                 wep_reload *= gamble_reload;
@@ -8555,7 +8589,14 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             if (allObjects[i].alarm1 == 2 && allObjects[i].image_index > 29) {
                 //go to next level
                 want_gen = true;
-                stop_looping_sound(snd_portal_loop_ID);
+                //stop_looping_sound(snd_portal_loop_ID);
+            }
+
+            if (!is_within_circle(allObjects[0].position, allObjects[i].position, 16)) {
+                play_sound_relative_to_player(snd_portal_loop_ID, allObjects[i].position.x, allObjects[i].position.y);
+            }
+            else {
+                play_sound_on_player(snd_portal_loop_ID);
             }
 
             if (is_within_circle(allObjects[i].position, allObjects[0].position, 32)) {
@@ -9382,7 +9423,7 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                 create_object(allObjects[i].position.x, allObjects[i].position.y, 0, 0, player_lightning_spawn, random_360_radians(), 14);
             }
 
-            play_sound_on_player(snd_lightning_cannon_loop_ID);
+            play_sound_relative_to_player(snd_lightning_cannon_loop_ID, allObjects[i].position.x, allObjects[i].position.y);
 
             break;
         case devastator_bullet:
@@ -9525,6 +9566,10 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
         case idpd_nade:
             allObjects[i].alarm1++;
             allObjects[i].alarm2++;
+
+            if (allObjects[i].alarm3 == 9) {//flame cannon loop
+                play_sound_relative_to_player(snd_flame_cannon_loop_ID, allObjects[i].position.x, allObjects[i].position.y);
+            }
 
             if (allObjects[i].alarm2 >= 5 && (allObjects[i].alarm3 == 4 || allObjects[i].alarm3 == 15)) {//missile
                 tempSpeed = 0.5f + random_float(0.5f);
@@ -9941,7 +9986,7 @@ void player_explosive_burst_step(int obj) {
         }
         else if (allObjects[obj].damage == 4) {  //flamethrower
             allObjects[obj].alarm1--;
-            play_sound_on_player(snd_flamethrower_ID);
+            player_shot_flamethrower_this_frame = true;
             for (int i = 0; i < 2; i++) {
                 inaccuracy = random_float(10.0f) - 5.0f;
                 inaccuracy /= degreestoradians;
@@ -9960,7 +10005,7 @@ void player_explosive_burst_step(int obj) {
         }
         else if (allObjects[obj].damage == 5) {  //dragon
             allObjects[obj].alarm1--;
-            play_sound_on_player(snd_dragon_ID);
+            player_shot_dragon_this_frame = true;
             for (int j = -1; j < 2; j++) {
                 for (int i = 0; i < 2; i++) {
                     inaccuracy = random_float(10.0f) - 5.0f + j * 8.0f;
@@ -10531,6 +10576,7 @@ void nade_step(int i) {     //NOW
     //blood ball
     if (allObjects[i].alarm3 == 7) {
         //meat
+        play_sound_relative_to_player(snd_blood_cannon_loop_ID, allObjects[i].position.x, allObjects[i].position.y);
         float tmpspdX = 0.0f;
         float tmpspdY = 0.0f;
         float tmpdir = random_360_radians();
@@ -12762,7 +12808,7 @@ int main(int argc, char* argv[])
 
     add_new_sound(snd_portal_close_ID, "snd/portal_close.wav", all_sounds, all_sounds_mirror, 0.01f, 0.01f);
 
-    add_new_sound(snd_portal_loop_ID, "snd/portal_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 0.0f);
+    add_new_sound(snd_portal_loop_ID, "snd/portal_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.002f, 100.0f);
 
     //thrones
     add_new_sound(snd_big_ball_fire_ID, "snd/big_ball_fire.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0001f);
@@ -15238,6 +15284,12 @@ int main(int argc, char* argv[])
                     //weapon_drop swap
 
                 }
+                if (E_pressed) {//debug
+                    wep++;
+                    if (wep >= 110) {
+                        wep = 0;
+                    }
+                }
                 E_pressed = false;
 
                 nearest_wep_drop_ID = 0;
@@ -15333,7 +15385,15 @@ int main(int argc, char* argv[])
                 }
 
                 if (player_held_LMB) {      //player shooting logic
+                    //wep = current_frame % 110;
                     fire_weapon(wep, direction_to_mouse);
+                    /*wep_reload = -1;
+                    LMB_pressed = true;
+                    player_energy = 55;
+                    player_bullets = 55;
+                    player_bolts = 55;
+                    player_shells = 55;
+                    player_explosives = 55;*/
                 }
 
                 calculate_ammo_drop_mult(); //calculate ammo mult after firing
@@ -15748,107 +15808,119 @@ int main(int argc, char* argv[])
                     }
                 }
             }
+            
+            if (player_shot_dragon_this_frame && !player_shot_dragon_prev_frame) {
+                play_sound_on_player(snd_dragon_ID);
+            }
+            if (player_shot_dragon_this_frame && player_shot_dragon_prev_frame) {
+                play_sound_on_player(snd_dragon_loop_ID);
+            }
+            if (!player_shot_dragon_this_frame && player_shot_dragon_prev_frame) {
+                play_sound_on_player(snd_dragon_end_ID);
+            }
+
+            if (player_shot_flamethrower_this_frame && !player_shot_flamethrower_prev_frame) {
+                play_sound_on_player(snd_flamethrower_ID);
+            }
+            if (player_shot_flamethrower_this_frame && player_shot_flamethrower_prev_frame) {
+                play_sound_on_player(snd_flamethrower_loop_ID);
+            }
+            if (!player_shot_flamethrower_this_frame && player_shot_flamethrower_prev_frame) {
+                play_sound_on_player(snd_flamethrower_end_ID);
+            }
 
             //play sounds
             float pitch_offset = 0.0f;
             for (int i = 0; i < 1000; i++) {
-                if (play_sounds_this_frame_count[i] > 0) {
+                if (is_looping_sound(i)) {
+                    if (play_sounds_this_frame_count[i] > 0) {
 
-                    //play_sound_in_pool(sound_ID(i), all_sounds, sound_pool, sound_pool_ids_mirror);
-                    bool skip_next = false;
-                    for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
-                        if (sound_pool_ids_mirror[snd__] == sound_ID(i)) {
-                            float PV = all_sounds_mirror[i].pitch_variance;
-                            sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
-                            sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
-                            sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                            sound_pool[snd__].play();
-                            skip_next = true;
-                            break;
+                        //play_sound_in_pool(sound_ID(i), all_sounds, sound_pool, sound_pool_ids_mirror);
+                        bool skip_next = false;
+                        for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
+                            if (sound_pool_ids_mirror[snd__] == sound_ID(i)) {
+                                //float PV = all_sounds_mirror[i].pitch_variance;
+                                //sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
+                                //sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
+                                sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
+                                //sound_pool[snd__].setLoop(true);
+                                //sound_pool[snd__].play();
+                                skip_next = true;
+                                break;
+                            }
+                        }
+                        //if no same sound is already playing
+                        if (!skip_next) {
+                            for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
+                                if (sound_pool[snd__].getStatus() != sf::Sound::Playing) {
+                                    float PV = all_sounds_mirror[i].pitch_variance;
+                                    sound_pool[snd__].setBuffer(all_sounds[i]);
+                                    sound_pool[snd__].setVolume(all_sounds_mirror[i].volume);
+                                    sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
+                                    sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
+                                    sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
+                                    sound_pool[snd__].setLoop(true);
+                                    sound_pool[snd__].play();
+                                    sound_pool_ids_mirror[snd__] = sound_ID(i);
+                                    break;
+                                }
+                            }
                         }
                     }
-                    //if no same sound is already playing
-                    if (!skip_next) {
+                    else {
                         for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
-                            if (sound_pool[snd__].getStatus() != sf::Sound::Playing) {
-                                float PV = all_sounds_mirror[i].pitch_variance;
-                                sound_pool[snd__].setBuffer(all_sounds[i]);
-                                sound_pool[snd__].setVolume(all_sounds_mirror[i].volume);
-                                sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
-                                sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
-                                sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                                sound_pool[snd__].play();
-                                sound_pool_ids_mirror[snd__] = sound_ID(i);
+                            if (sound_pool_ids_mirror[snd__] == sound_ID(i)) {
+                                sound_pool[snd__].stop();
+                                sound_pool_ids_mirror[snd__] = snd_none_ID;
                                 break;
                             }
                         }
                     }
-                    /*switch (i) {
-                    default:
-                        play_sound_random_pitch(all_sounds[i].sound, all_sounds[i].pitch_variance, i);
-                        break;
-                    case snd_rad_pickup_ID:
-                        pitch_offset = (1.0f + ((float(player_rads) / float(player_level * 60)) / 4.0f));
-                        all_sounds[i].sound.setPitch(pitch_offset);
-                        all_sounds[i].sound.play();
-                        break;
-                    case snd_lightning_cannon_loop_ID:
-                        all_sounds[snd_lightning_cannon_loop_ID].sound.setVolume(100.0f);
-                        break;
-                    case snd_horror_beam_hold_ID:
-                        all_sounds[snd_horror_beam_hold_ID].sound.setVolume(70.0f);
-                        break;
-                    case snd_portal_loop_ID:
-                        
-                        all_sounds[snd_portal_loop_ID].sound.setPlayingOffset(sf::milliseconds(0));
-                        all_sounds[snd_portal_loop_ID].sound.setVolume(80.0f);
-                        break;
-                    case snd_plasma_huge_ID:
-                        if (laser_brain < 1.15f) {
-                            play_sound_random_pitch(all_sounds[i].sound, all_sounds[i].pitch_variance, i);
-                        }
-                        else {
-                            play_sound_random_pitch(all_sounds[snd_plasma_huge_upgrade_ID].sound, all_sounds[snd_plasma_huge_upgrade_ID].pitch_variance, snd_plasma_huge_upgrade_ID);
-                        }
-                        break;
-                    case snd_plasma_split_ID:
-                        if (laser_brain < 1.15f) {
-                            play_sound_random_pitch(all_sounds[i].sound, all_sounds[i].pitch_variance, i);
-                        }
-                        else {
-                            play_sound_random_pitch(all_sounds[snd_plasma_split_upgrade_ID].sound, all_sounds[snd_plasma_split_upgrade_ID].pitch_variance, snd_plasma_split_upgrade_ID);
-                        }
-                        break;
-                    case snd_player_hurt_ID:
-                        play_sound_random_pitch(all_sounds[snd_player_hurt_ID].sound, all_sounds[snd_player_hurt_ID].pitch_variance, snd_player_hurt_ID);
-                        break;
-                    }*/
-                    play_sounds_this_frame_count[i] = 0;
-                    play_sounds_this_frame_pos[i].x = 0;
-                    play_sounds_this_frame_pos[i].y = 0;
                 }
-                /*else if (play_sounds_this_frame_count[i] < 0) {
-                    switch (i) {
-                    case snd_lightning_cannon_loop_ID:
-                        all_sounds[snd_lightning_cannon_loop_ID].sound.setVolume(0.0f);
-                        break;
-                    case snd_horror_beam_hold_ID:
-                        all_sounds[snd_horror_beam_hold_ID].sound.setVolume(0.0f);
-                        break;
-                    case snd_portal_loop_ID:
-                        all_sounds[snd_portal_loop_ID].sound.setVolume(0.0f);
-                        break;
-                    default:
-                        break;
+                else {
+                    if (play_sounds_this_frame_count[i] > 0) {
+
+                        //play_sound_in_pool(sound_ID(i), all_sounds, sound_pool, sound_pool_ids_mirror);
+                        bool skip_next = false;
+                        for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
+                            if (sound_pool_ids_mirror[snd__] == sound_ID(i)) {
+                                float PV = all_sounds_mirror[i].pitch_variance;
+                                sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
+                                sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
+                                sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
+                                sound_pool[snd__].setLoop(false);
+                                sound_pool[snd__].play();
+                                skip_next = true;
+                                break;
+                            }
+                        }
+                        //if no same sound is already playing
+                        if (!skip_next) {
+                            for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
+                                if (sound_pool[snd__].getStatus() != sf::Sound::Playing) {
+                                    float PV = all_sounds_mirror[i].pitch_variance;
+                                    sound_pool[snd__].setBuffer(all_sounds[i]);
+                                    sound_pool[snd__].setVolume(all_sounds_mirror[i].volume);
+                                    sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
+                                    sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
+                                    sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
+                                    sound_pool[snd__].setLoop(false);
+                                    sound_pool[snd__].play();
+                                    sound_pool_ids_mirror[snd__] = sound_ID(i);
+                                    break;
+                                }
+                            }
+                        }
                     }
-                    play_sounds_this_frame_count[i] = 0;
-                    play_sounds_this_frame_pos[i].x = 0;
-                    play_sounds_this_frame_pos[i].y = 0;
-                }*/
+                }
+                play_sounds_this_frame_count[i] = 0;
+                play_sounds_this_frame_pos[i].x = 0;
+                play_sounds_this_frame_pos[i].y = 0;
             }
 
+
             //set looping sounds to not play if not set next frame
-            play_sounds_this_frame_count[snd_lightning_cannon_loop_ID] = -1;
+            //play_sounds_this_frame_count[snd_lightning_cannon_loop_ID] = -1;
 
             for (int b = 0; b < popup_texts_max; b++) {
                 if (popup_texts[b].getLineSpacing() > 20) {
@@ -19303,6 +19375,10 @@ int main(int argc, char* argv[])
             return EXIT_PROGRAM_NOW;
         }
 
+        player_shot_flamethrower_prev_frame = player_shot_flamethrower_this_frame;
+        player_shot_flamethrower_this_frame = false;
+        player_shot_dragon_prev_frame = player_shot_dragon_this_frame;
+        player_shot_dragon_this_frame = false;
     }
     bool sorted = false;
     while (!sorted) {
