@@ -39,7 +39,7 @@ int fps_samples_idx = 0;
 
 bool global_debug = false;
 
-bool debug_invincibility = true;
+bool debug_invincibility = false;
 
 int EXIT_PROGRAM_NOW = 0;
 
@@ -110,7 +110,7 @@ int rotateable_sprites_bullets_big_bloom_max = 1000;
 
 //explosions
 std::vector<sf::Sprite> explosions_sprites;
-int explosions_sprites_max = 6000;
+int explosions_sprites_max = 9000;
 
 std::vector<sf::Sprite> plasma_impact_sprites;
 int plasma_impact_sprites_max = 1800;
@@ -717,6 +717,22 @@ bool is_looping_sound(int sound_id) {
     case snd_flamethrower_loop_ID:__fallthrough;
     case snd_dragon_loop_ID:__fallthrough;
     case snd_flame_cannon_loop_ID:__fallthrough;
+    case snd_chicken_headless_loop_ID: __fallthrough;
+    case snd_eyes_loop_ID: __fallthrough;
+    case snd_eyes_TB_loop_ID: __fallthrough;
+    case snd_frog_loop_ID: __fallthrough;
+    case snd_frog_TB_loop_ID: __fallthrough;
+    case snd_portal_strike_loop_ID: __fallthrough;
+    case snd_snow_bot_slide_loop_ID: __fallthrough;
+    case snd_salamander_fire_loop_ID: __fallthrough;
+    case snd_logo_loop_ID: __fallthrough;
+    case snd_nothing_beam_loop_ID: __fallthrough;
+    case snd_ball_mom_loop_ID: __fallthrough;
+
+    case snd_frog_ultra_B_loop_ID: __fallthrough;
+    case snd_throne_1_idle_loop_ID: __fallthrough;
+    case snd_fish_TB_loop_ID: __fallthrough;
+
     case snd_horror_beam_hold_ID:
         return true;
         break;
@@ -4626,6 +4642,22 @@ void destroy_projectile(int object_index) {
         allObjects[object_index].scale = rand() % 2 * 2 - 1;
         allObjects[object_index].direction = random_360_degrees();
         allObjects[object_index].my_hitbox = hitboxes(plant_tangle_hitbox * (1 + (ultra_picked == 1)));
+        if (ultra_picked != 1) {
+            if (!has_throne_butt) {
+                play_sound_relative_to_player(snd_plant_fire_seed_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
+            }
+            else {
+                play_sound_relative_to_player(snd_plant_fire_seed_TB_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
+            }
+        }
+        else {
+            if (!has_throne_butt) {
+                play_sound_relative_to_player(snd_plant_fire_seed_trapper_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
+            }
+            else {
+                play_sound_relative_to_player(snd_plant_fire_seed_trapper_TB_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
+            }
+        }
         break;
     default:
         break;
@@ -5841,6 +5873,7 @@ void basic_enemy_collision(int currOBJ, int i, int j) {
                             destroy_projectile(O);
                             if (ultra_picked == 2) {
                                 allObjects[currOBJ].my_hp -= 10;
+                                play_sound_relative_to_player(snd_plant_TB_kill_ID, allObjects[O].position.x, allObjects[O].position.y);
 
                                 if (allObjects[currOBJ].my_hp > 0) {
                                     enemy_hurt(currOBJ, O);
@@ -5916,6 +5949,7 @@ void plant_tangle_collision(int currOBJ, int i, int j) {
                                 allObjects[O].my_hp = 0;
                                 enemy_die(O, 0);
                                 create_object(allObjects[O].position.x, allObjects[O].position.y, 0, 0, static_effect, 0, 192);
+                                play_sound_relative_to_player(snd_plant_TB_kill_ID, allObjects[O].position.x, allObjects[O].position.y);
                             }
                         }
                         break;
@@ -7045,6 +7079,7 @@ void throne_2_collision(int currOBJ, int i, int j) {
                             destroy_projectile(O);
                             if (ultra_picked == 2) {
                                 allObjects[currOBJ].my_hp -= 10;
+                                play_sound_relative_to_player(snd_plant_TB_kill_ID, allObjects[O].position.x, allObjects[O].position.y);
 
                                 if (allObjects[currOBJ].my_hp > 0) {
                                     enemy_hurt(currOBJ, O);
@@ -9064,7 +9099,9 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             allObjects[i].position += allObjects[i].speed;
 
             allObjects[i].growspeed += allObjects[i].speeddir * allObjects[i].rotation;
-
+            if (allObjects[i].speeddir < 5.0f) {
+                eyes_tk_pull(i);
+            }
             break;
         case bandit:
             allObjects[i].speeddir -= allObjects[i].friction;
@@ -11863,7 +11900,7 @@ void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[]) {
         break;
     case robot:
 
-        laser_brain += 0.1f;
+        //laser_brain += 0.1f;
 
         player_max_hp = 8;
         player_hp = 8;
@@ -11871,7 +11908,7 @@ void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[]) {
     case chicken:
 
         player_max_hp = 8;
-        player_hp = 8;
+        player_hp = 8; 
         break;
     case rebel:
 
@@ -12776,6 +12813,17 @@ int main(int argc, char* argv[])
     add_new_sound(snd_corpse_explode_ID, "snd/corpse_explode.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
     add_new_sound(snd_corpse_explode_TB_ID, "snd/corpse_explode_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
 
+    //plant
+    add_new_sound(snd_plant_fire_seed_ID, "snd/plant_fire_seed.wav", all_sounds, all_sounds_mirror, 0.05f, 0.01f);
+    add_new_sound(snd_plant_fire_seed_TB_ID, "snd/plant_fire_seed_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.01f);
+    add_new_sound(snd_plant_fire_seed_trapper_ID, "snd/plant_fire_seed_trapper.wav", all_sounds, all_sounds_mirror, 0.05f, 0.01f);
+    add_new_sound(snd_plant_fire_seed_trapper_TB_ID, "snd/plant_fire_seed_trapper_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.01f);
+    add_new_sound(snd_plant_TB_kill_ID, "snd/plant_TB_kill.wav", all_sounds, all_sounds_mirror, 0.05f, 0.01f);
+
+
+    //chicken
+    add_new_sound(snd_chicken_headless_loop_ID, "snd/chicken_headless_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+
 
     add_new_sound(snd_pickup_disappear_ID, "snd/pickup_disappear.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
@@ -12914,7 +12962,26 @@ int main(int argc, char* argv[])
     add_new_sound(snd_lightning_orb_explo_ID, "snd/lightning_cannon_end.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
     add_new_sound(snd_revenge_bullet, "snd/revenge_bullet.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f, 65.0f);
-    
+
+
+    //some looping sounds
+
+    add_new_sound(snd_eyes_loop_ID, "snd/eyes_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
+    add_new_sound(snd_eyes_TB_loop_ID, "snd/eyes_TB_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
+    add_new_sound(snd_frog_loop_ID, "snd/frog_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
+    add_new_sound(snd_frog_TB_loop_ID, "snd/frog_TB_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
+    add_new_sound(snd_portal_strike_loop_ID, "snd/portal_strike_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
+    add_new_sound(snd_snow_bot_slide_loop_ID, "snd/snow_bot_slide_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
+    add_new_sound(snd_salamander_fire_loop_ID, "snd/salamander_fire_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
+    add_new_sound(snd_logo_loop_ID, "snd/logo_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
+    add_new_sound(snd_nothing_beam_loop_ID, "snd/nothing_beam_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
+    add_new_sound(snd_ball_mom_loop_ID, "snd/ball_mom_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
+
+    add_new_sound(snd_frog_ultra_B_loop_ID, "snd/frog_ultra_B_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
+    add_new_sound(snd_throne_1_idle_loop_ID, "snd/throne_1_idle_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
+    add_new_sound(snd_fish_TB_loop_ID, "snd/fish_TB_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
+
+
     //footsteps
     float foot_step_vol = 11.0f;
     add_new_sound(snd_foot_metmetal_1_ID, "snd/footsteps/foot_metmetal_1.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, foot_step_vol);
@@ -14869,6 +14936,12 @@ int main(int argc, char* argv[])
                             tmpXSPD = cos(direction_to_mouse) * 12;
                             tmpYSPD = sin(direction_to_mouse) * 12;
                             player_tangle_ID = create_object(allObjects[0].position.x, allObjects[0].position.y, tmpXSPD, tmpYSPD, plant_tangle_seed, direction_to_mouse, 0);
+                            if (!has_throne_butt) {
+                                play_sound_on_player(snd_plant_fire_seed_ID);
+                            }
+                            else {
+                                play_sound_on_player(snd_plant_fire_seed_TB_ID);
+                            }
                         }
                         break;
                     case YV:
@@ -15112,7 +15185,7 @@ int main(int argc, char* argv[])
                             }
                         }
                         if (footstep_audio_offset == 0) {
-                            footstep_audio_offset = 1;
+                            footstep_audio_offset = 1;  //???
                         }
                         else {
                             footstep_audio_offset = 0;
@@ -15217,9 +15290,9 @@ int main(int argc, char* argv[])
                         break;
                     }
                     if (foot_step_sound_to_play != no_footstep) {
-                        play_sound_on_player(static_cast<sound_ID>(choice + footstep_audio_offset));
+                        play_sound_on_player(static_cast<sound_ID>(choice));
                         if (player_walk_material == slime_rock_mat || player_walk_material == slime_sand_mat) {
-                            play_sound_on_player(static_cast<sound_ID>(choice2 + footstep_audio_offset_slime));
+                            play_sound_on_player(static_cast<sound_ID>(choice2));
                         }
                     }
                 }
@@ -15446,6 +15519,11 @@ int main(int argc, char* argv[])
                             horror_beam_strength = 7.0f;
                         }
                         break;
+                    case fish:
+                        if (has_throne_butt) {
+                            play_sound_on_player(snd_fish_TB_loop_ID);
+                        }
+                        break;
                     case crystal:
                         if (crystal_is_shielding && crystal_shield_time < 22) {
                             crystal_shield_time++;
@@ -15457,6 +15535,13 @@ int main(int argc, char* argv[])
                         break;
                     case eyes:
                         eyes_using_TK = true;
+                        if (has_throne_butt) {
+                            play_sound_on_player(snd_eyes_TB_loop_ID);
+                        }
+                        else {
+                            play_sound_on_player(snd_eyes_loop_ID);
+                        }
+
                         if (ultra_picked == 2) {
                             eyes_using_ultraB_TK = false;
                         }
@@ -15474,13 +15559,31 @@ int main(int argc, char* argv[])
                             xspd = cos(direction_to_mouse) * 12;
                             yspd = sin(direction_to_mouse) * 12;
                             player_tangle_ID = create_object(allObjects[0].position.x, allObjects[0].position.y, xspd, yspd, plant_tangle_seed, direction_to_mouse, 0);
+                            if (!has_throne_butt) {
+                                play_sound_on_player(snd_plant_fire_seed_ID);
+                            }
+                            else {
+                                play_sound_on_player(snd_plant_fire_seed_TB_ID);
+                            }
                         }
                         break;
                     case steroids:
                         fire_weapon(wep, direction_to_mouse, 1, 0, true);
                         break;
+                    case rogue:
+                        play_sound_on_player(snd_portal_strike_loop_ID);
+                        break;
                     case frog:
                         frog_hold_frames++;
+                        if (ultra_picked == 2) {
+                            play_sound_on_player(snd_frog_ultra_B_loop_ID);
+                        }
+                        if (has_throne_butt) {
+                            play_sound_on_player(snd_frog_TB_loop_ID);
+                        }
+                        else {
+                            play_sound_on_player(snd_frog_loop_ID);
+                        }
                         break;
                     default:
                         break;
@@ -15734,6 +15837,7 @@ int main(int argc, char* argv[])
                             }
                         }
                         if (chicken_headless_timer > 0) {
+                            play_sound_on_player(snd_chicken_headless_loop_ID);
                             chicken_headless_timer--;
                             if (rand() % 12 == 0 || (rand() % 3 == 0 && chicken_headless_timer < 60)) {
                                 float tmp_DIR = -(45 + random_float(90)) / degreestoradians;

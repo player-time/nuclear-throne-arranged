@@ -400,6 +400,14 @@ enum sound_ID {
 	snd_corpse_explode_ID,
 	snd_corpse_explode_TB_ID,
 
+	snd_plant_fire_seed_ID,
+	snd_plant_fire_seed_TB_ID,
+	snd_plant_fire_seed_trapper_ID,
+	snd_plant_fire_seed_trapper_TB_ID,
+	snd_plant_TB_kill_ID,
+
+	snd_chicken_headless_loop_ID,
+
 
 	snd_pickup_disappear_ID,
 	snd_ammo_pickup_ID,
@@ -561,6 +569,23 @@ enum sound_ID {
     snd_jackhammer_ID,
 
 	snd_explosive_reload_ID,
+
+	//some looping sounds
+	snd_eyes_loop_ID,
+	snd_eyes_TB_loop_ID,
+	snd_frog_loop_ID,
+	snd_frog_TB_loop_ID,
+	snd_portal_strike_loop_ID,
+	snd_snow_bot_slide_loop_ID,
+	snd_salamander_fire_loop_ID,
+	snd_logo_loop_ID,
+	snd_nothing_beam_loop_ID,
+	snd_ball_mom_loop_ID,
+
+	snd_frog_ultra_B_loop_ID,
+	snd_throne_1_idle_loop_ID,
+	snd_fish_TB_loop_ID,
+
 
 	snd_foot_metmetal_1_ID,
 	snd_foot_metmetal_2_ID,
