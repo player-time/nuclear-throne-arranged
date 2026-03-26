@@ -163,6 +163,9 @@ int variable_textures_max = 4000;
 std::vector<sf::Sprite> variable_textures_top;
 int variable_textures_top_max = 800;
 
+std::vector<sf::Sprite> variable_textures_top_enemies;
+int variable_textures_top_enemies_max = 800;
+
 std::vector<sf::Sprite> wall_shadow_textures;
 int wall_shadow_textures_max = 600;
 
@@ -329,6 +332,7 @@ int player_is_facing_right = 1;
 
 int wep = 0;    //ushov
 int bwep = 11;  //SPC
+
 
 int wep_swap_anim = 20;
 
@@ -1394,8 +1398,8 @@ void get_wep_reload_sound(int wep) {
     case 100:
     case 101:
     case 102:
-    case 103:
-    case 104:
+    //case 103:
+    //case 104:
     case 105:
     case 106:
     case 107:
@@ -2327,8 +2331,9 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 if (is_within_circle(allObjects[i].position, allObjects[0].position, 72)) {
                     allObjects[i].my_id = nothing;
                 }
-
-                play_sound_on_player(snd_revenge_bullet);
+                if (current_frame % 2) {
+                    play_sound_on_player(snd_revenge_bullet);
+                }
                 break;
 
             case large_guardian_bullet:
@@ -2754,7 +2759,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 }
 
                 if (image_index == 7) {
-                    allObjects[i].damage = 9;   //ultra
+                    allObjects[i].damage = 17;   //ultra
                     allObjects[i].friction = 0.37f;
                 }
 
@@ -3054,6 +3059,26 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].growspeed = random_360_degrees();
 
                 allObjects[i].alarm1 = 1;   //has ammo
+                allObjects[i].alarm2 = -1;
+
+                break;
+            case thrown_wep:
+
+                allObjects[i].my_id = obj_id;
+                allObjects[i].my_hitbox = weapon_hitbox;
+
+                allObjects[i].position = { x, y };
+                allObjects[i].speed = { 0, 0 };
+                allObjects[i].speeddir = 15.9f;
+                allObjects[i].direction = direction_to_mouse;
+                allObjects[i].size = image_index;   //what wep it is
+                allObjects[i].friction = 0.0f;
+
+                allObjects[i].rotation = (1.0f + random_float(1.0f)) * (rand() % 2 * 2 - 1);
+
+                allObjects[i].growspeed = random_360_degrees();
+                
+                allObjects[i].alarm2 = 15;
 
                 break;
             case scorch:
@@ -3583,6 +3608,22 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 case 432:   //lightning end
                     allObjects[i].alarm1 = 11;
                     allObjects[i].alarm2 = 9;
+                    break;
+                case 552:   //robot eat
+                    allObjects[i].alarm1 = 25;
+                    allObjects[i].alarm2 = 3;
+                    break;
+                case 576:   //robot A ultra
+                    allObjects[i].alarm1 = 15;
+                    allObjects[i].alarm2 = 3;
+                    break;
+                case 600:   //throw_hit
+                    allObjects[i].alarm1 = 13;
+                    allObjects[i].alarm2 = 10;
+                    break;
+                case 601:   //chicken ultra B
+                    allObjects[i].alarm1 = 16;
+                    allObjects[i].alarm2 = 11;
                     break;
                 default:
                     allObjects[i].alarm1 = 0;
@@ -5039,6 +5080,13 @@ void enemy_die(int ENEMY, int PROJ) {
 
     kill_count++;
 
+    if (player_character == chicken && ultra_picked == 1) {
+        chicken_headless_timer += 13;
+        if (chicken_headless_timer > 300) {
+            chicken_headless_timer = 300;
+        }
+    }
+
     if (allObjects[ENEMY].my_id != throne_2) {
         for (int i = allObjects[ENEMY].rad_drop + (player_character == melting); i > 0; i--) {
             create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, random_float(3.0f) + 3.0f, 0.0f, rad, 0.0f, 0);
@@ -5742,6 +5790,20 @@ void weapon_drop_collision(int currOBJ, int i, int j) {
                         if (allObjects[currOBJ].alarm1 == 1) {
                             allObjects[currOBJ].alarm1 = 0;
                             add_ammo_chest_to_player(allObjects[currOBJ].size);
+                            if (player_character == robot && ultra_picked == 1) {
+                                float tmp_player_max_hp = player_max_hp;
+                                if (tmp_player_max_hp <= 0) {
+                                    tmp_player_max_hp = 1;
+                                }
+                                if (random_float(tmp_player_max_hp) >= player_hp && rand() % 3 != 0) {
+                                    pickup_health();
+                                }
+                                else {
+                                    pickup_ammo();
+                                }
+                                create_object(allObjects[nearest_wep_drop_ID].position.x, allObjects[nearest_wep_drop_ID].position.y, 0, 0, static_effect, 0, 576);
+                                play_sound_on_player(snd_robot_eat_fast_ID);
+                            }
                         }
                     }
                 }
@@ -5907,6 +5969,23 @@ void basic_enemy_collision(int currOBJ, int i, int j) {
                                     enemy_die(currOBJ, O);
                                 }
                                 allObjects[O].speeddir *= 0.5f;
+                            }
+                        }
+                        break;
+                    case objectID::thrown_wep:
+                        if (allObjects[O].speeddir > 1.0f && allObjects[currOBJ].next_hurt < current_frame) {
+                            if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, allObjects[currOBJ].my_hitbox + allObjects[O].my_hitbox)) {
+                                allObjects[currOBJ].my_hp -= 22 + 2 * player_level;
+                                
+                                create_object(allObjects[O].position.x, allObjects[O].position.y, 0, 0, static_effect, 0, 600);
+                                if (allObjects[currOBJ].my_hp > 0) {
+                                    enemy_hurt(currOBJ, O);
+                                }
+                                else {  //dead
+                                    enemy_die(currOBJ, O);
+                                }
+                                allObjects[O].speeddir *= 0.5f;
+                                allObjects[O].direction = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
                             }
                         }
                         break;
@@ -7093,6 +7172,23 @@ void throne_2_collision(int currOBJ, int i, int j) {
 
                         }
                         break;
+                    case thrown_wep:
+                        if (allObjects[O].speeddir > 1.0f && allObjects[currOBJ].next_hurt < current_frame) {
+                            if (is_within_throne_2(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox)) {
+                                allObjects[currOBJ].my_hp -= 22 + 2 * player_level;
+
+                                create_object(allObjects[O].position.x, allObjects[O].position.y, 0, 0, static_effect, 0, 600);
+                                if (allObjects[currOBJ].my_hp > 0) {
+                                    enemy_hurt(currOBJ, O);
+                                }
+                                else {  //dead
+                                    enemy_die(currOBJ, O);
+                                }
+                                allObjects[O].speeddir *= 0.5f;
+                                allObjects[O].direction = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
+                            }
+                        }
+                        break;
                     default:
                         break;
                     }
@@ -7219,16 +7315,69 @@ void not_enough_ammo(std::string string) {
 
 void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gamble_reload, int free_shots, int cost, float reload, float proj_speed, objectID object_type, float player_KB, float wep_KB, float acc_variation, bool automatic, int& ammo_type, int bullet_type = 0) {
     if ((LMB_pressed && wep_reload <= 0.0f && ammo_type - cost * shots >= 0) || (skeleton_gamble && wep_reload <= 0.0f)) {
+        LMB_pressed = automatic;
+        wep_kick = wep_KB;
+
+        if (wep == 22 && player_rads < 16) {
+            create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
+            play_sound_on_player(snd_not_enough_rads_ID);
+            return;//not enough rads
+        }
+        else if (wep == 22) {
+            player_rads -= 16;
+        }
+
+        if (wep == 49 && player_rads < 4) {
+            create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
+            play_sound_on_player(snd_not_enough_rads_ID);
+            LMB_pressed = false;
+            return;//not enough rads
+        }
+        else if (wep == 49) {
+            player_rads -= 4;
+        }
+
+        if (wep == 63 && player_rads < 12) {
+            create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
+            play_sound_on_player(snd_not_enough_rads_ID);
+            return;//not enough rads
+        }
+        else if (wep == 63) {
+            player_rads -= 12;
+        }
+
+        if (wep == 83 && player_rads < 14) {
+            create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
+            play_sound_on_player(snd_not_enough_rads_ID);
+            LMB_pressed = false;
+            return;//not enough rads
+        }
+        else if (wep == 83) {
+            player_rads -= 14;
+        }
+
+        if (wep == 108 && player_rads < 20) {
+            create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
+            play_sound_on_player(snd_not_enough_rads_ID);
+            return;//not enough rads
+        }
+        else if (wep == 108) {
+            player_rads -= 20;
+        }
+
         reloaded = false;
 
         last_fire_frame = current_frame;
 
         ammo_type -= cost * shots * !(skeleton_gamble);
-        LMB_pressed = automatic;
-        wep_kick = wep_KB;
+        
         motion_add_dir(direction, player_KB, 0);
         
         play_wep_sound();
+
+        if (shots > 1) {
+            play_sound_on_player(snd_YV_pop_ID);
+        }
 
         wep_reload += reload * shots * gamble_reload;
 
@@ -7695,6 +7844,9 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
     float Xoff = 0.0f;
     float Yoff = 0.0f;
 
+    if (wep == -1) {
+        return;
+    }
 
     if (!crystal_is_shielding) {
         if (b_wep_shot) {
@@ -7757,6 +7909,9 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 }
                 else {
                     //not enough rads
+                    wep_kick = -3;
+                    create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
+                    play_sound_on_player(snd_not_enough_rads_ID);
                 }
             }
             break;
@@ -7913,6 +8068,9 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 motion_add_dir(direction, -16, 0);
                 play_wep_sound();
 
+                if (shots > 1) {
+                    play_sound_on_player(snd_YV_pop_ID);
+                }
 
                 wep_reload += 260.0f * shots * gamble_reload;
                 Xspd = cos(direction) * 6.0f;
@@ -8333,6 +8491,7 @@ void object_tunnel_corner(int currOBJ) {
         }
         break;
     case objectID::debris:
+    case objectID::thrown_wep:
         bounce_in_corner_wall(currOBJ);
         allObjects[currOBJ].speeddir = allObjects[currOBJ].speeddir / 2;
         break;
@@ -9093,6 +9252,32 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                 allObjects[i].speeddir = 0;
             }
 
+
+            allObjects[i].alarm2--;
+            if (player_character == chicken && ultra_picked == 2 && allObjects[i].alarm2 == 0) {
+                //chicken ultra
+                if (bwep == -1) {
+                    if (wep == -1) {
+                        wep = allObjects[i].size;
+                        wep_reload = 0.0f;
+                        reloaded = true;
+                        wep_kick = 0;
+                    }
+                    else {
+                        bwep = allObjects[i].size;
+                        bwep_reload = 0.0f;
+                        breloaded = true;
+                        Bwep_kick = 0;
+                    }
+                    allObjects[i].my_id = nothing;
+                    create_object(allObjects[i].position.x, allObjects[i].position.y, 0, 0, static_effect, 0, 601);
+                    create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, static_effect, 0, 601);
+
+                    play_sound_on_player(snd_chicken_B_ID);
+                }
+            }
+
+
             allObjects[i].speed.x = cos(allObjects[i].direction) * allObjects[i].speeddir;
             allObjects[i].speed.y = sin(allObjects[i].direction) * allObjects[i].speeddir;
 
@@ -9713,6 +9898,28 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                 allObjects[i].my_id = nothing;
             }
             break;
+        case thrown_wep:
+            allObjects[i].alarm2--;
+            allObjects[i].alarm3--;
+            if (allObjects[i].alarm2 <= 0) {
+                allObjects[i].friction = 0.5f;
+            }
+            if (allObjects[i].speeddir > 0) {
+                allObjects[i].speeddir -= allObjects[i].friction;
+
+                allObjects[i].speed.x = cos(allObjects[i].direction) * allObjects[i].speeddir;
+                allObjects[i].speed.y = sin(allObjects[i].direction) * allObjects[i].speeddir;
+
+                allObjects[i].position += allObjects[i].speed;
+            }
+            else {
+                allObjects[i].speeddir = 0.0f;
+                allObjects[i].my_id = weapon_drop;
+                allObjects[i].friction = 0.4f;
+                allObjects[i].alarm1 = 0;
+                allObjects[i].alarm2 = 30;  //chicken ultra
+            }
+            break;
         case debris:
             if (allObjects[i].speeddir > 0) {
                 allObjects[i].alarm2--;
@@ -9722,6 +9929,9 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                 allObjects[i].speed.y = sin(allObjects[i].direction) * allObjects[i].speeddir;
 
                 allObjects[i].position += allObjects[i].speed;
+            }
+            else {
+                allObjects[i].speeddir = 0.0f;
             }
             allObjects[i].alarm1--;
 
@@ -10034,7 +10244,7 @@ void player_explosive_burst_step(int obj) {
                 inaccuracy_y = sin(direction_to_mouse + inaccuracy) * tmp_spd;
 
                 //player_flame
-                create_object(allObjects[0].position.x, allObjects[0].position.y, inaccuracy_x, inaccuracy_y, player_flame, direction_to_mouse + inaccuracy, 0);
+                create_object(allObjects[0].position.x + inaccuracy_x / 2 + random_float(4) - 2, allObjects[0].position.y + inaccuracy_y / 2 + random_float(4) - 2, inaccuracy_x, inaccuracy_y, player_flame, direction_to_mouse + inaccuracy, 0);
             }
             if (wep == 103) {
                 wep_kick = 2;
@@ -10054,7 +10264,7 @@ void player_explosive_burst_step(int obj) {
                     inaccuracy_y = sin(direction_to_mouse + inaccuracy) * tmp_spd;
 
                     //player_flame
-                    create_object(allObjects[0].position.x, allObjects[0].position.y, inaccuracy_x, inaccuracy_y, player_flame, direction_to_mouse + inaccuracy, 0);
+                    create_object(allObjects[0].position.x + inaccuracy_x / 2 + random_float(4) - 2, allObjects[0].position.y + inaccuracy_y / 2 + random_float(4) - 2, inaccuracy_x, inaccuracy_y, player_flame, direction_to_mouse + inaccuracy, 0);
                 }
             }
             if (wep == 104) {
@@ -11096,6 +11306,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                         }
                         break;
                     case objectID::debris:
+                    case objectID::thrown_wep:
                         bounce_in_wall(currOBJ);
                         allObjects[currOBJ].speeddir = allObjects[currOBJ].speeddir / 2;
                         break;
@@ -12820,9 +13031,19 @@ int main(int argc, char* argv[])
     add_new_sound(snd_plant_fire_seed_trapper_TB_ID, "snd/plant_fire_seed_trapper_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.01f);
     add_new_sound(snd_plant_TB_kill_ID, "snd/plant_TB_kill.wav", all_sounds, all_sounds_mirror, 0.05f, 0.01f);
 
+    //YV
+    add_new_sound(snd_YV_pop_ID, "snd/YV_pop.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+
+    //robot
+    add_new_sound(snd_robot_eat_ID, "snd/robot_eat.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_robot_eat_fast_ID, "snd/robot_eat_fast.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_robot_eat_TB_ID, "snd/robot_eat_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
 
     //chicken
     add_new_sound(snd_chicken_headless_loop_ID, "snd/chicken_headless_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+
+    add_new_sound(snd_chicken_throw_ID, "snd/chicken_throw.wav", all_sounds, all_sounds_mirror, 0.05, 0.0f);
+    add_new_sound(snd_chicken_B_ID, "snd/chicken_B.wav", all_sounds, all_sounds_mirror, 0.05, 0.0f);
 
 
     add_new_sound(snd_pickup_disappear_ID, "snd/pickup_disappear.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
@@ -12885,6 +13106,9 @@ int main(int argc, char* argv[])
     add_new_sound(snd_gain_strong_spirit_ID, "snd/gain_strong_spirit.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
 
     add_new_sound(snd_lose_strong_spirit_ID, "snd/lose_strong_spirit.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
+
+
+    add_new_sound(snd_not_enough_rads_ID, "snd/not_enough_rads.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
 
     //weapon shoot snds
     //add_new_sound(snd_player_shoot_A_ID, "snd/sword.wav", all_sounds, snd_sword_ID, all_extra_sound_buffers, 0.1f, 0.0f);
@@ -13276,6 +13500,7 @@ int main(int argc, char* argv[])
         sf::Sprite xp_bar_spr;
         sf::Sprite hp_bar_spr;
         sf::Sprite health_bar_spr;
+        sf::Sprite chicken_health_bar_spr;
 
         sf::Texture player_level_tex;
         player_level_tex.loadFromFile("res/sprPlayerLevel.png");
@@ -13285,6 +13510,9 @@ int main(int argc, char* argv[])
         hp_bar.loadFromFile("res/player/hp_bar.png");
         sf::Texture health_bar;
         health_bar.loadFromFile("res/player/health_bar.png");
+
+        sf::Texture chicken_health_bar;
+        chicken_health_bar.loadFromFile("res/player/chicken_health_bar.png");
 
 
         player_level_spr.setTexture(player_level_tex);
@@ -13305,6 +13533,11 @@ int main(int argc, char* argv[])
         health_bar_spr.setOrigin(0, 0);
         health_bar_spr.setPosition(22, 7);
         health_bar_spr.setScale(84, 1);
+
+        chicken_health_bar_spr.setTexture(chicken_health_bar);
+        chicken_health_bar_spr.setOrigin(0, 0);
+        chicken_health_bar_spr.setPosition(22, 7);
+        chicken_health_bar_spr.setScale(84, 1);
 
         sf::Text hp_text;
         hp_text.setCharacterSize(8);
@@ -13362,7 +13595,8 @@ int main(int argc, char* argv[])
         sf::Texture player_sight_tex;
         player_sight_tex.loadFromFile("res/player/player_sight.png");
 
-
+        sf::Texture chicken_ultra_B_tex;
+        chicken_ultra_B_tex.loadFromFile("res/chicken_ultra_B.png");
 
 
         sf::Texture allPropSprites;
@@ -14236,6 +14470,11 @@ int main(int argc, char* argv[])
         temp.setColor({ 0, 0, 0, 0 });
         variable_textures_top.push_back(temp);
     }
+    for (int i = 0; i < variable_textures_top_enemies_max; i++) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        variable_textures_top_enemies.push_back(temp);
+    }
 
     for (int i = 0; i < variable_textures_bloom_max; i++) {
         sf::Sprite temp;
@@ -14948,6 +15187,58 @@ int main(int argc, char* argv[])
                         LMB_pressed = true;
                         fire_weapon(wep, direction_to_mouse, 2, ultra_picked == 2);
                         break;
+                    case robot:
+                        if (nearest_wep_drop_ID != 0) {
+                            allObjects[nearest_wep_drop_ID].my_id = nothing;
+                            float tmp_player_max_hp = player_max_hp;
+                            if (tmp_player_max_hp <= 0) {
+                                tmp_player_max_hp = 1;
+                            }
+                            
+                            for (int i = 0; i < 1; i++) {
+                                if (random_float(tmp_player_max_hp) >= player_hp && rand() % 3 != 0) {
+                                    pickup_health();
+                                }
+                                else {
+                                    pickup_ammo();
+                                }
+                            }
+                            int siz = allObjects[nearest_wep_drop_ID].size;
+                            if (siz == 16 || siz == 21 || siz == 30 || siz == 42 || siz == 43 || siz == 50 || siz == 55 || siz == 62 || siz == 70 || siz == 78 || siz == 87 || siz == 98 || siz == 100) {
+                                for (int i = 0; i < 4; i++) {
+                                    if (random_float(tmp_player_max_hp) >= player_hp && rand() % 3 != 0) {
+                                        pickup_health();
+                                    }
+                                    else {
+                                        pickup_ammo();
+                                    }
+                                }
+                            }
+                            create_object(allObjects[nearest_wep_drop_ID].position.x, allObjects[nearest_wep_drop_ID].position.y, 0, 0, static_effect, 0, 552);
+                            play_sound_on_player(snd_robot_eat_ID);
+                        }
+                        break;
+                    case chicken:
+                        if (wep != -1) {
+                            create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, thrown_wep, 0, wep);
+                            play_sound_on_player(snd_chicken_throw_ID);
+                            if (bwep != -1) {
+                                wep = bwep;
+                                wep_reload = bwep_reload;
+                                reloaded = breloaded;
+
+                                bwep = -1;
+                                bwep_reload = 0.0f;
+                                breloaded = true;
+                            }
+                            else {
+                                wep = -1;
+                                wep_reload = 0.0f;
+                                reloaded = true;
+                            }
+                        }
+
+                        break;
                     case rebel:
                         //if picked riot or has alive allys the cost is 2
                         tmpXSPD = (ally_count != 0 || ultra_picked == 2) + 1;
@@ -15345,22 +15636,49 @@ int main(int argc, char* argv[])
 
 
                 if (nearest_wep_drop_ID != 0 && E_pressed) {
-                    int tmpwep = wep;
-                    wep = allObjects[nearest_wep_drop_ID].size;
-                    allObjects[nearest_wep_drop_ID].size = tmpwep;
-                    wep_reload = 0.0f;
-                    play_sound_on_player(snd_wep_pickup_ID);
-                    wep_swap_anim = 0;
-                    swapmove = 1;
+                    if (wep != -1 && bwep != -1) {
+                        int tmpwep = wep;
+                        wep = allObjects[nearest_wep_drop_ID].size;
+                        allObjects[nearest_wep_drop_ID].size = tmpwep;
+                        wep_reload = 0.0f;
+                        play_sound_on_player(snd_wep_pickup_ID);
+                        wep_swap_anim = 0;
+                        swapmove = 1;
 
-                    allObjects[nearest_wep_drop_ID].growspeed = random_360_degrees();
-                    //weapon_drop swap
+                        allObjects[nearest_wep_drop_ID].growspeed = random_360_degrees();
+                        //weapon_drop swap
+                    }
+                    else if (wep != -1 && bwep == -1) {
+                        bwep = wep;
+                        breloaded = reloaded;
+                        bwep_reload = wep_reload;
 
+                        allObjects[nearest_wep_drop_ID].my_id = nothing;
+
+                        wep_reload = 0.0f;
+                        reloaded = true;
+                        play_sound_on_player(snd_wep_pickup_ID);
+                        wep_swap_anim = 0;
+                        swapmove = 1;
+
+                        wep = allObjects[nearest_wep_drop_ID].size;
+                    }
+                    else if (wep == -1 && bwep == -1) {
+                        allObjects[nearest_wep_drop_ID].my_id = nothing;
+
+                        wep_reload = 0.0f;
+                        reloaded = true;
+                        play_sound_on_player(snd_wep_pickup_ID);
+                        wep_swap_anim = 0;
+                        swapmove = 1;
+
+                        wep = allObjects[nearest_wep_drop_ID].size;
+                    }
                 }
                 if (E_pressed) {//debug
-                    wep++;
+                    //wep++;
                     if (wep >= 110) {
-                        wep = 0;
+                        //wep = 0;
                     }
                 }
                 E_pressed = false;
@@ -15371,37 +15689,39 @@ int main(int argc, char* argv[])
                 swapmove = 0;
                 if (SPACE_pressed) {
                     SPACE_pressed = false;
+                    if (bwep != -1) {
 
-                    play_swap_sound(bwep);
+                        play_swap_sound(bwep);
 
-                    if (current_player_weapon_sound == 0) {
-                        current_player_weapon_sound = 1;
+                        if (current_player_weapon_sound == 0) {
+                            current_player_weapon_sound = 1;
+                        }
+                        else {
+                            current_player_weapon_sound = 0;
+                        }   //determines what buffer is swapped when swapping weapons
+
+                        if (player_character != steroids) {
+                            int tmpwep = wep;
+                            wep = bwep;
+                            bwep = tmpwep;
+
+                            //reload
+                            float tmpreload = wep_reload;
+                            wep_reload = bwep_reload;
+                            bwep_reload = tmpreload;
+
+                            wep_kick = 0;
+                        }
+                        else {
+                            swap_weapons();
+                        }
+                        wep_swap_anim = 0;
+                        swapmove = 1;
+
+                        int tmpreloaded = reloaded;
+                        reloaded = breloaded;
+                        breloaded = tmpreloaded;
                     }
-                    else {
-                        current_player_weapon_sound = 0;
-                    }   //determines what buffer is swapped when swapping weapons
-
-                    if (player_character != steroids) {
-                        int tmpwep = wep;
-                        wep = bwep;
-                        bwep = tmpwep;
-
-                        //reload
-                        float tmpreload = wep_reload;
-                        wep_reload = bwep_reload;
-                        bwep_reload = tmpreload;
-
-                        wep_kick = 0;
-                    }
-                    else {
-                        swap_weapons();
-                    }
-                    wep_swap_anim = 0;
-                    swapmove = 1;
-
-                    int tmpreloaded = reloaded;
-                    reloaded = breloaded;
-                    breloaded = tmpreloaded;
                 }
 
                 if (wep_reload >= 0.0f) {
@@ -16042,6 +16362,7 @@ int main(int argc, char* argv[])
                 player_health_bar_scale = 0;
             }
             health_bar_spr.setScale(player_health_bar_scale, 1);
+            chicken_health_bar_spr.setScale(int(ceil(float(chicken_headless_timer) / (150.0f * ((ultra_picked == 1) + 1)) * 84.0f)), 1);
             if (player_hp < 0) {
                 player_hp = 0;
             }
@@ -16171,6 +16492,8 @@ int main(int argc, char* argv[])
 
         int rotateableSpriteGunIndex = 0;
         int rotateableSpriteGunTopIndex = 0;
+
+        int variableTexturesTopEnemiesIndex = 0;
 
         int rotateableEffectsSmallIndex = 0;
         int rotateableEffectsMediumIndex = 0;
@@ -16614,13 +16937,13 @@ int main(int argc, char* argv[])
                                 tmp_wep_angle = direction_to_mouse + (Bwep_angle * (1 - (Bwep_kick / 20))) / degreestoradians;
                             }
 
-                            bwep_sprite.setPosition(allObjects[idx].position - cameraPos + sf::Vector2f(cos(tmp_wep_angle) * -Bwep_kick, sin(tmp_wep_angle) * -Bwep_kick));
+                            bwep_sprite.setPosition(allObjects[idx].position - cameraPos + sf::Vector2f(cos(tmp_wep_angle) * -Bwep_kick, sin(tmp_wep_angle) * -Bwep_kick - 4));
                             bwep_sprite.setTextureRect(sf::IntRect{ 36 * Bwep_shine_frame, 36 * bwep, 36, 36 });
-                            if (wep < 11){
+                            if (bwep < 11){
                                 bwep_sprite.setScale(1 * allObjects[0].scale, (player_is_facing_right * (breloaded * 2 - 1)) * allObjects[0].scale);
                             }
                             else {
-                                bwep_sprite.setScale(1 * allObjects[0].scale, player_is_facing_right * allObjects[0].scale);
+                                bwep_sprite.setScale(1 * allObjects[0].scale, -player_is_facing_right * allObjects[0].scale);
                             }
                             bwep_sprite.setRotation(tmp_wep_angle * degreestoradians);
                             bwep_sprite.setOrigin(wep_get_origin(bwep));
@@ -17046,6 +17369,7 @@ int main(int argc, char* argv[])
                         scorch_spritesIndex++;
                         break;
                     case weapon_drop:
+                    case thrown_wep:
                         weapon_sprites[weapon_spritesIndex].setColor({ 255, 255, 255, 255 });
                         weapon_sprites[weapon_spritesIndex].setPosition(allObjects[idx].position - cameraPos);
                         weapon_sprites[weapon_spritesIndex].setOrigin(wep_get_origin(allObjects[idx].size));
@@ -17156,11 +17480,11 @@ int main(int argc, char* argv[])
                                 rotateable_effects_large[rotateableEffectsLargeIndex].setScale(sf::Vector2f(1, 1));
                                 if (allObjects[idx].alarm3 == 7) {
                                     choice2 = 456;
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ (int(allObjects[idx].alarm1 * 0.4f) % 3) * 24, choice2, 24, 24 });
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ (int((allObjects[idx].alarm1 + 300) * 0.4f) % 3) * 24, choice2, 24, 24 });
                                 }
                                 else {
                                     choice2 = 480;
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ (int(allObjects[idx].alarm1 * 0.4f) % 6) * 24, choice2, 24, 24 });
+                                    rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ (int((allObjects[idx].alarm1 + 300) * 0.4f) % 6) * 24, choice2, 24, 24 });
                                 }
                                 rotateableEffectsLargeIndex++;
                             }
@@ -17785,6 +18109,26 @@ int main(int argc, char* argv[])
                             variable_textures_bloom[variableTexturesBloomIndex].setOrigin(12, 12);
                             variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
                             variableTexturesBloomIndex++;
+                        }
+                        else if (allObjects[idx].alarm2 == 10) {
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setTexture(allBigEffectSprites);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setColor({ 255, 255, 255, 255 });
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setPosition(allObjects[idx].position - cameraPos);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setRotation(allObjects[idx].direction);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setTextureRect(sf::IntRect{ choice * 24, allObjects[idx].size, 24, 24 });
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setOrigin(12, 12);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setScale(1, 1);
+                            variableTexturesTopEnemiesIndex++;
+                        }
+                        else if (allObjects[idx].alarm2 == 11) {
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setTexture(chicken_ultra_B_tex);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setColor({ 255, 255, 255, 255 });
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setPosition(allObjects[idx].position - cameraPos);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setRotation(allObjects[idx].direction);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setTextureRect(sf::IntRect{ choice * 32, 0, 32, 32 });
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setOrigin(16, 16);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setScale(1, 1);
+                            variableTexturesTopEnemiesIndex++;
                         }
                         break;
                     case rebel_ally:
@@ -18591,7 +18935,7 @@ int main(int argc, char* argv[])
 
         sf::Text debug2;
 
-        debug2.setString("GLOBAL_DEBUG_INT: " + std::to_string(GLOBAL_DEBUG_INT));
+        debug2.setString("player_rads: " + std::to_string(player_rads));
         debug2.setCharacterSize(8);
         debug2.setFont(font);
         debug2.setColor(sf::Color::White);
@@ -19008,8 +19352,19 @@ int main(int argc, char* argv[])
             }
             reset_rotateable_sprites(rotateable_sprites_guns_top, rotateableSpriteGunTopIndex);
 
+            for (sf::Sprite spr : variable_textures_top_enemies) {
+                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                    break;
+                }
+                buffer_over.draw(spr);
+            }
+            reset_rotateable_sprites(variable_textures_top_enemies, variableTexturesTopEnemiesIndex);
+
+
             int temp_var = 0;
             if ((float)rotateableSpriteGunTopIndex / (float)rotateable_sprites_guns_top_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "rotateable_sprites_guns_top"; proportion_min[temp_var].x = rotateableSpriteGunTopIndex; proportion_min[temp_var].y = rotateable_sprites_guns_top_max; }
+            temp_var++;
+            if ((float)variableTexturesTopEnemiesIndex / (float)variable_textures_top_enemies_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "variable_textures_top_enemies"; proportion_min[temp_var].x = variableTexturesTopEnemiesIndex; proportion_min[temp_var].y = variable_textures_top_enemies_max; }
             temp_var++;
             if ((float)underEffectsSmallIndex / (float)under_effects_small_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "under_effects_small"; proportion_min[temp_var].x = underEffectsSmallIndex; proportion_min[temp_var].y = under_effects_small_max; }
             temp_var++;
@@ -19109,9 +19464,10 @@ int main(int argc, char* argv[])
             buffer_over.draw(portal_sprite);
 
             if (!crystal_is_shielding && player_alive) {
-                buffer_over.draw(bwep_sprite);
-
-                if (direction_to_mouse - (180 / degreestoradians) > 0) {
+                if (bwep != -1) {
+                    buffer_over.draw(bwep_sprite);
+                }
+                if (direction_to_mouse - (180 / degreestoradians) > 0 && wep != -1) {
                     buffer_over.draw(wep_sprite);
                 }
             }
@@ -19143,7 +19499,7 @@ int main(int argc, char* argv[])
                 buffer_over.draw(player_sprite);
             }
 
-            if (!crystal_is_shielding && player_alive) {
+            if (!crystal_is_shielding && player_alive && wep != -1) {
                 if (direction_to_mouse - (180 / degreestoradians) <= 0) {
                     buffer_over.draw(wep_sprite);
                 }
@@ -19361,6 +19717,9 @@ int main(int argc, char* argv[])
                 buffer_over.draw(player_level_spr);
                 buffer_over.draw(hp_bar_spr);
                 buffer_over.draw(health_bar_spr);
+                if (chicken_beheaded) {
+                    buffer_over.draw(chicken_health_bar_spr);
+                }
                 draw_text_NT(hp_text, buffer_over);
                 go_addy1 = 55;
                 go_addy2 = 3;

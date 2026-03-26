@@ -1,5 +1,4 @@
-﻿  Building Custom Rule C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/_deps/sfml-src/src/SFML/Network/CMakeLists.txt
-  Ftp.cpp
+﻿  Ftp.cpp
   Http.cpp
   IpAddress.cpp
   Packet.cpp

@@ -87,6 +87,7 @@ enum objectID {
 	stress_sweat,
 
 	weapon_drop,
+	thrown_wep,
 
 	rad, rad_destroy,
 
@@ -406,8 +407,16 @@ enum sound_ID {
 	snd_plant_fire_seed_trapper_TB_ID,
 	snd_plant_TB_kill_ID,
 
+	snd_YV_pop_ID,
+
+	snd_robot_eat_ID,
+	snd_robot_eat_fast_ID,
+	snd_robot_eat_TB_ID,
+
 	snd_chicken_headless_loop_ID,
 
+	snd_chicken_throw_ID,
+	snd_chicken_B_ID,
 
 	snd_pickup_disappear_ID,
 	snd_ammo_pickup_ID,
@@ -569,6 +578,9 @@ enum sound_ID {
     snd_jackhammer_ID,
 
 	snd_explosive_reload_ID,
+
+	snd_not_enough_rads_ID,
+
 
 	//some looping sounds
 	snd_eyes_loop_ID,
