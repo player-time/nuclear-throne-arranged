@@ -1,7 +1,10 @@
 //NUCLEAR THRONE ARRANGED
 
 //TODO !!!
-// make robot have more direct movement instead of soonter wep drops
+
+//finish wall sprites
+//fix light sources
+
 
 //check whether going over sprite limit
 //replay system
@@ -265,6 +268,8 @@ sf::Vector2f create_portal_POS = { 24016, 24016 };
 
 bool killed_throne_2 = false;
 bool can_move_outside_T2_arena = false;
+bool boss_taunt = false;
+int boss_taunt_delay = 0;
 
 unsigned int MAXFPS = 30;
 
@@ -4798,7 +4803,7 @@ int create_explo_tile(int x, int y) {
 void vector2D_reset(int top, int bottom, int left, int right){
     for (int i = left; i < right; i++) {
         for (int j = top; j < bottom; j++) {
-            game_area[i][j].object_indexes.clear();
+            da_clear(game_area[i][j].object_indexes);
             //game_area[i][j].current_object_index = 0;
             //game_area[i][j].has_line_of_sight = false;
         }
@@ -8622,6 +8627,7 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                 //all_sounds[snd_music_ID].sound.setVolume(100.0f);
                 current_music.setVolume(100.0f);
                 current_music.play();
+                
             }
 
             //half hp noise
@@ -8630,6 +8636,15 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             if (allObjects[i].my_hp < max_hp * 0.5f && allObjects[i].scale > 0.5f) {
                 allObjects[i].scale = 0.0f;
                 play_sound_on_player(snd_throne_2_half_hp_ID);
+            }
+
+            //taunt
+            if (!boss_taunt && !player_alive) {
+                boss_taunt_delay++;
+                if (boss_taunt_delay > 50) {
+                    boss_taunt = true;
+                    play_sound_on_player(snd_throne_2_taunt_ID);
+                }
             }
 
             //draw always
@@ -12248,6 +12263,13 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
         int tmp_num_of_enemies_to_spawn = 1;
         int enemy_choice = 0;
         if (sub_area == 1) {
+
+
+            current_music.openFromFile("mus/mus1.ogg");
+            current_music.setVolume(100.0f);
+            current_music.play();
+
+
             for (int i = left_physics; i <= right_physics; i++) {
                 for (int j = top_physics; j <= bottom_physics; j++) {
                     //if its the top left of a floor tile place enemy in center of tile
@@ -12309,6 +12331,13 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
         int tmp_num_of_enemies_to_spawn = 1;
         int enemy_choice = 0;
         if (sub_area == 1) {
+
+
+            current_music.openFromFile("mus/mus2.ogg");
+            current_music.setVolume(100.0f);
+            current_music.play();
+
+
             for (int i = left_physics; i <= right_physics; i++) {
                 for (int j = top_physics; j <= bottom_physics; j++) {
                     //if its the top left of a floor tile place enemy in center of tile
@@ -12365,6 +12394,13 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
         int tmp_num_of_enemies_to_spawn = 1;
         int enemy_choice = 0;
         if (sub_area == 1) {
+
+
+            current_music.openFromFile("mus/mus3.ogg");
+            current_music.setVolume(100.0f);
+            current_music.play();
+
+
             for (int i = left_physics; i <= right_physics; i++) {
                 for (int j = top_physics; j <= bottom_physics; j++) {
                     //if its the top left of a floor tile place enemy in center of tile
@@ -12421,6 +12457,13 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
         int tmp_num_of_enemies_to_spawn = 1;
         int enemy_choice = 0;
         if (sub_area == 1) {
+
+
+            current_music.openFromFile("mus/mus4.ogg");
+            current_music.setVolume(100.0f);
+            current_music.play();
+
+
             for (int i = left_physics; i <= right_physics; i++) {
                 for (int j = top_physics; j <= bottom_physics; j++) {
                     //if its the top left of a floor tile place enemy in center of tile
@@ -12477,6 +12520,13 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
         int tmp_num_of_enemies_to_spawn = 1;
         int enemy_choice = 0;
         if (sub_area == 1) {
+
+
+            current_music.openFromFile("mus/mus5.ogg");
+            current_music.setVolume(100.0f);
+            current_music.play();
+
+
             for (int i = left_physics; i <= right_physics; i++) {
                 for (int j = top_physics; j <= bottom_physics; j++) {
                     //if its the top left of a floor tile place enemy in center of tile
@@ -12529,10 +12579,124 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
     if (area == 6) {
         generate_floors(480, 0, 14, 11, 13, 
             21, 22, 7, 20);
+        int tmp_num_of_enemies_to_spawn = 1;
+        int enemy_choice = 0;
+        if (sub_area == 1) {
+
+
+            current_music.openFromFile("mus/mus6.ogg");
+            current_music.setVolume(100.0f);
+            current_music.play();
+
+
+            for (int i = left_physics; i <= right_physics; i++) {
+                for (int j = top_physics; j <= bottom_physics; j++) {
+                    //if its the top left of a floor tile place enemy in center of tile
+                    if (i % 2 == 0 && j % 2 == 0 &&
+                        game_area[i][j].my_grid_type == floor_tile && !is_within_circle(sf::Vector2f(24016, 24016), sf::Vector2f(i * 16 + 8, j * 16 + 8), 100)) {
+                        if (rand() % 1 == 0) {   //spawn enemy
+                            if (rand() % 2) {   //cluster spawn
+                                tmp_num_of_enemies_to_spawn = (90 / (1 + (200 * pow(e_constant, -0.3f * LOOPS))));    //logistic growth so the enemy count caps out at about l30, but keeps general growth in early loops
+                            }
+                            else {              //single spawn
+                                tmp_num_of_enemies_to_spawn = 1;
+                            }
+                        }
+                        else {
+                            tmp_num_of_enemies_to_spawn = 0;
+                        }
+                        enemy_choice = rand() % 9;
+                        if (tmp_num_of_enemies_to_spawn > 1) {  //cluster spawn destroys nearby walls
+                            for (int b = -1; b < 3; b++) {
+                                for (int c = -1; c < 3; c++) {
+                                    if (game_area[i + b][j + c].my_grid_type == wall) {
+                                        create_explo_tile(i + b, j + c);
+                                        //create debris too
+                                    }
+                                }
+                            }
+                        }
+                        for (int b = 0; b < 2; b++) {
+                            for (int c = 0; c < 2; c++) {
+                                if (game_area[i + b][j + c].my_grid_type == wall) {
+                                    create_explo_tile(i + b, j + c);
+                                    //create debris too
+                                }
+                            }
+                        }
+                        for (int r = 0; r < tmp_num_of_enemies_to_spawn; r++) {
+                            if (enemy_choice < 10) { //bandit
+                                //further apart reduces lag when spawning in to the level
+                                float rand_off_x = random_float(16.0f) - 8.0f;
+                                float rand_off_y = random_float(16.0f) - 8.0f;
+                                create_object(i * 16 + 16 + rand_off_x, j * 16 + 16 + rand_off_y, 0, 0, bandit, 0, 0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     if (area == 7) {
         generate_floors(520, 0, 15, 12, 14, 
             8, 9, 7, 16);
+        int tmp_num_of_enemies_to_spawn = 1;
+        int enemy_choice = 0;
+        if (sub_area == 1) {
+
+
+            current_music.openFromFile("mus/mus7.ogg");
+            current_music.setVolume(100.0f);
+            current_music.play();
+
+
+            for (int i = left_physics; i <= right_physics; i++) {
+                for (int j = top_physics; j <= bottom_physics; j++) {
+                    //if its the top left of a floor tile place enemy in center of tile
+                    if (i % 2 == 0 && j % 2 == 0 &&
+                        game_area[i][j].my_grid_type == floor_tile && !is_within_circle(sf::Vector2f(24016, 24016), sf::Vector2f(i * 16 + 8, j * 16 + 8), 100)) {
+                        if (rand() % 1 == 0) {   //spawn enemy
+                            if (rand() % 2) {   //cluster spawn
+                                tmp_num_of_enemies_to_spawn = (90 / (1 + (200 * pow(e_constant, -0.3f * LOOPS))));    //logistic growth so the enemy count caps out at about l30, but keeps general growth in early loops
+                            }
+                            else {              //single spawn
+                                tmp_num_of_enemies_to_spawn = 1;
+                            }
+                        }
+                        else {
+                            tmp_num_of_enemies_to_spawn = 0;
+                        }
+                        enemy_choice = rand() % 9;
+                        if (tmp_num_of_enemies_to_spawn > 1) {  //cluster spawn destroys nearby walls
+                            for (int b = -1; b < 3; b++) {
+                                for (int c = -1; c < 3; c++) {
+                                    if (game_area[i + b][j + c].my_grid_type == wall) {
+                                        create_explo_tile(i + b, j + c);
+                                        //create debris too
+                                    }
+                                }
+                            }
+                        }
+                        for (int b = 0; b < 2; b++) {
+                            for (int c = 0; c < 2; c++) {
+                                if (game_area[i + b][j + c].my_grid_type == wall) {
+                                    create_explo_tile(i + b, j + c);
+                                    //create debris too
+                                }
+                            }
+                        }
+                        for (int r = 0; r < tmp_num_of_enemies_to_spawn; r++) {
+                            if (enemy_choice < 10) { //bandit
+                                //further apart reduces lag when spawning in to the level
+                                float rand_off_x = random_float(16.0f) - 8.0f;
+                                float rand_off_y = random_float(16.0f) - 8.0f;
+                                create_object(i * 16 + 16 + rand_off_x, j * 16 + 16 + rand_off_y, 0, 0, bandit, 0, 0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     //check if any details are on b-tiles
@@ -12745,7 +12909,7 @@ void poll_movement_inputs(int& poll_move_up, int& poll_move_down, int& poll_move
 int main(int argc, char* argv[])
 {
 
-
+    GLOBAL_DEBUG_INT = sizeof(game_area);
 
 
     debug_timer_startup.timing_us_start();
@@ -12780,6 +12944,8 @@ int main(int argc, char* argv[])
     sf::Music current_music;
 
     current_music.openFromFile("mus/mus1.ogg");
+    current_music.setLoop(true);
+
 
     add_new_sound(snd_bullet_bounce_ID, "snd/bullet_bounce.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
@@ -13099,6 +13265,8 @@ int main(int argc, char* argv[])
     add_new_sound(snd_throne_2_dead_end_ID, "snd/throne_2_dead_end.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
 
     add_new_sound(snd_throne_2_explode_ID, "snd/throne_2_explode.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
+
+    add_new_sound(snd_throne_2_taunt_ID, "snd/throne_2_taunt.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
 
     add_new_sound(snd_big_ball_explode_ID, "snd/big_ball_explode.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
 
@@ -16736,9 +16904,19 @@ int main(int argc, char* argv[])
                     wall_shadow_textures[wall_shadow_texturesIndex].setTextureRect(sf::IntRect{ 24 * area, 24 * choice2, 24, 24 });
                     wall_shadow_texturesIndex++;
 
+                    int wall_transition = 8;
+
+                    for (int i_w = -1; i_w < 2; i_w++) {
+                        for (int j_w = -1; j_w < 2; j_w++) {
+                            if (game_area[i + i_w][j + j_w].my_grid_type != wall) {
+                                wall_transition = 0;
+                            }
+                        }
+                    }
+
                     wall_textures[wall_texturesArrayIndex].setColor({ 255, 255, 255, 255 });
                     wall_textures[wall_texturesArrayIndex].setPosition(currDrawPosition - sf::Vector2f{0, 8});
-                    wall_textures[wall_texturesArrayIndex].setTextureRect(sf::IntRect{ 16 * choice, 16 * area, 16, 16 });
+                    wall_textures[wall_texturesArrayIndex].setTextureRect(sf::IntRect{ 16 * choice, 16 * (area + wall_transition), 16, 16 });
                     wall_texturesArrayIndex++;
 
                     if (game_area[i][j + 1].my_grid_type != wall) {     //if there isnt a wall undernearth a bottom wall needs to be drawn
@@ -18935,7 +19113,7 @@ int main(int argc, char* argv[])
 
         sf::Text debug2;
 
-        debug2.setString("player_rads: " + std::to_string(player_rads));
+        debug2.setString("GLOBAL_DEBUG_INT: " + std::to_string(GLOBAL_DEBUG_INT));
         debug2.setCharacterSize(8);
         debug2.setFont(font);
         debug2.setColor(sf::Color::White);

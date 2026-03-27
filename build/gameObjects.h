@@ -8,6 +8,8 @@
 
 #include <chrono>
 
+#include "C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\my_vector.cpp"
+
 enum objectID {
 	nothing,
 	bullet1, bullet1_destroy,
@@ -341,6 +343,7 @@ enum sound_ID {
 	snd_throne_2_dead_start_ID,
 	snd_throne_2_dead_end_ID,
 	snd_throne_2_explode_ID,
+	snd_throne_2_taunt_ID,
 
 	snd_bandit_hurt_ID,
 	snd_bandit_die_ID,
@@ -691,7 +694,7 @@ enum sound_ID {
 	snd_foot_slime_6_ID,
 };
 
-enum gridType { out_of_bounds, wall, exlpo_tile, boarder , floor_tile, void_tile, T2_boarder }; //, secret_wall, secret_explotile, vault_wall, vault_explotile};
+enum gridType : uint8_t { out_of_bounds, wall, exlpo_tile, boarder , floor_tile, void_tile, T2_boarder }; //, secret_wall, secret_explotile, vault_wall, vault_explotile};
 enum subWallType{upLeft, up, upRight, right, downRight, down, downLeft, left, middle };	//which sprite to use for a wall
 
 enum character{ fish, crystal, eyes, melting, plant, YV, steroids, robot, chicken, rebel, horror, rogue, frog, skeleton };
@@ -821,8 +824,9 @@ struct gameObject{
 };
 
 struct gridTile {
-	std::vector<int> object_indexes;
-	gridType my_grid_type = out_of_bounds;
+	//std::vector<int> object_indexes;
+	vector_small object_indexes;
+	uint8_t my_grid_type = out_of_bounds;
 	//bool has_line_of_sight = false;
 };
 
