@@ -32,6 +32,8 @@
 
 #include <SFML/SimpleSpriteBatcher.hpp>
 
+//#include "C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\my_vector.cpp"
+
 
 int bandit_choice1 = 0;
 int draw_mult = 5;
@@ -318,6 +320,7 @@ float global_ammo_mult = 1.0f;  //ammo mult deteremined by the player ammo and w
 
 float player_friction_mult = 1.0f;
 
+bool ammo_chest_not_spawned = true;
 
 int nearest_wep_drop_ID = 0;
 float nearest_wep_drop_distance = 32.0f;
@@ -425,6 +428,7 @@ int horror_held_beam_length = 0;
 //fish
 int roll = 0;
 float roll_direction = 0.0f;
+int gun_warrent_timer = 0;
 //crystal
 int crystal_shield_cooldown = 0;
 bool crystal_is_shielding = false;
@@ -2434,8 +2438,19 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].position = { x, y };
                 allObjects[i].image_index = 0;
                 break;
-            case ammo_pack:
+            case chest:
                 allObjects[i].my_id = obj_id;
+                allObjects[i].my_hitbox = chest_hitbox;
+
+                allObjects[i].position = { x, y };
+                allObjects[i].image_index = 0;
+
+                allObjects[i].alarm1 = image_index; //what chest type it is
+                allObjects[i].alarm2 = 1;   //whether its been opened
+
+                break;
+            case ammo_pack:
+                allObjects[i].my_id = obj_id; 
                 allObjects[i].my_hitbox = ammo_hitbox;
 
                 allObjects[i].position = { x, y };
@@ -2677,7 +2692,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
             case player_lightning_orb:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].my_hitbox = lightning_hitbox;
-                allObjects[i].damage = 40 + ((laser_brain - 1.0f) * 50);
+                allObjects[i].damage = 40 + ((laser_brain - 1.0f) * 42);
 
                 allObjects[i].position = { x, y };
                 allObjects[i].speeddir = 3.0f;
@@ -3629,6 +3644,15 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 case 601:   //chicken ultra B
                     allObjects[i].alarm1 = 16;
                     allObjects[i].alarm2 = 11;
+                    break;
+                case 602:   //gun warrant end
+                    allObjects[i].alarm1 = 16;
+                    allObjects[i].alarm2 = 12;
+                    break;
+                case 320:   //fish boost
+                    allObjects[i].alarm1 = 16;
+                    allObjects[i].alarm2 = 2;
+                    allObjects[i].direction = random_360_degrees();
                     break;
                 default:
                     allObjects[i].alarm1 = 0;
@@ -4803,7 +4827,7 @@ int create_explo_tile(int x, int y) {
 void vector2D_reset(int top, int bottom, int left, int right){
     for (int i = left; i < right; i++) {
         for (int j = top; j < bottom; j++) {
-            da_clear(game_area[i][j].object_indexes);
+            game_area[i][j].object_indexes.clear();
             //game_area[i][j].current_object_index = 0;
             //game_area[i][j].has_line_of_sight = false;
         }
@@ -5501,6 +5525,108 @@ void bullet_collide_player_ignore_iframes(int O, int currOBJ) {
     }
 }
 
+
+void add_ammo_chest_to_player_chest(int the_wep) {
+    if (true) {
+        if (the_wep < melee_weps) {
+            the_wep = rand() % 5;
+            switch (the_wep) {
+            case 0:
+                the_wep = energy_weps - 1;
+                break;
+            case 1:
+                the_wep = bullet_weps - 1;
+                break;
+            case 2:
+                the_wep = bolt_weps - 1;
+                break;
+            case 3:
+                the_wep = shell_weps - 1;
+                break;
+            case 4:
+                the_wep = explosive_weps - 1;
+                break;
+            }
+        }
+        if (the_wep < energy_weps) {
+            player_energy += 20 + (player_character == fish) * 6;
+            if (player_energy > player_energy_max) {
+                player_energy = player_energy_max;
+                create_popuptext("MAX ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            else {
+                if (player_character == fish) {
+                    create_popuptext("+26 ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+                else {
+                    create_popuptext("+20 ENERGY", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+            }
+        }
+        else if (the_wep < bullet_weps) {
+            player_bullets += 64 + (player_character == fish) * 16;
+            if (player_bullets > player_bullets_max) {
+                player_bullets = player_bullets_max;
+                create_popuptext("MAX BULLETS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            else {
+                if (player_character == fish) {
+                    create_popuptext("+80 BULLETS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+                else {
+                    create_popuptext("+64 BULLETS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+            }
+        }
+        else if (the_wep < bolt_weps) {    //bullet weapons
+            player_bolts += 14 + (player_character == fish) * 4;
+            if (player_bolts > player_bolts_max) {
+                player_bolts = player_bolts_max;
+                create_popuptext("MAX BOLTS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            else {
+                if (player_character == fish) {
+                    create_popuptext("+18 BOLTS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+                else {
+                    create_popuptext("+14 BOLTS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+            }
+        }
+        else if (the_wep < shell_weps) {    //shell weapons
+            player_shells += 16 + (player_character == fish) * 4;
+            if (player_shells > player_shells_max) {
+                player_shells = player_shells_max;
+                create_popuptext("MAX SHELLS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            else {
+                if (player_character == fish) {
+                    create_popuptext("+20 SHELLS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+                else {
+                    create_popuptext("+16 SHELLS", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+            }
+        }
+        else if (the_wep < explosive_weps) {    //explosive weapons
+            player_explosives += 12 + (player_character == fish) * 4;
+            if (player_explosives > player_explosives_max) {
+                player_explosives = player_explosives_max;
+                create_popuptext("MAX EXPLOSIVES", allObjects[0].position + sf::Vector2f{ 0, -8 });
+            }
+            else {
+                if (player_character == fish) {
+                    create_popuptext("+16 EXPLOSIVES", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+                else {
+                    create_popuptext("+12 EXPLOSIVES", allObjects[0].position + sf::Vector2f{ 0, -8 });
+                }
+            }
+        }
+    }
+}
+
+
 void player_collision(int i, int j, int currOBJ) {
     float diffx = 0.0f;
     float diffy = 0.0f;
@@ -5544,6 +5670,22 @@ void player_collision(int i, int j, int currOBJ) {
                             allObjects[O].position.y -= allObjects[O].speed.y / 2;
                             player_rads++;
                             play_sound_on_player(snd_rad_pickup_ID);
+                        }
+                        break;
+                    case objectID::chest:
+                        if (allObjects[O].alarm2 == 1 && abs(allObjects[O].position.x - allObjects[0].position.x) < 8 && abs(allObjects[O].position.y - allObjects[0].position.y) < 8) {
+                            if (allObjects[O].alarm1 == 0) {    //ammo chest
+                                add_ammo_chest_to_player_chest(wep);
+                                allObjects[O].image_index = 0;
+                                allObjects[O].alarm2 = 0;   //no longer openable
+                            }
+                            else if (allObjects[O].alarm1 == 1){    //hp chest
+
+                                //add_hp_chest_to_player_chest();
+                                allObjects[O].image_index = 0;
+                                allObjects[O].alarm2 = 0;   //no longer openable
+                            }
+
                         }
                         break;
                     case objectID::ammo_pack:
@@ -5893,7 +6035,9 @@ void basic_enemy_collision(int currOBJ, int i, int j) {
                         break;
                     case player_flame:
                         if (allObjects[O].team != enemy_team && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[currOBJ].my_hitbox + allObjects[O].my_hitbox)) {
-                            allObjects[currOBJ].next_hurt--;    //lightning buff
+                            if (rand() % 3 == 0) {
+                                allObjects[currOBJ].next_hurt--;    //lightning buff
+                            }
                             if (allObjects[currOBJ].next_hurt < current_frame) {
                                 allObjects[currOBJ].my_hp -= allObjects[O].damage;
                                 if (allObjects[currOBJ].my_hp > 0) {
@@ -5907,7 +6051,9 @@ void basic_enemy_collision(int currOBJ, int i, int j) {
                         break;
                     case player_lightning:
                         if (allObjects[O].team != enemy_team && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[currOBJ].my_hitbox + allObjects[O].my_hitbox)) {
-                            allObjects[currOBJ].next_hurt--;    //lightning buff
+                            if (rand() % 3 == 0) {
+                                allObjects[currOBJ].next_hurt--;    //lightning buff
+                            }
                             if (allObjects[currOBJ].next_hurt < current_frame) {
                                 tmpdir = 0.5f + random_float(0.5f);
                                 create_object(allObjects[O].position.x, allObjects[O].position.y, tmpdir, tmpdir, smoke, 0, 0);    //smoke
@@ -7107,7 +7253,9 @@ void throne_2_collision(int currOBJ, int i, int j) {
                         break;
                     case player_flame:
                         if (allObjects[O].team != enemy_team && is_within_throne_2(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox)) {
-                            allObjects[currOBJ].next_hurt--;    //lightning buff
+                            if (rand() % 3 == 0) {
+                                allObjects[currOBJ].next_hurt--;    //lightning buff
+                            }
                             if (allObjects[currOBJ].next_hurt < current_frame) {
                                 allObjects[currOBJ].my_hp -= allObjects[O].damage;
                                 if (allObjects[currOBJ].my_hp > 0) {
@@ -7121,7 +7269,9 @@ void throne_2_collision(int currOBJ, int i, int j) {
                         break;
                     case player_lightning:
                         if (allObjects[O].team != enemy_team && is_within_throne_2(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox)) {
-                            allObjects[currOBJ].next_hurt--;    //lightning buff
+                            if (rand() % 3 == 0) {
+                                allObjects[currOBJ].next_hurt--;    //lightning buff
+                            }
                             if (allObjects[currOBJ].next_hurt < current_frame) {
                                 tempSpeed = 0.5f + random_float(0.5f);
                                 create_object(allObjects[O].position.x, allObjects[O].position.y, tempSpeed, tempSpeed, smoke, 0, 0);    //smoke
@@ -7319,60 +7469,68 @@ void not_enough_ammo(std::string string) {
 }
 
 void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gamble_reload, int free_shots, int cost, float reload, float proj_speed, objectID object_type, float player_KB, float wep_KB, float acc_variation, bool automatic, int& ammo_type, int bullet_type = 0) {
+    if (gun_warrent_timer > 0) {
+        cost = 0;
+    }
     if ((LMB_pressed && wep_reload <= 0.0f && ammo_type - cost * shots >= 0) || (skeleton_gamble && wep_reload <= 0.0f)) {
         LMB_pressed = automatic;
         wep_kick = wep_KB;
 
-        if (wep == 22 && player_rads < 16) {
-            create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
-            play_sound_on_player(snd_not_enough_rads_ID);
-            return;//not enough rads
-        }
-        else if (wep == 22) {
-            player_rads -= 16;
+        if (cost != 0 && !skeleton_gamble) {
+            if (wep == 22 && player_rads < 16) {
+                create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
+                play_sound_on_player(snd_not_enough_rads_ID);
+                return;//not enough rads
+            }
+            else if (wep == 22) {
+                player_rads -= 16;
+            }
+
+            if (wep == 49 && player_rads < 4) {
+                create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
+                play_sound_on_player(snd_not_enough_rads_ID);
+                LMB_pressed = false;
+                return;//not enough rads
+            }
+            else if (wep == 49) {
+                player_rads -= 4;
+            }
+
+            if (wep == 63 && player_rads < 12) {
+                create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
+                play_sound_on_player(snd_not_enough_rads_ID);
+                return;//not enough rads
+            }
+            else if (wep == 63) {
+                player_rads -= 12;
+            }
+
+            if (wep == 83 && player_rads < 14) {
+                create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
+                play_sound_on_player(snd_not_enough_rads_ID);
+                LMB_pressed = false;
+                return;//not enough rads
+            }
+            else if (wep == 83) {
+                player_rads -= 14;
+            }
+
+            if (wep == 108 && player_rads < 20) {
+                create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
+                play_sound_on_player(snd_not_enough_rads_ID);
+                return;//not enough rads
+            }
+            else if (wep == 108) {
+                player_rads -= 20;
+            }
         }
 
-        if (wep == 49 && player_rads < 4) {
-            create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
-            play_sound_on_player(snd_not_enough_rads_ID);
-            LMB_pressed = false;
-            return;//not enough rads
-        }
-        else if (wep == 49) {
-            player_rads -= 4;
-        }
-
-        if (wep == 63 && player_rads < 12) {
-            create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
-            play_sound_on_player(snd_not_enough_rads_ID);
-            return;//not enough rads
-        }
-        else if (wep == 63) {
-            player_rads -= 12;
-        }
-
-        if (wep == 83 && player_rads < 14) {
-            create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
-            play_sound_on_player(snd_not_enough_rads_ID);
-            LMB_pressed = false;
-            return;//not enough rads
-        }
-        else if (wep == 83) {
-            player_rads -= 14;
-        }
-
-        if (wep == 108 && player_rads < 20) {
-            create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
-            play_sound_on_player(snd_not_enough_rads_ID);
-            return;//not enough rads
-        }
-        else if (wep == 108) {
-            player_rads -= 20;
-        }
 
         reloaded = false;
 
-        last_fire_frame = current_frame;
+        if (player_KB != 0.0f) {
+            last_fire_frame = current_frame;
+        }
 
         ammo_type -= cost * shots * !(skeleton_gamble);
         
@@ -7849,6 +8007,8 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
     float Xoff = 0.0f;
     float Yoff = 0.0f;
 
+    int cost = 0;
+
     if (wep == -1) {
         return;
     }
@@ -7883,13 +8043,17 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
         case 0:     //ultra shovel
             if (LMB_pressed && wep_reload <= 0.0f && shots == 1) {
                 LMB_pressed = false;
-                if (player_rads > 13) {
+                cost = 1;
+                if (gun_warrent_timer > 0) {
+                    cost = 0;
+                }
+                if (player_rads >= 14 * cost) {
                     reloaded = false;
 
                     wep_kick = -6;
                     wep_angle *= -1;
                     play_sound_on_player(snd_ultra_shovel_ID);
-                    player_rads -= 14;
+                    player_rads -= 14 * cost;
                     wep_reload += 15.0f;
                     motion_add_dir(direction, 8, 0);
 
@@ -7987,9 +8151,13 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             }
             break;
         case 8: //esword
-            if ((LMB_pressed && wep_reload <= 0.0f && shots == 1 && player_energy - 2 >= 0) || (skeleton_gamble && wep_reload <= 0.0f)) {
+            cost = 2;
+            if (gun_warrent_timer > 0) {
+                cost = 0;
+            }
+            if ((LMB_pressed && wep_reload <= 0.0f && shots == 1 && player_energy - cost >= 0) || (skeleton_gamble && wep_reload <= 0.0f)) {
                 swing_melee(direction, 12.0f, 22);
-                player_energy -= 2 * !(skeleton_gamble);
+                player_energy -= cost * !(skeleton_gamble);
 
                 wep_reload *= gamble_reload;
 
@@ -8038,9 +8206,13 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             }
             break;
         case 10://escrew
-            if ((LMB_pressed && wep_reload <= 0.0f && shots == 1 && player_energy - 2 >= 0) || (skeleton_gamble && wep_reload <= 0.0f)) {
+            cost = 1;
+            if (gun_warrent_timer > 0) {
+                cost = 0;
+            }
+            if ((LMB_pressed && wep_reload <= 0.0f && shots == 1 && player_energy - cost >= 0) || (skeleton_gamble && wep_reload <= 0.0f)) {
                 swing_shank(direction, 4.0f, 22);
-                player_energy -= 2 * !(skeleton_gamble);
+                player_energy -= cost * !(skeleton_gamble);
 
                 wep_reload *= gamble_reload;
 
@@ -8064,10 +8236,14 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             }
             break;
         case 11:
-            if ((LMB_pressed && wep_reload <= 0.0f && player_energy - 24 * shots >= 0)      ||    (skeleton_gamble && wep_reload <= 0.0f)) {
+            cost = 24;
+            if (gun_warrent_timer > 0) {
+                cost = 0;
+            }
+            if ((LMB_pressed && wep_reload <= 0.0f && player_energy - cost * shots >= 0)      ||    (skeleton_gamble && wep_reload <= 0.0f)) {
                 reloaded = false;
 
-                player_energy -= 24 * shots * !(skeleton_gamble);
+                player_energy -= cost * shots * !(skeleton_gamble);
                 LMB_pressed = false;
                 wep_kick = 7;
                 motion_add_dir(direction, -16, 0);
@@ -8161,163 +8337,163 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             break;
 
         case 29://revolver
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 6, 16.0f, player_bullet, -0.0f, 2, 4.0f * accuracy_curr, false, player_bullets, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 6, 16.0f, player_bullet, 0.0f, 2, 4.0f * accuracy_curr, false, player_bullets, 0);
             break;
         case 30://golden revolver
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 5, 16.0f, player_bullet, -0.0f, 4, 4.0f * accuracy_curr, false, player_bullets, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 5, 16.0f, player_bullet, 0.0f, 4, 4.0f * accuracy_curr, false, player_bullets, 0);
             break;
         case 31://rogue rifle
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 6, 16.0f, player_bullet_burst, -0.0f, 0, 5.0f * accuracy_curr, false, player_bullets, 5);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 6, 16.0f, player_bullet_burst, 0.0f, 0, 5.0f * accuracy_curr, false, player_bullets, 5);
             break;
         case 32://rusty revolver
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 7, 16.0f, player_bullet, -0.0f, 4, 0.0f * accuracy_curr, false, player_bullets, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 7, 16.0f, player_bullet, 0.0f, 4, 0.0f * accuracy_curr, false, player_bullets, 0);
             break;
         case 33://assault rifle
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 11, 16.0f, player_bullet_burst, -0.0f, 2, 2.0f * accuracy_curr, false, player_bullets, 1);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 11, 16.0f, player_bullet_burst, 0.0f, 2, 2.0f * accuracy_curr, false, player_bullets, 1);
             break;
         case 34://machinegun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 5, 16.0f, player_bullet, -0.0f, 2, 6.0f * accuracy_curr, true, player_bullets, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 5, 16.0f, player_bullet, 0.0f, 2, 6.0f * accuracy_curr, true, player_bullets, 0);
             break;
         case 35://SMG
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 3, 16.0f, player_bullet, -0.0f, 2, 16.0f * accuracy_curr, true, player_bullets, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 3, 16.0f, player_bullet, 0.0f, 2, 16.0f * accuracy_curr, true, player_bullets, 0);
             break;
         case 36://triple machine gun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 4, 16.0f, player_bullet, -0.0f, 6, 3.0f * accuracy_curr, true, player_bullets, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 4, 16.0f, player_bullet, 0.0f, 6, 3.0f * accuracy_curr, true, player_bullets, 0);
             break;
         case 37://minigun
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 1, 16.0f, player_bullet, -0.4f, 4, 13.0f * accuracy_curr, true, player_bullets, 0);
             break;
         case 38://hyper rifle
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 5, 3, 16.0f, player_bullet_burst, -0.0f, 0, 2.0f * accuracy_curr, false, player_bullets, 2);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 5, 3, 16.0f, player_bullet_burst, 0.0f, 0, 2.0f * accuracy_curr, false, player_bullets, 2);
             break;
         case 39://smart gun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 3, 16.0f, player_bullet, -0.0f, 5, 5.0f * accuracy_curr, true, player_bullets, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 3, 16.0f, player_bullet, 0.0f, 5, 5.0f * accuracy_curr, true, player_bullets, 0);
             break;
         case 40://quadruple machinegun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 4, 4, 16.0f, player_bullet, -0.0f, 8, 3.0f * accuracy_curr, true, player_bullets, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 4, 4, 16.0f, player_bullet, 0.0f, 8, 3.0f * accuracy_curr, true, player_bullets, 0);
             break;
         case 41://double minigun
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 1, 16.0f, player_bullet, -0.7f, 7, 9.5f * accuracy_curr, true, player_bullets, 0);
             break;
         case 42://golden machinegun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 4, 16.0f, player_bullet, -0.0f, 4, 4.0f * accuracy_curr, true, player_bullets, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 4, 16.0f, player_bullet, 0.0f, 4, 4.0f * accuracy_curr, true, player_bullets, 0);
             break;
         case 43://golden assault rifle
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 9, 16.0f, player_bullet_burst, -0.0f, 0, 2.0f * accuracy_curr, false, player_bullets, 4);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 9, 16.0f, player_bullet_burst, 0.0f, 0, 2.0f * accuracy_curr, false, player_bullets, 4);
             break;
             
         case 44://heavy revolver
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 5, 16.0f, player_bullet, -0.0f, 6, 1.0f * accuracy_curr, false, player_bullets, 3);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 5, 16.0f, player_bullet, 0.0f, 6, 1.0f * accuracy_curr, false, player_bullets, 3);
             break;
         case 45://heavy machinegun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 5, 16.0f, player_bullet, -0.0f, 6, 3.0f * accuracy_curr, true, player_bullets, 3);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 5, 16.0f, player_bullet, 0.0f, 6, 3.0f * accuracy_curr, true, player_bullets, 3);
             break;
         case 46://heavy assault rifle
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 6, 9, 16.0f, player_bullet_burst, -0.0f, 0, 1.0f * accuracy_curr, false, player_bullets, 3);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 6, 9, 16.0f, player_bullet_burst, 0.0f, 0, 1.0f * accuracy_curr, false, player_bullets, 3);
             break;
 
         case 47://bouncer SMG
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 3, 6.0f, player_bullet, -0.0f, 2, 20.0f * accuracy_curr, true, player_bullets, 2);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 3, 6.0f, player_bullet, 0.0f, 2, 20.0f * accuracy_curr, true, player_bullets, 2);
             break;
         case 48://bouncer shotgun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 6, 18, 6.0f, player_bullet, -0.0f, 5, 3.0f * accuracy_curr, true, player_bullets, 2);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 6, 18, 6.0f, player_bullet, 0.0f, 5, 3.0f * accuracy_curr, true, player_bullets, 2);
             break;
 
         case 49://ultra revolver
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 4, 24.0f, player_bullet, -0.0f, 4, 3.0f * accuracy_curr, true, player_bullets, 4);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 4, 24.0f, player_bullet, 0.0f, 4, 3.0f * accuracy_curr, true, player_bullets, 4);
             break;
 
         case 50://gold frog pistol
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 6, 12.0f, player_bullet, -0.0f, 0, 6.0f * accuracy_curr, true, player_bullets, 5);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 6, 12.0f, player_bullet, 0.0f, 0, 6.0f * accuracy_curr, true, player_bullets, 5);
             break;
 
         case 51://incinerator
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 2, 16.0f, player_shell, -0.0f, 7, 5.0f * accuracy_curr, true, player_bullets, 1);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 2, 16.0f, player_shell, 0.0f, 7, 5.0f * accuracy_curr, true, player_bullets, 1);
             break;
 
         case 52://crossbow
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 26, 24.0f, player_bolt, -0.0f, 4, 0.0f * accuracy_curr, false, player_bolts, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 26, 24.0f, player_bolt, 0.0f, 4, 0.0f * accuracy_curr, false, player_bolts, 0);
             break;
         case 53://auto crossbow
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 8, 24.0f, player_bolt, -0.0f, 4, 5.0f * accuracy_curr, true, player_bolts, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 8, 24.0f, player_bolt, 0.0f, 4, 5.0f * accuracy_curr, true, player_bolts, 0);
             break;
         case 54://super crossbow
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 5, 30, 24.0f, player_bolt, -0.0f, 8, 0.0f * accuracy_curr, false, player_bolts, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 5, 30, 24.0f, player_bolt, 0.0f, 8, 0.0f * accuracy_curr, false, player_bolts, 0);
             break;
         case 55://gold crossbow
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 23, 24.0f, player_bolt, -0.0f, 4, 0.0f * accuracy_curr, false, player_bolts, 5);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 23, 24.0f, player_bolt, 0.0f, 4, 0.0f * accuracy_curr, false, player_bolts, 5);
             break;
         case 56://heavy crossbow
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 40, 24.0f, player_bolt, -0.0f, 6, 0.0f * accuracy_curr, false, player_bolts, 1);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 40, 24.0f, player_bolt, 0.0f, 6, 0.0f * accuracy_curr, false, player_bolts, 1);
             break;
         case 57://heavy auto crossbow
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 13, 24.0f, player_bolt, -0.0f, 6, 6.0f * accuracy_curr, true, player_bolts, 1);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 13, 24.0f, player_bolt, 0.0f, 6, 6.0f * accuracy_curr, true, player_bolts, 1);
             break;
         case 58://toxic crossbow
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 29, 22.0f, player_bolt, -0.0f, 4, 0.0f * accuracy_curr, false, player_bolts, 4);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 29, 22.0f, player_bolt, 0.0f, 4, 0.0f * accuracy_curr, false, player_bolts, 4);
             break;
         case 59://splinter gun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 19, 24.0f, player_bolt, -0.0f, 3, 10.0f * accuracy_curr, false, player_bolts, 3);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 19, 24.0f, player_bolt, 0.0f, 3, 10.0f * accuracy_curr, false, player_bolts, 3);
             break;
         case 60://splinter pistol
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 8, 24.0f, player_bolt, -0.0f, 3, 4.0f * accuracy_curr, false, player_bolts, 3);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 8, 24.0f, player_bolt, 0.0f, 3, 4.0f * accuracy_curr, false, player_bolts, 3);
             break;
         case 61://super splinter
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 28, 24.0f, player_bolt, -0.0f, 3, 0.0f * accuracy_curr, false, player_bolts, 3);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 28, 24.0f, player_bolt, 0.0f, 3, 0.0f * accuracy_curr, false, player_bolts, 3);
             break;
         case 62://gold splinter
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 12, 24.0f, player_bolt, -0.0f, 3, 4.0f * accuracy_curr, false, player_bolts, 3);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 12, 24.0f, player_bolt, 0.0f, 3, 4.0f * accuracy_curr, false, player_bolts, 3);
             break;
         case 63://ultra crossbow
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 11, 24.0f, player_bolt, -0.0f, 7, 0.0f * accuracy_curr, false, player_bolts, 2);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 11, 24.0f, player_bolt, 0.0f, 7, 0.0f * accuracy_curr, false, player_bolts, 2);
             break;
         case 64://seeker pustol
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 16, 4.0f, player_bolt, -0.0f, 4, 30.0f * accuracy_curr, false, player_bolts, 6);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 16, 4.0f, player_bolt, 0.0f, 4, 30.0f * accuracy_curr, false, player_bolts, 6);
             break;
         case 65://seeker shotgun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 28, 4.0f, player_bolt, -0.0f, 8, 70.0f * accuracy_curr, false, player_bolts, 6);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 28, 4.0f, player_bolt, 0.0f, 8, 70.0f * accuracy_curr, false, player_bolts, 6);
             break;
 
         case 84://shotgun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 17, 16.0f, player_shell, -0.0f, 6, 20.0f * accuracy_curr, false, player_shells, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 17, 16.0f, player_shell, 0.0f, 6, 20.0f * accuracy_curr, false, player_shells, 0);
             break;
         case 85://double shotgun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 28, 16.0f, player_shell, -0.0f, 8, 25.0f * accuracy_curr, false, player_shells, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 28, 16.0f, player_shell, 0.0f, 8, 25.0f * accuracy_curr, false, player_shells, 0);
             break;
         case 66://auto_shotgun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 4, 16.0f, player_shell, -0.0f, 5, 15.0f * accuracy_curr, true, player_shells, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 4, 16.0f, player_shell, 0.0f, 5, 15.0f * accuracy_curr, true, player_shells, 0);
             break;
         case 67://sawed off
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 28, 16.0f, player_shell, -0.0f, 8, 45.0f * accuracy_curr, false, player_shells, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 28, 16.0f, player_shell, 0.0f, 8, 45.0f * accuracy_curr, false, player_shells, 0);
             break;
         case 68://eraser
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 20, 16.0f, player_shell, -0.0f, 8, 1.0f * accuracy_curr, false, player_shells, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 20, 16.0f, player_shell, 0.0f, 8, 1.0f * accuracy_curr, false, player_shells, 0);
             break;
         case 69://wave gun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 17, 16.0f, player_shell_burst, -0.0f, 0, 1.0f * accuracy_curr, false, player_shells, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 17, 16.0f, player_shell_burst, 0.0f, 0, 1.0f * accuracy_curr, false, player_shells, 0);
             break;
         case 70://gold shotgun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 13, 16.0f, player_shell, -0.0f, 8, 17.0f * accuracy_curr, false, player_shells, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 13, 16.0f, player_shell, 0.0f, 8, 17.0f * accuracy_curr, false, player_shells, 0);
             break;
 
         case 71://flame shotgun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 20, 16.0f, player_shell, -0.0f, 6, 15.0f * accuracy_curr, false, player_shells, 1);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 20, 16.0f, player_shell, 0.0f, 6, 15.0f * accuracy_curr, false, player_shells, 1);
             break;
         case 72://double flame shotgun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 28, 16.0f, player_shell, -0.0f, 9, 25.0f * accuracy_curr, false, player_shells, 1);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 28, 16.0f, player_shell, 0.0f, 9, 25.0f * accuracy_curr, false, player_shells, 1);
             break;
         case 73://auto flame shotgun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 5, 16.0f, player_shell, -0.0f, 5, 10.0f * accuracy_curr, true , player_shells, 1);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 5, 16.0f, player_shell, 0.0f, 5, 10.0f * accuracy_curr, true , player_shells, 1);
             break;
 
         case 74://slugger
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 22, 16.0f, player_shell, -0.0f, 8, 5.0f * accuracy_curr, false, player_shells, 2);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 22, 16.0f, player_shell, 0.0f, 8, 5.0f * accuracy_curr, false, player_shells, 2);
             break;
         case 75://assault slugger
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 35, 16.0f, player_shell_burst, -0.0f, 8, 4.0f * accuracy_curr, false, player_shells, 2);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 35, 16.0f, player_shell_burst, 0.0f, 8, 4.0f * accuracy_curr, false, player_shells, 2);
             break;
         case 76://gatling slugger
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 7, 16.0f, player_shell, -0.0f, 8, 6.0f * accuracy_curr, true, player_shells, 2);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 7, 16.0f, player_shell, 0.0f, 8, 6.0f * accuracy_curr, true, player_shells, 2);
             break;
         case 77://super slugger
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 5, 32, 16.0f, player_shell, -3.0f, 8, 4.0f * accuracy_curr, false, player_shells, 2);
@@ -8327,29 +8503,29 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             break;
 
         case 79://heavy slugger
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 13, 16.0f, player_shell, -0.0f, 10, 4.0f * accuracy_curr, false, player_shells, 3);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 13, 16.0f, player_shell, 0.0f, 10, 4.0f * accuracy_curr, false, player_shells, 3);
             break;
         case 80://hyper slugger
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 9, 16.0f, player_shell_hyper, -0.0f, 10, 1.0f * accuracy_curr, true, player_shells, 4);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 9, 16.0f, player_shell_hyper, 0.0f, 10, 1.0f * accuracy_curr, true, player_shells, 4);
             break;
         case 81://flak cannon
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 26, 16.0f, player_shell, -0.0f, 7, 5.0f * accuracy_curr, false, player_shells, 5);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 26, 16.0f, player_shell, 0.0f, 7, 5.0f * accuracy_curr, false, player_shells, 5);
             break;
         case 82://super flak cannon
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 8, 64, 16.0f, player_shell, -0.0f, 9, 1.0f * accuracy_curr, false, player_shells, 6);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 8, 64, 16.0f, player_shell, 0.0f, 9, 1.0f * accuracy_curr, false, player_shells, 6);
             break;
         case 83://ultra shotgun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 11, 16.0f, player_shell, -0.0f, 5, 22.0f * accuracy_curr, true, player_shells, 7);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 11, 16.0f, player_shell, 0.0f, 5, 22.0f * accuracy_curr, true, player_shells, 7);
             break;
 
         case 86://grenade launcher
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 20, 10.0f, nade, -0.0f, 5, 3.0f * accuracy_curr, false, player_explosives, 0);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 20, 10.0f, nade, 0.0f, 5, 3.0f * accuracy_curr, false, player_explosives, 0);
             break;
         case 87://gold grenade launcher
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 18, 12.0f, nade, -0.0f, 7, 0.0f * accuracy_curr, false, player_explosives, 12);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 18, 12.0f, nade, 0.0f, 7, 0.0f * accuracy_curr, false, player_explosives, 12);
             break;
         case 88://heavy grenade launcher
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 26, 10.0f + random_float(1.0f), nade, -0.0f, 8, 2.0f * accuracy_curr, false, player_explosives, 2);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 26, 10.0f + random_float(1.0f), nade, 0.0f, 8, 2.0f * accuracy_curr, false, player_explosives, 2);
             break;
         case 89://toxic grenade launcher
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 16, 9.0f, nade, -0.0f, 4, 3.0f * accuracy_curr, false, player_explosives, 13);
@@ -8358,61 +8534,61 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 25, 11.0f, nade, -0.0f, 5, 3.0f * accuracy_curr, false, player_explosives, 14);
             break;
         case 91://grenade shotgun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 16, 10.0f + random_float(5.0f), nade, -0.0f, 5, 17.0f * accuracy_curr, false, player_explosives, 1);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 16, 10.0f + random_float(5.0f), nade, 0.0f, 5, 17.0f * accuracy_curr, false, player_explosives, 1);
             break;
         case 92://grenade rifle
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 10, 0, explosive_burst, -0.0f, 5, 0.0f * accuracy_curr, false, player_explosives, 1);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 10, 0, explosive_burst, 0.0f, 5, 0.0f * accuracy_curr, false, player_explosives, 1);
             break;
         case 93://auto grenade shotgun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 8, 11.0f + random_float(4.0f), nade, -0.0f, 4, 14.0f * accuracy_curr, true, player_explosives, 1);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 8, 11.0f + random_float(4.0f), nade, 0.0f, 4, 14.0f * accuracy_curr, true, player_explosives, 1);
             break;
         case 94://grenade cluster
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 26, 10.0f, nade, -0.0f, 6, 4.0f * accuracy_curr, false, player_explosives, 3);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 26, 10.0f, nade, 0.0f, 6, 4.0f * accuracy_curr, false, player_explosives, 3);
             break;
         case 95://bazooka
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 30, 2.0f, nade, -0.0f, 10, 1.0f * accuracy_curr, false, player_explosives, 4);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 30, 2.0f, nade, 0.0f, 10, 1.0f * accuracy_curr, false, player_explosives, 4);
             break;
         case 96://super bazooka
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 5, 40, 2.0f, nade, -1.0f, 12, 0.0f * accuracy_curr, false, player_explosives, 4);
             break;
         case 97://gatling bazooka
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 10, 2.0f, nade, -0.0f, 9, 3.0f * accuracy_curr, true, player_explosives, 4);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 10, 2.0f, nade, 0.0f, 9, 3.0f * accuracy_curr, true, player_explosives, 4);
             break;
         case 98://golden bazooka
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 27, 2.0f, nade, -0.0f, 10, 0.0f * accuracy_curr, false, player_explosives, 15);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 27, 2.0f, nade, 0.0f, 10, 0.0f * accuracy_curr, false, player_explosives, 15);
             break;
         case 99://nuke launcher
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 50, 2.0f, nade, -0.0f, 10, 0.0f * accuracy_curr, false, player_explosives, 5);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 50, 2.0f, nade, 0.0f, 10, 0.0f * accuracy_curr, false, player_explosives, 5);
             break;
         case 100://gold nuke launcher
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 40, 2.0f, nade, -0.0f, 10, 0.0f * accuracy_curr, false, player_explosives, 16);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 3, 40, 2.0f, nade, 0.0f, 10, 0.0f * accuracy_curr, false, player_explosives, 16);
             break;
         case 101://blood launcher
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 12, 10.0f, nade, -0.0f, 4, 4.0f * accuracy_curr, true, player_explosives, 6);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 12, 10.0f, nade, 0.0f, 4, 4.0f * accuracy_curr, true, player_explosives, 6);
             break;
         case 102://blood cannon
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 4, 19, 5.0f, nade, -0.0f, 6, 3.0f * accuracy_curr, true, player_explosives, 7);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 4, 19, 5.0f, nade, 0.0f, 6, 3.0f * accuracy_curr, true, player_explosives, 7);
             break;
         case 103://flamethrower
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 12, 0, explosive_burst, -0.0f, 2, 5.0f * accuracy_curr, true, player_explosives, 2);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 12, 0, explosive_burst, 0.0f, 2, 5.0f * accuracy_curr, true, player_explosives, 2);
             break;
         case 104://dragon
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 7, 0, explosive_burst, -0.0f, 4, 5.0f * accuracy_curr, true, player_explosives, 3);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 7, 0, explosive_burst, 0.0f, 4, 5.0f * accuracy_curr, true, player_explosives, 3);
             break;
         case 105://flare gun
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 25, 9.0f, nade, -0.0f, 5, 1.0f * accuracy_curr, true, player_explosives, 8);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 25, 9.0f, nade, 0.0f, 5, 1.0f * accuracy_curr, true, player_explosives, 8);
             break;
         case 106://flame cannon
             fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 4, 44, 3.0f, nade, -6.0f, 6, 1.0f * accuracy_curr, false, player_explosives, 9);
             break;
         case 107://hyper launcher
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 7, 0.0f, nade, -0.0f, 8, 0.0f * accuracy_curr, true, player_explosives, 10);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 2, 7, 1.0f, nade, 0.0f, 8, 0.0f * accuracy_curr, true, player_explosives, 10);
             break;
         case 108://ultra nade launcher
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 16, 10.0f, nade, -0.0f, 8, 2.0f * accuracy_curr, false, player_explosives, 11);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 16, 10.0f, nade, 0.0f, 8, 2.0f * accuracy_curr, false, player_explosives, 11);
             break;
         case 109://jackhammer
-            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 12, 0.0f, explosive_burst, -0.0f, 8, 0.0f * accuracy_curr, true, player_explosives, 4);
+            fire_gun_shot(shots, skeleton_gamble, direction, gamble_reload, free_shots, 1, 12, 0.0f, explosive_burst, 0.0f, 8, 0.0f * accuracy_curr, true, player_explosives, 4);
             break;
         default:
             break;
@@ -9093,6 +9269,10 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             if (allObjects[i].image_index > 6) {
                 allObjects[i].my_id = nothing;
             }
+            break;
+        case chest:
+            allObjects[i].image_index++;
+            eyes_tk_pull(i);
             break;
         case ammo_pack:
             allObjects[i].image_index++;
@@ -10743,7 +10923,8 @@ void nade_step(int i) {     //NOW
             }
             else if (game_area[int(X_ / 16)][int(Y_ / 16)].my_grid_type == T2_boarder) {
                 collided = true;
-                goto hyper_launcher_exit_no_explo;
+                allObjects[i].my_id = nothing;
+                return;
             }
 
             if (allObjects[i].my_id != nothing) {
@@ -10763,7 +10944,9 @@ void nade_step(int i) {     //NOW
                                     else {  //dead
                                         enemy_die(obj_collide, i);
                                     }
-                                    goto hyper_launcher_exit;
+                                    create_object(X_prev, Y_prev, 0, 0, explosion, 0, 0);
+                                    allObjects[i].my_id = nothing;
+                                    return;
                                 }
                                 break;
                             case throne_2:
@@ -10776,7 +10959,9 @@ void nade_step(int i) {     //NOW
                                     else {  //dead
                                         enemy_die(obj_collide, i);
                                     }
-                                    goto hyper_launcher_exit;
+                                    create_object(X_prev, Y_prev, 0, 0, explosion, 0, 0);
+                                    allObjects[i].my_id = nothing;
+                                    return;
                                 }
                                 break;
                             default:
@@ -10788,9 +10973,7 @@ void nade_step(int i) {     //NOW
             }
 
         }
-        hyper_launcher_exit:
         create_object(X_prev, Y_prev, 0, 0, explosion, 0, 0);
-        hyper_launcher_exit_no_explo:
         allObjects[i].my_id = nothing;
         return;
     }
@@ -11143,6 +11326,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
 
                                 break;
                             case objectID::ammo_pack:
+                            case objectID::chest:
                                 collide_wall(O, i, j, h, w, 7);
 
                                 break;
@@ -12200,6 +12384,8 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
     allObjects[0].alarm1 = 0;
     player_invincible = 0;
 
+    gun_warrent_timer = 210 * (player_character == fish && ultra_picked == 2);
+
     rogue_strike_position = sf::Vector2f(mousepos) + cameraPos;
     rogue_holding_strike = false;
 
@@ -12710,6 +12896,39 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
         }
     }
 
+    //spawn chests
+    int chest_range = 420;
+    int num_of_canidate_floor = 0;
+    sf::Vector2f canidate_floors[200];
+    while (num_of_canidate_floor == 0) {
+        num_of_canidate_floor = 0;
+        for (int i_ = 0; i_ < 200; i_++) {
+            if (!is_within_circle(allFloors[i_].getPosition(), { 24016, 24016 }, chest_range) &&
+                game_area[int(allFloors[i_].getPosition().x / 16)][int(allFloors[i_].getPosition().y / 16)].my_grid_type == floor_tile &&
+                game_area[int(allFloors[i_].getPosition().x / 16) + 1][int(allFloors[i_].getPosition().y / 16)].my_grid_type == floor_tile &&
+                game_area[int(allFloors[i_].getPosition().x / 16)][int(allFloors[i_].getPosition().y / 16) + 1].my_grid_type == floor_tile &&
+                game_area[int(allFloors[i_].getPosition().x / 16) + 1][int(allFloors[i_].getPosition().y / 16) + 1].my_grid_type == floor_tile
+                ) {
+                canidate_floors[num_of_canidate_floor].x = (allFloors[i_].getPosition().x);
+                canidate_floors[num_of_canidate_floor].y = (allFloors[i_].getPosition().y);
+                num_of_canidate_floor++;
+            }
+        }
+        chest_range -= 32;
+        if (chest_range < 0) {
+            break;
+        }
+    }
+
+    if (num_of_canidate_floor > 0) {
+        num_of_canidate_floor = rand() % num_of_canidate_floor;
+
+        int t_x = canidate_floors[num_of_canidate_floor].x + 16;
+        int t_y = canidate_floors[num_of_canidate_floor].y + 16;
+
+        create_object(t_x, t_y, 0, 0, chest, 0, 0);
+    }
+
     //clear out area around player
     for (int i = 1499; i < 1503; i++) {
         for (int j = 1499; j < 1503; j++) {
@@ -13184,6 +13403,8 @@ int main(int argc, char* argv[])
     //player abilities
     //fish
     add_new_sound(snd_fish_roll_ID, "snd/fish_roll.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_fish_roll_TB_ID, "snd/fish_roll_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_gun_warrant_end_ID, "snd/gun_warrant_end.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
     //crystal
     add_new_sound(snd_crystal_shield_ID, "snd/crystal_shield.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
     //melting
@@ -13678,6 +13899,12 @@ int main(int argc, char* argv[])
         hp_bar.loadFromFile("res/player/hp_bar.png");
         sf::Texture health_bar;
         health_bar.loadFromFile("res/player/health_bar.png");
+
+        //gun warrant
+        sf::Texture gun_warrant_active_tex;
+        gun_warrant_active_tex.loadFromFile("res/sprGunWarrant.png");
+        sf::Texture gun_warrant_disappear_tex;
+        gun_warrant_disappear_tex.loadFromFile("res/sprGunWarrantDisappear.png");
 
         sf::Texture chicken_health_bar;
         chicken_health_bar.loadFromFile("res/player/chicken_health_bar.png");
@@ -15299,23 +15526,57 @@ int main(int argc, char* argv[])
                 allObjects[0].team = player_team;
 
 
+                //calualte direction to mouse
+                mouse_offset_window_center_x = (mousepos.x - window_size_x / (window_scale * 2)) / (6 - weapon_camera_type);
+                mouse_offset_window_center_y = (mousepos.y - window_size_y / (window_scale * 2)) / (6 - weapon_camera_type);
+
+                camera_want_x = floor(allObjects[0].position.x + cameraOffset.x + mouse_offset_window_center_x + portal_camera_offset.x);
+                camera_want_y = floor(allObjects[0].position.y + cameraOffset.y + mouse_offset_window_center_y + portal_camera_offset.y);
+                portal_camera_offset = { 0, 0 };
+
+                cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x);// +debug_camera_offset.x;
+                cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y);// +debug_camera_offset.y;
+
+                //calualte direction to mouse
+                direction_to_mouse = atan2f(allObjects[0].position.y - (mousepos.y + cameraPos.y), allObjects[0].position.x - (mousepos.x + cameraPos.x)) + 180.0f / degreestoradians;
+
 
                 crystal_shield_cooldown--;
+                if (gun_warrent_timer > 0) {
+                    gun_warrent_timer--;
+                    if (gun_warrent_timer == 0) {
+                        create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, static_effect, 0, 602);
+                        play_sound_on_player(snd_gun_warrant_end_ID);
+                    }
+                }
+
 
                 if (player_pressed_RMB_this_frame) {
                     float tmpXSPD = 0.0f;
                     float tmpYSPD = 0.0f;
                     switch (player_character) {
                     case fish:      //roll
-                        if (roll <= 0) {
-                            roll = 12;
+                        if (!has_throne_butt) {
+                            if (roll <= 0) {
+                                roll = 12;
+                                if (allObjects[0].speeddir > 0.4f) {
+                                    roll_direction = allObjects[0].direction;
+                                }
+                                else {
+                                    roll_direction = direction_to_mouse;
+                                }
+                                play_sound_on_player(snd_fish_roll_ID);
+                            }
+                        }
+                        else {  //throne butt
+                            roll = 2;
                             if (allObjects[0].speeddir > 0.4f) {
                                 roll_direction = allObjects[0].direction;
                             }
                             else {
                                 roll_direction = direction_to_mouse;
                             }
-                            play_sound_on_player(snd_fish_roll_ID);
+                            play_sound_on_player(snd_fish_roll_TB_ID);
                         }
                         break;
                     case crystal:
@@ -15449,7 +15710,12 @@ int main(int argc, char* argv[])
                 if (roll > 0) {
                     roll--;
                     player_acceleration = 5.0f;
-                    create_object(allObjects[0].position.x, allObjects[0].position.y + 4, 0.7, 0.7, dust, 0, 0);    //dust
+                    if (!has_throne_butt) {
+                        create_object(allObjects[0].position.x, allObjects[0].position.y + 4, 0.7, 0.7, dust, 0, 0);    //dust
+                    }
+                    else {
+                        create_object(allObjects[0].position.x + random_float(6) - 3, allObjects[0].position.y + random_float(6) - 3, 0, 0, static_effect, 0, 320);
+                    }
                 }
 
                 if (allObjects[0].alarm1 > 0) {
@@ -15472,7 +15738,7 @@ int main(int argc, char* argv[])
                         dirto_add = allObjects[0].direction * degreestoradians;
                     }
 
-                    if (roll <= 0) {
+                    if (roll <= 0 || has_throne_butt) {
                         if (!horizontal_player_move && vertical_player_move) {
                             dirto_add = 180.0f - (90.0f * vertical_player_move);
                         }
@@ -15498,7 +15764,7 @@ int main(int argc, char* argv[])
                         dirto_add = roll_direction * degreestoradians;
                     }
                     //frog
-                    if (player_character == frog && (horizontal_player_move || vertical_player_move)) {
+                    if ((player_character == frog || (player_character == fish && has_throne_butt && roll > 0)) && (horizontal_player_move || vertical_player_move)) {
 
                         float curr_move_dir = allObjects[0].direction * degreestoradians;
 
@@ -15570,8 +15836,8 @@ int main(int argc, char* argv[])
                 poll_move_right = 0;
                 poll_move_total = 0;
 
-                if (allObjects[0].speeddir > player_max_speed + (roll > 0) * 2) {
-                    allObjects[0].speeddir = player_max_speed + (roll > 0) * 2;
+                if (allObjects[0].speeddir > player_max_speed + (roll > 0) * 2 + (roll > 0 && has_throne_butt)) {
+                    allObjects[0].speeddir = player_max_speed + (roll > 0) * 2 + (roll > 0 && has_throne_butt);
                 }
 
                 //allObjects[0].friction = 0.45f;
@@ -15591,12 +15857,13 @@ int main(int argc, char* argv[])
                 }
 
                 //more direct movement
-                
-                if (player_acceleration < 0.1f && PRECISE_MOVEMENT && allObjects[0].next_hurt < current_frame + robot_less_kb && last_fire_frame < current_frame - 7 + robot_less_kb) {
-                    friction_player *= 40;
-                }
-                else if (!PRECISE_MOVEMENT && horizontal_player_move == 0 && vertical_player_move == 0 && allObjects[0].next_hurt < current_frame + robot_less_kb && last_fire_frame < current_frame - 7 + robot_less_kb) {
-                    friction_player *= 40;
+                if (roll <= 0) {
+                    if (player_acceleration < 0.1f && PRECISE_MOVEMENT && allObjects[0].next_hurt < current_frame + robot_less_kb && last_fire_frame < current_frame - 7 + robot_less_kb) {
+                        friction_player *= 40;
+                    }
+                    else if (!PRECISE_MOVEMENT && horizontal_player_move == 0 && vertical_player_move == 0 && allObjects[0].next_hurt < current_frame + robot_less_kb && last_fire_frame < current_frame - 7 + robot_less_kb) {
+                        friction_player *= 40;
+                    }
                 }
 
                 allObjects[0].speeddir -= friction_player * player_friction_mult;
@@ -15769,7 +16036,7 @@ int main(int argc, char* argv[])
                     weapon_camera_type = 4;
                 }
 
-                mouse_offset_window_center_x = (mousepos.x - window_size_x / (window_scale * 2)) / (6 - weapon_camera_type);
+                /*mouse_offset_window_center_x = (mousepos.x - window_size_x / (window_scale * 2)) / (6 - weapon_camera_type);
                 mouse_offset_window_center_y = (mousepos.y - window_size_y / (window_scale * 2)) / (6 - weapon_camera_type);
 
                 camera_want_x = floor(allObjects[0].position.x + cameraOffset.x + mouse_offset_window_center_x + portal_camera_offset.x);
@@ -15780,7 +16047,7 @@ int main(int argc, char* argv[])
                 cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y);// +debug_camera_offset.y;
 
                 //calualte direction to mouse
-                direction_to_mouse = atan2f(allObjects[0].position.y - (mousepos.y + cameraPos.y), allObjects[0].position.x - (mousepos.x + cameraPos.x)) + 180.0f / degreestoradians;
+                direction_to_mouse = atan2f(allObjects[0].position.y - (mousepos.y + cameraPos.y), allObjects[0].position.x - (mousepos.x + cameraPos.x)) + 180.0f / degreestoradians;*/
 
                 allObjects[0].image_index++;
 
@@ -16010,6 +16277,7 @@ int main(int argc, char* argv[])
                     case fish:
                         if (has_throne_butt) {
                             play_sound_on_player(snd_fish_TB_loop_ID);
+                            roll = 2;
                         }
                         break;
                     case crystal:
@@ -17008,6 +17276,20 @@ int main(int argc, char* argv[])
                             mousepos.y = 0;
                         }*/
 
+                        if (gun_warrent_timer > 0) {
+                            if (gun_warrent_timer > 45 || round(current_frame / 2) == (current_frame / 2)) {
+                                //draw_sprite(sprGunWarrant, (int(current_frame * 0.4f) % 12), (x + (lengthdir_x(10, aimDirection))), (y + (lengthdir_y(10, aimDirection))));
+                                variable_textures_top[variableTexturesTopIndex].setTexture(gun_warrant_active_tex);
+                                variable_textures_top[variableTexturesTopIndex].setColor({ 255, 255, 255, 255 });
+                                variable_textures_top[variableTexturesTopIndex].setPosition(allObjects[0].position - cameraPos);
+                                variable_textures_top[variableTexturesTopIndex].setRotation(0);
+                                variable_textures_top[variableTexturesTopIndex].setTextureRect(sf::IntRect{ (int(current_frame * 0.4f) % 12) * 48, 0, 48, 48 });
+                                variable_textures_top[variableTexturesTopIndex].setOrigin(24, 24);
+                                variable_textures_top[variableTexturesTopIndex].setScale(1, 1);
+                                variableTexturesTopIndex++;
+                            }
+                        }
+
                         direction_to_mouse = atan2f(allObjects[0].position.y - (mousepos.y + cameraPos.y), allObjects[0].position.x - (mousepos.x + cameraPos.x)) + 180.0f / degreestoradians;
 
                         cursor_sprite.setPosition(sf::Vector2f(mousepos));
@@ -17050,7 +17332,17 @@ int main(int argc, char* argv[])
                             player_sprite.setRotation(allObjects[idx].gun_angle);   //rotation
                         }
                         else {
-                            player_sprite.setRotation(roll * -30 * (player_is_facing_right));   //rotation
+                            if (roll > 0) {
+                                if (!has_throne_butt) {
+                                    player_sprite.setRotation(roll * -30 * (player_is_facing_right));   //rotation
+                                }
+                                else {
+                                    player_sprite.setRotation(allObjects[0].direction * degreestoradians + 90);   //rotation
+                                }
+                            }
+                            else {
+                                player_sprite.setRotation(0);
+                            }
                         }
                         player_sprite.setTextureRect(sf::IntRect{ 48 * choice, 48 * (choice2 + ((player_character == chicken && player_hp == 0) * 4)), 48, 48});
                         player_sprite.setScale(player_is_facing_right * allObjects[0].scale, 1 * allObjects[0].scale);
@@ -18053,6 +18345,21 @@ int main(int argc, char* argv[])
                         underEffectsSmallIndex++;
 
                         break;
+                    case chest:
+                            choice = int(allObjects[idx].image_index * 0.4f);
+                            if (choice > 6) {
+                                choice = 0;
+                            }
+                            if (allObjects[idx].alarm2 == 0) {
+                                choice = 7;
+                            }
+                            rotateable_effects_medium[rotateableEffectsMediumIndex].setColor({ 255, 255, 255, 255 });
+                            rotateable_effects_medium[rotateableEffectsMediumIndex].setPosition(allObjects[idx].position - cameraPos);
+                            rotateable_effects_medium[rotateableEffectsMediumIndex].setRotation(0);
+                            rotateable_effects_medium[rotateableEffectsMediumIndex].setScale(1, 1);
+                            rotateable_effects_medium[rotateableEffectsMediumIndex].setTextureRect(sf::IntRect{ 16 * choice, 336, 16, 16 });
+                            rotateableEffectsMediumIndex++;
+                        break;
                     case ammo_pack:
                         if (allObjects[idx].alarm1 > 60 || int(allObjects[idx].alarm1 / 2) % 2) {
                             choice = int(allObjects[idx].image_index * 0.4f);
@@ -18307,6 +18614,16 @@ int main(int argc, char* argv[])
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setOrigin(16, 16);
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setScale(1, 1);
                             variableTexturesTopEnemiesIndex++;
+                        }
+                        else if (allObjects[idx].alarm2 == 12) {
+                            variable_textures_top[variableTexturesTopIndex].setTexture(gun_warrant_disappear_tex);
+                            variable_textures_top[variableTexturesTopIndex].setColor({ 255, 255, 255, 255 });
+                            variable_textures_top[variableTexturesTopIndex].setPosition(allObjects[idx].position - cameraPos);
+                            variable_textures_top[variableTexturesTopIndex].setRotation(allObjects[idx].direction);
+                            variable_textures_top[variableTexturesTopIndex].setTextureRect(sf::IntRect{ choice * 64, 0, 64, 64 });
+                            variable_textures_top[variableTexturesTopIndex].setOrigin(32, 32);
+                            variable_textures_top[variableTexturesTopIndex].setScale(1, 1);
+                            variableTexturesTopIndex++;
                         }
                         break;
                     case rebel_ally:

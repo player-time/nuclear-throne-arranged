@@ -91,6 +91,10 @@ enum objectID {
 	weapon_drop,
 	thrown_wep,
 
+
+	chest,
+
+
 	rad, rad_destroy,
 
 	ammo_pack, health_pack,
@@ -396,6 +400,8 @@ enum sound_ID {
 	
 
 	snd_fish_roll_ID,
+	snd_fish_roll_TB_ID,
+	snd_gun_warrant_end_ID,
 
 	snd_crystal_shield_ID,
 
@@ -745,6 +751,8 @@ enum hitboxes {
 
 	lightning_hitbox = 5,
 
+	chest_hitbox = 9,
+
 	revenge_bullet_hitbox = -2,
 
 };
@@ -824,8 +832,8 @@ struct gameObject{
 };
 
 struct gridTile {
-	//std::vector<int> object_indexes;
-	vector_small object_indexes;
+	
+	std::vector<int> object_indexes;
 	uint8_t my_grid_type = out_of_bounds;
 	//bool has_line_of_sight = false;
 };
