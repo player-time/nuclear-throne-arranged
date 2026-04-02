@@ -44,7 +44,7 @@ int fps_samples_idx = 0;
 
 bool global_debug = false;
 
-bool debug_invincibility = false;
+bool debug_invincibility = true;
 
 int EXIT_PROGRAM_NOW = 0;
 
@@ -513,7 +513,7 @@ int chicken_headless_timer = 150;
 bool chicken_beheaded = false;
 
 //ultras
-int ultra_picked = 2;   //0 = no ultra
+int ultra_picked = 1;   //0 = no ultra
 
 int meltdown = 1;       //set to 2 when meltdown is picked
 
@@ -3649,10 +3649,26 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].alarm1 = 16;
                     allObjects[i].alarm2 = 12;
                     break;
+                case 603:   //fx chest
+                    allObjects[i].alarm1 = 22;
+                    allObjects[i].alarm2 = 13;
+                    break;
                 case 320:   //fish boost
                     allObjects[i].alarm1 = 16;
                     allObjects[i].alarm2 = 2;
                     allObjects[i].direction = random_360_degrees();
+                    break;
+                case 648:   //big heal
+                    allObjects[i].alarm1 = 22;
+                    allObjects[i].alarm2 = 3;
+                    break;
+                case 649:   //very big heal
+                    allObjects[i].alarm1 = 25;
+                    allObjects[i].alarm2 = 14;
+                    break;
+                case 650:   //fishA
+                    allObjects[i].alarm1 = 22;
+                    allObjects[i].alarm2 = 15;
                     break;
                 default:
                     allObjects[i].alarm1 = 0;
@@ -3738,24 +3754,28 @@ void corpse_step(int i) {
 }
 
 void pickup_health() {
-    play_sound_relative_to_player(snd_hp_pickup_ID, allObjects[0].position.x, allObjects[0].position.y);
     player_hp += 2 + second_stomach;
     if (player_hp >= player_max_hp) {
         player_hp = player_max_hp;
         create_popuptext("MAX HP", allObjects[0].position + sf::Vector2f{ 0, -8 });
         if (second_stomach == 2) {
-
+            play_sound_on_player(snd_hp_pickup_big_ID);
+            create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, static_effect, 0, 648);
         }
         else {
             create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, heal_FX, 0, 0);
+            play_sound_on_player(snd_hp_pickup_ID);
         }
     }
     else if (second_stomach == 2) {
         create_popuptext("+4 HP", allObjects[0].position + sf::Vector2f{ 0, -8 });
+        create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, static_effect, 0, 648);
+        play_sound_on_player(snd_hp_pickup_big_ID);
     }
     else {
         create_popuptext("+2 HP", allObjects[0].position + sf::Vector2f{ 0, -8 });
         create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, heal_FX, 0, 0);
+        play_sound_on_player(snd_hp_pickup_ID);
     }
 }
 
@@ -4149,10 +4169,21 @@ void ammo_drop_function(int ENEMY, int base_chance) {
             tmp_player_max_hp = 1;
         }
         if (random_float(tmp_player_max_hp) >= player_hp && rand() % 3 != 0) {
-            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, health_pack, 0, 0);
+            if (player_character == fish && ultra_picked == 1 && rand() % 5 == 0) {
+                create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, chest, 0, 1);
+            }
+            else {
+                create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, health_pack, 0, 0);
+            }
         }
         else {
-            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, ammo_pack, 0, 0);
+            if (player_character == fish && ultra_picked == 1 && rand() % 5 == 0) {
+                create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, chest, 0, 0);
+                create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, static_effect, 0, 0);
+            }
+            else {
+                create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, ammo_pack, 0, 0);
+            }
         }
     }
 
@@ -5525,9 +5556,35 @@ void bullet_collide_player_ignore_iframes(int O, int currOBJ) {
     }
 }
 
+void add_hp_chest_to_player_chest() {
+    player_hp += 4 + second_stomach * 2;
+    if (player_hp >= player_max_hp) {
+        player_hp = player_max_hp;
+        create_popuptext("MAX HP", allObjects[0].position + sf::Vector2f{ 0, -8 });
+        if (second_stomach == 2) {
+            play_sound_on_player(snd_hp_chest_big_ID);
+            create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, static_effect, 0, 649);
+        }
+        else {
+            play_sound_on_player(snd_hp_chest_ID);
+            create_object(allObjects[0].position.x, allObjects[0].position.y - 10, 0, 0, static_effect, 0, 648);
+        }
+    }
+    else if (second_stomach == 2) {
+        create_popuptext("+8 HP", allObjects[0].position + sf::Vector2f{ 0, -8 });
+        play_sound_on_player(snd_hp_chest_big_ID);
+        create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, static_effect, 0, 649);
+    }
+    else {
+        create_popuptext("+4 HP", allObjects[0].position + sf::Vector2f{ 0, -8 });
+        play_sound_on_player(snd_hp_chest_ID);
+        create_object(allObjects[0].position.x, allObjects[0].position.y - 10, 0, 0, static_effect, 0, 648);
+    }
+}
 
 void add_ammo_chest_to_player_chest(int the_wep) {
     if (true) {
+        play_sound_on_player(snd_ammo_chest_ID);
         if (the_wep < melee_weps) {
             the_wep = rand() % 5;
             switch (the_wep) {
@@ -5674,6 +5731,7 @@ void player_collision(int i, int j, int currOBJ) {
                         break;
                     case objectID::chest:
                         if (allObjects[O].alarm2 == 1 && abs(allObjects[O].position.x - allObjects[0].position.x) < 8 && abs(allObjects[O].position.y - allObjects[0].position.y) < 8) {
+                            create_object(allObjects[O].position.x, allObjects[O].position.y, 0, 0, static_effect, 0, 603);
                             if (allObjects[O].alarm1 == 0) {    //ammo chest
                                 add_ammo_chest_to_player_chest(wep);
                                 allObjects[O].image_index = 0;
@@ -5681,11 +5739,17 @@ void player_collision(int i, int j, int currOBJ) {
                             }
                             else if (allObjects[O].alarm1 == 1){    //hp chest
 
-                                //add_hp_chest_to_player_chest();
+                                add_hp_chest_to_player_chest();
                                 allObjects[O].image_index = 0;
                                 allObjects[O].alarm2 = 0;   //no longer openable
                             }
+                            else if (allObjects[O].alarm1 == 2) {    //weapon chest
 
+                                play_sound_on_player(snd_weapon_chest_ID);
+                                create_object(allObjects[O].position.x, allObjects[O].position.y, 0, 0, weapon_drop, 0, rand() % 110);
+                                allObjects[O].image_index = 0;
+                                allObjects[O].alarm2 = 0;   //no longer openable
+                            }
                         }
                         break;
                     case objectID::ammo_pack:
@@ -9272,6 +9336,9 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             break;
         case chest:
             allObjects[i].image_index++;
+            if (allObjects[i].image_index > 35 && rand() % 60 == 0) {
+                allObjects[i].image_index = 0;
+            }
             eyes_tk_pull(i);
             break;
         case ammo_pack:
@@ -11254,7 +11321,10 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                 allObjects[O].my_id = nothing;
                                 break;
                             case ammo_pack:
-                                allObjects[O].my_id = nothing;
+                            case chest:
+                                if (w == 0 && h == 0) {
+                                    allObjects[O].my_id = nothing;
+                                }
                                 break;
 
                             case plant_tangle_seed:
@@ -12900,7 +12970,7 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
     int chest_range = 420;
     int num_of_canidate_floor = 0;
     sf::Vector2f canidate_floors[200];
-    while (num_of_canidate_floor == 0) {
+    while (num_of_canidate_floor < 3) {
         num_of_canidate_floor = 0;
         for (int i_ = 0; i_ < 200; i_++) {
             if (!is_within_circle(allFloors[i_].getPosition(), { 24016, 24016 }, chest_range) &&
@@ -12920,13 +12990,37 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
         }
     }
 
-    if (num_of_canidate_floor > 0) {
-        num_of_canidate_floor = rand() % num_of_canidate_floor;
+    if (num_of_canidate_floor > 2) {
+        int num_of_canidate_floor_MAX = num_of_canidate_floor;
+        num_of_canidate_floor = rand() % num_of_canidate_floor_MAX;
+
+        int ammo_chest_floor = num_of_canidate_floor;
 
         int t_x = canidate_floors[num_of_canidate_floor].x + 16;
         int t_y = canidate_floors[num_of_canidate_floor].y + 16;
 
         create_object(t_x, t_y, 0, 0, chest, 0, 0);
+
+        //weapon chest
+        while (num_of_canidate_floor == ammo_chest_floor) { //pick a new floor that isnt the ammo chests floor
+            num_of_canidate_floor = rand() % num_of_canidate_floor_MAX;
+        }
+        int weapon_chest_floor = num_of_canidate_floor;
+
+        t_x = canidate_floors[num_of_canidate_floor].x + 16;
+        t_y = canidate_floors[num_of_canidate_floor].y + 16;
+
+        create_object(t_x, t_y, 0, 0, chest, 0, 2);
+
+        //rad or hp chest
+        while (num_of_canidate_floor == ammo_chest_floor || num_of_canidate_floor == weapon_chest_floor) { //pick a new floor that isnt the ammo chests floor
+            num_of_canidate_floor = rand() % num_of_canidate_floor_MAX;
+        }
+
+        t_x = canidate_floors[num_of_canidate_floor].x + 16;
+        t_y = canidate_floors[num_of_canidate_floor].y + 16;
+
+        create_object(t_x, t_y, 0, 0, chest, 0, 1);
     }
 
     //clear out area around player
@@ -13438,6 +13532,7 @@ int main(int argc, char* argv[])
     add_new_sound(snd_ammo_pickup_ID, "snd/ammo_pickup.wav", all_sounds, all_sounds_mirror, 0.07f, 0.01f);
 
     add_new_sound(snd_hp_pickup_ID, "snd/hp_pickup.wav", all_sounds, all_sounds_mirror, 0.07f, 0.01f);
+    add_new_sound(snd_hp_pickup_big_ID, "snd/hp_pickup_big.wav", all_sounds, all_sounds_mirror, 0.07f, 0.01f);
 
     add_new_sound(snd_lust_proc_ID, "snd/lust_proc.wav", all_sounds, all_sounds_mirror, 0.07f, 0.01f);
 
@@ -13575,6 +13670,13 @@ int main(int argc, char* argv[])
     add_new_sound(snd_lightning_orb_explo_ID, "snd/lightning_cannon_end.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
     add_new_sound(snd_revenge_bullet, "snd/revenge_bullet.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f, 65.0f);
+
+
+    //chest
+    add_new_sound(snd_ammo_chest_ID, "snd/ammo_chest.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
+    add_new_sound(snd_weapon_chest_ID, "snd/weapon_chest.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
+    add_new_sound(snd_hp_chest_ID, "snd/health_chest.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
+    add_new_sound(snd_hp_chest_big_ID, "snd/health_chest_big.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
 
 
     //some looping sounds
@@ -13905,6 +14007,12 @@ int main(int argc, char* argv[])
         gun_warrant_active_tex.loadFromFile("res/sprGunWarrant.png");
         sf::Texture gun_warrant_disappear_tex;
         gun_warrant_disappear_tex.loadFromFile("res/sprGunWarrantDisappear.png");
+        sf::Texture fx_chest_open_tex;
+        fx_chest_open_tex.loadFromFile("res/sprFXChestOpen.png");
+        sf::Texture fx_very_big_heal_tex;
+        fx_very_big_heal_tex.loadFromFile("res/sprHealGiantFX.png");
+        sf::Texture fx_fishA_tex;
+        fx_fishA_tex.loadFromFile("res/fishA.png");
 
         sf::Texture chicken_health_bar;
         chicken_health_bar.loadFromFile("res/player/chicken_health_bar.png");
@@ -18353,11 +18461,22 @@ int main(int argc, char* argv[])
                             if (allObjects[idx].alarm2 == 0) {
                                 choice = 7;
                             }
+                            switch (allObjects[idx].alarm1) {
+                            default://ammo
+                                choice2 = 336;
+                                break;
+                            case 1://hp
+                                choice2 = 384;
+                                break;
+                            case 2://wep
+                                choice2 = 416;
+                                break;
+                            }
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setColor({ 255, 255, 255, 255 });
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setPosition(allObjects[idx].position - cameraPos);
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setRotation(0);
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setScale(1, 1);
-                            rotateable_effects_medium[rotateableEffectsMediumIndex].setTextureRect(sf::IntRect{ 16 * choice, 336, 16, 16 });
+                            rotateable_effects_medium[rotateableEffectsMediumIndex].setTextureRect(sf::IntRect{ 16 * choice, choice2, 16, 16 });
                             rotateableEffectsMediumIndex++;
                         break;
                     case ammo_pack:
@@ -18624,6 +18743,36 @@ int main(int argc, char* argv[])
                             variable_textures_top[variableTexturesTopIndex].setOrigin(32, 32);
                             variable_textures_top[variableTexturesTopIndex].setScale(1, 1);
                             variableTexturesTopIndex++;
+                        }
+                        else if (allObjects[idx].alarm2 == 13) {//fx chest
+                            variable_textures_top[variableTexturesTopIndex].setTexture(fx_chest_open_tex);
+                            variable_textures_top[variableTexturesTopIndex].setColor({ 255, 255, 255, 255 });
+                            variable_textures_top[variableTexturesTopIndex].setPosition(allObjects[idx].position - cameraPos);
+                            variable_textures_top[variableTexturesTopIndex].setRotation(0);
+                            variable_textures_top[variableTexturesTopIndex].setTextureRect(sf::IntRect{ choice * 32, 0, 32, 32 });
+                            variable_textures_top[variableTexturesTopIndex].setOrigin(16, 16);
+                            variable_textures_top[variableTexturesTopIndex].setScale(1, 1);
+                            variableTexturesTopIndex++;
+                        }
+                        else if (allObjects[idx].alarm2 == 14) {//verg big heal
+                            variable_textures_top[variableTexturesTopIndex].setTexture(fx_very_big_heal_tex);
+                            variable_textures_top[variableTexturesTopIndex].setColor({ 255, 255, 255, 255 });
+                            variable_textures_top[variableTexturesTopIndex].setPosition(allObjects[idx].position - cameraPos);
+                            variable_textures_top[variableTexturesTopIndex].setRotation(0);
+                            variable_textures_top[variableTexturesTopIndex].setTextureRect(sf::IntRect{ choice * 36, 0, 36, 45 });
+                            variable_textures_top[variableTexturesTopIndex].setOrigin(18, 42);
+                            variable_textures_top[variableTexturesTopIndex].setScale(1, 1);
+                            variableTexturesTopIndex++;
+                        }
+                        else if (allObjects[idx].alarm2 == 15) {//fishA
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setTexture(fx_fishA_tex);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setColor({ 255, 255, 255, 255 });
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setPosition(allObjects[idx].position - cameraPos);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setRotation(0);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setTextureRect(sf::IntRect{ choice * 32, 0, 32, 32 });
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setOrigin(16, 16);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setScale(1, 1);
+                            variableTexturesTopEnemiesIndex++;
                         }
                         break;
                     case rebel_ally:

@@ -430,7 +430,14 @@ enum sound_ID {
 	snd_pickup_disappear_ID,
 	snd_ammo_pickup_ID,
 	snd_hp_pickup_ID,
+	snd_hp_pickup_big_ID,
 	snd_lust_proc_ID,
+
+	//chest
+	snd_ammo_chest_ID,
+	snd_weapon_chest_ID,
+	snd_hp_chest_ID,
+	snd_hp_chest_big_ID,
 
 	snd_empty_ID,
 
