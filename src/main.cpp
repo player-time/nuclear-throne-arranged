@@ -53,12 +53,13 @@ int GLOBAL_DEBUG_INT = 0;
 std::string DEBUG_SPRITE_MIN[64];
 sf::Vector2i proportion_min[64];
 int samllest_proportion = 0;
-int samllest_proportion_value = 10.0f;
+float samllest_proportion_value = 10.0f;
 int largest_proportion = 0;
-int largest_proportion_value = 0.0f;
+float largest_proportion_value = 0.0f;
 
 bool DEBUG_DO_RANDOM_INPUTS = false;
 
+float largest_speed = 0.0f;
 
 
 //network stuff
@@ -93,10 +94,10 @@ std::vector<sf::Sprite> bullet_2_batchable;
 int bullet_2_batchable_max = 25000;
 
 std::vector<sf::Sprite> all_enemy_sprites;  //all enemy sprites that fit into a 32x32 box
-int all_enemy_sprites_max = 5000;
+int all_enemy_sprites_max = 6000;
 
 std::vector<sf::Sprite> all_enemy_corpses;  //all enemy corpse sprites that fit into a 32x32 box
-int all_enemy_corpses_max = 5000;
+int all_enemy_corpses_max = 6000;
 
 std::vector<sf::Sprite> rotateable_sprites_bullets;
 int rotateable_sprites_bullets_max = 17000;
@@ -154,6 +155,7 @@ std::vector<sf::Sprite> weapon_sprites;
 int weapon_sprites_max = 1000;
 
 sf::Sprite portal_sprite;
+bool portal_drawn = false;
 
 sf::Sprite T2_sprite;
 int T2_object_index = 1;
@@ -272,6 +274,8 @@ bool killed_throne_2 = false;
 bool can_move_outside_T2_arena = false;
 bool boss_taunt = false;
 int boss_taunt_delay = 0;
+
+std::vector<int> weapons_in_portal;
 
 unsigned int MAXFPS = 30;
 
@@ -1432,17 +1436,27 @@ void draw_light(sf::Vector2f pos, sf::RenderTexture& the_darkness, int large_rad
     Renderer_2.blendMode = sf::BlendMin;
     sf::CircleShape circ;
 
-    circ.setRadius(large_radius);
-    circ.setPointCount(24);
-    circ.setOrigin(large_radius, large_radius);
-    circ.setFillColor({ 0, 0, 0, 128 });
-    circ.setPosition(pos - cameraPos + sf::Vector2f(random_float(1.0f) - 0.5f, random_float(1.0f) - 0.5f));
-    the_darkness.draw(circ, Renderer_2);
+    if (player_character != eyes) {
+        circ.setRadius(large_radius);
+        circ.setPointCount(24);
+        circ.setOrigin(large_radius, large_radius);
+        circ.setFillColor({ 0, 0, 0, 128 });
+        circ.setPosition(pos - cameraPos + sf::Vector2f(random_float(1.0f) - 0.5f, random_float(1.0f) - 0.5f));
+        the_darkness.draw(circ, Renderer_2);
 
-    circ.setRadius(small_radius);
-    circ.setOrigin(small_radius, small_radius);
-    circ.setFillColor({ 0, 0, 0, 0 });
-    the_darkness.draw(circ, Renderer_2);
+        circ.setRadius(small_radius);
+        circ.setOrigin(small_radius, small_radius);
+        circ.setFillColor({ 0, 0, 0, 0 });
+        the_darkness.draw(circ, Renderer_2);
+    }
+    else {//eyes
+        circ.setRadius(small_radius);
+        circ.setPointCount(24);
+        circ.setOrigin(small_radius, small_radius);
+        circ.setFillColor({ 0, 0, 0, 0 });
+        circ.setPosition(pos - cameraPos + sf::Vector2f(random_float(1.0f) - 0.5f, random_float(1.0f) - 0.5f));
+        the_darkness.draw(circ, Renderer_2);
+    }
 }
 
 float angle_to_player_radians(sf::Vector2f position) {
@@ -2477,7 +2491,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 break;
             case rebel_ally:
                 allObjects[i].my_id = obj_id;
-                allObjects[i].my_hitbox = enemy_bullet_hitbox;
+                allObjects[i].my_hitbox = plasma_hitbox;
 
                 allObjects[i].position = { x, y };
                 allObjects[i].speed = { 0, 0 };
@@ -2526,7 +2540,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].max_hp = allObjects[i].my_hp;
                 allObjects[i].image_index = rand() % 17;
                 allObjects[i].team = enemy_team;     //enemy team
-                allObjects[i].rad_drop = 5;
+                allObjects[i].rad_drop = 1 + (player_character == melting);
 
                 allObjects[i].size = 1;
 
@@ -2561,7 +2575,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].max_hp = allObjects[i].my_hp;
                 allObjects[i].image_index = rand() % 17;
                 allObjects[i].team = enemy_team;     //enemy team
-                allObjects[i].rad_drop = 24;    //25 base 24 with blood
+                allObjects[i].rad_drop = 24 + (player_character == melting);    //25 base 24 with blood
 
                 allObjects[i].size = 2;
 
@@ -3069,6 +3083,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].my_hitbox = weapon_hitbox;
 
                 allObjects[i].position = { x, y };
+                allObjects[i].position_PREV = { x, y };
                 allObjects[i].speed = { 0, 0 };
                 allObjects[i].speeddir = 0;
                 allObjects[i].size = image_index;   //what wep it is
@@ -3110,7 +3125,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
             case meat_explosion:
                 allObjects[i].my_id = obj_id;
                 allObjects[i].my_hitbox = meat_explosion_hitbox;
-                allObjects[i].damage = 1;
+                allObjects[i].damage = 1 + (has_throne_butt && player_character == melting);
 
                 allObjects[i].position = { x, y };
                 allObjects[i].image_index = 0;
@@ -3684,6 +3699,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
             return i;
         }
     }
+    return 0;
 }
 
 void corpse_portal_spawning_logic() {
@@ -3711,7 +3727,8 @@ void corpse_portal_spawning_logic() {
 void corpse_step(int i) {
     if (destroy_on_screen_corpses && is_within_camera(i)) {
         allObjects[i].my_id = melt_splat;
-        for (int j = 0; j < 1 + ((has_throne_butt || allObjects[i].size > 1) * 2); j++) {
+        allObjects[i].size = 0;
+        for (int j = 0; j < 1 + ((/*has_throne_butt ||*/ allObjects[i].size > 1) * 2); j++) {
             create_object(allObjects[i].position.x + random_float(2) - 1, allObjects[i].position.y + random_float(2) - 1, 0, 0, meat_explosion, 0, player_team);
             play_sound_on_player(snd_corpse_explode_ID);
             play_sound_on_player(snd_explosion_ID);
@@ -4058,25 +4075,74 @@ void object_bounce_wall(int O, int h, int w, int width, int height, int i, int j
 void collide_wall(int object_index, int i, int j, int h, int w, int width) {
     bool horizontalcontact = false;
     bool verticalcontact = false;
-    float diffx = (allObjects[object_index].position.x) - ((i * 16) + 8);    //distance from the center of the wall
-    float diffy = (allObjects[object_index].position.y) - ((j * 16) + 8);    //distance from the center of the wall
+    float diffx = (allObjects[object_index].position.x) - float((i * 16) + 8);    //distance from the center of the wall
+    float diffy = (allObjects[object_index].position.y) - float((j * 16) + 8);    //distance from the center of the wall
+
+    if (area == 0) {
+
+    }
+
     if (h == 0) {
-        if (w == 1 && diffx > 0 && diffx < 13 && abs(diffy) < 13) {
+        if (w == 1 && diffx > 0 && diffx < (8 + width) && abs(diffy) < (8 + width)) {
             allObjects[object_index].position.x = (i * 16) + 16 + width;
         }
-        if (w == -1 && diffx < 0 && diffx > -13 && abs(diffy) < 13) {
+        if (w == -1 && diffx < 0 && diffx > -(8 + width) && abs(diffy) < (8 + width)) {
             allObjects[object_index].position.x = (i * 16) - width;
         }
     }
 
-    if (w == 0) {
-        if (h == 1 && diffy > 0 && diffy < 13 && abs(diffx) < 13) {
+    else if (w == 0) {
+        if (h == 1 && diffy > 0 && diffy < (8 + width) && abs(diffx) < (8 + width)) {
             allObjects[object_index].position.y = (j * 16) + 16 + width;
         }
-        if (h == -1 && diffy < 0 && diffy > -13 && abs(diffx) < 13) {
+        if (h == -1 && diffy < 0 && diffy > -(8 + width) && abs(diffx) < (8 + width)) {
             allObjects[object_index].position.y = (j * 16) - width;
         }
     }
+
+    else if (abs(diffx) < 8 + width && abs(diffy) < 8 + width) {
+        if (diffx > 0 && diffy > 0) {
+            if (diffx > diffy && (game_area[i + 1][j].my_grid_type == exlpo_tile || game_area[i + 1][j].my_grid_type == floor_tile)) {
+                allObjects[object_index].position.x = (i * 16) + 16 + width;
+            }
+            else if (game_area[i][j + 1].my_grid_type == exlpo_tile || game_area[i][j + 1].my_grid_type == floor_tile) {
+                allObjects[object_index].position.y = (j * 16) + 16 + width;
+            }
+        }
+        else if (diffx > 0 && diffy < 0) {
+            if (diffx > abs(diffy) && (game_area[i + 1][j].my_grid_type == exlpo_tile || game_area[i + 1][j].my_grid_type == floor_tile)) {
+                allObjects[object_index].position.x = (i * 16) + 16 + width;
+            }
+            else if (game_area[i][j - 1].my_grid_type == exlpo_tile || game_area[i][j - 1].my_grid_type == floor_tile) {
+                allObjects[object_index].position.y = (j * 16) - width;
+            }
+        }
+        else if (diffx < 0 && diffy > 0) {
+            if (abs(diffx) > diffy && (game_area[i - 1][j].my_grid_type == exlpo_tile || game_area[i - 1][j].my_grid_type == floor_tile)) {
+                allObjects[object_index].position.x = (i * 16) - width;
+            }
+            else if (game_area[i][j + 1].my_grid_type == exlpo_tile || game_area[i][j + 1].my_grid_type == floor_tile) {
+                allObjects[object_index].position.y = (j * 16) + 16 + width;
+            }
+        }
+        else {//if (diffx < 0 && diffy < 0) {
+            if (diffx < diffy && (game_area[i - 1][j].my_grid_type == exlpo_tile || game_area[i - 1][j].my_grid_type == floor_tile)) {
+                allObjects[object_index].position.x = (i * 16) - width;
+            }
+            else if (game_area[i][j - 1].my_grid_type == exlpo_tile || game_area[i][j - 1].my_grid_type == floor_tile) {
+                allObjects[object_index].position.y = (j * 16) - width;
+            }
+        }
+    }
+
+    return;
+}
+
+void collide_wall_nice(int object_index, int i, int j, int h, int w, int width) {
+    bool horizontalcontact = false;
+    bool verticalcontact = false;
+    float diffx = (allObjects[object_index].position.x) - float((i * 16) + 8);    //distance from the center of the wall
+    float diffy = (allObjects[object_index].position.y) - float((j * 16) + 8);    //distance from the center of the wall
 
     if (w == 0 && h == 0) {
         if (diffx > 0 && diffy > 0) {
@@ -4087,7 +4153,7 @@ void collide_wall(int object_index, int i, int j, int h, int w, int width) {
                 allObjects[object_index].position.y = (j * 16) + 16 + width;
             }
         }
-        if (diffx > 0 && diffy < 0) {
+        else if (diffx > 0 && diffy < 0) {
             if (diffx > abs(diffy)) {
                 allObjects[object_index].position.x = (i * 16) + 16 + width;
             }
@@ -4095,7 +4161,7 @@ void collide_wall(int object_index, int i, int j, int h, int w, int width) {
                 allObjects[object_index].position.y = (j * 16) - width;
             }
         }
-        if (diffx < 0 && diffy > 0) {
+        else if (diffx < 0 && diffy > 0) {
             if (abs(diffx) > diffy) {
                 allObjects[object_index].position.x = (i * 16) - width;
             }
@@ -4103,7 +4169,7 @@ void collide_wall(int object_index, int i, int j, int h, int w, int width) {
                 allObjects[object_index].position.y = (j * 16) + 16 + width;
             }
         }
-        if (diffx < 0 && diffy < 0) {
+        else {//if (diffx < 0 && diffy < 0) {
             if (diffx < diffy) {
                 allObjects[object_index].position.x = (i * 16) - width;
             }
@@ -4112,6 +4178,25 @@ void collide_wall(int object_index, int i, int j, int h, int w, int width) {
             }
         }
     }
+
+    else if (h == 0) {
+        if (w == 1 && diffx > 0 && diffx < (8 + width) && abs(diffy) < (8 + width)) {
+            allObjects[object_index].position.x = (i * 16) + 16 + width;
+        }
+        if (w == -1 && diffx < 0 && diffx > -(8 + width) && abs(diffy) < (8 + width)) {
+            allObjects[object_index].position.x = (i * 16) - width;
+        }
+    }
+
+    else if (w == 0) {
+        if (h == 1 && diffy > 0 && diffy < (8 + width) && abs(diffx) < (8 + width)) {
+            allObjects[object_index].position.y = (j * 16) + 16 + width;
+        }
+        if (h == -1 && diffy < 0 && diffy > -(8 + width) && abs(diffx) < (8 + width)) {
+            allObjects[object_index].position.y = (j * 16) - width;
+        }
+    }
+    return;
 }
 
 bool is_within_throne_2(sf::Vector2f T2_pos, sf::Vector2f otherpos, int other_size) {
@@ -5241,7 +5326,7 @@ void enemy_die(int ENEMY, int PROJ) {
         }
 
         //debug start
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < 0; i++) {
             tmpdir = random_360_radians();
             tmpSpd = random_float(2.0f) + 3.0f;
             tempSpdx = cos(tmpdir) * tmpSpd;
@@ -5977,8 +6062,7 @@ void wep_push(int currOBJ, int O) {
         diffy = allObjects[currOBJ].position.y - allObjects[O].position.y;
 
         tmpdir = atan2f(diffy, diffx);
-        motion_add_dir(tmpdir, 1.0f, currOBJ);
-
+        motion_add_dir(tmpdir + random_float(0.01f) - 0.005f, 1.0f, currOBJ);
     }
 }
 
@@ -6029,6 +6113,26 @@ void basic_enemy_collision(int currOBJ, int i, int j) {
     float diffx = 0.0f;
     float diffy = 0.0f;
     float tmpdir = 0.0f;
+
+    //die if melting has brain cap and low hp
+    if (destroy_on_screen_corpses && player_character == melting && ultra_picked == 1 && is_within_camera(currOBJ)) {
+        if (allObjects[currOBJ].my_hp < round(5.0f * (1 + float(LOOPS) / 20.0f))) {
+
+            for (int jj = 0; jj < 1 + ((/*has_throne_butt ||*/ allObjects[currOBJ].size > 1) * 2); jj++) {
+                create_object(allObjects[currOBJ].position.x + random_float(2) - 1, allObjects[currOBJ].position.y + random_float(2) - 1, 0, 0, meat_explosion, 0, player_team);
+                play_sound_on_player(snd_corpse_explode_ID);
+                play_sound_on_player(snd_explosion_ID);
+            }
+
+            enemy_die(currOBJ, -1);
+            if (enemy_count > 0) {
+                allObjects[currOBJ].my_id = melt_splat;
+            }
+            allObjects[currOBJ].size = 1;
+            return;
+        }
+    }
+
     for (int w = -1; w < 2; w++) {
         for (int h = -1; h < 2; h++) {
             for (int O : game_area[i + w][j + h].object_indexes) {
@@ -6813,8 +6917,8 @@ void explosion_collision(int currOBJ, int i, int j) {
                     case bandit:
                     case idpd_freak:
                     case prop:
-                        if ((allObjects[currOBJ].team != allObjects[Other].team) && is_within_circle(allObjects[Other].position, allObjects[currOBJ].position, (allObjects[Other].my_hitbox + allObjects[currOBJ].my_hitbox))) {
-                            allObjects[Other].my_hp -= allObjects[Other].damage;
+                        if (is_within_circle(allObjects[Other].position, allObjects[currOBJ].position, (allObjects[Other].my_hitbox + allObjects[currOBJ].my_hitbox))) {
+                            allObjects[Other].my_hp -= allObjects[currOBJ].damage;
                             tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[Other].position.y, allObjects[currOBJ].position.x - allObjects[Other].position.x);
                             allObjects[currOBJ].speed.x = cos(tmpdir) * 12;
                             allObjects[currOBJ].speed.y = sin(tmpdir) * 12; //this is so the enemy_hurt() function works
@@ -6965,17 +7069,20 @@ void meat_explosion_collision(int currOBJ, int i, int j) {
                         case idpd_freak:
                         case prop:
                             if ((allObjects[currOBJ].team != allObjects[O].team) && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (allObjects[O].my_hitbox + meat_explosion_hitbox))) {
-                                allObjects[O].my_hp -= 1;
-                                tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
-                                allObjects[currOBJ].speed.x = cos(tmpdir) * 12;
-                                allObjects[currOBJ].speed.y = sin(tmpdir) * 12; //this is so the enemy_hurt() function works
-                                if (allObjects[O].my_hp > 0) {
-                                    enemy_hurt(O, currOBJ);
-                                }
-                                else {  //dead
-                                    enemy_die(O, currOBJ);
-                                }
+                                allObjects[O].next_hurt--;
+                                if (allObjects[O].next_hurt < current_frame) {
+                                    allObjects[O].my_hp -= allObjects[currOBJ].damage;
 
+                                    tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
+                                    allObjects[currOBJ].speed.x = cos(tmpdir) * 12;
+                                    allObjects[currOBJ].speed.y = sin(tmpdir) * 12; //this is so the enemy_hurt() function works
+                                    if (allObjects[O].my_hp > 0) {
+                                        enemy_hurt(O, currOBJ);
+                                    }
+                                    else {  //dead
+                                        enemy_die(O, currOBJ);
+                                    }
+                                }
                             }
                             break;
                         
@@ -7210,6 +7317,28 @@ void T2_bullet_step(int i) {
     }
 }
 
+void portal_collision(int currOBJ, int i, int j) {
+    for (int w = -10; w < 11; w++) {
+        for (int h = -10; h < 11; h++) {
+            for (int O : game_area[i + w][j + h].object_indexes) {
+                switch (allObjects[O].my_id) {
+                case weapon_drop:
+                    if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, 80)) {
+                        int dir = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
+                        motion_add_dir(dir, 7.0f, O);
+                        if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, 16)) {
+                            allObjects[O].my_id = nothing;
+                            //send to next level
+                            weapons_in_portal.push_back(allObjects[O].size);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+}
+
 void throne_2_collision(int currOBJ, int i, int j) {
     float tmpdir = 0.0f;
     float tempSpeedX = 0.0f;
@@ -7252,12 +7381,16 @@ void throne_2_collision(int currOBJ, int i, int j) {
                         break;
                     case meat_explosion:
                         if (allObjects[currOBJ].alarm1 < 0 && allObjects[O].team != enemy_team && is_within_throne_2(allObjects[currOBJ].position, allObjects[O].position, meat_explosion_hitbox)) {
-                            allObjects[currOBJ].my_hp -= 1;
-                            if (allObjects[currOBJ].my_hp > 0) {
-                                enemy_hurt(currOBJ, O);
-                            }
-                            else {  //dead
-                                enemy_die(currOBJ, O);
+                            allObjects[currOBJ].next_hurt--;
+                            if (allObjects[currOBJ].next_hurt < current_frame) {
+                                allObjects[currOBJ].my_hp -= allObjects[O].damage;
+
+                                if (allObjects[currOBJ].my_hp > 0) {
+                                    enemy_hurt(currOBJ, O);
+                                }
+                                else {  //dead
+                                    enemy_die(currOBJ, O);
+                                }
                             }
                         }
                         break;
@@ -7421,8 +7554,8 @@ void throne_2_collision(int currOBJ, int i, int j) {
 void add_object_indexs_to_2Dvector(int start, int end) {
     for (int i = start; i < end; i++) {
         if (allObjects[i].my_id != nothing) {
-            int xpos = allObjects[i].position.x / 16;
-            int ypos = allObjects[i].position.y / 16;
+            int xpos = int(allObjects[i].position.x / 16.0f);
+            int ypos = int(allObjects[i].position.y / 16.0f);
             //game_area[xpos][ypos].object_indexes[game_area[xpos][ypos].current_object_index] = i;
             game_area[xpos][ypos].object_indexes.push_back(i);
             //game_area[xpos][ypos].current_object_index++;
@@ -9018,6 +9151,9 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                     allObjects[i].my_id = nothing;
                 }
             }
+            else {
+                allObjects[i].position = allObjects[0].position;
+            }
             break;
         case portal:
             portal_camera_offset = { (allObjects[i].position.x - allObjects[0].position.x) / 16, (allObjects[i].position.y - allObjects[0].position.y) / 16 };
@@ -9506,14 +9642,25 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             break;
 
         case weapon_drop:
+
+
+            if (created_portal && area == 0) {
+                int dir = atan2f(create_portal_POS.y - allObjects[i].position.y, create_portal_POS.x - allObjects[i].position.x);
+                motion_add_dir(dir, 7.0f, i);
+                if (is_within_circle(create_portal_POS, allObjects[i].position, 16)) {
+                    allObjects[i].my_id = nothing;
+                    //send to next level
+                    weapons_in_portal.push_back(allObjects[i].size);
+                }
+            }
+
             allObjects[i].speeddir -= allObjects[i].friction;
-            if (allObjects[i].speeddir > 7.9f) {
-                allObjects[i].speeddir = 7.9f;
+            if (allObjects[i].speeddir > 5.9f) {
+                allObjects[i].speeddir = 5.9f;
             }
             else if (allObjects[i].speeddir < 0.0f) {
                 allObjects[i].speeddir = 0;
             }
-
 
             allObjects[i].alarm2--;
             if (player_character == chicken && ultra_picked == 2 && allObjects[i].alarm2 == 0) {
@@ -9542,6 +9689,16 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
 
             allObjects[i].speed.x = cos(allObjects[i].direction) * allObjects[i].speeddir;
             allObjects[i].speed.y = sin(allObjects[i].direction) * allObjects[i].speeddir;
+
+            if (1) {
+                float a = allObjects[i].position.x - allObjects[i].position_PREV.x;
+                float b = allObjects[i].position.y - allObjects[i].position_PREV.y;
+
+                if (sqrt(a * a + b * b) > largest_speed) {
+                    largest_speed = sqrt(a * a + b * b);
+                }
+            }
+            allObjects[i].position_PREV = allObjects[i].position;
 
             allObjects[i].position += allObjects[i].speed;
 
@@ -11149,7 +11306,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                 player_collision(i, j, O);
                                 if (!can_move_outside_T2_arena) {
                                     if (!roll && !(player_character == frog)) {
-                                        collide_wall(O, i, j, h, w, 5);
+                                        collide_wall_nice(O, i, j, h, w, 5);
                                     }
                                     else {
                                         player_bounce_wall(O, h, w, 5, 5, i, j);
@@ -11274,6 +11431,11 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                     throne_2_collision(O, i, j);
                                 }
                                 break;
+                            case portal:
+                                if (w == 0 && h == 0) {
+                                    portal_collision(O, i, j);
+                                }
+                                break;
                             case T2_bullet:
                                 if (w == 0 && h == 0) {
                                     T2_bullet_step(O);
@@ -11384,7 +11546,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                 break;
                             case objectID::player:
                                 if (!roll && !(player_character == frog)) {
-                                    collide_wall(O, i, j, h, w, 5);
+                                    collide_wall_nice(O, i, j, h, w, 5);
                                 }
                                 else {
                                     player_bounce_wall(O, h, w, 5, 5, i, j);
@@ -11418,8 +11580,18 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                 for (int currOBJ : game_area[i][j].object_indexes) {    //inside of wall
                     switch (allObjects[currOBJ].my_id) {
                     case bandit:
+                    case weapon_drop:
                         if (game_area[int(allObjects[currOBJ].position.x / 16.0f)][int(allObjects[currOBJ].position.y / 16.0f)].my_grid_type == wall) {
-                            GLOBAL_DEBUG_INT++;
+                            if (allObjects[currOBJ].my_id == bandit) {
+                                GLOBAL_DEBUG_INT = 29;
+                                GAME_PAUSED = true;
+                                DEBUG_ENEMY_TELEPORT_TO = currOBJ;
+                            }
+                            else {
+                                GLOBAL_DEBUG_INT = 99;
+                                GAME_PAUSED = true;
+                                DEBUG_ENEMY_TELEPORT_TO = currOBJ;
+                            }
                             for (int B = 1; B < max_objects; B++) {
                                 if (B != currOBJ) {
                                     allObjects[B].my_id = nothing;
@@ -11621,6 +11793,9 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                     switch (allObjects[currOBJ].my_id) {
                     case throne_2:
                         throne_2_collision(currOBJ, i, j);
+                        break;
+                    case portal:
+                        portal_collision(currOBJ, i, j);
                         break;
                     case T2_bullet:
                         T2_bullet_step(currOBJ);
@@ -12433,9 +12608,10 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
     for (int i = 0; i < max_floors; i++) {
         allFloors[i].setPosition(0, 0);
     }
-    vector2D_reset(top_physics, bottom_physics, left_physics, right_physics);
+    vector2D_reset(top_physics - extra_physics, bottom_physics + extra_physics, left_physics - extra_physics, right_physics + extra_physics);       //make sure these dont go out of bounds
 
     reset_popup_texts();
+
 
     gen_curr_floor_index = 0;
 
@@ -12483,6 +12659,7 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
     T2_sprite.setPosition(-1000, -1000);
 
     allObjects[0].position = { 24016.0f, 24016.0f };
+
 
     if (area == 0) {    //throne 2
         //all_sounds[snd_music_ID].sound.setVolume(0.0f);
@@ -13032,6 +13209,16 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
             }
         }
     }
+
+
+
+    //spawn in weapons that went into the portal
+    for (int i = 0; i < weapons_in_portal.size(); i++) {
+        create_object(24016.0f, 24016.0f, 0, 0, weapon_drop, 0, weapons_in_portal[i]);
+    }
+
+    weapons_in_portal.clear();
+
 
     //rebel allies for ultra A
     if (player_character == rebel) {
@@ -15394,46 +15581,47 @@ int main(int argc, char* argv[])
 
 
         //if doing a replay, overwrite the players inputs with the inputs of the the replay file
-        if (PLAY_REPLAY) {
-            mousepos.x = replay_inputs[current_frame].mouse_x;
-            mousepos.y = replay_inputs[current_frame].mouse_y;
+        if (current_frame < replay_size) {
+            if (PLAY_REPLAY) {
+                mousepos.x = replay_inputs[current_frame].mouse_x;
+                mousepos.y = replay_inputs[current_frame].mouse_y;
 
-            player_move_up = (replay_inputs[current_frame].keyboard_n_mouse_input &     0b0000000000000001) != 0;
-            player_move_down = (replay_inputs[current_frame].keyboard_n_mouse_input &             0b0000000000000010) != 0;
-            player_move_left = (replay_inputs[current_frame].keyboard_n_mouse_input &         0b0000000000000100) != 0;
-            player_move_right = (replay_inputs[current_frame].keyboard_n_mouse_input &        0b0000000000001000) != 0;
+                player_move_up = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000000000000001) != 0;
+                player_move_down = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000000000000010) != 0;
+                player_move_left = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000000000000100) != 0;
+                player_move_right = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000000000001000) != 0;
 
-            SHIFT_held = (replay_inputs[current_frame].keyboard_n_mouse_input &           0b0000000000010000) != 0;
-            SPACE_pressed = (replay_inputs[current_frame].keyboard_n_mouse_input &        0b0000000000100000) != 0;
-            E_pressed = (replay_inputs[current_frame].keyboard_n_mouse_input &        0b0000000001000000) != 0;
-            LMB_pressed = (replay_inputs[current_frame].keyboard_n_mouse_input &          0b0000000010000000) != 0;
-            RMB_pressed = (replay_inputs[current_frame].keyboard_n_mouse_input &          0b0000000100000000) != 0;
-            player_pressed_LMB_this_frame = (replay_inputs[current_frame].keyboard_n_mouse_input &        0b0000001000000000) != 0;
-            player_pressed_RMB_this_frame = (replay_inputs[current_frame].keyboard_n_mouse_input &        0b0000010000000000) != 0;
-            player_held_LMB = (replay_inputs[current_frame].keyboard_n_mouse_input &          0b0000100000000000) != 0;
-            player_held_RMB = (replay_inputs[current_frame].keyboard_n_mouse_input &          0b0001000000000000) != 0;
+                SHIFT_held = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000000000010000) != 0;
+                SPACE_pressed = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000000000100000) != 0;
+                E_pressed = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000000001000000) != 0;
+                LMB_pressed = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000000010000000) != 0;
+                RMB_pressed = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000000100000000) != 0;
+                player_pressed_LMB_this_frame = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000001000000000) != 0;
+                player_pressed_RMB_this_frame = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000010000000000) != 0;
+                player_held_LMB = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000100000000000) != 0;
+                player_held_RMB = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0001000000000000) != 0;
+            }
+            //TODO record replay for now but later have an option to not record or play
+            else {//record input
+                replay_inputs[current_frame].mouse_x = mousepos.x;
+                replay_inputs[current_frame].mouse_y = mousepos.y;
+
+                replay_inputs[current_frame].keyboard_n_mouse_input += (player_move_up * 0b0000000000000001);
+                replay_inputs[current_frame].keyboard_n_mouse_input += (player_move_down * 0b0000000000000010);
+                replay_inputs[current_frame].keyboard_n_mouse_input += (player_move_left * 0b0000000000000100);
+                replay_inputs[current_frame].keyboard_n_mouse_input += (player_move_right * 0b0000000000001000);
+
+                replay_inputs[current_frame].keyboard_n_mouse_input += (SHIFT_held * 0b0000000000010000);
+                replay_inputs[current_frame].keyboard_n_mouse_input += (SPACE_pressed * 0b0000000000100000);
+                replay_inputs[current_frame].keyboard_n_mouse_input += (E_pressed * 0b0000000001000000);
+                replay_inputs[current_frame].keyboard_n_mouse_input += (LMB_pressed * 0b0000000010000000);
+                replay_inputs[current_frame].keyboard_n_mouse_input += (RMB_pressed * 0b0000000100000000);
+                replay_inputs[current_frame].keyboard_n_mouse_input += (player_pressed_LMB_this_frame * 0b0000001000000000);
+                replay_inputs[current_frame].keyboard_n_mouse_input += (player_pressed_RMB_this_frame * 0b0000010000000000);
+                replay_inputs[current_frame].keyboard_n_mouse_input += (player_held_LMB * 0b0000100000000000);
+                replay_inputs[current_frame].keyboard_n_mouse_input += (player_held_RMB * 0b0001000000000000);
+            }
         }
-        //TODO record replay for now but later have an option to not record or play
-        else {//record input
-            replay_inputs[current_frame].mouse_x = mousepos.x;
-            replay_inputs[current_frame].mouse_y = mousepos.y;
-
-            replay_inputs[current_frame].keyboard_n_mouse_input += (player_move_up * 0b0000000000000001);
-            replay_inputs[current_frame].keyboard_n_mouse_input += (player_move_down * 0b0000000000000010);
-            replay_inputs[current_frame].keyboard_n_mouse_input += (player_move_left * 0b0000000000000100);
-            replay_inputs[current_frame].keyboard_n_mouse_input += (player_move_right * 0b0000000000001000);
-
-            replay_inputs[current_frame].keyboard_n_mouse_input += (SHIFT_held * 0b0000000000010000);
-            replay_inputs[current_frame].keyboard_n_mouse_input += (SPACE_pressed * 0b0000000000100000);
-            replay_inputs[current_frame].keyboard_n_mouse_input += (E_pressed * 0b0000000001000000);
-            replay_inputs[current_frame].keyboard_n_mouse_input += (LMB_pressed * 0b0000000010000000);
-            replay_inputs[current_frame].keyboard_n_mouse_input += (RMB_pressed * 0b0000000100000000);
-            replay_inputs[current_frame].keyboard_n_mouse_input += (player_pressed_LMB_this_frame * 0b0000001000000000);
-            replay_inputs[current_frame].keyboard_n_mouse_input += (player_pressed_RMB_this_frame * 0b0000010000000000);
-            replay_inputs[current_frame].keyboard_n_mouse_input += (player_held_LMB * 0b0000100000000000);
-            replay_inputs[current_frame].keyboard_n_mouse_input += (player_held_RMB * 0b0001000000000000);
-        }
-
 
         if (DEBUG_DO_RANDOM_INPUTS && rand() % 5) {
             player_held_LMB = rand() % 2;
@@ -15482,7 +15670,7 @@ int main(int argc, char* argv[])
             player_shells = player_energy_max;
             player_explosives = player_energy_max;
             player_rads = 9999;
-            if (current_frame % 5000 == 0) {
+            if (current_frame % 500 == 0 && GLOBAL_DEBUG_INT != 99) {
                 want_gen = true;
             }
         }
@@ -15525,7 +15713,12 @@ int main(int argc, char* argv[])
         buffer_over.clear(sf::Color::Transparent);
         buffer_under.clear(sf::Color::Transparent);
         shadows.clear(sf::Color::Transparent);
-        the_darkness.clear(sf::Color::Black);
+        if (player_character != eyes) {
+            the_darkness.clear(sf::Color::Black);
+        }
+        else {//eyes
+            the_darkness.clear({0, 0, 0, 127});
+        }
 
         sf::CircleShape c{ 3.0f };
         sf::Text tx;
@@ -15573,11 +15766,18 @@ int main(int argc, char* argv[])
         tO.setPosition({ 2, 42 });
 
         sf::Text tO_;
-        tO_.setString("DEBUG_ENEMY_TELEPORT_TO Y: " + std::to_string(allObjects[DEBUG_ENEMY_TELEPORT_TO].position.y));
+        tO_.setString("DEBUG_ENEMY_TELEPORT_TO Y: " + std::to_string(allObjects[DEBUG_ENEMY_TELEPORT_TO].speed.y));
         tO_.setCharacterSize(8);
         tO_.setFont(font);
         tO_.setColor(sf::Color::White);
         tO_.setPosition({ 2, 112 });
+
+        sf::Text tO__;
+        tO__.setString("largest_speed: " + std::to_string(largest_speed));
+        tO__.setCharacterSize(8);
+        tO__.setFont(font);
+        tO__.setColor(sf::Color::White);
+        tO__.setPosition({ 2, 122 });
 
         int curr_tile_count = 0;
         //little laggy so take that into account when using
@@ -15642,8 +15842,8 @@ int main(int argc, char* argv[])
                 camera_want_y = floor(allObjects[0].position.y + cameraOffset.y + mouse_offset_window_center_y + portal_camera_offset.y);
                 portal_camera_offset = { 0, 0 };
 
-                cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x);// +debug_camera_offset.x;
-                cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y);// +debug_camera_offset.y;
+                cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x) +debug_camera_offset.x;
+                cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y) +debug_camera_offset.y;
 
                 //calualte direction to mouse
                 direction_to_mouse = atan2f(allObjects[0].position.y - (mousepos.y + cameraPos.y), allObjects[0].position.x - (mousepos.x + cameraPos.x)) + 180.0f / degreestoradians;
@@ -16134,6 +16334,10 @@ int main(int argc, char* argv[])
                 if (!crystal_is_shielding) {
                     allObjects[0].position.x += cos(allObjects[0].direction) * allObjects[0].speeddir;
                     allObjects[0].position.y += sin(allObjects[0].direction) * allObjects[0].speeddir;
+                }
+                else if (ultra_picked == 2) {
+                    allObjects[0].position.x += cos(allObjects[0].direction) * allObjects[0].speeddir * 0.7f;
+                    allObjects[0].position.y += sin(allObjects[0].direction) * allObjects[0].speeddir * 0.7f;
                 }
 
                 current_create_start = 1;   //reset each frame so that objects can be slotted into deleted objects places
@@ -16634,7 +16838,7 @@ int main(int argc, char* argv[])
 
             do_object_logic(0, max_objects, all_sounds, current_music);
 
-            destroy_on_screen_corpses = false;
+            //destroy_on_screen_corpses = false;
 
             if (global_stop_music) {
                 //all_sounds[snd_music_ID].sound.setVolume(0.0f);
@@ -16653,6 +16857,7 @@ int main(int argc, char* argv[])
             heal_all_allys = false;
 
             do_object_collision(left_physics_adjusted, right_physics_adjusted, 0);
+            destroy_on_screen_corpses = false;
 
             //check if player got hit
             if (allObjects[0].next_hurt == current_frame + 6) {
@@ -17581,6 +17786,7 @@ int main(int argc, char* argv[])
                         T2_sprite.setScale(1, 1);*/
                         break;
                     case portal:
+                        portal_drawn = true;
                         choice = int(allObjects[idx].image_index * 0.4f) % 4;
                         if (allObjects[idx].alarm1 == 2) {
                             portal_sprite.setTexture(portalDisappearTex);
@@ -18944,6 +19150,11 @@ int main(int argc, char* argv[])
                         choice = idx % 5;
 
                         choice2 = 6 + has_throne_butt;
+                        
+                        if (allObjects[idx].size == 1) {
+                            choice = 5;
+                            choice2 = 6;
+                        }
 
                         all_enemy_corpses[allEnemyCorpsesIndex].setTextureRect(sf::IntRect{ 48 * choice, 48 * choice2, 48, 48 });
                         allEnemyCorpsesIndex++;
@@ -20066,7 +20277,11 @@ int main(int argc, char* argv[])
             temp_var++;
             if ((float)rain_texturesIndex / (float)rain_textures_max >= (float)proportion_min[temp_var].x / (float)proportion_min[temp_var].y) { DEBUG_SPRITE_MIN[temp_var] = "rain_textures"; proportion_min[temp_var].x = rain_texturesIndex; proportion_min[temp_var].y = rain_textures_max; }
 
-
+            for (int ii = 0; ii < temp_var; ii++) {
+                if ((float)proportion_min[ii].x / (float)proportion_min[ii].y > 1.0f) {
+                    EXIT_PROGRAM_NOW = 7;
+                }
+            }
 
             for (int ii = 0; ii <= temp_var; ii++) {
                 if ((float)proportion_min[ii].x / (float)proportion_min[ii].y > largest_proportion_value) {
@@ -20105,7 +20320,9 @@ int main(int argc, char* argv[])
             }
 
             //portal
-            buffer_over.draw(portal_sprite);
+            if (portal_drawn) {
+                buffer_over.draw(portal_sprite);
+            }
 
             if (!crystal_is_shielding && player_alive) {
                 if (bwep != -1) {
@@ -20197,12 +20414,14 @@ int main(int argc, char* argv[])
             }
             reset_rotateable_sprites(variable_textures_bloom, variableTexturesBloomIndex);
 
-
-            portal_sprite.setScale(2, 2);
-            portal_sprite.setColor({ 255, 255, 255, 25 });
-            buffer_over.draw(portal_sprite, RendererBloom);
-            portal_sprite.setScale(1, 1);
-            portal_sprite.setColor({ 255, 255, 255, 255 });
+            if (portal_drawn) {
+                portal_sprite.setScale(2, 2);
+                portal_sprite.setColor({ 255, 255, 255, 25 });
+                buffer_over.draw(portal_sprite, RendererBloom);
+                portal_sprite.setScale(1, 1);
+                portal_sprite.setColor({ 255, 255, 255, 255 });
+            }
+            portal_drawn = false;
 
             for (sf::Sprite spr : explosions_sprites) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
@@ -20441,6 +20660,7 @@ int main(int argc, char* argv[])
             draw_text_NT(tC, buffer_over);
             draw_text_NT(tO, buffer_over);
             draw_text_NT(tO_, buffer_over);
+            draw_text_NT(tO__, buffer_over);
             draw_text_NT(tO0, buffer_over);
             draw_text_NT(tTime, buffer_over);
             draw_text_NT(tspr, buffer_over);
@@ -20479,6 +20699,36 @@ int main(int argc, char* argv[])
         window.display();
 
         if (EXIT_PROGRAM_NOW) {
+            bool sorted = false;
+            while (!sorted) {
+                bool swap_occured = false;
+                for (int i = 0; i < 64 - 1; i++) {
+                    if ((float)proportion_min[i].x / (float)proportion_min[i].y < (float)proportion_min[i + 1].x / (float)proportion_min[i + 1].y) {
+                        int temp_x = proportion_min[i].x;
+                        int temp_y = proportion_min[i].y;
+                        std::string temp_str = DEBUG_SPRITE_MIN[i];
+
+                        proportion_min[i].x = proportion_min[i + 1].x;
+                        proportion_min[i].y = proportion_min[i + 1].y;
+                        DEBUG_SPRITE_MIN[i] = DEBUG_SPRITE_MIN[i + 1];
+
+                        proportion_min[i + 1].x = temp_x;
+                        proportion_min[i + 1].y = temp_y;
+                        DEBUG_SPRITE_MIN[i + 1] = temp_str;
+                        swap_occured = true;
+                    }
+                }
+                if (!swap_occured) {
+                    break;
+                }
+            }
+
+            std::ofstream myfile;
+            myfile.open("sprite_caps.txt");
+            for (int i = 0; i < 64; i++) {
+                myfile << DEBUG_SPRITE_MIN[i] + ": " + std::to_string(proportion_min[i].x) + " / " + std::to_string(proportion_min[i].y) + "\n";
+            }
+            myfile.close();
             return EXIT_PROGRAM_NOW;
         }
 

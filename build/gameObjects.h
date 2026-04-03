@@ -752,7 +752,7 @@ enum hitboxes {
 	crystal_shield_hitbox = 24,
 	plant_tangle_hitbox = 24,
 
-	weapon_hitbox = 8,
+	weapon_hitbox = 7,
 
 	devastator_hitbox = 8,
 
@@ -766,6 +766,7 @@ enum hitboxes {
  
 struct gameObject{
 	sf::Vector2f position = {0, 0};
+	sf::Vector2f position_PREV = {0, 0};
 	sf::Vector2f speed = { 0, 0 };
 
 	float direction = 0.0f;
