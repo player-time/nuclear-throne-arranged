@@ -5197,6 +5197,7 @@ void enemy_hurt(int ENEMY, int PROJ) {
     allObjects[ENEMY].image_index = -6;
     motion_add_XY_speed(allObjects[PROJ].speed.x, allObjects[PROJ].speed.y, ENEMY);   //knockback
     play_sound_relative_to_player(allObjects[ENEMY].hurt_ID, allObjects[ENEMY].position.x, allObjects[ENEMY].position.y);
+    GLOBAL_DEBUG_INT = allObjects[ENEMY].position.x;
 }
 
 void basic_enemy_death_logic() {
@@ -5222,6 +5223,8 @@ float direction_to_player(int OBJ) {
 
 
 void enemy_die(int ENEMY, int PROJ) {
+
+    GLOBAL_DEBUG_INT = allObjects[ENEMY].position.x;
     if (PROJ > 0) {     //is killed by and object (not anomaly)
         allObjects[ENEMY].speed = allObjects[PROJ].speed;
         motion_add_XY_speed(allObjects[PROJ].speed.x, allObjects[PROJ].speed.y, ENEMY);   //knockback
@@ -6195,7 +6198,7 @@ void basic_enemy_collision(int currOBJ, int i, int j) {
                     case nade:
                         if (allObjects[O].team != allObjects[currOBJ].team && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[currOBJ].my_hitbox + allObjects[O].my_hitbox)) {
 
-                            if (allObjects[O].alarm3 != 13 && allObjects[O].alarm3 != 14) {
+                            if (allObjects[O].alarm3 != 13 && allObjects[O].alarm3 != 14 && allObjects[O].alarm3 != 10) {
                                 allObjects[currOBJ].my_hp -= allObjects[O].damage;
 
                                 destroy_projectile(O);
@@ -6815,7 +6818,7 @@ void melee_shank_collision(int currOBJ, int i, int j) {
                     }
                     break;
                 case nade:
-                    if (is_within_melee_shank(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox, allObjects[currOBJ].direction)) {
+                    if (is_within_melee_shank(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox, allObjects[currOBJ].direction) && allObjects[O].alarm3 != 10) {
                         destroy_projectile(O);
                     }
 
@@ -6937,7 +6940,7 @@ void explosion_collision(int currOBJ, int i, int j) {
                         break;
                     case nade:
                     case idpd_nade:
-                        if (is_within_circle(allObjects[Other].position, allObjects[currOBJ].position, (allObjects[Other].my_hitbox + allObjects[currOBJ].my_hitbox))) {
+                        if (is_within_circle(allObjects[Other].position, allObjects[currOBJ].position, (allObjects[Other].my_hitbox + allObjects[currOBJ].my_hitbox)) && allObjects[Other].alarm3 != 10) {
                             destroy_projectile(Other);
                         }
                         break;
@@ -7005,7 +7008,7 @@ void idpd_explosion_collision(int currOBJ, int i, int j) {
                         break;
                     case nade:
                     case idpd_nade:
-                        if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (allObjects[O].my_hitbox + idpd_explosion_hitbox))) {
+                        if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (allObjects[O].my_hitbox + idpd_explosion_hitbox)) && allObjects[O].alarm3 != 10) {
                             destroy_projectile(O);
                         }
                         break;
@@ -7147,6 +7150,8 @@ void meat_explosion_collision(int currOBJ, int i, int j) {
 void player_laser_collision(int currOBJ) {
     bool has_collided_with_wall = false;
 
+    int enemies_collided_with = 0;
+
     //std::vector<sf::Vector2i> tiles_to_check_collision_with;
 
     float prev_x_pos = allObjects[currOBJ].position.x;
@@ -7228,6 +7233,13 @@ void player_laser_collision(int currOBJ) {
 
             float extra_hitbox = 0.0f;
 
+            float xdiff = allObjects[currOBJ].position.x - x;
+            float ydiff = allObjects[currOBJ].position.y - y;
+
+            allObjects[currOBJ].size = int(sqrt(xdiff * xdiff + ydiff * ydiff));
+
+            int laser_pierce_threashold = 24;
+
             for (int w = start_x; w < end_x; w++) {
                 for (int h = start_y; h < end_y; h++) {
                     for (int obj : game_area[w][h].object_indexes) {
@@ -7242,7 +7254,10 @@ void player_laser_collision(int currOBJ) {
                                 float line_y_pos = slope_x * allObjects[obj].position.x + y_intercept;
                                 float total_hitox = allObjects[obj].my_hitbox + allObjects[currOBJ].scale * 4 * hitbox_mult;
                                 if (abs(line_x_pos - allObjects[obj].position.x) < (total_hitox) || abs(line_y_pos - allObjects[obj].position.y) < (total_hitox)) {
-                                    has_collided_with_wall = true;
+                                    if (enemies_collided_with > 0 && allObjects[currOBJ].size > laser_pierce_threashold) {
+                                        has_collided_with_wall = true;
+                                    }
+                                    enemies_collided_with++;
                                 }
                             }
                             break;
@@ -7255,7 +7270,10 @@ void player_laser_collision(int currOBJ) {
                                     float line_y_pos = slope_x * allObjects[obj].position.x + y_intercept;
                                     float total_hitox = 48 + allObjects[currOBJ].scale * 4 * hitbox_mult;
                                     if (abs(line_x_pos - allObjects[obj].position.x) < (total_hitox) || abs(line_y_pos - (allObjects[obj].position.y + 18.0f)) < (total_hitox)) {
-                                        has_collided_with_wall = true;
+                                        if (enemies_collided_with > 0 && allObjects[currOBJ].size > laser_pierce_threashold) {
+                                            has_collided_with_wall = true;
+                                        }
+                                        enemies_collided_with++;
                                     }
                                 }
                             }
@@ -7302,7 +7320,7 @@ void player_laser_collision(int currOBJ) {
 
     allObjects[currOBJ].size = int(sqrt(xdiff * xdiff + ydiff * ydiff));
 
-    //do collisions with enemies
+    //do collisions with enemies (damaging part)
     int start_x = 0;
     int start_y = 0;
     int lowest_x = 0;
@@ -7554,7 +7572,7 @@ void throne_2_collision(int currOBJ, int i, int j) {
                     case nade:
                         if (allObjects[O].team != enemy_team && is_within_throne_2(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox)) {
 
-                            if (allObjects[O].alarm3 != 13 && allObjects[O].alarm3 != 14) {
+                            if (allObjects[O].alarm3 != 13 && allObjects[O].alarm3 != 14 && allObjects[O].alarm3 != 10) {
                                 allObjects[currOBJ].my_hp -= allObjects[O].damage;
 
                                 destroy_projectile(O);
@@ -10347,6 +10365,10 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             if (allObjects[i].corpse_id != 0 && is_an_enemy(allObjects[allObjects[i].corpse_id].my_id)) {
                 allObjects[i].position = allObjects[allObjects[i].corpse_id].position;
             }
+
+            if (allObjects[i].alarm3 == 10) {//hyper
+                break;
+            }
             __fallthrough;
         case idpd_nade:
             allObjects[i].alarm1++;
@@ -11275,6 +11297,10 @@ void nade_step(int i) {     //NOW
         float Y_prev = allObjects[0].position.y;
         float X_ = allObjects[0].position.x;
         float Y_ = allObjects[0].position.y;
+
+        allObjects[i].speed.x = cos(allObjects[i].direction) * allObjects[i].speeddir;
+        allObjects[i].speed.y = sin(allObjects[i].direction) * allObjects[i].speeddir;
+
         while (!collided) {
             X_prev = X_;
             Y_prev = Y_;
@@ -11299,7 +11325,10 @@ void nade_step(int i) {     //NOW
             if (allObjects[i].my_id != nothing && (int(X_prev / 16) != int(X_ / 16) || int(Y_prev / 16) != int(Y_ / 16))) {
                 for (int w = -4; w < 5; w++) {
                     for (int h = -4; h < 5; h++) {
-                        for (int obj_collide : game_area[int(X_ / 16) + w][int(Y_ / 16) + h].object_indexes) {
+                        for (int objidx = 0; objidx < game_area[int(X_ / 16) + w][int(Y_ / 16) + h].object_indexes.size(); objidx++) {
+
+                            int obj_collide = game_area[int(X_ / 16) + w][int(Y_ / 16) + h].object_indexes[objidx];
+
                             switch (allObjects[obj_collide].my_id) {
                             case bandit:__fallthrough;
                             case idpd_freak:__fallthrough;
@@ -11313,7 +11342,7 @@ void nade_step(int i) {     //NOW
                                     else {  //dead
                                         enemy_die(obj_collide, i);
                                     }
-                                    create_object(allObjects[0].position.x + random_float(1.0f) - 0.5f, allObjects[0].position.y + random_float(1.0f) - 0.5f, 0, 0, explosion, 0, 0);
+                                    create_object(X_ + random_float(1.0f) - 0.5f, Y_ + random_float(1.0f) - 0.5f, 0, 0, explosion, 0, 0);
                                     allObjects[i].my_id = nothing;
                                     return;
                                 }
