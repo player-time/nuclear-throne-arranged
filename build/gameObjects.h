@@ -404,6 +404,7 @@ enum sound_ID {
 	snd_gun_warrant_end_ID,
 
 	snd_crystal_shield_ID,
+	snd_crystal_teleport_ID,
 
 	snd_eyes_TK_ID,
 
@@ -417,6 +418,7 @@ enum sound_ID {
 	snd_plant_TB_kill_ID,
 
 	snd_YV_pop_ID,
+	snd_YV_brap_ID,
 
 	snd_robot_eat_ID,
 	snd_robot_eat_fast_ID,
