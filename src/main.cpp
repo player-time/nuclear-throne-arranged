@@ -499,6 +499,8 @@ int second_stomach = 0;
 float stress = 1.0f;
 int bloodlust = 1;
 
+bool extra_feet = false;
+
 bool rabbit_paw = 0;
 
 bool bolt_marrow = false;
@@ -3382,6 +3384,9 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].growspeed = 0.05f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.05f)));  //growspeed
                 allObjects[i].scale = 0.7f;  //image scale
                 allObjects[i].image_index = rand() % 5;
+
+                allObjects[i].size = image_index;
+
                 break;
             case toxic_gas:
                 allObjects[i].alarm1 = 0;
@@ -3700,6 +3705,15 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].alarm1 = 13;
                     allObjects[i].alarm2 = 2;
                     break;
+                case 480:   //steroids throne butt
+                    allObjects[i].alarm1 = 18;
+                    allObjects[i].alarm2 = 2;
+                    allObjects[i].alarm3 = 1;
+                    break;
+                case 481:   //robot eat TB
+                    allObjects[i].alarm1 = 25;
+                    allObjects[i].alarm2 = 16;
+                    break;
                 default:
                     allObjects[i].alarm1 = 0;
                     allObjects[i].alarm2 = 0;
@@ -4011,7 +4025,7 @@ void player_bounce_wall(int O, int h, int w, int width, int height, int i, int j
     }
 }
 
-void object_bounce_wall(int O, int h, int w, int width, int height, int i, int j) {
+bool object_bounce_wall(int O, int h, int w, int width, int height, int i, int j) {
 
     //the width and height are effetively the radius of the square
     //x -> width
@@ -4030,11 +4044,13 @@ void object_bounce_wall(int O, int h, int w, int width, int height, int i, int j
             //allObjects[O].speed.x *= -1;
             allObjects[O].direction = 180 / degreestoradians - allObjects[O].direction;        //mirror over y axis
             allObjects[O].facing_right = !allObjects[O].facing_right;
+            return true;
         }
         else if (w == -1 && diffx <= 0 && diffx > -8 - width && abs(diffy) < 8 + height) {
             allObjects[O].position.x = (i * 16) - width;
             allObjects[O].direction = 180 / degreestoradians - allObjects[O].direction;        //mirror over y axis
             allObjects[O].facing_right = !allObjects[O].facing_right;
+            return true;
         }
     }
 
@@ -4042,10 +4058,12 @@ void object_bounce_wall(int O, int h, int w, int width, int height, int i, int j
         if (h == 1 && diffy >= 0 && diffy < 8 + height && abs(diffx) < 8 + width) {
             allObjects[O].position.y = (j * 16) + 16 + height;
             allObjects[O].direction = -allObjects[O].direction;     //mirror over x axis
+            return true;
         }
         else if (h == -1 && diffy <= 0 && diffy > -8 - height && abs(diffx) < 8 + width) {
             allObjects[O].position.y = (j * 16) - height;
             allObjects[O].direction = -allObjects[O].direction;     //mirror over x axis
+            return true;
         }
     }
     else if (abs(diffx) < 8 + width && abs(diffy) < 8 + height) {
@@ -4083,8 +4101,9 @@ void object_bounce_wall(int O, int h, int w, int width, int height, int i, int j
         }
         allObjects[O].direction = 180 / degreestoradians + allObjects[O].direction;        //mirror over x and y axis
         allObjects[O].facing_right = !allObjects[O].facing_right;
+        return true;
     }
-
+    return false;
 }
 
 void collide_wall(int object_index, int i, int j, int h, int w, int width) {
@@ -4660,13 +4679,16 @@ void destroy_projectile(int object_index) {
             break;
         case 6://blood nade
             tmpdir = random_360_radians();
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 5; i++) {
                 //meat
                 tmpspdX = cos(tmpdir) * 24;
                 tmpspdY = sin(tmpdir) * 24;
                 create_object(allObjects[object_index].position.x + tmpspdX, allObjects[object_index].position.y + tmpspdY, 0, 0, meat_explosion, 0, player_team);
+                tmpdir += 36 / degreestoradians;
+                tmpspdX = cos(tmpdir) * 24;
+                tmpspdY = sin(tmpdir) * 24;
                 create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspdX / 10, tmpspdY / 10, static_effect, tmpdir * degreestoradians, 216);
-                tmpdir += 120 / degreestoradians;
+                tmpdir += 36 / degreestoradians;
             }
             play_sound_relative_to_player(snd_blood_launcher_explode_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
             break;
@@ -5170,7 +5192,7 @@ void clear_all_bullets() {      //clear all enemy bullets
     objectID curr_id = nothing;
     for (int i = 1; i < max_objects; i++) {
         switch (allObjects[i].my_id) {
-        case nade:
+        //case nade:
         case idpd_nade:
             clear_idpd_nade(i);
             break;
@@ -6334,8 +6356,10 @@ void basic_enemy_collision(int currOBJ, int i, int j) {
                                 else {  //dead
                                     enemy_die(currOBJ, O);
                                 }
-                                allObjects[O].speeddir *= 0.5f;
-                                allObjects[O].direction = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
+                                allObjects[O].speeddir *= (0.5f + (has_throne_butt) * 0.4f);
+                                if (!has_throne_butt) {
+                                    allObjects[O].direction = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
+                                }
                             }
                         }
                         break;
@@ -7681,8 +7705,10 @@ void throne_2_collision(int currOBJ, int i, int j) {
                                 else {  //dead
                                     enemy_die(currOBJ, O);
                                 }
-                                allObjects[O].speeddir *= 0.5f;
-                                allObjects[O].direction = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
+                                allObjects[O].speeddir *= (0.5f + (has_throne_butt) * 0.4f);
+                                if (!has_throne_butt) {
+                                    allObjects[O].direction = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
+                                }
                             }
                         }
                         break;
@@ -7810,6 +7836,83 @@ void not_enough_ammo(std::string string) {
     wep_kick = 3;
 }
 
+void steroids_TB_shot(int cost) {
+                                                    // is not a melee wep
+    if (player_character == steroids && has_throne_butt && bwep > 7 && wep > 7) {
+        int ammo_type_pack = 1;
+        if (wep < energy_weps) { ammo_type_pack = 10; }
+        else if (wep < bullet_weps) { ammo_type_pack = 32; }
+        else if (wep < bolt_weps) { ammo_type_pack = 7; }
+        else if (wep < shell_weps) { ammo_type_pack = 8; }
+        else if (wep < explosive_weps) { ammo_type_pack = 6; }
+
+        //always act as if the player is shooting both weps
+        if ((rand() % ammo_type_pack) < cost && rand() % 6 != 0) {
+
+            create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, static_effect, 0, 480);
+
+            int B_ammo_type_pack = 1;
+            if (bwep < energy_weps) { B_ammo_type_pack = 10; }
+            else if (bwep < bullet_weps) { B_ammo_type_pack = 32; }
+            else if (bwep < bolt_weps) { B_ammo_type_pack = 7; }
+            else if (bwep < shell_weps) { B_ammo_type_pack = 8; }
+            else if (bwep < explosive_weps) { B_ammo_type_pack = 6; }
+            switch (B_ammo_type_pack) {
+            case 10:
+                player_energy += 5;
+                if (player_energy >= player_energy_max) {
+                    player_energy = player_energy_max;
+                    create_popuptext("MAX ENERGY", allObjects[0].position);
+                }
+                else {
+                    create_popuptext("+5 ENERGY", allObjects[0].position);
+                }
+                break;
+            case 32:
+                player_bullets += 16;
+                if (player_bullets >= player_bullets_max) {
+                    player_bullets = player_bullets_max;
+                    create_popuptext("MAX BULLETS", allObjects[0].position);
+                }
+                else {
+                    create_popuptext("+16 BULLETS", allObjects[0].position);
+                }
+                break;
+            case 7:
+                player_bolts += 4;
+                if (player_bolts >= player_bolts_max) {
+                    player_bolts = player_bolts_max;
+                    create_popuptext("MAX BOLTS", allObjects[0].position);
+                }
+                else {
+                    create_popuptext("+4 BOLTS", allObjects[0].position);
+                }
+                break;
+            case 8:
+                player_shells += 4;
+                if (player_shells >= player_shells_max) {
+                    player_shells = player_shells_max;
+                    create_popuptext("MAX SHELLS", allObjects[0].position);
+                }
+                else {
+                    create_popuptext("+4 SHELLS", allObjects[0].position);
+                }
+                break;
+            case 6:
+                player_explosives += 3;
+                if (player_explosives >= player_explosives_max) {
+                    player_explosives = player_explosives_max;
+                    create_popuptext("MAX EXPLOSIVES", allObjects[0].position);
+                }
+                else {
+                    create_popuptext("+3 EXPLOSIVES", allObjects[0].position);
+                }
+                break;
+            }
+        }
+    }
+}
+
 void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gamble_reload, int free_shots, int cost, float reload, float proj_speed, objectID object_type, float player_KB, float wep_KB, float acc_variation, bool automatic, int& ammo_type, int bullet_type = 0) {
     if (gun_warrent_timer > 0) {
         cost = 0;
@@ -7817,6 +7920,8 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
     if ((LMB_pressed && wep_reload <= 0.0f && ammo_type - cost * shots >= 0) || (skeleton_gamble && wep_reload <= 0.0f)) {
         LMB_pressed = automatic;
         wep_kick = wep_KB;
+
+        steroids_TB_shot(cost);
 
         if (cost != 0 && !skeleton_gamble) {
             if (wep == 22 && player_rads < 16 * shots) {
@@ -8507,11 +8612,14 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             if (gun_warrent_timer > 0) {
                 cost = 0;
             }
+
             if ((LMB_pressed && wep_reload <= 0.0f && shots == 1 && player_energy - cost >= 0) || (skeleton_gamble && wep_reload <= 0.0f)) {
                 swing_melee(direction, 12.0f, 22);
                 player_energy -= cost * !(skeleton_gamble);
 
                 wep_reload *= gamble_reload;
+
+                steroids_TB_shot(cost);
 
                 if (skeleton_gamble && rand() % 10 < 2) {
                     hurt_player(1);
@@ -8533,13 +8641,21 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             }
             break;
         case 9: //ehammer
-            if ((LMB_pressed && wep_reload <= 0.0f && shots == 1 && player_energy - 5 >= 0) || (skeleton_gamble && wep_reload <= 0.0f)) {
+
+            cost = 5;
+            if (gun_warrent_timer > 0) {
+                cost = 0;
+            }
+
+            if ((LMB_pressed && wep_reload <= 0.0f && shots == 1 && player_energy - cost >= 0) || (skeleton_gamble && wep_reload <= 0.0f)) {
                 swing_melee(direction, 20.0f, 42);
                 player_energy -= 5 * !(skeleton_gamble);
 
+                steroids_TB_shot(cost);
+
                 wep_reload *= gamble_reload;
 
-                if (skeleton_gamble && rand() % 10 < 5) {
+                if (skeleton_gamble && rand() % 10 < cost) {
                     hurt_player(1);
                     create_object(allObjects[0].position.x + Xspd * 2, allObjects[0].position.y + Yspd * 2, 0, 0, static_effect, direction * degreestoradians, 168);
                 }
@@ -8553,22 +8669,25 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 }
                 last_fire_frame = current_frame;
             }
-            if (LMB_pressed && wep_reload < 0.0f && player_energy - 5 < 0 && shots == 1 && !skeleton_gamble) {
+            if (LMB_pressed && wep_reload < 0.0f && player_energy - cost < 0 && shots == 1 && !skeleton_gamble) {
                 not_enough_ammo("NOT ENOUGH ENERGY");
             }
             break;
         case 10://escrew
-            cost = 1;
+            cost = 2;
             if (gun_warrent_timer > 0) {
                 cost = 0;
             }
+
             if ((LMB_pressed && wep_reload <= 0.0f && shots == 1 && player_energy - cost >= 0) || (skeleton_gamble && wep_reload <= 0.0f)) {
                 swing_shank(direction, 4.0f, 22);
                 player_energy -= cost * !(skeleton_gamble);
 
+                steroids_TB_shot(cost);
+
                 wep_reload *= gamble_reload;
 
-                if (skeleton_gamble && rand() % 10 < 2) {
+                if (skeleton_gamble && rand() % 10 < cost) {
                     hurt_player(1);
                     create_object(allObjects[0].position.x + Xspd * 2, allObjects[0].position.y + Yspd * 2, 0, 0, static_effect, direction * degreestoradians, 168);
                 }
@@ -8592,8 +8711,11 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
             if (gun_warrent_timer > 0) {
                 cost = 0;
             }
+
             if ((LMB_pressed && wep_reload <= 0.0f && player_energy - cost * shots >= 0)      ||    (skeleton_gamble && wep_reload <= 0.0f)) {
                 reloaded = false;
+
+                steroids_TB_shot(cost);
 
                 player_energy -= cost * shots * !(skeleton_gamble);
                 LMB_pressed = false;
@@ -9024,7 +9146,6 @@ void object_tunnel_corner(int currOBJ) {
         }
         break;
     case objectID::debris:
-    case objectID::thrown_wep:
         bounce_in_corner_wall(currOBJ);
         allObjects[currOBJ].speeddir = allObjects[currOBJ].speeddir / 2;
         break;
@@ -10412,7 +10533,7 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             if (allObjects[i].alarm1 == 69 && allObjects[i].my_id == idpd_nade) {
                 play_sound_relative_to_player(snd_IDPD_nade_almost_ID, allObjects[i].position.x, allObjects[i].position.y);
             }
-            if (allObjects[i].alarm2 >= 10 && (allObjects[i].alarm3 == 0 || allObjects[i].alarm3 == 2 || allObjects[i].alarm3 == 3 || allObjects[i].alarm3 == 11 || allObjects[i].alarm3 == 12 || allObjects[i].alarm3 == 13 || allObjects[i].alarm3 == 14 || allObjects[i].my_id == idpd_nade)) {
+            if (allObjects[i].alarm2 >= 10 && (allObjects[i].alarm3 == 0 || allObjects[i].alarm3 == 2 || allObjects[i].alarm3 == 3 || allObjects[i].alarm3 == 6 || allObjects[i].alarm3 == 11 || allObjects[i].alarm3 == 12 || allObjects[i].alarm3 == 13 || allObjects[i].alarm3 == 14 || allObjects[i].my_id == idpd_nade)) {
                 allObjects[i].friction = 0.4f;
                 if (allObjects[i].my_id == idpd_nade) {
                     allObjects[i].friction = 0.5f;
@@ -10488,6 +10609,9 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             allObjects[i].alarm3--;
             if (allObjects[i].alarm2 <= 0) {
                 allObjects[i].friction = 0.5f;
+            }
+            if (allObjects[i].speeddir > 12) {
+                allObjects[i].speeddir = 12;
             }
             if (allObjects[i].speeddir > 0) {
                 allObjects[i].speeddir -= allObjects[i].friction;
@@ -11568,7 +11692,9 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                 }
                                 break;
                             case objectID::weapon_drop:
-                                collide_wall(O, i, j, h, w, allObjects[O].my_hitbox);
+                                if (!can_move_outside_T2_arena) {
+                                    collide_wall(O, i, j, h, w, allObjects[O].my_hitbox);
+                                }
                                 break;
                             case idpd_freak:
                                 if (!can_move_outside_T2_arena) {
@@ -11741,6 +11867,14 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                             case bandit:__fallthrough;
                             case idpd_freak:
                                 object_bounce_wall(O, h, w, allObjects[O].my_hitbox, allObjects[O].my_hitbox, i, j);
+                                break;
+                            case thrown_wep:
+                                if (1) {
+                                    bool bounced = object_bounce_wall(O, h, w, allObjects[O].my_hitbox, allObjects[O].my_hitbox, i, j);
+                                    if (bounced) {
+                                        create_object(allObjects[O].position.x, allObjects[O].position.y, 0, 0, portal_clear, 0, 0);
+                                    }
+                                }
                                 break;
                             case objectID::idpd_freak_corpse:
                                 object_bounce_wall(O, h, w, 7, 7, i, j);
@@ -11922,7 +12056,6 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                         }
                         break;
                     case objectID::debris:
-                    case objectID::thrown_wep:
                         bounce_in_wall(currOBJ);
                         allObjects[currOBJ].speeddir = allObjects[currOBJ].speeddir / 2;
                         break;
@@ -14385,6 +14518,8 @@ int main(int argc, char* argv[])
         fx_very_big_heal_tex.loadFromFile("res/sprHealGiantFX.png");
         sf::Texture fx_fishA_tex;
         fx_fishA_tex.loadFromFile("res/fishA.png");
+        sf::Texture robot_eat_TB_tex;
+        robot_eat_TB_tex.loadFromFile("res/sprRobotEatTB.png");
 
         sf::Texture chicken_health_bar;
         chicken_health_bar.loadFromFile("res/player/chicken_health_bar.png");
@@ -16113,22 +16248,13 @@ int main(int argc, char* argv[])
                     case robot:
                         if (nearest_wep_drop_ID != 0) {
                             allObjects[nearest_wep_drop_ID].my_id = nothing;
-                            float tmp_player_max_hp = player_max_hp;
-                            if (tmp_player_max_hp <= 0) {
-                                tmp_player_max_hp = 1;
-                            }
-                            
-                            for (int i = 0; i < 1; i++) {
-                                if (random_float(tmp_player_max_hp) >= player_hp && rand() % 3 != 0) {
-                                    pickup_health();
+                            for (int b = 0; b < 1 + (has_throne_butt); b++) {
+                                float tmp_player_max_hp = player_max_hp;
+                                if (tmp_player_max_hp <= 0) {
+                                    tmp_player_max_hp = 1;
                                 }
-                                else {
-                                    pickup_ammo();
-                                }
-                            }
-                            int siz = allObjects[nearest_wep_drop_ID].size;
-                            if (siz == 16 || siz == 21 || siz == 30 || siz == 42 || siz == 43 || siz == 50 || siz == 55 || siz == 62 || siz == 70 || siz == 78 || siz == 87 || siz == 98 || siz == 100) {
-                                for (int i = 0; i < 4; i++) {
+
+                                for (int i = 0; i < 1; i++) {
                                     if (random_float(tmp_player_max_hp) >= player_hp && rand() % 3 != 0) {
                                         pickup_health();
                                     }
@@ -16136,9 +16262,28 @@ int main(int argc, char* argv[])
                                         pickup_ammo();
                                     }
                                 }
+                                int siz = allObjects[nearest_wep_drop_ID].size;
+                                if (siz == 16 || siz == 21 || siz == 30 || siz == 42 || siz == 43 || siz == 50 || siz == 55 || siz == 62 || siz == 70 || siz == 78 || siz == 87 || siz == 98 || siz == 100) {
+                                    for (int i = 0; i < 4; i++) {
+                                        if (random_float(tmp_player_max_hp) >= player_hp && rand() % 3 != 0) {
+                                            pickup_health();
+                                        }
+                                        else {
+                                            pickup_ammo();
+                                        }
+                                    }
+                                }
                             }
-                            create_object(allObjects[nearest_wep_drop_ID].position.x, allObjects[nearest_wep_drop_ID].position.y, 0, 0, static_effect, 0, 552);
-                            play_sound_on_player(snd_robot_eat_ID);
+                            float tmpspd = 0.1f + random_float(0.2f);
+                            create_object(allObjects[nearest_wep_drop_ID].position.x, allObjects[nearest_wep_drop_ID].position.y, tmpspd, tmpspd, smoke, 0, 0);    //smoke
+                            if (!has_throne_butt) {
+                                play_sound_on_player(snd_robot_eat_ID);
+                                create_object(allObjects[nearest_wep_drop_ID].position.x, allObjects[nearest_wep_drop_ID].position.y, 0, 0, static_effect, 0, 552);
+                            }
+                            else {
+                                play_sound_on_player(snd_robot_eat_TB_ID);
+                                create_object(allObjects[nearest_wep_drop_ID].position.x, allObjects[nearest_wep_drop_ID].position.y, 0, 0, static_effect, 0, 552);
+                            }
                         }
                         break;
                     case chicken:
@@ -16518,6 +16663,14 @@ int main(int argc, char* argv[])
                         play_sound_on_player(static_cast<sound_ID>(choice));
                         if (player_walk_material == slime_rock_mat || player_walk_material == slime_sand_mat) {
                             play_sound_on_player(static_cast<sound_ID>(choice2));
+                        }
+                        if (rand() % 3 == 0) {//player foot step dust
+                            if (extra_feet) {
+                                create_object(allObjects[0].position.x, allObjects[0].position.y, 0.7, 0.7, dust, 0, 1);    //dust
+                            }
+                            else {
+                                create_object(allObjects[0].position.x, allObjects[0].position.y, 0.7, 0.7, dust, 0, 0);    //dust
+                            }
                         }
                     }
                 }
@@ -18740,7 +18893,7 @@ int main(int argc, char* argv[])
                         rotateable_effects_medium[rotateableEffectsMediumIndex].setPosition(allObjects[idx].position - cameraPos);
                         rotateable_effects_medium[rotateableEffectsMediumIndex].setRotation(allObjects[idx].direction);
                         rotateable_effects_medium[rotateableEffectsMediumIndex].setScale(sf::Vector2f(allObjects[idx].scale, allObjects[idx].scale));
-                        rotateable_effects_medium[rotateableEffectsMediumIndex].setTextureRect(sf::IntRect{ 16 * choice, 0, 16, 16 });
+                        rotateable_effects_medium[rotateableEffectsMediumIndex].setTextureRect(sf::IntRect{ 16 * choice, 0 + allObjects[idx].size * 496, 16, 16 });
                         rotateableEffectsMediumIndex++;
 
                         break;
@@ -19228,6 +19381,16 @@ int main(int argc, char* argv[])
                         }
                         else if (allObjects[idx].alarm2 == 15) {//fishA
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setTexture(fx_fishA_tex);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setColor({ 255, 255, 255, 255 });
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setPosition(allObjects[idx].position - cameraPos);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setRotation(0);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setTextureRect(sf::IntRect{ choice * 32, 0, 32, 32 });
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setOrigin(16, 16);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setScale(1, 1);
+                            variableTexturesTopEnemiesIndex++;
+                        }
+                        else if (allObjects[idx].alarm2 == 16) {//robot_eat_TB
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setTexture(robot_eat_TB_tex);
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setColor({ 255, 255, 255, 255 });
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setPosition(allObjects[idx].position - cameraPos);
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setRotation(0);
