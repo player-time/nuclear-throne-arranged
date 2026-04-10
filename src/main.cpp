@@ -3181,6 +3181,14 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].speed.x = xspd;
                 allObjects[i].speed.y = yspd;
                 allObjects[i].image_index = 0;
+                
+                if (has_throne_butt) {
+                    play_sound_on_player(snd_rogue_strike_TB_ID);
+                }
+                else {
+                    play_sound_on_player(snd_rogue_strike_ID);
+                }
+
                 break;
             case explosion:
                 allObjects[i].my_id = obj_id;
@@ -5426,6 +5434,17 @@ void enemy_die(int ENEMY, int PROJ) {
     play_sound_relative_to_player(allObjects[ENEMY].die_ID, allObjects[ENEMY].position.x, allObjects[ENEMY].position.y);
 }
 
+void rogue_blast_armor() {
+    if (player_character == rogue) {
+        create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, idpd_explosion, 0, 1);
+        if (ultra_picked == 2) {//super blast armor
+            for (int i = 0; i < 3; i++) {
+                create_object(allObjects[0].position.x + random_float(1.0f) - 0.5f, allObjects[0].position.y + random_float(1.0f) - 0.5f, 0, 0, idpd_explosion, 0, 1);
+            }
+        }
+    }
+}
+
 void eyes_tk_push(int i) {
     int diffx = 0;
     int diffy = 0;
@@ -5681,6 +5700,7 @@ void bullet_collide_player(int O, int currOBJ) {
         destroy_projectile(O);
         if ((allObjects[currOBJ].next_hurt < current_frame || proj_ID == revenge_bullet) && player_invincible == 0) {
             play_player_hurt_sound();
+            rogue_blast_armor();
             player_hp -= allObjects[O].damage;
             allObjects[currOBJ].next_hurt = current_frame + 6;
             allObjects[currOBJ].image_index = 0;
@@ -5697,6 +5717,7 @@ void bullet_collide_player_ignore_iframes(int O, int currOBJ) {
         destroy_projectile(O);
         if (player_invincible == 0) {
             play_player_hurt_sound();
+            rogue_blast_armor();
             player_hp -= allObjects[O].damage;
             allObjects[currOBJ].next_hurt = current_frame + 6;
             allObjects[currOBJ].image_index = 0;
@@ -5942,6 +5963,7 @@ void player_collision(int i, int j, int currOBJ) {
                             motion_add_dir(tmpdir, 1.0f, currOBJ);  //the bigger the enemy the more it pushes: speed = size * 0.5
                             if (allObjects[O].next_melee < current_frame && allObjects[currOBJ].next_hurt < current_frame && !player_invincible) { //melee cooldown
                                 play_player_hurt_sound();
+                                rogue_blast_armor();
                                 allObjects[O].next_melee = current_frame + 25;
                                 player_hp -= 5;
                                 allObjects[currOBJ].next_hurt = current_frame + 6;
@@ -5959,6 +5981,7 @@ void player_collision(int i, int j, int currOBJ) {
                             //motion_add_dir(tmpdir, 1.0f, currOBJ);  //the bigger the enemy the more it pushes: speed = size * 0.5
                             if (allObjects[O].alarm1 < 0 && allObjects[O].next_melee < current_frame && allObjects[currOBJ].next_hurt < current_frame && !player_invincible) { //melee cooldown
                                 play_player_hurt_sound();
+                                rogue_blast_armor();
                                 allObjects[O].next_melee = current_frame + 30;
                                 player_hp -= 10;
                                 allObjects[currOBJ].next_hurt = current_frame + 6;
@@ -5970,6 +5993,7 @@ void player_collision(int i, int j, int currOBJ) {
                     case objectID::idpd_explosion:
                         if (allObjects[O].team != allObjects[0].team && player_invincible == 0 && (allObjects[O].image_index == 3 || allObjects[O].image_index == 4) && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox + player_hitbox)) {
                             play_player_hurt_sound();
+                            rogue_blast_armor();
                             player_hp -= 8;
                             allObjects[currOBJ].next_hurt = current_frame + 6;
                             allObjects[currOBJ].image_index = 0;
@@ -5982,6 +6006,7 @@ void player_collision(int i, int j, int currOBJ) {
                     case objectID::explosion:
                         if (player_invincible == 0 && (allObjects[O].image_index == 3 || allObjects[O].image_index == 4) && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox + player_hitbox)) {
                             play_player_hurt_sound();
+                            rogue_blast_armor();
                             player_hp -= allObjects[O].damage;
                             allObjects[currOBJ].next_hurt = current_frame + 6;
                             allObjects[currOBJ].image_index = 0;
@@ -7048,7 +7073,7 @@ void idpd_explosion_collision(int currOBJ, int i, int j) {
                         break;
                     case nade:
                     case idpd_nade:
-                        if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (allObjects[O].my_hitbox + idpd_explosion_hitbox)) && allObjects[O].alarm3 != 10) {
+                        if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (allObjects[O].my_hitbox + idpd_explosion_hitbox)) && allObjects[O].alarm3 != 10 && allObjects[currOBJ].team != player_team) {
                             destroy_projectile(O);
                         }
                         break;
@@ -7781,7 +7806,9 @@ void hurt_player(int damage) {
     player_hp -= damage;
     allObjects[0].next_hurt = current_frame + 6;
     allObjects[0].image_index = 0;
+    rogue_blast_armor();
 }
+
 void YV_money() {
     for (int i = 0; i < 3; i++) {
         create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, money, 0, 0);
@@ -14039,6 +14066,11 @@ int main(int argc, char* argv[])
     add_new_sound(snd_chicken_throw_ID, "snd/chicken_throw.wav", all_sounds, all_sounds_mirror, 0.05, 0.0f);
     add_new_sound(snd_chicken_B_ID, "snd/chicken_B.wav", all_sounds, all_sounds_mirror, 0.05, 0.0f);
 
+    //rogue
+    add_new_sound(snd_rogue_strike_ID, "snd/portal_strike.wav", all_sounds, all_sounds_mirror, 0.05, 0.0f);
+    add_new_sound(snd_rogue_strike_TB_ID, "snd/portal_strike_TB.wav", all_sounds, all_sounds_mirror, 0.05, 0.0f);
+    add_new_sound(snd_rogue_strike_empty_ID, "snd/portal_strike_empty.wav", all_sounds, all_sounds_mirror, 0.05, 0.0f);
+
 
     add_new_sound(snd_pickup_disappear_ID, "snd/pickup_disappear.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
@@ -16345,7 +16377,7 @@ int main(int argc, char* argv[])
                             rogue_holding_strike = true;
                         }
                         else {
-                            play_sound_on_player(snd_rogue_strike_fail_ID);
+                            play_sound_on_player(snd_rogue_strike_empty_ID);
                         }
                         break;
                     case frog:
@@ -17264,7 +17296,7 @@ int main(int argc, char* argv[])
             //check if player got hit
             if (allObjects[0].next_hurt == current_frame + 6) {
                 if (player_character == rogue) {
-                    create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, idpd_explosion, 0, 1);
+                    //create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, idpd_explosion, 0, 1);
                 }
             }
 

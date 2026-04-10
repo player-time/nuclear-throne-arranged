@@ -429,6 +429,10 @@ enum sound_ID {
 	snd_chicken_throw_ID,
 	snd_chicken_B_ID,
 
+	snd_rogue_strike_ID,
+	snd_rogue_strike_TB_ID,
+	snd_rogue_strike_empty_ID,
+
 	snd_pickup_disappear_ID,
 	snd_ammo_pickup_ID,
 	snd_hp_pickup_ID,
