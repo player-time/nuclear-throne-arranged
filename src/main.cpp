@@ -44,7 +44,7 @@ int fps_samples_idx = 0;
 
 bool global_debug = false;
 
-bool debug_invincibility = true;
+bool debug_invincibility = false;
 
 int EXIT_PROGRAM_NOW = 0;
 
@@ -459,6 +459,7 @@ int ally_count = 0;
 //rogue
 sf::Vector2f rogue_strike_position = {0, 0};
 bool rogue_holding_strike = false;
+int rogue_strike_ammo = 3;
 //frog
 int frog_hold_frames = 0;
 bool frog_hit_wall = false;
@@ -499,6 +500,8 @@ int second_stomach = 0;
 float stress = 1.0f;
 int bloodlust = 1;
 
+int has_rhino_skin = 1;
+
 bool extra_feet = false;
 
 bool rabbit_paw = 0;
@@ -524,7 +527,7 @@ int chicken_headless_timer = 150;
 bool chicken_beheaded = false;
 
 //ultras
-int ultra_picked = 2;   //0 = no ultra
+int ultra_picked = 1;   //0 = no ultra
 
 int meltdown = 1;       //set to 2 when meltdown is picked
 
@@ -5270,6 +5273,14 @@ void enemy_die(int ENEMY, int PROJ) {
         if (chicken_headless_timer > 300) {
             chicken_headless_timer = 300;
         }
+        if (chicken_beheaded) {
+            float tmpspdX = 0.0f;
+            float tmpspdY = 0.0f;
+            float tmpdir = direction_to_player(ENEMY);
+            tmpspdX = cos(tmpdir) * 11;
+            tmpspdY = sin(tmpdir) * 11;
+            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, tmpspdX / 10, tmpspdY / 10, static_effect, tmpdir * degreestoradians, 216);
+        }
     }
 
     if (allObjects[ENEMY].my_id != throne_2) {
@@ -5717,6 +5728,11 @@ void add_hp_chest_to_player_chest() {
         create_popuptext("+4 HP", allObjects[0].position + sf::Vector2f{ 0, -8 });
         play_sound_on_player(snd_hp_chest_ID);
         create_object(allObjects[0].position.x, allObjects[0].position.y - 10, 0, 0, static_effect, 0, 648);
+    }
+
+    //chicken
+    if (player_character == chicken && player_max_hp < 8 + (has_rhino_skin * 4)) {
+        player_max_hp++;
     }
 }
 
@@ -16323,8 +16339,14 @@ int main(int argc, char* argv[])
                         }
                         break;
                     case rogue:
-                        rogue_strike_position = sf::Vector2f(mousepos) + cameraPos;
-                        rogue_holding_strike = true;
+                        if (rogue_strike_ammo > 0) {
+                            rogue_strike_ammo--;
+                            rogue_strike_position = sf::Vector2f(mousepos) + cameraPos;
+                            rogue_holding_strike = true;
+                        }
+                        else {
+                            play_sound_on_player(snd_rogue_strike_fail_ID);
+                        }
                         break;
                     case frog:
                         frog_hold_frames = 0;
