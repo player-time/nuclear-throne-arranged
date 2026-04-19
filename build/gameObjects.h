@@ -78,6 +78,8 @@ enum objectID {
 	plant_tangle_seed,
 	plant_tangle,
 
+	chicken_head,
+
 	throne_2, throne_2_death,
 
 	popup_text,
@@ -397,6 +399,23 @@ enum sound_ID {
 	snd_rogue_hurt_ID,
 	snd_frog_hurt_ID,
 	snd_skeleton_hurt_ID,
+
+	//death snds
+	snd_fish_die_ID,
+	snd_crystal_die_ID,
+	snd_eyes_die_ID,
+	snd_melting_die_ID,
+	snd_plant_die_ID,
+	snd_YV_die_ID,
+	snd_steroids_die_ID,
+	snd_robot_die_ID,
+	snd_chicken_die_ID,
+	snd_rebel_die_ID,
+	snd_horror_die_ID,
+	snd_rogue_die_ID,
+	snd_frog_die_ID,
+	snd_skeleton_die_ID,
+
 	
 
 	snd_fish_roll_ID,
@@ -425,6 +444,8 @@ enum sound_ID {
 	snd_robot_eat_TB_ID,
 
 	snd_chicken_headless_loop_ID,
+	snd_chicken_lose_head_ID,
+	snd_chicken_regen_head_ID,
 
 	snd_chicken_throw_ID,
 	snd_chicken_B_ID,

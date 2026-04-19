@@ -525,9 +525,11 @@ int player_corpse_id = 0;
 //chicken stuff
 int chicken_headless_timer = 150;
 bool chicken_beheaded = false;
+int chicken_head_obj_idx = 0;
+sf::Vector2f chicken_head_camera_offset = {0, 0};
 
 //ultras
-int ultra_picked = 1;   //0 = no ultra
+int ultra_picked = 2;   //0 = no ultra
 
 int meltdown = 1;       //set to 2 when meltdown is picked
 
@@ -1883,6 +1885,14 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].image_index = 0;
 
                 allObjects[i].position = { x, y };
+                break;
+            case chicken_head:
+                allObjects[i].my_id = obj_id;
+                allObjects[i].friction = 0.25f;
+                allObjects[i].my_hitbox = no_hitbox;
+                allObjects[i].position = { x, y };
+                allObjects[i].speeddir = xspd;
+                allObjects[i].direction = direction;
                 break;
             case prop:
                 allObjects[i].my_id = obj_id;
@@ -3764,6 +3774,39 @@ void corpse_portal_spawning_logic() {
     }
 }
 
+void chicken_head_step(int i) {
+
+    if (allObjects[i].speeddir > 6.9f) {
+        allObjects[i].speeddir = 6.9f;
+    }
+    if (allObjects[i].speeddir > 0.0f) {
+        allObjects[i].speeddir -= allObjects[i].friction;
+        allObjects[i].speed.x = cos(allObjects[i].direction) * allObjects[i].speeddir;
+        allObjects[i].speed.y = sin(allObjects[i].direction) * allObjects[i].speeddir;
+        allObjects[i].position += allObjects[i].speed;
+    }
+    allObjects[i].image_index++;
+
+    //offset camera, midpoint between head and camera capped at a certain point
+    chicken_head_camera_offset = allObjects[i].position - allObjects[0].position;
+    chicken_head_camera_offset.x /= 2;
+    chicken_head_camera_offset.y /= 2;
+
+    if (chicken_head_camera_offset.x > 120) {
+        chicken_head_camera_offset.x = 120;
+    }
+    else if(chicken_head_camera_offset.x < -120) {
+        chicken_head_camera_offset.x = -120;
+    }
+
+    if (chicken_head_camera_offset.y > 80) {
+        chicken_head_camera_offset.y = 80;
+    }
+    else if (chicken_head_camera_offset.y < -80) {
+        chicken_head_camera_offset.y = -80;
+    }
+}
+
 void corpse_step(int i) {
     if (destroy_on_screen_corpses && is_within_camera(i)) {
         allObjects[i].my_id = melt_splat;
@@ -5492,6 +5535,55 @@ void eyes_tk_pull_enemy(int i) {
         }
     }
 }
+
+void play_player_die_sound() {
+
+    switch (player_character) {
+    case fish:
+        play_sound_on_player(snd_fish_die_ID);
+        break;
+    case crystal:
+        play_sound_on_player(snd_crystal_die_ID);
+        break;
+    case eyes:
+        play_sound_on_player(snd_eyes_die_ID);
+        break;
+    case melting:
+        play_sound_on_player(snd_melting_die_ID);
+        break;
+    case plant:
+        play_sound_on_player(snd_plant_die_ID);
+        break;
+    case YV:
+        play_sound_on_player(snd_YV_die_ID);
+        break;
+    case steroids:
+        play_sound_on_player(snd_steroids_die_ID);
+        break;
+    case robot:
+        play_sound_on_player(snd_robot_die_ID);
+        break;
+    case chicken:
+        play_sound_on_player(snd_chicken_die_ID);
+        break;
+    case rebel:
+        play_sound_on_player(snd_rebel_die_ID);
+        break;
+    case horror:
+        play_sound_on_player(snd_horror_die_ID);
+        break;
+    case rogue:
+        play_sound_on_player(snd_rogue_die_ID);
+        break;
+    case frog:
+        play_sound_on_player(snd_frog_die_ID);
+        break;
+    case skeleton:
+        play_sound_on_player(snd_skeleton_die_ID);
+        break;
+    }
+}
+
 void play_player_hurt_sound() {
 
     switch (player_character) {
@@ -9150,6 +9242,7 @@ void object_tunnel_corner(int currOBJ) {
     case objectID::player_lightning_orb:
         destroy_projectile(currOBJ);
         break;
+    case objectID::chicken_head:
     case objectID::enemy_corpse:
     case objectID::idpd_freak_corpse:
     case objectID::toxic_gas:
@@ -10100,6 +10193,9 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             }
             //bandit ai
             eyes_tk_pull_enemy(i);
+            break;
+        case chicken_head:
+            chicken_head_step(i);
             break;
         case enemy_corpse:
             corpse_step(i);
@@ -12036,6 +12132,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                         plasma_collision(currOBJ, i, j);
                         //allObjects[currOBJ].alarm2 = 99;
                         break;
+                    case objectID::chicken_head:
                     case objectID::enemy_corpse:
                     case objectID::toxic_gas:
                         bounce_in_wall(currOBJ);
@@ -14032,6 +14129,22 @@ int main(int argc, char* argv[])
     add_new_sound(snd_frog_hurt_ID, "snd/frog_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
     add_new_sound(snd_skeleton_hurt_ID, "snd/skeleton_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
 
+    //death snds
+    add_new_sound(snd_horror_die_ID, "snd/horror_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_fish_die_ID, "snd/fish_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_crystal_die_ID, "snd/crystal_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_eyes_die_ID, "snd/eyes_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_melting_die_ID, "snd/melting_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_plant_die_ID, "snd/plant_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_YV_die_ID, "snd/YV_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_steroids_die_ID, "snd/steroids_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_robot_die_ID, "snd/robot_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_chicken_die_ID, "snd/chicken_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_rebel_die_ID, "snd/rebel_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_rogue_die_ID, "snd/rogue_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_frog_die_ID, "snd/frog_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_skeleton_die_ID, "snd/skeleton_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+
     //player abilities
     //fish
     add_new_sound(snd_fish_roll_ID, "snd/fish_roll.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
@@ -14059,9 +14172,13 @@ int main(int argc, char* argv[])
     add_new_sound(snd_robot_eat_ID, "snd/robot_eat.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
     add_new_sound(snd_robot_eat_fast_ID, "snd/robot_eat_fast.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
     add_new_sound(snd_robot_eat_TB_ID, "snd/robot_eat_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_robot_eat_TB_ID, "snd/robot_eat_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
 
     //chicken
     add_new_sound(snd_chicken_headless_loop_ID, "snd/chicken_headless_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_chicken_lose_head_ID, "snd/chicken_lose_head.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
+    add_new_sound(snd_chicken_regen_head_ID, "snd/chicken_regen_head.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
+
 
     add_new_sound(snd_chicken_throw_ID, "snd/chicken_throw.wav", all_sounds, all_sounds_mirror, 0.05, 0.0f);
     add_new_sound(snd_chicken_B_ID, "snd/chicken_B.wav", all_sounds, all_sounds_mirror, 0.05, 0.0f);
@@ -16211,8 +16328,8 @@ int main(int argc, char* argv[])
                 camera_want_y = floor(allObjects[0].position.y + cameraOffset.y + mouse_offset_window_center_y + portal_camera_offset.y);
                 portal_camera_offset = { 0, 0 };
 
-                cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x) +debug_camera_offset.x;
-                cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y) +debug_camera_offset.y;
+                cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x) + chicken_head_camera_offset.x + /*DEBUG*/debug_camera_offset.x;
+                cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y) + chicken_head_camera_offset.y + /*DEBUG*/debug_camera_offset.y;
 
                 //calualte direction to mouse
                 direction_to_mouse = atan2f(allObjects[0].position.y - (mousepos.y + cameraPos.y), allObjects[0].position.x - (mousepos.x + cameraPos.x)) + 180.0f / degreestoradians;
@@ -17199,6 +17316,7 @@ int main(int argc, char* argv[])
                 if (!has_died) {
                     has_died = true;
                     player_corpse_id = create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, player_corpse, 0, 0);
+                    play_player_die_sound();
                 }
                 allObjects[0].position.x = (left_physics - extra_physics) * 16 + 8;    //just put the player outside so no enemies can see them, do extra stuff for T2 and freaks because of 0-1
                 allObjects[0].scale = 0;
@@ -17322,6 +17440,13 @@ int main(int argc, char* argv[])
                     }
                     else {
                         if (!chicken_beheaded) {
+                            play_sound_on_player(snd_chicken_lose_head_ID);
+
+                            float direction_head = allObjects[0].direction;
+                            if (allObjects[0].speeddir < 0.01f) {
+                                direction_head = random_360_radians();
+                            }
+                            chicken_head_obj_idx = create_object(allObjects[0].position.x, allObjects[0].position.y, allObjects[0].speeddir + 3, 0, chicken_head, direction_head, 0);
                             chicken_beheaded = true;
                             player_max_hp -= 2;
                             //feathers
@@ -17366,6 +17491,14 @@ int main(int argc, char* argv[])
                 if (chicken_beheaded) {
                     player_invincible = 7;
                     chicken_beheaded = false;
+                    play_sound_on_player(snd_chicken_regen_head_ID);
+
+                    //remove head if there is one
+                    if (allObjects[chicken_head_obj_idx].my_id == chicken_head) {
+                        allObjects[chicken_head_obj_idx].my_id = nothing;
+                    }
+                    chicken_head_camera_offset = { 0, 0 };
+
                     for (int i = 0; i < 5; i++) {
                         create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, feather, 0, 0);
                     }
@@ -19631,6 +19764,21 @@ int main(int argc, char* argv[])
 
                         all_enemy_corpses[allEnemyCorpsesIndex].setTextureRect(sf::IntRect{ 48 * choice, 48 * choice2, 48, 48 });
                         allEnemyCorpsesIndex++;
+                        break;
+                    case chicken_head:
+                        all_enemy_corpses[allEnemyCorpsesIndex].setColor({ 255, 255, 255, 255 });
+                        all_enemy_corpses[allEnemyCorpsesIndex].setPosition(allObjects[idx].position - cameraPos);
+                        all_enemy_corpses[allEnemyCorpsesIndex].setScale(allObjects[idx].facing_right * 2 - 1, 1);
+
+                        choice = int(allObjects[idx].image_index * 0.4f);
+                        if (choice > 3) {
+                            choice = 3;
+                        }
+                        choice2 = 13 + is_Bskin;
+
+                        all_enemy_corpses[allEnemyCorpsesIndex].setTextureRect(sf::IntRect{ 48 * choice, 48 * choice2, 48, 48 });
+                        allEnemyCorpsesIndex++;
+
                         break;
                     case enemy_corpse:
                         all_enemy_corpses[allEnemyCorpsesIndex].setColor({ 255, 255, 255, 255 });
