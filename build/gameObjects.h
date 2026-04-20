@@ -382,6 +382,8 @@ enum sound_ID {
 	snd_IDPD_explosion_ID,
 	snd_plasma_hit_ID,
 
+	snd_sewer_drip_ID,
+
 
 	snd_player_hurt_ID,
 
@@ -424,12 +426,16 @@ enum sound_ID {
 
 	snd_crystal_shield_ID,
 	snd_crystal_teleport_ID,
+	snd_crystal_deflect_ID,
 
 	snd_eyes_TK_ID,
 
 	snd_corpse_explode_ID,
 	snd_corpse_explode_TB_ID,
 
+	snd_plant_power_ID,
+	snd_plant_tangle_ID,
+	snd_plant_tangle_TB_ID,
 	snd_plant_fire_seed_ID,
 	snd_plant_fire_seed_TB_ID,
 	snd_plant_fire_seed_trapper_ID,
@@ -450,9 +456,37 @@ enum sound_ID {
 	snd_chicken_throw_ID,
 	snd_chicken_B_ID,
 
+	snd_stalker_ID,
+	snd_horror_beam_hold_TB_ID,
+	snd_spawn_ally_ID,
+	snd_ally_spawn_ID,
+	snd_ally_spawn_TB_ID,
+
+	snd_ally_hurt_ID,
+	snd_ally_die_ID,
+
+	snd_horror_empty_ID,
+
 	snd_rogue_strike_ID,
 	snd_rogue_strike_TB_ID,
 	snd_rogue_strike_empty_ID,
+	snd_rogue_aim_ID,
+
+	snd_rogue_canister_ID,
+
+	snd_skeleton_gamble_TB_ID,
+	snd_skeleton_gamble_ID,
+
+	snd_frog_start_ID,
+	snd_frog_start_TB_ID,
+	snd_frog_end_ID,
+	snd_frog_end_TB_ID,
+	snd_frog_gas_release_ID,
+	snd_frog_gas_release_TB_ID,
+
+	snd_bolt_stick_ID,
+	snd_melee_wall_ID,
+	snd_burn_ID,
 
 	snd_pickup_disappear_ID,
 	snd_ammo_pickup_ID,

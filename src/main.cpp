@@ -762,7 +762,8 @@ bool is_looping_sound(int sound_id) {
     case snd_throne_1_idle_loop_ID: __fallthrough;
     case snd_fish_TB_loop_ID: __fallthrough;
 
-    case snd_horror_beam_hold_ID:
+    case snd_horror_beam_hold_ID: __fallthrough;
+    case snd_horror_beam_hold_TB_ID:
         return true;
         break;
     }
@@ -2540,10 +2541,18 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 
                 allObjects[i].size = 1;
 
-                allObjects[i].hurt_ID = snd_bandit_hurt_ID;
-                allObjects[i].die_ID = snd_bandit_die_ID;
+                allObjects[i].hurt_ID = snd_ally_hurt_ID;
+                allObjects[i].die_ID = snd_ally_die_ID;
 
                 ally_count++;
+
+                play_sound_on_player(snd_spawn_ally_ID);
+                if (has_throne_butt) {
+                    play_sound_on_player(snd_ally_spawn_TB_ID);
+                }
+                else {
+                    play_sound_on_player(snd_ally_spawn_ID);
+                }
 
                 break;
             case bandit:
@@ -2983,6 +2992,10 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].image_index = 2;
 
                 allObjects[i].alarm3 = xspd;    //what object its stuck to, 0 if stuck in wall
+
+                if (xspd == 0) {
+                    play_sound_relative_to_player(snd_bolt_stick_ID, x, y);
+                }
 
                 allObjects[i].team = player_team;     //player team
 
@@ -3807,7 +3820,12 @@ void corpse_step(int i) {
         allObjects[i].size = 0;
         for (int j = 0; j < 1 + ((/*has_throne_butt ||*/ allObjects[i].size > 1) * 2); j++) {
             create_object(allObjects[i].position.x + random_float(2) - 1, allObjects[i].position.y + random_float(2) - 1, 0, 0, meat_explosion, 0, player_team);
-            play_sound_on_player(snd_corpse_explode_ID);
+            if (has_throne_butt) {
+                play_sound_on_player(snd_corpse_explode_TB_ID);
+            }
+            else {
+                play_sound_on_player(snd_corpse_explode_ID);
+            }
             play_sound_on_player(snd_explosion_ID);
         }
         return;
@@ -4913,12 +4931,15 @@ void destroy_projectile(int object_index) {
         allObjects[object_index].scale = rand() % 2 * 2 - 1;
         allObjects[object_index].direction = random_360_degrees();
         allObjects[object_index].my_hitbox = hitboxes(plant_tangle_hitbox * (1 + (ultra_picked == 1)));
+
+        play_sound_relative_to_player(snd_plant_power_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
+
         if (ultra_picked != 1) {
             if (!has_throne_butt) {
-                play_sound_relative_to_player(snd_plant_fire_seed_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
+                play_sound_relative_to_player(snd_plant_tangle_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
             }
             else {
-                play_sound_relative_to_player(snd_plant_fire_seed_TB_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
+                play_sound_relative_to_player(snd_plant_tangle_TB_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
             }
         }
         else {
@@ -5339,6 +5360,7 @@ void enemy_die(int ENEMY, int PROJ) {
                 tempSpdy = sin(temp_dir) * 6.0f;
                 create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, tempSpdx, tempSpdy, horror_bullet, temp_dir, 1);
             }
+            play_sound_relative_to_player(snd_stalker_ID, allObjects[ENEMY].position.x, allObjects[ENEMY].position.y);
         }
     }
 
@@ -6154,6 +6176,7 @@ void crystal_shield_collision(int currOBJ, int i, int j) {
                             allObjects[O].speed.y = sin(tempdir) * tempspd;
                             allObjects[O].team = player_team;
                             create_object(allObjects[O].position.x, allObjects[O].position.y, 0, 0, deflect, allObjects[O].direction, 0);
+                            play_sound_relative_to_player(snd_crystal_deflect_ID, allObjects[O].position.x, allObjects[O].position.y);
                             break;
                             //destroy
                         case bullet2:
@@ -6161,6 +6184,7 @@ void crystal_shield_collision(int currOBJ, int i, int j) {
                         case T2_bullet:
                         case large_guardian_bullet:
                         case toxic_gas:
+                            play_sound_relative_to_player(snd_crystal_deflect_ID, allObjects[O].position.x, allObjects[O].position.y);
                             destroy_projectile(O);
                             break;
                         case bandit:
@@ -6322,7 +6346,12 @@ void basic_enemy_collision(int currOBJ, int i, int j) {
 
             for (int jj = 0; jj < 1 + ((/*has_throne_butt ||*/ allObjects[currOBJ].size > 1) * 2); jj++) {
                 create_object(allObjects[currOBJ].position.x + random_float(2) - 1, allObjects[currOBJ].position.y + random_float(2) - 1, 0, 0, meat_explosion, 0, player_team);
-                play_sound_on_player(snd_corpse_explode_ID);
+                if (has_throne_butt) {
+                    play_sound_on_player(snd_corpse_explode_TB_ID);
+                }
+                else {
+                    play_sound_on_player(snd_corpse_explode_ID);
+                }
                 play_sound_on_player(snd_explosion_ID);
             }
 
@@ -6409,6 +6438,8 @@ void basic_enemy_collision(int currOBJ, int i, int j) {
                                 allObjects[currOBJ].next_hurt--;    //lightning buff
                             }
                             if (allObjects[currOBJ].next_hurt < current_frame) {
+                                play_sound_relative_to_player(snd_burn_ID, allObjects[currOBJ].position.x, allObjects[currOBJ].position.y);
+
                                 allObjects[currOBJ].my_hp -= allObjects[O].damage;
                                 if (allObjects[currOBJ].my_hp > 0) {
                                     enemy_hurt(currOBJ, O);
@@ -6840,6 +6871,8 @@ void ultra_slash_collision(int currOBJ, int i, int j) {
                     float ang_to = allObjects[currOBJ].direction;
 
                     create_object((((i + w) * 16) + 8) - cos(ang_to) * 11, (((j + h) * 16) + 8) - sin(ang_to) * 11, 0, 0, static_effect, ang_to * degreestoradians, 224);
+
+                    play_sound_on_player(snd_melee_wall_ID);
                 }
             }
             for (int O : game_area[i + w][j + h].object_indexes) {
@@ -7772,6 +7805,7 @@ void throne_2_collision(int currOBJ, int i, int j) {
                                 allObjects[currOBJ].next_hurt--;    //lightning buff
                             }
                             if (allObjects[currOBJ].next_hurt < current_frame) {
+                                play_sound_relative_to_player(snd_burn_ID, allObjects[currOBJ].position.x, allObjects[currOBJ].position.y);
                                 allObjects[currOBJ].my_hp -= allObjects[O].damage;
                                 if (allObjects[currOBJ].my_hp > 0) {
                                     enemy_hurt(currOBJ, O);
@@ -8575,9 +8609,19 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
             }
 
         }
-        if (skeleton_gamble && rand() % 10 < cost) {
-            hurt_player(1);
+        int ammo_pack_ammo = 10;
+        if (wep >= energy_weps && wep < bullet_weps) { ammo_pack_ammo = 32; }
+        if (wep >= bullet_weps && wep < bolt_weps) { ammo_pack_ammo = 7; }
+        if (wep >= bolt_weps && wep < shell_weps) { ammo_pack_ammo = 8; }
+        if (wep >= shell_weps) { ammo_pack_ammo = 6; }
+
+        if (skeleton_gamble) {
+            if ((rand() % ammo_pack_ammo) < cost) {
+                hurt_player(1);
+            }
             create_object(allObjects[0].position.x + Xspd * 2, allObjects[0].position.y + Yspd * 2, 0, 0, static_effect, direction * degreestoradians, 168);
+            if (has_throne_butt) { play_sound_on_player(snd_skeleton_gamble_TB_ID); }
+            else{ play_sound_on_player(snd_skeleton_gamble_ID); }
         }
         if (player_hp == 0 && !has_spirit && skeleton_gamble) {
             create_popuptext("FUCK", allObjects[0].position);
@@ -8772,9 +8816,14 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
 
                 steroids_TB_shot(cost);
 
-                if (skeleton_gamble && rand() % 10 < 2) {
-                    hurt_player(1);
+                if (skeleton_gamble) {
+                    if (rand() % 10 < cost && (!has_throne_butt || rand() % 3 == 0)) {
+                        hurt_player(1);
+                    }
                     create_object(allObjects[0].position.x + Xspd * 2, allObjects[0].position.y + Yspd * 2, 0, 0, static_effect, direction * degreestoradians, 168);
+
+                    if (has_throne_butt) { play_sound_on_player(snd_skeleton_gamble_TB_ID); }
+                    else { play_sound_on_player(snd_skeleton_gamble_ID); }
                 }
                 if (player_hp == 0 && !has_spirit && skeleton_gamble) {
                     create_popuptext("FUCK", allObjects[0].position);
@@ -8806,9 +8855,14 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
 
                 wep_reload *= gamble_reload;
 
-                if (skeleton_gamble && rand() % 10 < cost) {
-                    hurt_player(1);
+                if (skeleton_gamble) {
+                    if (rand() % 10 < cost && (!has_throne_butt || rand() % 3 == 0)) {
+                        hurt_player(1);
+                    }
                     create_object(allObjects[0].position.x + Xspd * 2, allObjects[0].position.y + Yspd * 2, 0, 0, static_effect, direction * degreestoradians, 168);
+
+                    if (has_throne_butt) { play_sound_on_player(snd_skeleton_gamble_TB_ID); }
+                    else { play_sound_on_player(snd_skeleton_gamble_ID); }
                 }
                 if (player_hp == 0 && !has_spirit && skeleton_gamble) {
                     create_popuptext("FUCK", allObjects[0].position);
@@ -8838,9 +8892,14 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
 
                 wep_reload *= gamble_reload;
 
-                if (skeleton_gamble && rand() % 10 < cost) {
-                    hurt_player(1);
+                if (skeleton_gamble) {
+                    if (rand() % 10 < cost && (!has_throne_butt || rand() % 3 == 0)) {
+                        hurt_player(1);
+                    }
                     create_object(allObjects[0].position.x + Xspd * 2, allObjects[0].position.y + Yspd * 2, 0, 0, static_effect, direction * degreestoradians, 168);
+
+                    if (has_throne_butt) { play_sound_on_player(snd_skeleton_gamble_TB_ID); }
+                    else { play_sound_on_player(snd_skeleton_gamble_ID); }
                 }
                 if (player_hp == 0 && !has_spirit && skeleton_gamble) {
                     create_popuptext("FUCK", allObjects[0].position);
@@ -8891,8 +8950,13 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                     }
                 }
                 if (skeleton_gamble) {
-                    hurt_player(1);
+                    if (!has_throne_butt || rand() % 3 == 0) {
+                        hurt_player(1);
+                    }
                     create_object(allObjects[0].position.x + Xspd * 2, allObjects[0].position.y + Yspd * 2, 0, 0, static_effect, direction * degreestoradians, 168);
+
+                    if (has_throne_butt) { play_sound_on_player(snd_skeleton_gamble_TB_ID); }
+                    else { play_sound_on_player(snd_skeleton_gamble_ID); }
                 }
                 if (player_hp == 0 && !has_spirit && skeleton_gamble) {
                     create_popuptext("FUCK", allObjects[0].position);
@@ -9393,7 +9457,9 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                         tempSpeedX = cos(temp_dir) * 6.0f;
                         tempSpeedY = sin(temp_dir) * 6.0f;
                         create_object(allObjects[i].position.x, allObjects[i].position.y, tempSpeedX, tempSpeedY, horror_bullet, temp_dir, 1);
+
                     }
+                    play_sound_relative_to_player(snd_stalker_ID, allObjects[i].position.x, allObjects[i].position.y);
                 }
                 for (int b = 0; b < 30; b++) {
                     create_object(allObjects[i].position.x + random_float(128) - 64, allObjects[i].position.y + random_float(100) - 50, 0, 0, explosion, 0, 2);
@@ -11251,6 +11317,7 @@ void player_bolt_step(int obj) {
 
             if (allObjects[obj].damage != 45) {
                 destroy_projectile(obj);
+
                 create_object(allObjects[obj].position.x, allObjects[obj].position.y, 0.0f, 0, player_bolt_stick, allObjects[obj].direction, allObjects[obj].damage);
                 create_object(allObjects[obj].position.x, allObjects[obj].position.y, 0.5, 0.5, dust, 0, 0);    //dust
             }
@@ -13661,7 +13728,28 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
         t_x = canidate_floors[num_of_canidate_floor].x + 16;
         t_y = canidate_floors[num_of_canidate_floor].y + 16;
 
-        create_object(t_x, t_y, 0, 0, chest, 0, 1);
+        int player_max_hp_half = player_max_hp / 2;
+
+        if (player_character == chicken) {
+            if (has_rhino_skin) {
+                player_max_hp_half = 6;
+            }
+            else {
+                player_max_hp_half = 4;
+            }
+        }
+
+        if (player_hp < player_max_hp_half && rand() % 2) {
+            create_object(t_x, t_y, 0, 0, chest, 0, 1);
+        }
+        else {
+            if (player_character == rogue) {
+                create_object(t_x, t_y, 0, 0, chest, 0, 3);
+            }
+            else {
+                //rad chest
+            }
+        }
     }
 
     //clear out area around player
@@ -13928,6 +14016,7 @@ int main(int argc, char* argv[])
     add_new_sound(snd_horror_beam_start_ID, "snd/horror_beam_start.wav", all_sounds, all_sounds_mirror, 0.02f, 0.0f, 70.0f);
 
     add_new_sound(snd_horror_beam_hold_ID, "snd/horror_beam_hold.wav", all_sounds, all_sounds_mirror, 0.00f, 0.0f, 70.0f);
+    add_new_sound(snd_horror_beam_hold_TB_ID, "snd/horror_beam_hold_TB.wav", all_sounds, all_sounds_mirror, 0.00f, 0.0f, 70.0f);
 
     add_new_sound(snd_lightning_cannon_loop_ID, "snd/lightning_cannon_loop.wav", all_sounds, all_sounds_mirror, 0.00f, 0.0f, 100.0f);
 
@@ -13941,6 +14030,10 @@ int main(int argc, char* argv[])
     add_new_sound(snd_hit_metal_ID, "snd/hit_metal.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
 
     add_new_sound(snd_hit_flesh_ID, "snd/hit_flesh.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
+
+
+    add_new_sound(snd_sewer_drip_ID, "snd/sewer_drip.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+
     //prop related
     add_new_sound(snd_sewer_pipe_break_ID, "snd/sewer_pipe_break.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
     add_new_sound(snd_toxic_barrel_gas_ID, "snd/toxic_barrel_gas.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
@@ -14111,6 +14204,8 @@ int main(int argc, char* argv[])
 
     add_new_sound(snd_jackhammer_ID, "snd/jackhammer.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
+    add_new_sound(snd_burn_ID, "snd/burn.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
+
 
     //other
     add_new_sound(snd_nade_hit_wall_ID, "snd/nade_hit_wall.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
@@ -14169,11 +14264,15 @@ int main(int argc, char* argv[])
     //crystal
     add_new_sound(snd_crystal_shield_ID, "snd/crystal_shield.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
     add_new_sound(snd_crystal_teleport_ID, "snd/crystal_teleport.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
+    add_new_sound(snd_crystal_deflect_ID, "snd/crystal_deflect.wav", all_sounds, all_sounds_mirror, 0.05f, 0.01f);
     //melting
     add_new_sound(snd_corpse_explode_ID, "snd/corpse_explode.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
     add_new_sound(snd_corpse_explode_TB_ID, "snd/corpse_explode_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
 
     //plant
+    add_new_sound(snd_plant_power_ID, "snd/plant_power.wav", all_sounds, all_sounds_mirror, 0.05f, 0.01f);
+    add_new_sound(snd_plant_tangle_ID, "snd/plant_tangle.wav", all_sounds, all_sounds_mirror, 0.05f, 0.01f);
+    add_new_sound(snd_plant_tangle_TB_ID, "snd/plant_tangle_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.01f);
     add_new_sound(snd_plant_fire_seed_ID, "snd/plant_fire_seed.wav", all_sounds, all_sounds_mirror, 0.05f, 0.01f);
     add_new_sound(snd_plant_fire_seed_TB_ID, "snd/plant_fire_seed_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.01f);
     add_new_sound(snd_plant_fire_seed_trapper_ID, "snd/plant_fire_seed_trapper.wav", all_sounds, all_sounds_mirror, 0.05f, 0.01f);
@@ -14187,7 +14286,7 @@ int main(int argc, char* argv[])
     //robot
     add_new_sound(snd_robot_eat_ID, "snd/robot_eat.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
     add_new_sound(snd_robot_eat_fast_ID, "snd/robot_eat_fast.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
-    add_new_sound(snd_robot_eat_TB_ID, "snd/robot_eat_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    //add_new_sound(snd_robot_eat_TB_ID, "snd/robot_eat_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
     add_new_sound(snd_robot_eat_TB_ID, "snd/robot_eat_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
 
     //chicken
@@ -14195,14 +14294,41 @@ int main(int argc, char* argv[])
     add_new_sound(snd_chicken_lose_head_ID, "snd/chicken_lose_head.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
     add_new_sound(snd_chicken_regen_head_ID, "snd/chicken_regen_head.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
 
+    add_new_sound(snd_chicken_throw_ID, "snd/chicken_throw.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_chicken_B_ID, "snd/chicken_B.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
 
-    add_new_sound(snd_chicken_throw_ID, "snd/chicken_throw.wav", all_sounds, all_sounds_mirror, 0.05, 0.0f);
-    add_new_sound(snd_chicken_B_ID, "snd/chicken_B.wav", all_sounds, all_sounds_mirror, 0.05, 0.0f);
+    //rebel
+    add_new_sound(snd_spawn_ally_ID, "snd/spawn_ally.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_ally_spawn_ID, "snd/ally_spawn.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_ally_spawn_TB_ID, "snd/ally_spawn_TB.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+
+    add_new_sound(snd_ally_hurt_ID, "snd/ally_hurt.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
+    add_new_sound(snd_ally_die_ID, "snd/ally_dead.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
+
+
+
+    //horror
+    add_new_sound(snd_stalker_ID, "snd/stalker.wav", all_sounds, all_sounds_mirror, 0.05f, 0.01f);
+    add_new_sound(snd_horror_empty_ID, "snd/horror_empty.wav", all_sounds, all_sounds_mirror, 0.06f, 0.0f);
 
     //rogue
-    add_new_sound(snd_rogue_strike_ID, "snd/portal_strike.wav", all_sounds, all_sounds_mirror, 0.05, 0.0f);
-    add_new_sound(snd_rogue_strike_TB_ID, "snd/portal_strike_TB.wav", all_sounds, all_sounds_mirror, 0.05, 0.0f);
-    add_new_sound(snd_rogue_strike_empty_ID, "snd/portal_strike_empty.wav", all_sounds, all_sounds_mirror, 0.05, 0.0f);
+    add_new_sound(snd_rogue_strike_ID, "snd/portal_strike.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_rogue_aim_ID, "snd/rogue_aim.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_rogue_strike_TB_ID, "snd/portal_strike_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_rogue_strike_empty_ID, "snd/portal_strike_empty.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_rogue_canister_ID, "snd/rogue_canister.wav", all_sounds, all_sounds_mirror, 0.03f, 0.0f);
+    
+    //frog
+    add_new_sound(snd_frog_start_ID, "snd/frog_start.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_frog_start_TB_ID, "snd/frog_start_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_frog_end_ID, "snd/frog_end.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_frog_end_TB_ID, "snd/frog_end_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_frog_gas_release_ID, "snd/frog_gas_release.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_frog_gas_release_TB_ID, "snd/frog_gas_release_TB.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+
+    //skeleton
+    add_new_sound(snd_skeleton_gamble_TB_ID, "snd/skeleton_blood_gamble_TB.wav", all_sounds, all_sounds_mirror, 0.03f, 0.0f);
+    add_new_sound(snd_skeleton_gamble_ID, "snd/skeleton_blood_gamble.wav", all_sounds, all_sounds_mirror, 0.03f, 0.0f);
 
 
     add_new_sound(snd_pickup_disappear_ID, "snd/pickup_disappear.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
@@ -14276,6 +14402,9 @@ int main(int argc, char* argv[])
     //add_new_sound(snd_player_shoot_A_ID, "snd/sword.wav", all_sounds, snd_sword_ID, all_extra_sound_buffers, 0.1f, 0.0f);
     //add_new_sound(snd_player_shoot_B_ID, "snd/sword.wav", all_sounds, snd_sword_ID, all_extra_sound_buffers, 0.1f, 0.0f);
 
+
+    add_new_sound(snd_melee_wall_ID, "snd/melee_wall.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+
     add_new_sound(snd_sword_ID, "snd/sword.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
     add_new_sound(snd_black_sword_ID, "snd/black_sword.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
     add_new_sound(snd_wrench_ID, "snd/wrench.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
@@ -14342,6 +14471,8 @@ int main(int argc, char* argv[])
 
     add_new_sound(snd_wave_gun_ID, "snd/wave_gun.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
     add_new_sound(snd_slugger_ID, "snd/slugger.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+
+    add_new_sound(snd_bolt_stick_ID, "snd/bolt_stick.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
 
     add_new_sound(snd_devastator_explo_ID, "snd/devastator_explo.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
@@ -16503,11 +16634,17 @@ int main(int argc, char* argv[])
                             heal_all_allys = true;
                         }
                         break;
+                    case horror:
+                        if (player_rads <= 0) {
+                            play_sound_on_player(snd_horror_empty_ID);
+                        }
+                        break;
                     case rogue:
                         if (rogue_strike_ammo > 0) {
                             rogue_strike_ammo--;
                             rogue_strike_position = sf::Vector2f(mousepos) + cameraPos;
                             rogue_holding_strike = true;
+                            play_sound_on_player(snd_rogue_aim_ID);
                         }
                         else {
                             play_sound_on_player(snd_rogue_strike_empty_ID);
@@ -16515,6 +16652,12 @@ int main(int argc, char* argv[])
                         break;
                     case frog:
                         frog_hold_frames = 0;
+                        if (has_throne_butt) {
+                            play_sound_on_player(snd_frog_start_TB_ID);
+                        }
+                        else {
+                            play_sound_on_player(snd_frog_start_ID);
+                        }
                         break;
                     case skeleton:
                         fire_weapon(wep, direction_to_mouse, 1, 0, false, true);
@@ -17111,10 +17254,12 @@ int main(int argc, char* argv[])
                             }
                         }
 
-                        horror_beam_strength += 0.1f * (has_throne_butt + 1);
+                        if (player_rads > 0) {
+                            horror_beam_strength += 0.1f * (has_throne_butt + 1);
 
-                        if (horror_beam_strength > 7.0f) {
-                            horror_beam_strength = 7.0f;
+                            if (horror_beam_strength > 7.0f) {
+                                horror_beam_strength = 7.0f;
+                            }
                         }
                         break;
                     case fish:
@@ -17250,18 +17395,29 @@ int main(int argc, char* argv[])
                         if (rogue_holding_strike) {
                             rogue_holding_strike = false;
                             //portal_strike
-                            tmpdir = atan2f(rogue_strike_position.y - (sf::Vector2f(mousepos) + cameraPos).y, 
-                                            rogue_strike_position.x - (sf::Vector2f(mousepos) + cameraPos).x);
+                            tmpdir = atan2f(rogue_strike_position.y - (sf::Vector2f(mousepos) + cameraPos).y,
+                                rogue_strike_position.x - (sf::Vector2f(mousepos) + cameraPos).x);
 
                             create_object(rogue_strike_position.x + cos(tmpdir) * 70, rogue_strike_position.y + sin(tmpdir) * 70, -cos(tmpdir) * 24, -sin(tmpdir) * 24, rogue_strike, tmpdir, 2);
                         }
                         break;
                     case frog:
-                        if(frog_hold_frames > 200){
+                        if (frog_hold_frames > 200) {
                             frog_hold_frames = 200;
                         }
                         for (int i = 0; i < frog_hold_frames; i++) {
                             create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, toxic_gas, 0.0f, 0);
+                        }
+
+                        if (frog_hold_frames > 0) {
+                            if (has_throne_butt) {
+                                play_sound_on_player(snd_frog_end_TB_ID);
+                                play_sound_on_player(snd_frog_gas_release_TB_ID);
+                            }
+                            else {
+                                play_sound_on_player(snd_frog_end_ID);
+                                play_sound_on_player(snd_frog_gas_release_ID);
+                            }
                         }
                         frog_hold_frames = 0;
                         break;
@@ -17349,18 +17505,19 @@ int main(int argc, char* argv[])
 
                 switch (area) {
                 case 0:
-                case 1:
+                case 1://wind
                     if (game_area[int((cameraPos.x + randomX) / 16)][int((cameraPos.y + randomY) / 16)].my_grid_type == exlpo_tile ||
                         game_area[int((cameraPos.x + randomX) / 16)][int((cameraPos.y + randomY) / 16)].my_grid_type == floor_tile) {
                         create_object(cameraPos.x + randomX, cameraPos.y + randomY, 0, 0, the_wind, 0, 0);
                     }
                     global_effects_alarm1 = 1 + rand() % 60;
                     break;
-                case 2:
+                case 2://drip
                     if (game_area[int((cameraPos.x + randomX) / 16)][int((cameraPos.y + randomY) / 16)].my_grid_type == exlpo_tile ||
                         game_area[int((cameraPos.x + randomX) / 16)][int((cameraPos.y + randomY) / 16)].my_grid_type == floor_tile) {
                         create_object(cameraPos.x + randomX, cameraPos.y + randomY, 0, 0, static_effect, 0, 264);
                     }
+                    play_sound_on_player(snd_sewer_drip_ID);
                     global_effects_alarm1 = 1 + rand() % 120;
                     break;
                 case 3:
