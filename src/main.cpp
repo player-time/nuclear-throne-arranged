@@ -1892,6 +1892,11 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].my_hitbox = no_hitbox;
                 allObjects[i].position = { x, y };
                 allObjects[i].speeddir = xspd;
+
+                allObjects[i].image_index = 0;
+
+                allObjects[i].size = image_index;
+
                 allObjects[i].direction = direction;
                 break;
             case prop:
@@ -1912,6 +1917,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].damage = 1;   //number of idle animation frames
 
                 allObjects[i].rad_drop = 0;
+                allObjects[i].image_index = 0;
 
                 switch (image_index) {
                 case cactus_0_1:
@@ -3788,23 +3794,11 @@ void chicken_head_step(int i) {
     allObjects[i].image_index++;
 
     //offset camera, midpoint between head and camera capped at a certain point
-    chicken_head_camera_offset = allObjects[i].position - allObjects[0].position;
-    chicken_head_camera_offset.x /= 2;
-    chicken_head_camera_offset.y /= 2;
+    chicken_head_camera_offset = allObjects[0].position - allObjects[i].position;
+    chicken_head_camera_offset.x *= 0.75f;
+    chicken_head_camera_offset.y *= 0.75f;
 
-    if (chicken_head_camera_offset.x > 120) {
-        chicken_head_camera_offset.x = 120;
-    }
-    else if(chicken_head_camera_offset.x < -120) {
-        chicken_head_camera_offset.x = -120;
-    }
-
-    if (chicken_head_camera_offset.y > 80) {
-        chicken_head_camera_offset.y = 80;
-    }
-    else if (chicken_head_camera_offset.y < -80) {
-        chicken_head_camera_offset.y = -80;
-    }
+    // 3/4ths of the way between the player and head
 }
 
 void corpse_step(int i) {
@@ -6014,6 +6008,28 @@ void player_collision(int i, int j, int currOBJ) {
 
                                 play_sound_on_player(snd_weapon_chest_ID);
                                 create_object(allObjects[O].position.x, allObjects[O].position.y, 0, 0, weapon_drop, 0, rand() % 110);
+                                allObjects[O].image_index = 0;
+                                allObjects[O].alarm2 = 0;   //no longer openable
+                            }
+                            else if (allObjects[O].alarm1 == 3) {    //rogue chest
+
+                                play_sound_on_player(snd_rogue_canister_ID);
+                                rogue_strike_ammo++;
+                                if (ultra_picked == 1) {
+                                    rogue_strike_ammo += 2;
+                                }
+                                if (rogue_strike_ammo > 3 * (1 + (ultra_picked == 1) * 3)) {
+                                    rogue_strike_ammo = 3 * (1 + (ultra_picked == 1) * 3);
+                                    create_popuptext("MAX PORTAL STRIKES", allObjects[0].position);
+                                }
+                                else {
+                                    if (ultra_picked == 1) {
+                                        create_popuptext("+3 PORTAL STRIKES", allObjects[0].position);
+                                    }
+                                    else {
+                                        create_popuptext("+1 PORTAL STRIKE", allObjects[0].position);
+                                    }
+                                }
                                 allObjects[O].image_index = 0;
                                 allObjects[O].alarm2 = 0;   //no longer openable
                             }
@@ -16324,12 +16340,12 @@ int main(int argc, char* argv[])
                 mouse_offset_window_center_x = (mousepos.x - window_size_x / (window_scale * 2)) / (6 - weapon_camera_type);
                 mouse_offset_window_center_y = (mousepos.y - window_size_y / (window_scale * 2)) / (6 - weapon_camera_type);
 
-                camera_want_x = floor(allObjects[0].position.x + cameraOffset.x + mouse_offset_window_center_x + portal_camera_offset.x);
-                camera_want_y = floor(allObjects[0].position.y + cameraOffset.y + mouse_offset_window_center_y + portal_camera_offset.y);
+                camera_want_x = floor(allObjects[0].position.x + cameraOffset.x + mouse_offset_window_center_x + portal_camera_offset.x - chicken_head_camera_offset.x);
+                camera_want_y = floor(allObjects[0].position.y + cameraOffset.y + mouse_offset_window_center_y + portal_camera_offset.y - chicken_head_camera_offset.y);
                 portal_camera_offset = { 0, 0 };
 
-                cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x) + chicken_head_camera_offset.x + /*DEBUG*/debug_camera_offset.x;
-                cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y) + chicken_head_camera_offset.y + /*DEBUG*/debug_camera_offset.y;
+                cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x) + /*DEBUG*/debug_camera_offset.x;
+                cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y) + /*DEBUG*/debug_camera_offset.y;
 
                 //calualte direction to mouse
                 direction_to_mouse = atan2f(allObjects[0].position.y - (mousepos.y + cameraPos.y), allObjects[0].position.x - (mousepos.x + cameraPos.x)) + 180.0f / degreestoradians;
@@ -17446,7 +17462,7 @@ int main(int argc, char* argv[])
                             if (allObjects[0].speeddir < 0.01f) {
                                 direction_head = random_360_radians();
                             }
-                            chicken_head_obj_idx = create_object(allObjects[0].position.x, allObjects[0].position.y, allObjects[0].speeddir + 3, 0, chicken_head, direction_head, 0);
+                            chicken_head_obj_idx = create_object(allObjects[0].position.x, allObjects[0].position.y, allObjects[0].speeddir + 3, 0, chicken_head, direction_head, player_is_facing_right);
                             chicken_beheaded = true;
                             player_max_hp -= 2;
                             //feathers
@@ -17496,14 +17512,22 @@ int main(int argc, char* argv[])
                     //remove head if there is one
                     if (allObjects[chicken_head_obj_idx].my_id == chicken_head) {
                         allObjects[chicken_head_obj_idx].my_id = nothing;
+                        for (int i = 0; i < 3; i++) {
+                            create_object(allObjects[chicken_head_obj_idx].position.x, allObjects[chicken_head_obj_idx].position.y, 0, 0, feather, 0, 0);
+                        }
+
                     }
-                    chicken_head_camera_offset = { 0, 0 };
 
                     for (int i = 0; i < 5; i++) {
                         create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, feather, 0, 0);
                     }
                 }
             }
+            if (allObjects[chicken_head_obj_idx].my_id != chicken_head) {
+                chicken_head_camera_offset = { 0, 0 };
+            }
+
+
 
             if (player_hp >= player_max_hp && can_recover_spirit) {
                 has_spirit = true;
@@ -19266,6 +19290,9 @@ int main(int argc, char* argv[])
                             case 2://wep
                                 choice2 = 416;
                                 break;
+                            case 3://portal strike
+                                choice2 = 512;
+                                break;
                             }
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setColor({ 255, 255, 255, 255 });
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setPosition(allObjects[idx].position - cameraPos);
@@ -19768,7 +19795,7 @@ int main(int argc, char* argv[])
                     case chicken_head:
                         all_enemy_corpses[allEnemyCorpsesIndex].setColor({ 255, 255, 255, 255 });
                         all_enemy_corpses[allEnemyCorpsesIndex].setPosition(allObjects[idx].position - cameraPos);
-                        all_enemy_corpses[allEnemyCorpsesIndex].setScale(allObjects[idx].facing_right * 2 - 1, 1);
+                        all_enemy_corpses[allEnemyCorpsesIndex].setScale(allObjects[idx].size, 1);
 
                         choice = int(allObjects[idx].image_index * 0.4f);
                         if (choice > 3) {
