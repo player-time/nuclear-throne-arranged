@@ -3437,6 +3437,15 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].position = { x, y };
                 tmpdir = random_360_radians();
                 tmpspd = random_float(1.5f) + 0.2f;
+                if (player_character == frog && ultra_picked == 2) {
+                    tmpspd *= 1.2f;
+                }
+                if (player_character == frog && has_throne_butt) {
+                    tmpspd *= 1.6f;
+                    allObjects[i].my_hitbox = plasma_hitbox;
+                    allObjects[i].damage = 6;
+                }
+
                 allObjects[i].speed.x = cos(tmpdir) * tmpspd;
                 allObjects[i].speed.y = sin(tmpdir) * tmpspd;
                 allObjects[i].speeddir = tmpspd;
@@ -5824,7 +5833,7 @@ void toxic_gas_collision(int currOBJ, int i, int j) {
                         case T2_bullet:
                         case bullet2:
                             bullet_speed = sqrt(allObjects[O].speed.x * allObjects[O].speed.x + allObjects[O].speed.y * allObjects[O].speed.y);
-                            if (bullet_speed > 1.0f) {
+                            if (bullet_speed > 1.2f) {
                                 bullet_speed -= 0.123f;
                                 float bullet_angle = atan2f(allObjects[O].speed.y, allObjects[O].speed.x);
                                 allObjects[O].speed.x = cos(bullet_angle) * bullet_speed;
@@ -8059,10 +8068,12 @@ void swing_shank(float direction, float reload, float damage) {
 }
 
 void not_enough_ammo(std::string string) {
-    play_sound_on_player(snd_empty_ID);
-    create_popuptext(string, allObjects[0].position);
+    if (player_pressed_LMB_this_frame) {
+        play_sound_on_player(snd_empty_ID);
+        create_popuptext(string, allObjects[0].position);
+        wep_kick = 3;
+    }
     LMB_pressed = false;
-    wep_kick = 3;
 }
 
 void steroids_TB_shot(int cost) {
@@ -8150,12 +8161,13 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
         LMB_pressed = automatic;
         wep_kick = wep_KB;
 
-        steroids_TB_shot(cost);
-
         if (cost != 0 && !skeleton_gamble) {
             if (wep == 22 && player_rads < 16 * shots) {
-                create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
-                play_sound_on_player(snd_not_enough_rads_ID);
+                if (player_pressed_LMB_this_frame) {
+                    create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
+                    play_sound_on_player(snd_not_enough_rads_ID);
+                }
+                wep_kick = 0;
                 return;//not enough rads
             }
             else if (wep == 22) {
@@ -8163,9 +8175,12 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
             }
 
             if (wep == 49 && player_rads < 4 * shots) {
-                create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
-                play_sound_on_player(snd_not_enough_rads_ID);
+                if (player_pressed_LMB_this_frame) {
+                    create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
+                    play_sound_on_player(snd_not_enough_rads_ID);
+                }
                 LMB_pressed = false;
+                wep_kick = 0;
                 return;//not enough rads
             }
             else if (wep == 49) {
@@ -8173,8 +8188,11 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
             }
 
             if (wep == 63 && player_rads < 12 * shots) {
-                create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
-                play_sound_on_player(snd_not_enough_rads_ID);
+                if (player_pressed_LMB_this_frame) {
+                    create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
+                    play_sound_on_player(snd_not_enough_rads_ID);
+                }
+                wep_kick = 0;
                 return;//not enough rads
             }
             else if (wep == 63) {
@@ -8182,8 +8200,11 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
             }
 
             if (wep == 83 && player_rads < 14 * shots) {
-                create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
-                play_sound_on_player(snd_not_enough_rads_ID);
+                if (player_pressed_LMB_this_frame) {
+                    create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
+                    play_sound_on_player(snd_not_enough_rads_ID);
+                }
+                wep_kick = 0;
                 LMB_pressed = false;
                 return;//not enough rads
             }
@@ -8192,8 +8213,11 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
             }
 
             if (wep == 108 && player_rads < 20 * shots) {
-                create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
-                play_sound_on_player(snd_not_enough_rads_ID);
+                if (player_pressed_LMB_this_frame) {
+                    create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
+                    play_sound_on_player(snd_not_enough_rads_ID);
+                }
+                wep_kick = 0;
                 return;//not enough rads
             }
             else if (wep == 108) {
@@ -8201,6 +8225,7 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
             }
         }
 
+        steroids_TB_shot(cost);
 
         reloaded = false;
 
@@ -8774,9 +8799,11 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 }
                 else {
                     //not enough rads
-                    wep_kick = -3;
-                    create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
-                    play_sound_on_player(snd_not_enough_rads_ID);
+                    if (player_pressed_LMB_this_frame) {
+                        wep_kick = -3;
+                        create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
+                        play_sound_on_player(snd_not_enough_rads_ID);
+                    }
                 }
             }
             break;
@@ -8881,7 +8908,10 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 last_fire_frame = current_frame;
             }
             if (LMB_pressed && wep_reload < 0.0f && player_energy - 2 < 0 && shots == 1 && !skeleton_gamble) {
-                not_enough_ammo("NOT ENOUGH ENERGY");
+                if (player_pressed_LMB_this_frame) {
+                    wep_kick = -3;
+                    not_enough_ammo("NOT ENOUGH ENERGY");
+                }
             }
             break;
         case 9: //ehammer
@@ -8919,7 +8949,10 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 last_fire_frame = current_frame;
             }
             if (LMB_pressed && wep_reload < 0.0f && player_energy - cost < 0 && shots == 1 && !skeleton_gamble) {
-                not_enough_ammo("NOT ENOUGH ENERGY");
+                if (player_pressed_LMB_this_frame) {
+                    wep_kick = -3;
+                    not_enough_ammo("NOT ENOUGH ENERGY");
+                }
             }
             break;
         case 10://escrew
@@ -8957,7 +8990,10 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 last_fire_frame = current_frame;
             }
             if (LMB_pressed && wep_reload < 0.0f && player_energy - 2 < 0 && shots == 1 && !skeleton_gamble) {
-                not_enough_ammo("NOT ENOUGH ENERGY");
+                if (player_pressed_LMB_this_frame) {
+                    wep_kick = -3;
+                    not_enough_ammo("NOT ENOUGH ENERGY");
+                }
             }
             break;
         case 11:
@@ -9013,7 +9049,10 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 last_fire_frame = current_frame;
             }
             if (LMB_pressed && wep_reload < 0.0f && player_energy - 24 * shots < 0) {
-                not_enough_ammo("NOT ENOUGH ENERGY");
+                if (player_pressed_LMB_this_frame) {
+                    wep_kick = -3;
+                    not_enough_ammo("NOT ENOUGH ENERGY");
+                }
             }
 
             break;
@@ -16727,7 +16766,6 @@ int main(int argc, char* argv[])
                         break;
                     }
                 }
-                player_pressed_RMB_this_frame = false;
 
                 //frog ultra B
                 if (player_character == frog && ultra_picked == 2) {
@@ -16762,9 +16800,8 @@ int main(int argc, char* argv[])
                     player_acceleration = 0;
                 }
 
-                if (player_pressed_LMB_this_frame) {
+                if (player_pressed_LMB_this_frame && last_fire_frame < current_frame - 7 + robot_less_kb) {
                     player_acceleration = 0.0f;
-                    player_pressed_LMB_this_frame = false;
                 }
 
                 float hori_move = 0.0f;
@@ -17243,13 +17280,12 @@ int main(int argc, char* argv[])
                             get_wep_reload_sound(bwep);
                         }
                     }
-
-                    if (Bwep_kick > 0) {
-                        Bwep_kick--;
-                    }
-                    else if (Bwep_kick < 0) {
-                        Bwep_kick++;
-                    }
+                }
+                if (Bwep_kick > 0) {
+                    Bwep_kick--;
+                }
+                else if (Bwep_kick < 0) {
+                    Bwep_kick++;
                 }
 
                 if (wep_reload < 0.0f && !reloaded) {
@@ -17419,6 +17455,9 @@ int main(int argc, char* argv[])
                         }
                         break;
                     case steroids:
+                        if (player_pressed_RMB_this_frame) {
+                            player_pressed_LMB_this_frame = true;
+                        }
                         fire_weapon(wep, direction_to_mouse, 1, 0, true);
                         break;
                     case rogue:
@@ -17502,6 +17541,9 @@ int main(int argc, char* argv[])
                     all_sounds[snd_lightning_cannon_loop_ID].sound.setLoop(true);
                     all_sounds[snd_lightning_cannon_loop_ID].sound.setVolume(0.0f);
                 }*/
+
+                player_pressed_LMB_this_frame = false;
+                player_pressed_RMB_this_frame = false;
 
                 switch (player_character) {
                 case horror:
