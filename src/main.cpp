@@ -5362,6 +5362,14 @@ void enemy_die(int ENEMY, int PROJ) {
             }
             play_sound_relative_to_player(snd_stalker_ID, allObjects[ENEMY].position.x, allObjects[ENEMY].position.y);
         }
+
+        if (ultra_picked == 1 && player_character == frog) {//distance
+            for (int i = allObjects[ENEMY].rad_drop; i > 0; i--) {
+                if (rand() % 3 == 0) {
+                    create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, toxic_gas, 0, 0);
+                }
+            }
+        }
     }
 
     if (veryhard_mode) {
@@ -5792,6 +5800,42 @@ void horror_bullet_collision(int currOBJ, int i, int j) {
                         break;
                     default:
                         break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void toxic_gas_collision(int currOBJ, int i, int j) {
+    if (player_character == frog && ultra_picked == 2) {
+        float bullet_speed = 0.0f;
+        for (int w = -1; w < 2; w++) {      //horror_bullet collison
+            for (int h = -1; h < 2; h++) {
+                for (int O : game_area[i + w][j + h].object_indexes) {
+                    //slow projectiles
+
+                    if (allObjects[O].team != player_team && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox + allObjects[currOBJ].my_hitbox)) {
+                        switch (allObjects[O].my_id) {
+                        case bullet1:
+                        case idpd_bullet:
+                        case guardian_bullet:
+                        case large_guardian_bullet:
+                        case T2_bullet:
+                        case bullet2:
+                            bullet_speed = sqrt(allObjects[O].speed.x * allObjects[O].speed.x + allObjects[O].speed.y * allObjects[O].speed.y);
+                            if (bullet_speed > 1.0f) {
+                                bullet_speed -= 0.123f;
+                                float bullet_angle = atan2f(allObjects[O].speed.y, allObjects[O].speed.x);
+                                allObjects[O].speed.x = cos(bullet_angle) * bullet_speed;
+                                allObjects[O].speed.y = sin(bullet_angle) * bullet_speed;
+                                allObjects[O].speeddir = bullet_speed;
+                            }
+
+                            break;
+                        default:
+                            break;
+                        }
                     }
                 }
             }
@@ -9461,6 +9505,13 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                     }
                     play_sound_relative_to_player(snd_stalker_ID, allObjects[i].position.x, allObjects[i].position.y);
                 }
+                if (ultra_picked == 1 && player_character == frog) {//distance
+                    for (int b = allObjects[i].rad_drop; b > 0; b--) {
+                        if (rand() % 3 == 0) {
+                            create_object(allObjects[i].position.x, allObjects[i].position.y, 0, 0, toxic_gas, 0, 0);
+                        }
+                    }
+                }
                 for (int b = 0; b < 30; b++) {
                     create_object(allObjects[i].position.x + random_float(128) - 64, allObjects[i].position.y + random_float(100) - 50, 0, 0, explosion, 0, 2);
                 }
@@ -11999,8 +12050,15 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                     plasma_impact_collision(O, i, j);
                                 }
                                 break;
+                            case toxic_gas:
+                                if (w == 0 && h == 0) {
+                                    toxic_gas_collision(O, i, j);
+                                }
+                                break;
                             case horror_bullet:
-                                horror_bullet_collision(O, i, j);
+                                if (w == 0 && h == 0) {
+                                    horror_bullet_collision(O, i, j);
+                                }
                                 break;
                             case scorch:
                                 allObjects[O].my_id = nothing;
@@ -12485,6 +12543,9 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                         break;
                     case plant_tangle:
                         plant_tangle_collision(currOBJ, i, j);
+                        break;
+                    case toxic_gas:
+                        toxic_gas_collision(currOBJ, i, j);
                         break;
                     case horror_bullet:
                         horror_bullet_collision(currOBJ, i, j);
@@ -16667,6 +16728,16 @@ int main(int argc, char* argv[])
                     }
                 }
                 player_pressed_RMB_this_frame = false;
+
+                //frog ultra B
+                if (player_character == frog && ultra_picked == 2) {
+                    if (player_held_RMB) {
+                        for (int i = 0; i < 3; i++) {
+                            create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, toxic_gas, 0.0f, 0);
+                        }
+                    }
+                    create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, toxic_gas, 0.0f, 0);
+                }
 
 
                 int robot_less_kb = ((player_character == robot) * 3) + ((player_character == robot && ultra_picked == 2) * 5);
