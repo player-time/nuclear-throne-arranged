@@ -508,6 +508,8 @@ int hammerhead_delay = 13;
 int hammerhead_delay_decrease = 1;
 int hammerhead_destroyed_wall = 0;
 
+bool has_boiling_veins = true;
+int player_smoke_ammount = 0;
 
 int has_rhino_skin = 1;
 
@@ -6219,29 +6221,63 @@ void player_collision(int i, int j, int currOBJ) {
                         }
                         break;
                     case objectID::idpd_explosion:
-                        if (allObjects[O].team != allObjects[0].team && player_invincible == 0 && (allObjects[O].image_index == 3 || allObjects[O].image_index == 4) && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox + player_hitbox)) {
-                            play_player_hurt_sound();
-                            rogue_blast_armor();
-                            player_hp -= 8;
-                            allObjects[currOBJ].next_hurt = current_frame + 6;
-                            allObjects[currOBJ].image_index = 0;
-                            tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
-                            allObjects[O].speed.x = cos(tmpdir) * 12;
-                            allObjects[O].speed.y = sin(tmpdir) * 12;
-                            motion_add_XY_speed(allObjects[O].speed.x, allObjects[O].speed.y, currOBJ);
+                        if (!has_boiling_veins || allObjects[currOBJ].next_hurt < current_frame) {
+                            if (allObjects[O].team != allObjects[0].team && player_invincible == 0 && (allObjects[O].image_index == 3 || allObjects[O].image_index == 4) && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox + player_hitbox)) {
+                                play_player_hurt_sound();
+                                rogue_blast_armor();
+                                int prev_player_hp = player_hp;
+                                player_hp -= 8;
+
+                                if (has_boiling_veins) {
+                                    player_smoke_ammount = 30;
+                                    if (player_hp < 4) {
+                                        player_hp = 4;
+                                        if (prev_player_hp < player_hp) {
+                                            player_hp = prev_player_hp;
+                                        }
+                                        if (player_hp > player_max_hp) {
+                                            player_hp = player_max_hp;
+                                        }
+                                    }
+                                }
+
+                                allObjects[currOBJ].next_hurt = current_frame + 6;
+                                allObjects[currOBJ].image_index = 0;
+                                tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
+                                allObjects[O].speed.x = cos(tmpdir) * 12;
+                                allObjects[O].speed.y = sin(tmpdir) * 12;
+                                motion_add_XY_speed(allObjects[O].speed.x, allObjects[O].speed.y, currOBJ);
+                            }
                         }
                         break;
                     case objectID::explosion:
-                        if (player_invincible == 0 && (allObjects[O].image_index == 3 || allObjects[O].image_index == 4) && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox + player_hitbox)) {
-                            play_player_hurt_sound();
-                            rogue_blast_armor();
-                            player_hp -= allObjects[O].damage;
-                            allObjects[currOBJ].next_hurt = current_frame + 6;
-                            allObjects[currOBJ].image_index = 0;
-                            tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
-                            allObjects[O].speed.x = cos(tmpdir) * 12;
-                            allObjects[O].speed.y = sin(tmpdir) * 12;
-                            motion_add_XY_speed(allObjects[O].speed.x, allObjects[O].speed.y, currOBJ);
+                        if (!has_boiling_veins || allObjects[currOBJ].next_hurt < current_frame) {
+                            if (player_invincible == 0 && (allObjects[O].image_index == 3 || allObjects[O].image_index == 4) && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox + player_hitbox)) {
+                                play_player_hurt_sound();
+                                rogue_blast_armor();
+                                int prev_player_hp = player_hp;
+                                player_hp -= allObjects[O].damage;
+
+                                if (has_boiling_veins) {
+                                    player_smoke_ammount = 30;
+                                    if (player_hp < 4) {
+                                        player_hp = 4;
+                                        if (prev_player_hp < player_hp) {
+                                            player_hp = prev_player_hp;
+                                        }
+                                        if (player_hp > player_max_hp) {
+                                            player_hp = player_max_hp;
+                                        }
+                                    }
+                                }
+
+                                allObjects[currOBJ].next_hurt = current_frame + 6;
+                                allObjects[currOBJ].image_index = 0;
+                                tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
+                                allObjects[O].speed.x = cos(tmpdir) * 12;
+                                allObjects[O].speed.y = sin(tmpdir) * 12;
+                                motion_add_XY_speed(allObjects[O].speed.x, allObjects[O].speed.y, currOBJ);
+                            }
                         }
                         break;
                     default:
@@ -14227,6 +14263,7 @@ int main(int argc, char* argv[])
 
     add_new_sound(snd_sewer_drip_ID, "snd/sewer_drip.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
+
     //prop related
     add_new_sound(snd_sewer_pipe_break_ID, "snd/sewer_pipe_break.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
     add_new_sound(snd_toxic_barrel_gas_ID, "snd/toxic_barrel_gas.wav", all_sounds, all_sounds_mirror, 0.1f, 0.02f);
@@ -14533,6 +14570,8 @@ int main(int argc, char* argv[])
 
     add_new_sound(snd_lust_proc_ID, "snd/lust_proc.wav", all_sounds, all_sounds_mirror, 0.07f, 0.01f);
     add_new_sound(snd_lucky_shot_proc_ID, "snd/lucky_shot_proc.wav", all_sounds, all_sounds_mirror, 0.07f, 0.01f);
+    add_new_sound(snd_hammerhead_proc_ID, "snd/hammer_head_proc.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_hammerhead_end_ID, "snd/hammer_head_end.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
 
     add_new_sound(snd_empty_ID, "snd/empty.wav", all_sounds, all_sounds_mirror, 0.02f, 0.00f, 90.0f);
 
@@ -14590,14 +14629,14 @@ int main(int argc, char* argv[])
     add_new_sound(snd_lose_strong_spirit_ID, "snd/lose_strong_spirit.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
 
 
-    add_new_sound(snd_not_enough_rads_ID, "snd/not_enough_rads.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_not_enough_rads_ID, "snd/not_enough_rads.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f); 
 
     //weapon shoot snds
     //add_new_sound(snd_player_shoot_A_ID, "snd/sword.wav", all_sounds, snd_sword_ID, all_extra_sound_buffers, 0.1f, 0.0f);
     //add_new_sound(snd_player_shoot_B_ID, "snd/sword.wav", all_sounds, snd_sword_ID, all_extra_sound_buffers, 0.1f, 0.0f);
 
 
-    add_new_sound(snd_melee_wall_ID, "snd/melee_wall.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+    add_new_sound(snd_melee_wall_ID, "snd/melee_wall.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f, 55.0f);
 
     add_new_sound(snd_sword_ID, "snd/sword.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
     add_new_sound(snd_black_sword_ID, "snd/black_sword.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
@@ -17794,15 +17833,38 @@ int main(int argc, char* argv[])
             do_object_collision(left_physics_adjusted, right_physics_adjusted, 0);
             destroy_on_screen_corpses = false;
 
-            //hammerhead
-            if (hammerhead_delay_decrease == 1) {
-                hammerhead_delay = 13;
+            if (player_alive) {
+                //hammerhead
+                if (hammerhead_delay_decrease == 1) {
+                    hammerhead_delay = 13;
+                }
+                else if (hammerhead_destroyed_wall == 10) {//has been used this frame
+                    if (hammerhead_charges < 0) {
+                        play_sound_on_player(snd_hammerhead_end_ID);
+                    }
+                    else {
+                        play_sound_on_player(snd_hammerhead_proc_ID);
+                    }
+                }
+                if (hammerhead_charges < 0) {//can still use hammerhead at 0 charges
+                    can_hammerhead = false;
+                }
+                hammerhead_destroyed_wall--;
+                hammerhead_delay_decrease = 1;
+
+                //player smoke
+                if (player_smoke_ammount > 0) {
+                    float tmpspd = 0.5f + random_float(0.97f);
+                    create_object(allObjects[0].position.x, allObjects[0].position.y, tmpspd, tmpspd, smoke, 0, 0);
+                    if (player_smoke_ammount > 15 && rand() % 7 == 0) {
+                        create_object(allObjects[0].position.x + random_float(4) - 2, allObjects[0].position.y + random_float(4) - 2, 0, 0, flame, 0, 0);
+                    }
+                    player_smoke_ammount--;
+                }
+                if (has_boiling_veins && rand() % 100 == 0) {
+                    player_smoke_ammount++;
+                }
             }
-            if (hammerhead_charges < 0) {
-                can_hammerhead = false;;
-            }
-            hammerhead_destroyed_wall--;
-            hammerhead_delay_decrease = 1;
 
             //check if player got hit
             if (allObjects[0].next_hurt == current_frame + 6) {

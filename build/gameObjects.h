@@ -494,6 +494,8 @@ enum sound_ID {
 	snd_hp_pickup_big_ID,
 	snd_lust_proc_ID,
 	snd_lucky_shot_proc_ID,
+	snd_hammerhead_proc_ID,
+	snd_hammerhead_end_ID,
 
 	//chest
 	snd_ammo_chest_ID,
