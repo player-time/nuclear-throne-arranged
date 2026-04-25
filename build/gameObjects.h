@@ -217,9 +217,9 @@ enum enemy_corpses {
 	bandit_CORPSE,
 	idpd_freak_CORPSE,	//filler, not actually used
 	scorpion_CORPSE,
+	rebel_ally_CORPSE = 3,
 	golden_scorpion_CORPSE,
 
-	rebel_ally_CORPSE = 4,
 };
 
 enum ground_material {
@@ -493,6 +493,7 @@ enum sound_ID {
 	snd_hp_pickup_ID,
 	snd_hp_pickup_big_ID,
 	snd_lust_proc_ID,
+	snd_lucky_shot_proc_ID,
 
 	//chest
 	snd_ammo_chest_ID,

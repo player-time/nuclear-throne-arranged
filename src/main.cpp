@@ -97,7 +97,7 @@ std::vector<sf::Sprite> all_enemy_sprites;  //all enemy sprites that fit into a 
 int all_enemy_sprites_max = 6000;
 
 std::vector<sf::Sprite> all_enemy_corpses;  //all enemy corpse sprites that fit into a 32x32 box
-int all_enemy_corpses_max = 6000;
+int all_enemy_corpses_max = 60;
 
 std::vector<sf::Sprite> rotateable_sprites_bullets;
 int rotateable_sprites_bullets_max = 17000;
@@ -499,10 +499,21 @@ float laser_brain = 1.2f;
 int second_stomach = 0;
 float stress = 1.0f;
 int bloodlust = 1;
+int lucky_shot = 1;
+
+bool has_hammerhead = true;
+int hammerhead_charges = 0;
+bool can_hammerhead = false;
+int hammerhead_delay = 13;
+int hammerhead_delay_decrease = 1;
+int hammerhead_destroyed_wall = 0;
+
 
 int has_rhino_skin = 1;
 
-bool extra_feet = false;
+float extra_feet = 0.5f;
+
+float euphoria = 1.0f;
 
 bool rabbit_paw = 0;
 
@@ -733,6 +744,14 @@ void play_sound_in_pool(sound_ID sound, sound_sound_buffer all_sounds[], sf::Sou
             return;
         }
     }
+}
+
+void expand_vector(std::vector<sf::Sprite> &vector_to_expand, sf::Vector2f origin, sf::Texture &texture) {
+    sf::Sprite temp;
+    temp.setColor({ 0, 0, 0, 0 });
+    temp.setOrigin(origin);
+    temp.setTexture(texture);
+    vector_to_expand.push_back(temp);
 }
 
 bool is_looping_sound(int sound_id) {
@@ -1537,7 +1556,7 @@ void create_popuptext(std::string string, sf::Vector2f pos) {
     popup_text_index++;
 }
 
-void pickup_ammo() {
+void pickup_ammo(bool random_pack = false) {
     play_sound_relative_to_player(snd_ammo_pickup_ID, allObjects[0].position.x, allObjects[0].position.y);
     int wep_choice = 0;
     if (rand() % 2) {
@@ -1546,7 +1565,7 @@ void pickup_ammo() {
     else {
         wep_choice = bwep;
     }
-    if (wep_choice < melee_weps) {     //melee
+    if (wep_choice < melee_weps || random_pack) {     //melee
 
         int choice = rand() % 5;
         switch (choice) {
@@ -2345,6 +2364,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].damage = 3;
 
                 allObjects[i].position = { x, y };
+                xspd *= euphoria;
+                yspd *= euphoria;
                 allObjects[i].speed = { xspd, yspd };
                 allObjects[i].direction = direction * degreestoradians + 180.0f;
                 allObjects[i].image_index = 0;
@@ -2356,6 +2377,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].damage = 5;
 
                 allObjects[i].position = { x, y };
+                xspd *= euphoria;
+                yspd *= euphoria;
                 allObjects[i].speed = { xspd, yspd };
                 allObjects[i].direction = direction;
                 allObjects[i].image_index = 0;
@@ -2374,6 +2397,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].damage = 1;
 
                 allObjects[i].position = { x, y };
+                xspd *= euphoria;
+                yspd *= euphoria;
                 allObjects[i].speed = { xspd, yspd };
                 allObjects[i].image_index = rand() % 5;
                 allObjects[i].team = enemy_team;     //enemy team
@@ -2392,6 +2417,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].damage = 12;
 
                 allObjects[i].position = { x, y };
+                xspd *= euphoria;
+                yspd *= euphoria;
                 allObjects[i].speed = { xspd, yspd };
                 allObjects[i].direction = direction;
 
@@ -2405,6 +2432,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].damage = 12;
 
                 allObjects[i].position = { x, y };
+                xspd *= euphoria;
+                yspd *= euphoria;
                 allObjects[i].speed = { xspd, yspd };
                 allObjects[i].direction = direction;
 
@@ -2422,7 +2451,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].speed = { xspd, yspd };
                 allObjects[i].direction = direction * degreestoradians + 180.0f;
                 allObjects[i].image_index = 0;
-                allObjects[i].team = enemy_team;     //enemy team
+                allObjects[i].team = player_team;     //enemy team
                 break;
             case idpd_bullet:
                 allObjects[i].my_id = obj_id;
@@ -2430,6 +2459,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].damage = 3;
 
                 allObjects[i].position = { x, y };
+                xspd *= euphoria;
+                yspd *= euphoria;
                 allObjects[i].speed = { xspd, yspd };
                 allObjects[i].direction = direction * degreestoradians + 180.0f;
                 allObjects[i].image_index = 0;
@@ -2441,6 +2472,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].damage = 2;
 
                 allObjects[i].position = { x, y };
+                xspd *= euphoria;
+                yspd *= euphoria;
                 allObjects[i].speed = { xspd, yspd };
                 allObjects[i].direction = direction * degreestoradians + 180.0f;
                 allObjects[i].image_index = 0;
@@ -3509,6 +3542,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 
                 allObjects[i].position = { x, y };
                 allObjects[i].image_index = 0;
+                allObjects[i].size = image_index;
+
                 break;
             case laser_brain_FX:
                 allObjects[i].my_id = obj_id;
@@ -3906,12 +3941,18 @@ void lust_proc() {
     if (player_hp >= player_max_hp) {
         player_hp = player_max_hp;
         create_popuptext("MAX HP", allObjects[0].position + sf::Vector2f{ 0, -8 });
-        create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, lust_FX, 0, 0);
+        create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, lust_FX, 0, 2);
     }
     else {
         create_popuptext("+1 HP", allObjects[0].position + sf::Vector2f{ 0, -8 });
-        create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, lust_FX, 0, 0);
+        create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, lust_FX, 0, 2);
     }
+}
+
+void lucky_shot_proc() {
+    play_sound_relative_to_player(snd_lucky_shot_proc_ID, allObjects[0].position.x, allObjects[0].position.y);
+    pickup_ammo(true);
+    create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, lust_FX, 0, 28);
 }
 
 /*void pick_throne_butt(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_buffers[]) {
@@ -5301,9 +5342,13 @@ void enemy_hurt(int ENEMY, int PROJ) {
 }
 
 void basic_enemy_death_logic() {
-    //bloodlust
+    //bloodlust 1/13
     if (rand() % 13 == 0 && bloodlust) {
         lust_proc();
+    }
+    //lucky_shot 2/17
+    if (rand() % 17 <= 1 && lucky_shot) {
+        lucky_shot_proc();
     }
     //reload
     wep_reload *= trigger_fingers;
@@ -6091,15 +6136,15 @@ void player_collision(int i, int j, int currOBJ) {
                                 play_sound_on_player(snd_rogue_canister_ID);
                                 rogue_strike_ammo++;
                                 if (ultra_picked == 1) {
-                                    rogue_strike_ammo += 2;
+                                    rogue_strike_ammo += 3;
                                 }
-                                if (rogue_strike_ammo > 3 * (1 + (ultra_picked == 1) * 3)) {
+                                if (rogue_strike_ammo >= 3 * (1 + (ultra_picked == 1) * 3)) {
                                     rogue_strike_ammo = 3 * (1 + (ultra_picked == 1) * 3);
                                     create_popuptext("MAX PORTAL STRIKES", allObjects[0].position);
                                 }
                                 else {
                                     if (ultra_picked == 1) {
-                                        create_popuptext("+3 PORTAL STRIKES", allObjects[0].position);
+                                        create_popuptext("+4 PORTAL STRIKES", allObjects[0].position);
                                     }
                                     else {
                                         create_popuptext("+1 PORTAL STRIKE", allObjects[0].position);
@@ -10190,7 +10235,7 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             if (allObjects[i].alarm2 < 0) {
                 allObjects[i].alarm2 = 40;
                 if (created_portal) {
-                    allObjects[i].alarm2 = 10; 
+                    allObjects[i].alarm2 = 5; 
                 }
                 allObjects[i].my_hp -= 1;
 
@@ -10212,21 +10257,29 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             //rebel ally ai
             if (allObjects[i].alarm1 < 0) {
 
-                allObjects[i].alarm1 = 10 + rand() % 10;
+                allObjects[i].alarm1 = 10 + rand() % 5;
                 //walk towards player
-                allObjects[i].speeddir += 0.4f;
-                allObjects[i].direction = angle_to_player_radians(allObjects[i].position) + (random_180_radians() - (90.0f / degreestoradians)) / 2;
-                allObjects[i].walk_frames = 10 + rand() % 10;
-                allObjects[i].facing_right = cos(allObjects[i].direction) > 0;
+                if (rand() % 10 == 0) {
+                    allObjects[i].speeddir += 0.4f;
+                    allObjects[i].direction = angle_to_player_radians(allObjects[i].position) + (random_180_radians() - (90.0f / degreestoradians)) / 2;
+                    allObjects[i].walk_frames = 10 + rand() % 10;
+                    allObjects[i].facing_right = cos(allObjects[i].direction) > 0;
 
+                }
                 //sf::Vector2f enemy_pos;
                 //enemy_index = find_nearest_LOS_enemy(allObjects[0].position);
-                if (enemy_index_fire_at != 0) {
-                    tmpdir = atan2f(allObjects[enemy_index_fire_at].position.y - allObjects[i].position.y, allObjects[enemy_index_fire_at].position.x - allObjects[i].position.x);
-                    tmpdir += (random_float(20) - 10) / degreestoradians;
-                    tempSpeedX = cos(tmpdir) * 7;
-                    tempSpeedY = sin(tmpdir) * 7;
-                    create_object(allObjects[i].position.x, allObjects[i].position.y, tempSpeedX, tempSpeedY, player_bullet, tmpdir, 1);
+                else {//shoot at nearest enemy
+                    if (enemy_index_fire_at != 0) {
+                        tmpdir = atan2f(allObjects[enemy_index_fire_at].position.y - allObjects[i].position.y, allObjects[enemy_index_fire_at].position.x - allObjects[i].position.x);
+                        tmpdir += (random_float(20) - 10) / degreestoradians;
+                        tempSpeedX = cos(tmpdir) * 7;
+                        tempSpeedY = sin(tmpdir) * 7;
+                        create_object(allObjects[i].position.x, allObjects[i].position.y, tempSpeedX, tempSpeedY, player_bullet, tmpdir, 1);
+                    }
+                    allObjects[i].alarm1 = 8;
+                    if (has_throne_butt) {
+                        allObjects[i].alarm1 = 5;
+                    }
                 }
             }
             //rebel ally ai
@@ -12166,11 +12219,45 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                                 break;
                             case objectID::player:
                                 if (!roll && !(player_character == frog)) {
-                                    collide_wall_nice(O, i, j, h, w, 5);
+                                    bool broke_wall = false;
+                                    if (can_hammerhead) {
+                                        diffx = (allObjects[0].position.x) - float((i * 16) + 8);    //distance from the center of the wall
+                                        diffy = (allObjects[0].position.y) - float((j * 16) + 8);    //distance from the center of the wall
+                                        if (abs(diffx) < 8 + 5 && abs(diffy) < 8 + 5) {
+                                            hammerhead_delay -= hammerhead_delay_decrease;
+                                            hammerhead_delay_decrease = 0;
+                                            if (hammerhead_delay < 0 || hammerhead_destroyed_wall > 0) {
+                                                create_explo_tile(i, j);
+                                                hammerhead_charges--;
+                                                hammerhead_destroyed_wall = 10;
+                                                broke_wall = true;
+                                            }
+                                        }
+                                    }
+                                    if (!broke_wall) {
+                                        collide_wall_nice(O, i, j, h, w, 5);
+                                    }
                                 }
                                 else {
-                                    player_bounce_wall(O, h, w, 5, 5, i, j);
-                                    roll_direction = allObjects[O].direction;
+                                    bool broke_wall = false;
+                                    if (can_hammerhead) {
+                                        diffx = (allObjects[0].position.x) - float((i * 16) + 8);    //distance from the center of the wall
+                                        diffy = (allObjects[0].position.y) - float((j * 16) + 8);    //distance from the center of the wall
+                                        if (abs(diffx) < 8 + 5 && abs(diffy) < 8 + 5 || (player_held_RMB && player_character == frog && abs(diffx) < 8 + 9 && abs(diffy) < 8 + 9)) {
+                                            hammerhead_delay -= hammerhead_delay_decrease;
+                                            hammerhead_delay_decrease = 0;
+                                            if ((hammerhead_delay < 0 || hammerhead_destroyed_wall > 0) && abs(diffx) < 8 + 5 && abs(diffy) < 8 + 5) {
+                                                create_explo_tile(i, j);
+                                                hammerhead_charges--;
+                                                hammerhead_destroyed_wall = 10;
+                                                broke_wall = true;
+                                            }
+                                        }
+                                    }
+                                    if (!broke_wall) {
+                                        player_bounce_wall(O, h, w, 5, 5, i, j);
+                                        roll_direction = allObjects[O].direction;
+                                    }
                                 }
                                 break;
                             case objectID::weapon_drop:
@@ -13265,6 +13352,12 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
 
     rogue_strike_position = sf::Vector2f(mousepos) + cameraPos;
     rogue_holding_strike = false;
+
+    //hammerhead
+    if (has_hammerhead) {
+        hammerhead_charges = 20;
+        can_hammerhead = true;
+    }
 
     //recalculate revenge bullet offset
     revenge_bullet_offset = LOOPS + 5;
@@ -14439,6 +14532,7 @@ int main(int argc, char* argv[])
     add_new_sound(snd_hp_pickup_big_ID, "snd/hp_pickup_big.wav", all_sounds, all_sounds_mirror, 0.07f, 0.01f);
 
     add_new_sound(snd_lust_proc_ID, "snd/lust_proc.wav", all_sounds, all_sounds_mirror, 0.07f, 0.01f);
+    add_new_sound(snd_lucky_shot_proc_ID, "snd/lucky_shot_proc.wav", all_sounds, all_sounds_mirror, 0.07f, 0.01f);
 
     add_new_sound(snd_empty_ID, "snd/empty.wav", all_sounds, all_sounds_mirror, 0.02f, 0.00f, 90.0f);
 
@@ -16655,6 +16749,7 @@ int main(int argc, char* argv[])
                         break;
                     case YV:
                         LMB_pressed = true;
+                        player_pressed_LMB_this_frame = true;
                         fire_weapon(wep, direction_to_mouse, 2 * (1 + has_throne_butt), (ultra_picked == 2) + (ultra_picked == 2 && has_throne_butt));
                         break;
                     case robot:
@@ -16918,9 +17013,11 @@ int main(int argc, char* argv[])
                 poll_move_right = 0;
                 poll_move_total = 0;
 
-                if (allObjects[0].speeddir > player_max_speed + (roll > 0) * 2 + (roll > 0 && has_throne_butt)) {
-                    allObjects[0].speeddir = player_max_speed + (roll > 0) * 2 + (roll > 0 && has_throne_butt);
+                //shouldnt go higher than 8
+                if (allObjects[0].speeddir > player_max_speed + extra_feet + (roll > 0) * 2 + (roll > 0 && has_throne_butt)) {
+                    allObjects[0].speeddir = player_max_speed + extra_feet + (roll > 0) * 2 + (roll > 0 && has_throne_butt);
                 }
+
 
                 //allObjects[0].friction = 0.45f;
                 float friction_player = 0.45f;
@@ -17103,7 +17200,7 @@ int main(int argc, char* argv[])
                             play_sound_on_player(static_cast<sound_ID>(choice2));
                         }
                         if (rand() % 3 == 0) {//player foot step dust
-                            if (extra_feet) {
+                            if (extra_feet > 0.25f) {
                                 create_object(allObjects[0].position.x, allObjects[0].position.y, 0.7, 0.7, dust, 0, 1);    //dust
                             }
                             else {
@@ -17696,6 +17793,16 @@ int main(int argc, char* argv[])
 
             do_object_collision(left_physics_adjusted, right_physics_adjusted, 0);
             destroy_on_screen_corpses = false;
+
+            //hammerhead
+            if (hammerhead_delay_decrease == 1) {
+                hammerhead_delay = 13;
+            }
+            if (hammerhead_charges < 0) {
+                can_hammerhead = false;;
+            }
+            hammerhead_destroyed_wall--;
+            hammerhead_delay_decrease = 1;
 
             //check if player got hit
             if (allObjects[0].next_hurt == current_frame + 6) {
@@ -19616,7 +19723,7 @@ int main(int argc, char* argv[])
                         rotateable_effects_large[rotateableEffectsLargeIndex].setPosition(allObjects[idx].position - cameraPos);
                         rotateable_effects_large[rotateableEffectsLargeIndex].setRotation(0);
                         rotateable_effects_large[rotateableEffectsLargeIndex].setScale(1, 1);
-                        rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ 24 * choice, 2 * 24, 24, 24 });
+                        rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ 24 * choice, allObjects[idx].size * 24, 24, 24 });
                         rotateableEffectsLargeIndex++;
                         break;
                     case the_wind:
@@ -20046,6 +20153,10 @@ int main(int argc, char* argv[])
                         allEnemySpritesIndex++;
                         break;
                     case melt_splat:
+                        if (allEnemyCorpsesIndex >= all_enemy_corpses_max - 1) {
+                            expand_vector(all_enemy_corpses, {24, 24}, allEnemySprites);
+                            all_enemy_corpses_max++;
+                        }
                         all_enemy_corpses[allEnemyCorpsesIndex].setColor({ 255, 255, 255, 255 });
                         all_enemy_corpses[allEnemyCorpsesIndex].setPosition(allObjects[idx].position - cameraPos);
                         all_enemy_corpses[allEnemyCorpsesIndex].setScale(allObjects[idx].facing_right * 2 - 1, 1);
@@ -20063,6 +20174,10 @@ int main(int argc, char* argv[])
                         allEnemyCorpsesIndex++;
                         break;
                     case chicken_head:
+                        if (allEnemyCorpsesIndex >= all_enemy_corpses_max - 1) {
+                            expand_vector(all_enemy_corpses, { 24, 24 }, allEnemySprites);
+                            all_enemy_corpses_max++;
+                        }
                         all_enemy_corpses[allEnemyCorpsesIndex].setColor({ 255, 255, 255, 255 });
                         all_enemy_corpses[allEnemyCorpsesIndex].setPosition(allObjects[idx].position - cameraPos);
                         all_enemy_corpses[allEnemyCorpsesIndex].setScale(allObjects[idx].size, 1);
@@ -20078,6 +20193,10 @@ int main(int argc, char* argv[])
 
                         break;
                     case enemy_corpse:
+                        if (allEnemyCorpsesIndex >= all_enemy_corpses_max - 1) {
+                            expand_vector(all_enemy_corpses, { 24, 24 }, allEnemySprites);
+                            all_enemy_corpses_max++;
+                        }
                         all_enemy_corpses[allEnemyCorpsesIndex].setColor({ 255, 255, 255, 255 });
                         all_enemy_corpses[allEnemyCorpsesIndex].setPosition(allObjects[idx].position - cameraPos);
                         all_enemy_corpses[allEnemyCorpsesIndex].setScale(allObjects[idx].facing_right * 2 - 1, 1);
@@ -20094,6 +20213,10 @@ int main(int argc, char* argv[])
 
                         break;
                     case idpd_freak_corpse:
+                        if (allEnemyCorpsesIndex >= all_enemy_corpses_max - 1) {
+                            expand_vector(all_enemy_corpses, { 24, 24 }, allEnemySprites);
+                            all_enemy_corpses_max++;
+                        }
                         all_enemy_corpses[allEnemyCorpsesIndex].setColor({ 255, 255, 255, 255 });
                         all_enemy_corpses[allEnemyCorpsesIndex].setPosition(allObjects[idx].position - cameraPos);
                         all_enemy_corpses[allEnemyCorpsesIndex].setScale(allObjects[idx].facing_right * 2 - 1, 1);
