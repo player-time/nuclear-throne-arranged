@@ -2,9 +2,9 @@
 
 //TODO !!!
 
-//finish wall sprites
 //fix light sources
-
+//rad canister
+//proto vault
 
 //check whether going over sprite limit
 //replay system
@@ -243,6 +243,7 @@ static int max_objects = 262144 / 4;
 int current_create_start = 1;
 //int curr_objcount = 1;   this is now redundant as threads break it   //important to keep this equal to the amount of objects active so increase when "adding" object and decrease when "removing" an object (setting it to "nothing" type) starts at one for the player object
 int current_frame = 0;      //used for stuff like i-frames, reset this each area
+int current_frame_unpaused = 0;
 int last_fire_frame = 0;
 
 
@@ -399,7 +400,8 @@ int game_over_time = 0;
 sf::Sprite letter_boxes;
 
 
-bool naitive_cursor_active = true;
+bool GAME_OPTION_naitive_cursor_active = true;
+bool GAME_OPTION_hide_cursor_on_loading = true;
 
 int crosshair_selected = 0;
 
@@ -13412,6 +13414,7 @@ void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[]) {
     has_died = false;
 
     current_frame = 0;
+    current_frame_unpaused = 0;
     allObjects[0].next_hurt = current_frame + 6;
     reset_all_globals();//TODO
 
@@ -16871,45 +16874,45 @@ int main(int argc, char* argv[])
 
 
         //if doing a replay, overwrite the players inputs with the inputs of the the replay file
-        if (current_frame < replay_size) {
+        if (current_frame_unpaused < replay_size) {
             if (PLAY_REPLAY) {
-                mousepos.x = replay_inputs[current_frame].mouse_x;
-                mousepos.y = replay_inputs[current_frame].mouse_y;
+                mousepos.x = replay_inputs[current_frame_unpaused].mouse_x;
+                mousepos.y = replay_inputs[current_frame_unpaused].mouse_y;
 
-                player_move_up = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000000000000001) != 0;
-                player_move_down = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000000000000010) != 0;
-                player_move_left = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000000000000100) != 0;
-                player_move_right = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000000000001000) != 0;
+                player_move_up = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000000000001) != 0;
+                player_move_down = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000000000010) != 0;
+                player_move_left = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000000000100) != 0;
+                player_move_right = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000000001000) != 0;
 
-                SHIFT_held = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000000000010000) != 0;
-                SPACE_pressed = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000000000100000) != 0;
-                E_pressed = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000000001000000) != 0;
-                LMB_pressed = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000000010000000) != 0;
-                RMB_pressed = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000000100000000) != 0;
-                player_pressed_LMB_this_frame = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000001000000000) != 0;
-                player_pressed_RMB_this_frame = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000010000000000) != 0;
-                player_held_LMB = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0000100000000000) != 0;
-                player_held_RMB = (replay_inputs[current_frame].keyboard_n_mouse_input & 0b0001000000000000) != 0;
+                SHIFT_held = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000000010000) != 0;
+                SPACE_pressed = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000000100000) != 0;
+                E_pressed = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000001000000) != 0;
+                LMB_pressed = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000010000000) != 0;
+                RMB_pressed = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000100000000) != 0;
+                player_pressed_LMB_this_frame = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000001000000000) != 0;
+                player_pressed_RMB_this_frame = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000010000000000) != 0;
+                player_held_LMB = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000100000000000) != 0;
+                player_held_RMB = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0001000000000000) != 0;
             }
             //TODO record replay for now but later have an option to not record or play
             else {//record input
-                replay_inputs[current_frame].mouse_x = mousepos.x;
-                replay_inputs[current_frame].mouse_y = mousepos.y;
+                replay_inputs[current_frame_unpaused].mouse_x = mousepos.x;
+                replay_inputs[current_frame_unpaused].mouse_y = mousepos.y;
 
-                replay_inputs[current_frame].keyboard_n_mouse_input += (player_move_up * 0b0000000000000001);
-                replay_inputs[current_frame].keyboard_n_mouse_input += (player_move_down * 0b0000000000000010);
-                replay_inputs[current_frame].keyboard_n_mouse_input += (player_move_left * 0b0000000000000100);
-                replay_inputs[current_frame].keyboard_n_mouse_input += (player_move_right * 0b0000000000001000);
+                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_move_up * 0b0000000000000001);
+                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_move_down * 0b0000000000000010);
+                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_move_left * 0b0000000000000100);
+                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_move_right * 0b0000000000001000);
 
-                replay_inputs[current_frame].keyboard_n_mouse_input += (SHIFT_held * 0b0000000000010000);
-                replay_inputs[current_frame].keyboard_n_mouse_input += (SPACE_pressed * 0b0000000000100000);
-                replay_inputs[current_frame].keyboard_n_mouse_input += (E_pressed * 0b0000000001000000);
-                replay_inputs[current_frame].keyboard_n_mouse_input += (LMB_pressed * 0b0000000010000000);
-                replay_inputs[current_frame].keyboard_n_mouse_input += (RMB_pressed * 0b0000000100000000);
-                replay_inputs[current_frame].keyboard_n_mouse_input += (player_pressed_LMB_this_frame * 0b0000001000000000);
-                replay_inputs[current_frame].keyboard_n_mouse_input += (player_pressed_RMB_this_frame * 0b0000010000000000);
-                replay_inputs[current_frame].keyboard_n_mouse_input += (player_held_LMB * 0b0000100000000000);
-                replay_inputs[current_frame].keyboard_n_mouse_input += (player_held_RMB * 0b0001000000000000);
+                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (SHIFT_held * 0b0000000000010000);
+                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (SPACE_pressed * 0b0000000000100000);
+                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (E_pressed * 0b0000000001000000);
+                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (LMB_pressed * 0b0000000010000000);
+                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (RMB_pressed * 0b0000000100000000);
+                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_pressed_LMB_this_frame * 0b0000001000000000);
+                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_pressed_RMB_this_frame * 0b0000010000000000);
+                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_held_LMB * 0b0000100000000000);
+                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_held_RMB * 0b0001000000000000);
             }
         }
 
@@ -22249,14 +22252,26 @@ int main(int argc, char* argv[])
 
         draw_text_NT(global_timer_text, buffer_over);
 
-        if (!naitive_cursor_active || PLAY_REPLAY) {
+        bool hide_cursor_loading = GAME_OPTION_hide_cursor_on_loading && want_gen && skill_points <= 0 && ultra_points <= 0;
+        if ((!GAME_OPTION_naitive_cursor_active || PLAY_REPLAY) && !hide_cursor_loading) {
             buffer_over.draw(cursor_sprite);
         }
+        if (hide_cursor_loading) {
+            window.setMouseCursorVisible(false);
+        }
+        else if (GAME_OPTION_naitive_cursor_active) {
+            window.setMouseCursorVisible(true);
+        }
+        if (PLAY_REPLAY) {
+            window.setMouseCursorVisible(true);
+        }
+
 
         //window.draw(bounding_defaul_res);
         if (!GAME_PAUSED) {
             current_frame++;
         }
+        current_frame_unpaused++;
 
         if (fullscreen_mode) {
             buffer_overSprite.setScale(sf::Vector2f(window_scale, window_scale));
