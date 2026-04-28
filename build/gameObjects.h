@@ -238,6 +238,76 @@ enum player_material {
 	no_footstep
 };
 
+enum mutation_icon {
+	none_mut_icon,
+	rhino_skin_icon,
+	extra_feet_icon,
+	plutonium_hunger_icon,
+	rabbit_paw_icon,
+	throne_butt_icon,
+	lucky_shot_icon,
+	bloodlust_icon,
+	gamma_guts_icon,
+	second_stomach_icon,
+	back_muscle_icon,
+	scarier_face_icon,
+	euphoria_icon,
+	long_arms_icon,
+	boiling_veins_icon,
+	laser_brain_icon,
+	bolt_marrow_icon,
+	stress_icon,
+	trigger_fingers_icon,
+	hammerhead_icon,
+	strong_spirit_icon,
+	//ultras
+	fish_ultra_A_icon,
+	fish_ultra_B_icon,
+
+	crystal_ultra_A_icon,
+	crystal_ultra_B_icon,
+
+	eyes_ultra_A_icon,
+	eyes_ultra_B_icon,
+
+	melting_ultra_A_icon,
+	melting_ultra_B_icon,
+
+	plant_ultra_A_icon,
+	plant_ultra_B_icon,
+
+	YV_ultra_A_icon,
+	YV_ultra_B_icon,
+
+	steroids_ultra_A_icon,
+	steroids_ultra_B_icon,
+
+	robot_ultra_A_icon,
+	robot_ultra_B_icon,
+
+	chicken_ultra_A_icon,
+	chicken_ultra_B_icon,
+
+	rebel_ultra_A_icon,
+	rebel_ultra_B_icon,
+
+	horror_ultra_A_icon,
+	horror_ultra_B_icon,
+	horror_ultra_C_icon,
+
+	rogue_ultra_A_icon,
+	rogue_ultra_B_icon,
+
+	frog_ultra_A_icon,
+	frog_ultra_B_icon,
+
+	skeleton_ultra_A_icon,
+	skeleton_ultra_B_icon,
+
+	cuz_ultra_A_icon,
+	cuz_ultra_B_icon
+};
+
 enum sound_ID {
 	snd_none_ID,
 	snd_none_2_ID,
