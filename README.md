@@ -1,2 +1,2 @@
 # nuclear-throne-arranged
-hi
+competitive version of nuclear throne
