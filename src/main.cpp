@@ -10421,6 +10421,9 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             allObjects[i].image_index++;
             break;
         case prop:
+            if (allObjects[i].alarm2 == rad_canister_prop && allObjects[i].image_index > 50 && rand() % 100) {
+                allObjects[i].image_index = 0;
+            }
             allObjects[i].image_index++;
             break;
         case prop_dead:
@@ -20084,6 +20087,14 @@ int main(int argc, char* argv[])
                         else {
                             choice = int(allObjects[idx].image_index * 0.4f) % allObjects[idx].damage;
                         }
+
+                        if (allObjects[idx].alarm2 == rad_canister_prop) {
+                            choice = int(allObjects[idx].image_index * 0.4f);
+                            if (choice > 6) {
+                                choice = 0;
+                            }
+                        }
+
                         switch (allObjects[idx].alarm2) {
                         case cactus_0_1:
                         case cactus_0_2:
@@ -20143,6 +20154,16 @@ int main(int argc, char* argv[])
                         case rad_canister_prop:
                             add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24 + sf::Vector2f(0, 0), draw_shadow24s);
                             shadow24_ArrayIndex++;      //shadow
+
+                            variable_textures_bloom[variableTexturesBloomIndex].setTexture(allPropSprites);
+                            variable_textures_bloom[variableTexturesBloomIndex].setColor({ 255, 255, 255, 0 });
+                            variable_textures_bloom[variableTexturesBloomIndex].setPosition(allObjects[idx].position - cameraPos);
+                            variable_textures_bloom[variableTexturesBloomIndex].setRotation(0);
+                            variable_textures_bloom[variableTexturesBloomIndex].setTextureRect(sf::IntRect{ 224, 971, 16, 16 });
+                            variable_textures_bloom[variableTexturesBloomIndex].setOrigin(8, 8);
+                            variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
+                            variableTexturesBloomIndex++;
+
                             break;
                         default:
                             add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24 + sf::Vector2f(0, 3), draw_shadow24s);
