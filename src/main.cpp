@@ -2373,7 +2373,17 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].hurt_ID = snd_hit_rock_ID;
                     allObjects[i].die_ID = snd_pillar_break_ID;
                     break;
-
+                case rad_canister_prop:
+                    allObjects[i].alarm1 = 16; //size of the sprite on the sprite sheet X
+                    allObjects[i].next_melee = 16; //size of the sprite on the sprite sheet Y
+                    allObjects[i].my_hp = 10;
+                    allObjects[i].size = 1;
+                    allObjects[i].my_hitbox = small_prop_hitbox;
+                    allObjects[i].damage = 7;   //number of idle animation frames
+                    allObjects[i].hurt_ID = snd_hit_metal_ID;
+                    allObjects[i].die_ID = snd_rad_canister_break_ID;
+                    allObjects[i].rad_drop = 15;
+                    break;
                 default:
                     allObjects[i].damage = 1;   //number of idle animation frames
                     allObjects[i].my_hp = 1;
@@ -2425,6 +2435,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 
                 case small_generator_7_1:allObjects[i].alarm3 = 892;    break;
                 case nuclear_pillar_7_1: allObjects[i].alarm3 = 924;    break;
+                case rad_canister_prop: allObjects[i].alarm3 = 972;    break;
                 default:
                     allObjects[i].alarm3 = 0;
                     break;
@@ -6264,6 +6275,11 @@ void player_collision(int i, int j, int currOBJ) {
                         //only hit player if the toxic is big enough
                         if (allObjects[O].alarm1 > 6 && allObjects[O].scale > 0.1f && player_character != frog) {
                             bullet_collide_player(O, currOBJ);
+                        }
+                        break;
+                    case prop:
+                        if (allObjects[O].alarm2 == rad_canister_prop && is_within_circle(allObjects[O].position, allObjects[currOBJ].position, player_hitbox + allObjects[O].my_hitbox)) {
+                            enemy_die(O, 0);
                         }
                         break;
                     case objectID::portal:
@@ -14150,6 +14166,7 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
             }
             else {
                 //rad chest
+                create_object(t_x, t_y, 0, 0, prop, 0, rad_canister_prop);
             }
         }
     }
@@ -14975,7 +14992,9 @@ int main(int argc, char* argv[])
 
     add_new_sound(snd_empty_ID, "snd/empty.wav", all_sounds, all_sounds_mirror, 0.02f, 0.00f, 90.0f);
 
-
+    //level up
+    add_new_sound(snd_level_up_ID, "snd/level_up.wav", all_sounds, all_sounds_mirror, 0.02f, 0.0f);
+    add_new_sound(snd_level_ultra_ID, "snd/level_ultra.wav", all_sounds, all_sounds_mirror, 0.02f, 0.0f);
 
     add_new_sound(snd_melee_flip_ID, "snd/melee_flip.wav", all_sounds, all_sounds_mirror, 0.07f, 0.0f, 50.0f);
 
@@ -15119,6 +15138,7 @@ int main(int argc, char* argv[])
     add_new_sound(snd_weapon_chest_ID, "snd/weapon_chest.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
     add_new_sound(snd_hp_chest_ID, "snd/health_chest.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
     add_new_sound(snd_hp_chest_big_ID, "snd/health_chest_big.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
+    add_new_sound(snd_rad_canister_break_ID, "snd/rad_chest.wav", all_sounds, all_sounds_mirror, 0.01f, 0.0f);
 
 
     //some looping sounds
@@ -17134,11 +17154,17 @@ int main(int argc, char* argv[])
                         player_level++;
                         if (player_level < 10) {
                             create_object(allObjects[0].position.x, allObjects[0].position.y - 16, 0, 0, static_effect, 0, 254);
-                            //play_sound_on_player(snd_level_up_ID);
+                            std::string temp_string = "LEVEL ";
+                            temp_string.append(std::to_string(player_level));
+                            temp_string.append("!");
+                            create_popuptext(temp_string, allObjects[0].position);
+                            play_sound_on_player(snd_level_up_ID);
                             skill_points++;
                         }
                         else {
-                            //play_sound_on_player(snd_level_ultra_ID);
+                            create_object(allObjects[0].position.x, allObjects[0].position.y - 16, 0, 0, static_effect, 0, 254);
+                            create_popuptext("LEVEL ULTRA", allObjects[0].position);
+                            play_sound_on_player(snd_level_ultra_ID);
                             //ultra
                             ultra_points++;
                         }
@@ -20113,6 +20139,10 @@ int main(int argc, char* argv[])
                         case server_6_1:
                             add_sprite_32(shadow32_ArrayIndex, allObjects[idx].position - cameraPos + offset32 + sf::Vector2f(0, 1), draw_shadow32s);
                             shadow32_ArrayIndex++;      //shadow
+                            break;
+                        case rad_canister_prop:
+                            add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24 + sf::Vector2f(0, 0), draw_shadow24s);
+                            shadow24_ArrayIndex++;      //shadow
                             break;
                         default:
                             add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24 + sf::Vector2f(0, 3), draw_shadow24s);

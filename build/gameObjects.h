@@ -210,6 +210,7 @@ enum prop_ID {
 	//area 7
 	small_generator_7_1,
 	nuclear_pillar_7_1,
+	rad_canister_prop,
 };
 
 enum enemy_corpses {
@@ -572,6 +573,7 @@ enum sound_ID {
 	snd_weapon_chest_ID,
 	snd_hp_chest_ID,
 	snd_hp_chest_big_ID,
+	snd_rad_canister_break_ID,
 
 	snd_empty_ID,
 
@@ -731,6 +733,8 @@ enum sound_ID {
 
 	snd_not_enough_rads_ID,
 
+	snd_level_up_ID,
+	snd_level_ultra_ID,
 
 	//some looping sounds
 	snd_eyes_loop_ID,
