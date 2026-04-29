@@ -2121,6 +2121,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].my_hitbox = no_hitbox;
                 allObjects[i].next_hurt = 0;
 
+                allObjects[i].dead = false;
+
                 //allObjects[i].alarm1 = 0;   //whether the prop is alive
 
                 allObjects[i].alarm2 = image_index;   //dertermines what prop it is
@@ -2475,6 +2477,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].my_hp = 600 * round(1 + LOOPS / 3) * (1 + (LOOPS * 0.05f)) * scarier_face;
                 allObjects[i].max_hp = allObjects[i].my_hp;
 
+                allObjects[i].dead = false;
+
                 allObjects[i].rad_drop = 70;
 
                 allObjects[i].damage = 0;   //whether it moves
@@ -2764,6 +2768,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].position = { x, y };
                 allObjects[i].speed = { 0, 0 };
 
+                allObjects[i].dead = false;
+
                 allObjects[i].speeddir = 0.0f;
                 allObjects[i].direction = random_360_radians();
                 allObjects[i].friction = 0.2f;
@@ -2803,6 +2809,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].position = { x, y };
                 allObjects[i].speed = { 0, 0 };
 
+                allObjects[i].dead = false;
+
                 allObjects[i].speeddir = 0.0f;
                 allObjects[i].direction = random_360_radians();
                 allObjects[i].friction = 0.4f;
@@ -2832,6 +2840,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 
                 allObjects[i].position = { x, y };
                 allObjects[i].speed = { 0, 0 };
+
+                allObjects[i].dead = false;
 
                 allObjects[i].speeddir = 0.0f;
                 allObjects[i].walk_direction = random_360_radians();
@@ -5583,6 +5593,13 @@ float direction_to_player(int OBJ) {
 
 
 void enemy_die(int ENEMY, int PROJ) {
+
+
+    if (allObjects[ENEMY].dead) {
+        return;
+    }
+    allObjects[ENEMY].dead = true;
+
 
     GLOBAL_DEBUG_INT = allObjects[ENEMY].position.x;
     if (PROJ > 0) {     //is killed by and object (not anomaly)
@@ -13488,7 +13505,7 @@ void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[]) {
     //set what mutations are garuanteed
     muts_want[1] = true;//debug
 
-    wep = 29;   //revolver
+    wep = 104;   //revolver
     bwep = -1;
     player_bullets = 96;
     player_bolts = 0;
@@ -14668,6 +14685,11 @@ void check_if_clicked_on_mut(bool pressed_LMB, sf::Vector2i mouse_pos) {
 
 int main(int argc, char* argv[])
 {
+    //initalize portal spirals
+    for (int i = 0; i < 200; i++) {
+        spiral_cont_step();
+        portal_spiral_step();
+    }
 
     GLOBAL_DEBUG_INT = sizeof(game_area);
 
@@ -15440,10 +15462,16 @@ int main(int argc, char* argv[])
     sf::Sprite bufferthe_darkness(the_darkness.getTexture());
 
 
-    //sprites drawn under shadows
+    //sprites drawn over shadows
     sf::RenderTexture buffer_over;
     buffer_over.create(320, 240);
     sf::Sprite buffer_overSprite(buffer_over.getTexture());
+
+    //ui drawn over everything else
+    sf::RenderTexture buffer_UI;
+    buffer_UI.create(320, 240);
+    sf::Sprite buffer_UISprite(buffer_UI.getTexture());
+
 
     gameObject player;
     
@@ -17212,6 +17240,7 @@ int main(int argc, char* argv[])
         //BGColor = { 255, 0, 0, 0};
         window.clear(sf::Color::Black);
         buffer_over.clear(sf::Color::Transparent);
+        buffer_UI.clear(sf::Color::Transparent);
         buffer_under.clear(sf::Color::Transparent);
         shadows.clear(sf::Color::Transparent);
         if (player_character != eyes) {
@@ -21636,10 +21665,12 @@ int main(int argc, char* argv[])
             //portal spirals in background
 
 
-
-            if (area == 0) {
+            if (area == 0 || want_gen) {
                 spiral_cont_step();
                 portal_spiral_step();
+            }
+
+            if (area == 0) {
 
                 int portals_amount_left = all_portal_spirals_count;
                 int portals_sprital_position = all_portal_spirals_start;
@@ -21655,6 +21686,31 @@ int main(int argc, char* argv[])
                     sf::Uint8 color_darkness = darkness;
                     portal_spiral_spr.setColor({ color_darkness, color_darkness, color_darkness });
                     buffer_under.draw(portal_spiral_spr);
+                    portals_amount_left--;
+                    portals_sprital_position--;
+                    if (portals_sprital_position < 0) {
+                        portals_sprital_position = 999;
+                    }
+                }
+            }
+
+            //generating level, draw loading screen
+            if (want_gen) {
+                //portal_spiral first
+                int portals_amount_left = all_portal_spirals_count;
+                int portals_sprital_position = all_portal_spirals_start;
+
+                while (portals_amount_left > 0) {
+                    portal_spiral_spr.setPosition(all_portal_spirals[portals_sprital_position].position);
+                    portal_spiral_spr.setRotation(all_portal_spirals[portals_sprital_position].image_angle + 45);
+                    portal_spiral_spr.setScale(all_portal_spirals[portals_sprital_position].image_scale, all_portal_spirals[portals_sprital_position].image_scale);
+                    int darkness = 255 * (all_portal_spirals[portals_sprital_position].image_scale + 0.2f);
+                    if (darkness > 255) {
+                        darkness = 255;
+                    }
+                    sf::Uint8 color_darkness = darkness;
+                    portal_spiral_spr.setColor({ color_darkness, color_darkness, color_darkness });
+                    buffer_UI.draw(portal_spiral_spr);
                     portals_amount_left--;
                     portals_sprital_position--;
                     if (portals_sprital_position < 0) {
@@ -22387,14 +22443,14 @@ int main(int argc, char* argv[])
                     xp_bar_spr.setTextureRect({ choice, 0, 14, 24 });
                     player_level_spr.setTextureRect({ (player_level - 1) * 8, 0, 8, 8 });
 
-                    buffer_over.draw(xp_bar_spr);
-                    buffer_over.draw(player_level_spr);
-                    buffer_over.draw(hp_bar_spr);
-                    buffer_over.draw(health_bar_spr);
+                    buffer_UI.draw(xp_bar_spr);
+                    buffer_UI.draw(player_level_spr);
+                    buffer_UI.draw(hp_bar_spr);
+                    buffer_UI.draw(health_bar_spr);
                     if (chicken_beheaded) {
-                        buffer_over.draw(chicken_health_bar_spr);
+                        buffer_UI.draw(chicken_health_bar_spr);
                     }
-                    draw_text_NT(hp_text, buffer_over);
+                    draw_text_NT(hp_text, buffer_UI);
                     go_addy1 = 55;
                     go_addy2 = 3;
                     game_over_time = 0;
@@ -22406,10 +22462,10 @@ int main(int argc, char* argv[])
                     }
 
                     for (int i = 0; i < 13; i++) {
-                        buffer_over.draw(mut_icon_sprite[i]);
+                        buffer_UI.draw(mut_icon_sprite[i]);
                     }
                     for (int i = 0; i < 5; i++) {
-                        buffer_over.draw(mut_icon_sprite_select[i]);
+                        buffer_UI.draw(mut_icon_sprite_select[i]);
                     }
                 }
                 else {
@@ -22449,6 +22505,12 @@ int main(int argc, char* argv[])
                     }
                 }
             }
+
+            buffer_UI.display();
+
+            buffer_UISprite.setTexture(buffer_UI.getTexture());
+            buffer_over.draw(buffer_UISprite);
+
             buffer_over.display();
             //draw all sprites that are over shadows
             //window.draw(buffer_overSprite);

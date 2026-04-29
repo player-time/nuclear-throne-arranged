@@ -951,6 +951,8 @@ struct gameObject{
 
 	bool facing_right = true;
 
+	bool dead = false;
+
 	void reset_variables() {
 		position = {0,0};
 		speed = {0,0};
@@ -979,6 +981,8 @@ struct gameObject{
 		walk_frames = 0;
 
 		facing_right = true;
+
+		dead = false;
 
 	}
 };
