@@ -901,6 +901,12 @@ enum hitboxes {
 	revenge_bullet_hitbox = -2,
 
 };
+
+enum gamestate {
+	gs_title_screen,
+	gs_character_selection,
+	gs_in_game,
+};
  
 struct gameObject{
 	sf::Vector2f position = {0, 0};

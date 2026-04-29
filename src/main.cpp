@@ -3,8 +3,8 @@
 //TODO !!!
 
 //fix light sources
-//rad canister
 //proto vault
+//loading screen spiral
 
 //check whether going over sprite limit
 //replay system
@@ -76,6 +76,8 @@ bool RECORD_REPLAY = false;
 
 sf::Vector2f debug_camera_offset = {0.0f, 0.0f};
 
+gamestate CURRENT_GAME_STATE = gs_character_selection;
+bool has_generated_character_selection_screen = false;
 
 int seed = time(NULL);
 
@@ -247,7 +249,7 @@ int current_frame_unpaused = 0;
 int last_fire_frame = 0;
 
 
-int LOOPS = 25;
+int LOOPS = 0;
 
 
 
@@ -255,7 +257,7 @@ bool veryhard_mode = false;
 float revenge_bullet_offset = 1.0f;
 
 //game logic stuff
-int area = 7;
+int area = 0;
 int sub_area = 1;
 
 int idpd_spawn_count = 0;
@@ -364,6 +366,8 @@ bool player_held_RMB = false;
 bool player_pressed_RMB_this_frame = false;
 bool player_pressed_LMB_this_frame = false;
 
+bool can_show_not_enough_ammo_text = true;
+
 bool LMB_pressed = false;
 bool RMB_pressed = false;
 bool SPACE_pressed = false;
@@ -417,6 +421,9 @@ bool breloaded = true;
 int Bwep_shine_frame = 0;
 float Bwep_angle = (rand() % 2 * 2 - 1) * 120.0f; //this is the offset used for melee
 float Bwep_kick = 0.0f;
+
+
+bool ENTER_PRESSED = false;
 
 //check if key has been released
 bool P_released = true;
@@ -543,6 +550,10 @@ sf::Sprite mut_icon_sprite_select[5];
 
 mutation_icon current_mutation_pool[5];
 
+const int total_mut_count = 20 + 1;
+bool muts_want[total_mut_count];    //20 total muts + 1 nothing mut
+bool muts_has[total_mut_count];    //20 total muts + 1 nothing mut
+
 //ultras
 int ultra_picked = 0;   //0 = no ultra
 
@@ -553,7 +564,7 @@ int ultra_points = 0;
 character player_character = fish;
 
 void reset_skill_points() {
-    skill_points = 1;
+    skill_points = 0;
     ultra_points = 0;
 }
 
@@ -610,6 +621,10 @@ void reset_mutations() {//includes ultra
     player_shells_max = 55;
     player_explosives_max = 55;
     player_energy_max = 55;
+
+    for (int i = 0; i < total_mut_count; i++) {
+        muts_has[i] = false;
+    }
 
     mutation_HUD_icons_idx = 0;
     for (int i = 0; i < 13; i++) {
@@ -1741,6 +1756,12 @@ void pickup_ammo(bool random_pack = false) {
     else {
         wep_choice = bwep;
     }
+
+    //if bwep is missing
+    if (bwep == -1) {
+        wep_choice = wep;
+    }
+
     if (wep_choice < melee_weps || random_pack) {     //melee
 
         int choice = rand() % 5;
@@ -2382,7 +2403,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                     allObjects[i].damage = 7;   //number of idle animation frames
                     allObjects[i].hurt_ID = snd_hit_metal_ID;
                     allObjects[i].die_ID = snd_rad_canister_break_ID;
-                    allObjects[i].rad_drop = 15;
+                    allObjects[i].rad_drop = 25;
                     break;
                 default:
                     allObjects[i].damage = 1;   //number of idle animation frames
@@ -3460,7 +3481,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
 
                 for (int j = 0; j < 8; j++) {
                     tmpspd = 0.5f + random_float(2.0f);
-                    create_object(x, y, tmpspd, tmpspd, smoke, 0, 0);    //smoke
+                    create_object(x, y, tmpspd, tmpspd, smoke, random_360_radians(), 0);    //smoke
                 }
                 for (int j = 0; j < 17; j++) {
                     tmpspd = 3.0f + random_float(2.0f);
@@ -3683,9 +3704,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].my_hitbox = no_hitbox;
 
                 allObjects[i].position = { x, y };
-                tmpdir = random_360_radians();
-                allObjects[i].speed.x = cos(tmpdir) * xspd;
-                allObjects[i].speed.y = sin(tmpdir) * yspd;
+                allObjects[i].speed.x = cos(direction) * xspd;
+                allObjects[i].speed.y = sin(direction) * yspd;
                 allObjects[i].direction = random_360_degrees();
                 allObjects[i].rotation = (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (3.0f))) + 1.0f) * ((rand() % 2) * 2 - 1);  //rotation speed
                 allObjects[i].growspeed = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (0.005f)));  //growspeed
@@ -3984,6 +4004,14 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 case 481:   //robot eat TB
                     allObjects[i].alarm1 = 25;
                     allObjects[i].alarm2 = 16;
+                    break;
+                case 696:   //exploder explo
+                    allObjects[i].alarm1 = 18;
+                    allObjects[i].alarm2 = 17;
+                    for (int j = 0; j < 6; j++) {
+                        int tmpSpd = 4 + random_float(1);
+                        create_object(allObjects[i].position.x, allObjects[i].position.y, tmpSpd, tmpSpd, smoke, j * 60 / degreestoradians, 0);
+                    }
                     break;
                 default:
                     allObjects[i].alarm1 = 0;
@@ -4867,7 +4895,7 @@ void destroy_projectile(int object_index) {
                 }
                 for (int i = 0; i < 6; i++) {
                     tmpspd = random_float(3.0f);
-                    create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspd, tmpspd, smoke, 0, 0);    //smoke
+                    create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspd, tmpspd, smoke, random_360_radians(), 0);    //smoke
                 }
             }
             if (allObjects[object_index].size == 6) {//super flak
@@ -4879,7 +4907,7 @@ void destroy_projectile(int object_index) {
                 }
                 for (int i = 0; i < 12; i++) {
                     tmpspd = random_float(3.0f);
-                    create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspd, tmpspd, smoke, 0, 0);    //smoke
+                    create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspd, tmpspd, smoke, random_360_radians(), 0);    //smoke
                 }
             }
         }
@@ -4976,7 +5004,7 @@ void destroy_projectile(int object_index) {
             }
             for (int i = 0; i < 8; i++) {
                 tmpspd = random_float(3.0f);
-                create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspd, tmpspd, smoke, 0, 0);    //smoke
+                create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspd, tmpspd, smoke, random_360_radians(), 0);    //smoke
             }
             play_sound_relative_to_player(snd_cluster_open_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
             break;
@@ -5089,7 +5117,7 @@ void destroy_projectile(int object_index) {
             }
             for (int i = 0; i < 90; i++) {
                 tmpspd = 4.0f + random_float(2.0f);
-                create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspd, tmpspd, smoke, 0, 0);    //smoke
+                create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspd, tmpspd, smoke, random_360_radians(), 0);    //smoke
             }
             break;
         case 10:
@@ -5122,7 +5150,7 @@ void destroy_projectile(int object_index) {
             }
             for (int i = 0; i < 90; i++) {
                 tmpspd = 4.0f + random_float(2.0f);
-                create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspd, tmpspd, smoke, 0, 0);    //smoke
+                create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspd, tmpspd, smoke, random_360_radians(), 0);    //smoke
             }
             break;
         }
@@ -5141,7 +5169,7 @@ void destroy_projectile(int object_index) {
         tmpspd = 0.0f;
         for (int i = 0; i < 8; i++) {
             tmpspd = 1.0f + random_float(2.0f);
-            create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspd, tmpspd, smoke, 0, 0);    //smoke
+            create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, tmpspd, tmpspd, smoke, random_360_radians(), 0);    //smoke
         }
         for (int i = 0; i < 17; i++) {
             tmpspd = 4.0f + random_float(1.0f);
@@ -5156,7 +5184,7 @@ void destroy_projectile(int object_index) {
         allObjects[object_index].my_hitbox = plasma_impact_hitbox;
 
         for (int i = 0; i < 3; i++) {
-            create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, 2, 2, smoke, 0, 0);    //smoke
+            create_object(allObjects[object_index].position.x, allObjects[object_index].position.y, 2, 2, smoke, random_360_radians(), 0);    //smoke
         }
 
         play_sound_relative_to_player(snd_plasma_hit_ID, allObjects[object_index].position.x, allObjects[object_index].position.y);
@@ -5655,6 +5683,13 @@ void enemy_die(int ENEMY, int PROJ) {
         case small_generator_7_1:
             create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, explosion, 0.0f, 2);
             play_sound_relative_to_player(snd_explosion_ID, allObjects[ENEMY].position.x, allObjects[ENEMY].position.y);
+            break;
+        case rad_canister_prop:
+            for (int i = 0; i < 4; i++) {
+                tmpSpd = random_float(3) + 0.1f;
+                create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, tmpSpd, tmpSpd, smoke, random_360_radians(), 0);
+            }
+            create_object(allObjects[ENEMY].position.x, allObjects[ENEMY].position.y, 0, 0, static_effect, 0, 696);
             break;
         default:
             break;
@@ -6738,6 +6773,7 @@ void basic_enemy_collision(int currOBJ, int i, int j) {
                                 //stick to enemy
                                 if (is_an_enemy(allObjects[currOBJ].my_id)) {
                                     allObjects[O].corpse_id = currOBJ;
+                                    allObjects[O].speeddir = 0;
                                     play_sound_relative_to_player(snd_nade_stick_ID, allObjects[O].position.x, allObjects[O].position.y);
                                 }
                             }
@@ -6781,7 +6817,7 @@ void basic_enemy_collision(int currOBJ, int i, int j) {
                             }
                             if (allObjects[currOBJ].next_hurt < current_frame) {
                                 tmpdir = 0.5f + random_float(0.5f);
-                                create_object(allObjects[O].position.x, allObjects[O].position.y, tmpdir, tmpdir, smoke, 0, 0);    //smoke
+                                create_object(allObjects[O].position.x, allObjects[O].position.y, tmpdir, tmpdir, smoke, random_360_radians(), 0);    //smoke
                                 allObjects[currOBJ].my_hp -= allObjects[O].damage;
                                 if (allObjects[currOBJ].my_hp > 0) {
                                     enemy_hurt(currOBJ, O);
@@ -7961,7 +7997,7 @@ void player_laser_collision(int currOBJ) {
 
     //smoke
     float tmpspd = 0.5f + random_float(0.5f);
-    create_object(x, y, tmpspd, tmpspd, smoke, 0, 0);    //smoke
+    create_object(x, y, tmpspd, tmpspd, smoke, random_360_radians(), 0);    //smoke
 }
 
 void T2_bullet_step(int i) {
@@ -8118,6 +8154,7 @@ void throne_2_collision(int currOBJ, int i, int j) {
                                 //stick to enemy
                                 if (is_an_enemy(allObjects[currOBJ].my_id)) {
                                     allObjects[O].corpse_id = currOBJ;
+                                    allObjects[O].speeddir = 0;
                                     play_sound_relative_to_player(snd_nade_stick_ID, allObjects[O].position.x, allObjects[O].position.y);
                                 }
                             }
@@ -8147,7 +8184,7 @@ void throne_2_collision(int currOBJ, int i, int j) {
                             }
                             if (allObjects[currOBJ].next_hurt < current_frame) {
                                 tempSpeed = 0.5f + random_float(0.5f);
-                                create_object(allObjects[O].position.x, allObjects[O].position.y, tempSpeed, tempSpeed, smoke, 0, 0);    //smoke
+                                create_object(allObjects[O].position.x, allObjects[O].position.y, tempSpeed, tempSpeed, smoke, random_360_radians(), 0);    //smoke
                                 allObjects[currOBJ].my_hp -= allObjects[O].damage;
                                 if (allObjects[currOBJ].my_hp > 0) {
                                     enemy_hurt(currOBJ, O);
@@ -8339,7 +8376,7 @@ void swing_shank(float direction, float reload, float damage) {
 }
 
 void not_enough_ammo(std::string string) {
-    if (player_pressed_LMB_this_frame) {
+    if (can_show_not_enough_ammo_text) {
         play_sound_on_player(snd_empty_ID);
         create_popuptext(string, allObjects[0].position);
         wep_kick = 3;
@@ -8434,7 +8471,7 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
 
         if (cost != 0 && !skeleton_gamble) {
             if (wep == 22 && player_rads < 16 * shots) {
-                if (player_pressed_LMB_this_frame) {
+                if (can_show_not_enough_ammo_text) {
                     create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
                     play_sound_on_player(snd_not_enough_rads_ID);
                 }
@@ -8446,7 +8483,7 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
             }
 
             if (wep == 49 && player_rads < 4 * shots) {
-                if (player_pressed_LMB_this_frame) {
+                if (can_show_not_enough_ammo_text) {
                     create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
                     play_sound_on_player(snd_not_enough_rads_ID);
                 }
@@ -8459,7 +8496,7 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
             }
 
             if (wep == 63 && player_rads < 12 * shots) {
-                if (player_pressed_LMB_this_frame) {
+                if (can_show_not_enough_ammo_text) {
                     create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
                     play_sound_on_player(snd_not_enough_rads_ID);
                 }
@@ -8471,7 +8508,7 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
             }
 
             if (wep == 83 && player_rads < 14 * shots) {
-                if (player_pressed_LMB_this_frame) {
+                if (can_show_not_enough_ammo_text) {
                     create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
                     play_sound_on_player(snd_not_enough_rads_ID);
                 }
@@ -8484,7 +8521,7 @@ void fire_gun_shot(int shots, bool skeleton_gamble, float direction, float gambl
             }
 
             if (wep == 108 && player_rads < 20 * shots) {
-                if (player_pressed_LMB_this_frame) {
+                if (can_show_not_enough_ammo_text) {
                     create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
                     play_sound_on_player(snd_not_enough_rads_ID);
                 }
@@ -9070,7 +9107,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 }
                 else {
                     //not enough rads
-                    if (player_pressed_LMB_this_frame) {
+                    if (can_show_not_enough_ammo_text) {
                         wep_kick = -3;
                         create_popuptext("NOT ENOUGH RADS", allObjects[0].position);
                         play_sound_on_player(snd_not_enough_rads_ID);
@@ -9179,7 +9216,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 last_fire_frame = current_frame;
             }
             if (LMB_pressed && wep_reload < 0.0f && player_energy - 2 < 0 && shots == 1 && !skeleton_gamble) {
-                if (player_pressed_LMB_this_frame) {
+                if (can_show_not_enough_ammo_text) {
                     wep_kick = -3;
                     not_enough_ammo("NOT ENOUGH ENERGY");
                 }
@@ -9220,7 +9257,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 last_fire_frame = current_frame;
             }
             if (LMB_pressed && wep_reload < 0.0f && player_energy - cost < 0 && shots == 1 && !skeleton_gamble) {
-                if (player_pressed_LMB_this_frame) {
+                if (can_show_not_enough_ammo_text) {
                     wep_kick = -3;
                     not_enough_ammo("NOT ENOUGH ENERGY");
                 }
@@ -9261,7 +9298,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 last_fire_frame = current_frame;
             }
             if (LMB_pressed && wep_reload < 0.0f && player_energy - 2 < 0 && shots == 1 && !skeleton_gamble) {
-                if (player_pressed_LMB_this_frame) {
+                if (can_show_not_enough_ammo_text) {
                     wep_kick = -3;
                     not_enough_ammo("NOT ENOUGH ENERGY");
                 }
@@ -9320,7 +9357,7 @@ void fire_weapon(int index, float direction, int shots = 1, int free_shots = 0, 
                 last_fire_frame = current_frame;
             }
             if (LMB_pressed && wep_reload < 0.0f && player_energy - 24 * shots < 0) {
-                if (player_pressed_LMB_this_frame) {
+                if (can_show_not_enough_ammo_text) {
                     wep_kick = -3;
                     not_enough_ammo("NOT ENOUGH ENERGY");
                 }
@@ -10421,7 +10458,7 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             allObjects[i].image_index++;
             break;
         case prop:
-            if (allObjects[i].alarm2 == rad_canister_prop && allObjects[i].image_index > 50 && rand() % 100) {
+            if (allObjects[i].alarm2 == rad_canister_prop && allObjects[i].image_index > 50 && rand() % 100 && allObjects[i].next_hurt < current_frame) {
                 allObjects[i].image_index = 0;
             }
             allObjects[i].image_index++;
@@ -10553,6 +10590,11 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                     }
                     allObjects[i].my_id = nothing;
                     create_object(allObjects[i].position.x, allObjects[i].position.y, 0, 0, static_effect, 0, 601);
+
+                    for (int j = 0; j < 5; j++) {
+                        create_object(allObjects[i].position.x + random_float(8) - 4, allObjects[i].position.y + random_float(8) - 4, 0.5f, 0.5f, dust, 0, 0);
+                    }
+
                     create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, static_effect, 0, 601);
 
                     play_sound_on_player(snd_chicken_B_ID);
@@ -10789,7 +10831,7 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             break;
         case player_laser:
             allObjects[i].image_index++;
-            allObjects[i].scale -= 0.3f;
+            allObjects[i].scale -= 0.25f;
             if (allObjects[i].scale < 0.0f) {
                 allObjects[i].my_id = nothing;
             }
@@ -11094,7 +11136,7 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
 
             if (allObjects[i].alarm2 >= 5 && (allObjects[i].alarm3 == 4 || allObjects[i].alarm3 == 15)) {//missile
                 tempSpeed = 0.5f + random_float(0.5f);
-                create_object(allObjects[i].position.x - allObjects[i].speed.x, allObjects[i].position.y - allObjects[i].speed.y, tempSpeed, tempSpeed, smoke, 0, 0);    //smoke
+                create_object(allObjects[i].position.x - allObjects[i].speed.x, allObjects[i].position.y - allObjects[i].speed.y, tempSpeed, tempSpeed, smoke, random_360_radians(), 0);    //smoke
             }
             if (allObjects[i].alarm2 == 5 && (allObjects[i].alarm3 == 4 || allObjects[i].alarm3 == 15)) {
                 if (allObjects[i].alarm3 == 4) {
@@ -11107,7 +11149,7 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
 
             if (allObjects[i].alarm3 == 5 || allObjects[i].alarm3 == 16) {//nuke
                 tempSpeed = 0.5f + random_float(0.5f);
-                create_object(allObjects[i].position.x - allObjects[i].speed.x * 4.5, allObjects[i].position.y - allObjects[i].speed.y * 4.5, tempSpeed, tempSpeed, smoke, 0, 0);    //smoke
+                create_object(allObjects[i].position.x - allObjects[i].speed.x * 4.5, allObjects[i].position.y - allObjects[i].speed.y * 4.5, tempSpeed, tempSpeed, smoke, random_360_radians(), 0);    //smoke
 
                 float dir_to_mouse = atan2f(mousepos.y + cameraPos.y - allObjects[i].position.y, mousepos.x + cameraPos.x - allObjects[i].position.x);
 
@@ -11133,7 +11175,7 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                 }
                 if (allObjects[i].alarm2 == 10) {
                     for (int b = 0; b < 4; b++) {
-                        create_object(allObjects[i].position.x, allObjects[i].position.y, 2, 2, smoke, 0, 0);    //smoke
+                        create_object(allObjects[i].position.x, allObjects[i].position.y, 2, 2, smoke, random_360_radians(), 0);    //smoke
                     }
                     if (allObjects[i].my_id == idpd_nade) {
                         play_sound_relative_to_player(snd_IDPD_nade_load_ID, allObjects[i].position.x, allObjects[i].position.y);
@@ -12506,7 +12548,7 @@ void do_object_collision(int start, int end, int threadNUM) {       //create obj
                             case thrown_wep:
                                 if (1) {
                                     bool bounced = object_bounce_wall(O, h, w, allObjects[O].my_hitbox, allObjects[O].my_hitbox, i, j);
-                                    if (bounced) {
+                                    if (bounced && has_throne_butt) {
                                         create_object(allObjects[O].position.x, allObjects[O].position.y, 0, 0, portal_clear, 0, 0);
                                     }
                                 }
@@ -13394,48 +13436,80 @@ void swap_player_textures(sf::Texture &player_tex, character new_character, bool
     }
 }
 
-/* void swap_sounds(sound_sound_buffer all_sounds[], sf::SoundBuffer all_sound_buffers[]) {
-    switch (area) {
-    case 0:
-        change_sound_buffer(snd_wall_break_ID, all_sounds, snd_wall_break_rock_ID, all_sound_buffers, 0.1f, 0.0005f);
-        break;
-    case 1:
-        change_sound_buffer(snd_wall_break_ID, all_sounds, snd_wall_break_rock_ID, all_sound_buffers, 0.1f, 0.0005f);
-        break;
-    case 2:
-        change_sound_buffer(snd_wall_break_ID, all_sounds, snd_wall_break_brick_ID, all_sound_buffers, 0.1f, 0.0005f);
-        break;
-    case 3:
-        change_sound_buffer(snd_wall_break_ID, all_sounds, snd_wall_break_scrap_ID, all_sound_buffers, 0.1f, 0.0005f);
-        break;
-    case 4:
-        change_sound_buffer(snd_wall_break_ID, all_sounds, snd_wall_break_crystal_ID, all_sound_buffers, 0.1f, 0.0005f);
-        break;
-    case 5:
-        change_sound_buffer(snd_wall_break_ID, all_sounds, snd_wall_break_rock_ID, all_sound_buffers, 0.1f, 0.0005f);
-        break;
-    case 6:
-        change_sound_buffer(snd_wall_break_ID, all_sounds, snd_wall_break_labs_ID, all_sound_buffers, 0.1f, 0.0005f);
-        break;
-    case 7:
-        change_sound_buffer(snd_wall_break_ID, all_sounds, snd_wall_break_brick_ID, all_sound_buffers, 0.1f, 0.0005f);
-        break;
+void randomize_mutation_pool() {
+    int i = 0;
+    int temp_num_muts = 4 + (player_character == horror);
+    while (i < temp_num_muts) {
+        current_mutation_pool[i] = mutation_icon(rand() % 20 + 1);
+        bool collided = false;
+        for (int j = i - 1; j >= 0; j--) {
+            if (current_mutation_pool[j] == current_mutation_pool[i]) {
+                collided = true;
+            }
+        }
+        for (int k = 0; k < 13; k++) {//also check current muts
+            if (mutation_HUD_icons[k] == current_mutation_pool[i]) {
+                collided = true;
+            }
+        }
+        if (!collided) {
+            i++;
+        }
     }
-}*/
+    //then get the muts that are garuanteed, but not already taken
+    std::vector<mutation_icon> muts_need;
+    
+    for (int j = 1; j < total_mut_count; j++) {
+        if (muts_has[j] == false && muts_want[j] == true) {
+            muts_need.push_back((mutation_icon)j);
+        }
+    }
 
+    bool in_pool = false;
+    //check if one already exists in the current mut pool
+    for (int j = 0; j < temp_num_muts; j++) {
+        for (mutation_icon mut : muts_need) {
+            if (mut == current_mutation_pool[j]) {
+                in_pool = true;
+            }
+        }
+    }
+
+    if (!in_pool && muts_need.size() > 0) {
+        mutation_icon mut_to_replace_with = muts_need[rand() % muts_need.size()];
+        current_mutation_pool[rand() % temp_num_muts] = mut_to_replace_with;
+    }
+}
 
 //reset all global variables and set random seed to be randomized, or set to a specific seed if replay
 void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[]) {
     player_character = chararcter_choice;
 
+    //set what mutations are garuanteed
+    muts_want[1] = true;//debug
+
+    wep = 29;   //revolver
+    bwep = -1;
+    player_bullets = 96;
+    player_bolts = 0;
+    player_shells = 0;
+    player_explosives = 0;
+    player_energy = 0;
+
     player_max_speed = 4.0f;
     player_alive = true;
     has_died = false;
+
+    want_gen = true;
+    GENERATE_LEVEL = false;
+    gen_delay_progress = 0;
 
     current_frame = 0;
     current_frame_unpaused = 0;
     allObjects[0].next_hurt = current_frame + 6;
     reset_all_globals();//TODO
+
+    randomize_mutation_pool();
 
 
     allObjects[0].position = {24016,24016 };
@@ -13536,6 +13610,7 @@ void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[]) {
         break;
     }
     reset_mutations();
+
 }
 
 void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
@@ -13619,12 +13694,10 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
         current_music.openFromFile("mus/musBoss4B.ogg");
         generate_floors(240, 0, 6, 1, 5, 19, 22, 1, 4);
 
-        create_object(24016, 24016, 0, 0, weapon_drop, 0, 8);//debug
-
         //generate enemies
         int tmp_num_of_enemies_to_spawn = LOOPS * 3;
         int enemies_spawned = 0;
-        if (sub_area == 1) {
+        if (sub_area == 1 && CURRENT_GAME_STATE == gs_in_game) {
             while (tmp_num_of_enemies_to_spawn > enemies_spawned) {
                 for (int i = left_physics; i <= right_physics; i++) {
                     for (int j = top_physics; j <= bottom_physics; j++) {
@@ -14096,90 +14169,94 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
     }
 
     //spawn chests
-    int chest_range = 420;
-    int num_of_canidate_floor = 0;
-    sf::Vector2f canidate_floors[200];
-    while (num_of_canidate_floor < 3) {
-        num_of_canidate_floor = 0;
-        for (int i_ = 0; i_ < 200; i_++) {
-            if (!is_within_circle(allFloors[i_].getPosition(), { 24016, 24016 }, chest_range) &&
-                game_area[int(allFloors[i_].getPosition().x / 16)][int(allFloors[i_].getPosition().y / 16)].my_grid_type == floor_tile &&
-                game_area[int(allFloors[i_].getPosition().x / 16) + 1][int(allFloors[i_].getPosition().y / 16)].my_grid_type == floor_tile &&
-                game_area[int(allFloors[i_].getPosition().x / 16)][int(allFloors[i_].getPosition().y / 16) + 1].my_grid_type == floor_tile &&
-                game_area[int(allFloors[i_].getPosition().x / 16) + 1][int(allFloors[i_].getPosition().y / 16) + 1].my_grid_type == floor_tile
-                ) {
-                canidate_floors[num_of_canidate_floor].x = (allFloors[i_].getPosition().x);
-                canidate_floors[num_of_canidate_floor].y = (allFloors[i_].getPosition().y);
-                num_of_canidate_floor++;
+    if (area != 0) {
+        int chest_range = 420;
+        int num_of_canidate_floor = 0;
+        sf::Vector2f canidate_floors[200];
+        while (num_of_canidate_floor < 3) {
+            num_of_canidate_floor = 0;
+            for (int i_ = 0; i_ < 200; i_++) {
+                if (!is_within_circle(allFloors[i_].getPosition(), { 24016, 24016 }, chest_range) &&
+                    game_area[int(allFloors[i_].getPosition().x / 16)][int(allFloors[i_].getPosition().y / 16)].my_grid_type == floor_tile &&
+                    game_area[int(allFloors[i_].getPosition().x / 16) + 1][int(allFloors[i_].getPosition().y / 16)].my_grid_type == floor_tile &&
+                    game_area[int(allFloors[i_].getPosition().x / 16)][int(allFloors[i_].getPosition().y / 16) + 1].my_grid_type == floor_tile &&
+                    game_area[int(allFloors[i_].getPosition().x / 16) + 1][int(allFloors[i_].getPosition().y / 16) + 1].my_grid_type == floor_tile
+                    ) {
+                    canidate_floors[num_of_canidate_floor].x = (allFloors[i_].getPosition().x);
+                    canidate_floors[num_of_canidate_floor].y = (allFloors[i_].getPosition().y);
+                    num_of_canidate_floor++;
+                }
+            }
+            chest_range -= 32;
+            if (chest_range < 0) {
+                break;
             }
         }
-        chest_range -= 32;
-        if (chest_range < 0) {
-            break;
-        }
-    }
 
-    if (num_of_canidate_floor > 2) {
-        int num_of_canidate_floor_MAX = num_of_canidate_floor;
-        num_of_canidate_floor = rand() % num_of_canidate_floor_MAX;
-
-        int ammo_chest_floor = num_of_canidate_floor;
-
-        int t_x = canidate_floors[num_of_canidate_floor].x + 16;
-        int t_y = canidate_floors[num_of_canidate_floor].y + 16;
-
-        create_object(t_x, t_y, 0, 0, chest, 0, 0);
-
-        //weapon chest
-        while (num_of_canidate_floor == ammo_chest_floor) { //pick a new floor that isnt the ammo chests floor
+        if (num_of_canidate_floor > 2) {
+            int num_of_canidate_floor_MAX = num_of_canidate_floor;
             num_of_canidate_floor = rand() % num_of_canidate_floor_MAX;
-        }
-        int weapon_chest_floor = num_of_canidate_floor;
 
-        t_x = canidate_floors[num_of_canidate_floor].x + 16;
-        t_y = canidate_floors[num_of_canidate_floor].y + 16;
+            int ammo_chest_floor = num_of_canidate_floor;
 
-        create_object(t_x, t_y, 0, 0, chest, 0, 2);
+            int t_x = canidate_floors[num_of_canidate_floor].x + 16;
+            int t_y = canidate_floors[num_of_canidate_floor].y + 16;
 
-        //rad or hp chest
-        while (num_of_canidate_floor == ammo_chest_floor || num_of_canidate_floor == weapon_chest_floor) { //pick a new floor that isnt the ammo chests floor
-            num_of_canidate_floor = rand() % num_of_canidate_floor_MAX;
-        }
+            create_object(t_x, t_y, 0, 0, chest, 0, 0);
 
-        t_x = canidate_floors[num_of_canidate_floor].x + 16;
-        t_y = canidate_floors[num_of_canidate_floor].y + 16;
+            //weapon chest
+            while (num_of_canidate_floor == ammo_chest_floor) { //pick a new floor that isnt the ammo chests floor
+                num_of_canidate_floor = rand() % num_of_canidate_floor_MAX;
+            }
+            int weapon_chest_floor = num_of_canidate_floor;
 
-        int player_max_hp_half = player_max_hp / 2;
+            t_x = canidate_floors[num_of_canidate_floor].x + 16;
+            t_y = canidate_floors[num_of_canidate_floor].y + 16;
 
-        if (player_character == chicken) {
-            if (has_rhino_skin) {
-                player_max_hp_half = 6;
+            create_object(t_x, t_y, 0, 0, chest, 0, 2);
+
+            //rad or hp chest
+            while (num_of_canidate_floor == ammo_chest_floor || num_of_canidate_floor == weapon_chest_floor) { //pick a new floor that isnt the ammo chests floor
+                num_of_canidate_floor = rand() % num_of_canidate_floor_MAX;
+            }
+
+            t_x = canidate_floors[num_of_canidate_floor].x + 16;
+            t_y = canidate_floors[num_of_canidate_floor].y + 16;
+
+            int player_max_hp_half = player_max_hp / 2;
+
+            if (player_character == chicken) {
+                if (has_rhino_skin) {
+                    player_max_hp_half = 6;
+                }
+                else {
+                    player_max_hp_half = 4;
+                }
+            }
+
+            if (player_hp < player_max_hp_half && rand() % 2) {
+                create_object(t_x, t_y, 0, 0, chest, 0, 1);
             }
             else {
-                player_max_hp_half = 4;
-            }
-        }
-
-        if (player_hp < player_max_hp_half && rand() % 2) {
-            create_object(t_x, t_y, 0, 0, chest, 0, 1);
-        }
-        else {
-            if (player_character == rogue) {
-                create_object(t_x, t_y, 0, 0, chest, 0, 3);
-            }
-            else {
-                //rad chest
-                create_object(t_x, t_y, 0, 0, prop, 0, rad_canister_prop);
+                if (player_character == rogue) {
+                    create_object(t_x, t_y, 0, 0, chest, 0, 3);
+                }
+                else {
+                    //rad chest
+                    create_object(t_x, t_y, 0, 0, prop, 0, rad_canister_prop);
+                }
             }
         }
     }
 
     //clear out area around player
-    for (int i = 1499; i < 1503; i++) {
-        for (int j = 1499; j < 1503; j++) {
-            if (game_area[i][j].my_grid_type == wall) {
-                create_explo_tile(i, j);
-                //create debris too
+    if (CURRENT_GAME_STATE == gs_in_game) {
+        for (int i = 1499; i < 1503; i++) {
+            for (int j = 1499; j < 1503; j++) {
+                if (game_area[i][j].my_grid_type == wall) {
+                    create_explo_tile(i, j);
+                    //create debris too
+                }
             }
         }
     }
@@ -14372,27 +14449,6 @@ void poll_movement_inputs(int& poll_move_up, int& poll_move_down, int& poll_move
     }
 }
 
-void randomize_muation_pool() {
-    int i = 0;
-    while (i < 5) {
-        current_mutation_pool[i] = mutation_icon(rand() % 20 + 1);
-        bool collided = false;
-        for (int j = i - 1; j >= 0; j--) {
-            if (current_mutation_pool[j] == current_mutation_pool[i]) {
-                collided = true;
-            }
-        }
-        for (int k = 0; k < 13; k++) {//also check current muts
-            if (mutation_HUD_icons[k] == current_mutation_pool[i]) {
-                collided = true;
-            }
-        }
-        if (!collided) {
-            i++;
-        }
-    }
-}
-
 void pick_ultra(int num) {
     mutation_icon temp_icon = none_mut_icon;
     //mutation_HUD_icons[1] = temp_icon;
@@ -14480,9 +14536,12 @@ void get_mutation(int mut) {
         case strong_spirit_icon:get_spirit();break;
     }
     mutation_HUD_icons[mutation_HUD_icons_idx] = (mutation_icon)mut;
+
+    muts_has[mut] = true;
+
     mutation_HUD_icons_idx++;
     skill_points--;
-    randomize_muation_pool();
+    randomize_mutation_pool();
 }
 
 void check_if_clicked_on_mut(bool pressed_LMB, sf::Vector2i mouse_pos) {
@@ -15408,6 +15467,7 @@ int main(int argc, char* argv[])
     
     //player_sprite
     player_sprite.setOrigin(24,24);
+    player_sprite.setTextureRect({ 0, 0, 48, 48 });
     player_corpse_sprite.setOrigin(24,24);
     player_corpse_sprite.setTextureRect({0, 0, 48, 48});
 
@@ -16219,6 +16279,7 @@ int main(int argc, char* argv[])
         sf::Texture rogue_portal_strike;
         rogue_portal_strike.loadFromFile("res/player/characters/abilities/sprRogueStrike.png");
         sf::Sprite rogue_portal_strike_sprite;
+        rogue_portal_strike_sprite.setScale(0,0);
         rogue_portal_strike_sprite.setTexture(rogue_portal_strike);
         rogue_portal_strike_sprite.setOrigin(96, 24);
 
@@ -16256,7 +16317,9 @@ int main(int argc, char* argv[])
         weapons_tex.loadFromFile("res/player/weapons.png");
 
         wep_sprite.setTexture(weapons_tex);
+        wep_sprite.setTextureRect({0,0,0,0});
         bwep_sprite.setTexture(weapons_tex);
+        bwep_sprite.setTextureRect({ 0,0,0,0 });
 
         sf::Texture letter_boxes_sprite;
         letter_boxes_sprite.loadFromFile("res/letterBoxs.png");
@@ -16594,7 +16657,7 @@ int main(int argc, char* argv[])
     start_new_run(player_character, all_sounds);
 
     reset_mutations();
-    randomize_muation_pool();
+    randomize_mutation_pool();
 
     switch (player_character) {
     case fish:
@@ -16674,6 +16737,9 @@ int main(int argc, char* argv[])
                 }
                 if (event.type == sf::Event::KeyPressed) {
                     //debug
+
+                    if (event.key.code == sf::Keyboard::Enter) { ENTER_PRESSED = true; }
+
 
                     if (event.key.code == sf::Keyboard::Up) { debug_camera_offset.y -= 10; }
                     if (event.key.code == sf::Keyboard::Down) { debug_camera_offset.y += 10; }
@@ -16895,50 +16961,148 @@ int main(int argc, char* argv[])
             mousepos.y = 0;
         }
 
+        if (CURRENT_GAME_STATE == gs_character_selection) {
+            if (!has_generated_character_selection_screen) {
+                area = 0;
+                sub_area = 1;
+                LOOPS = 0;
+                want_gen = false;
+                GENERATE_LEVEL = false;
+                GAME_PAUSED = false;
+                generate_level(all_sounds, current_music);
+                //clear out area in middle of camera for campfire
+                cameraPos.x = (right_physics + left_physics) / 2 * 16;
+                cameraPos.y = (top_physics + bottom_physics) / 2 * 16;
+                allObjects[0].position = cameraPos;
+                create_object(cameraPos.x, cameraPos.y, 0, 0, portal_clear, 0, 0);
+                player_sprite.setScale(0, 0);
 
-        //if doing a replay, overwrite the players inputs with the inputs of the the replay file
-        if (current_frame_unpaused < replay_size) {
-            if (PLAY_REPLAY) {
-                mousepos.x = replay_inputs[current_frame_unpaused].mouse_x;
-                mousepos.y = replay_inputs[current_frame_unpaused].mouse_y;
-
-                player_move_up = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000000000001) != 0;
-                player_move_down = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000000000010) != 0;
-                player_move_left = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000000000100) != 0;
-                player_move_right = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000000001000) != 0;
-
-                SHIFT_held = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000000010000) != 0;
-                SPACE_pressed = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000000100000) != 0;
-                E_pressed = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000001000000) != 0;
-                LMB_pressed = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000010000000) != 0;
-                RMB_pressed = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000100000000) != 0;
-                player_pressed_LMB_this_frame = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000001000000000) != 0;
-                player_pressed_RMB_this_frame = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000010000000000) != 0;
-                player_held_LMB = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000100000000000) != 0;
-                player_held_RMB = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0001000000000000) != 0;
+                has_generated_character_selection_screen = true;
             }
-            //TODO record replay for now but later have an option to not record or play
-            else {//record input
-                replay_inputs[current_frame_unpaused].mouse_x = mousepos.x;
-                replay_inputs[current_frame_unpaused].mouse_y = mousepos.y;
+            player_rads = 0;
 
-                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_move_up * 0b0000000000000001);
-                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_move_down * 0b0000000000000010);
-                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_move_left * 0b0000000000000100);
-                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_move_right * 0b0000000000001000);
+            //clear all inputs so player character cant move
+            player_move_up = false;
+            player_move_down = false;
+            player_move_left = false;
+            player_move_right = false;
 
-                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (SHIFT_held * 0b0000000000010000);
-                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (SPACE_pressed * 0b0000000000100000);
-                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (E_pressed * 0b0000000001000000);
-                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (LMB_pressed * 0b0000000010000000);
-                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (RMB_pressed * 0b0000000100000000);
-                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_pressed_LMB_this_frame * 0b0000001000000000);
-                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_pressed_RMB_this_frame * 0b0000010000000000);
-                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_held_LMB * 0b0000100000000000);
-                replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_held_RMB * 0b0001000000000000);
+            SHIFT_held = false;
+            SPACE_pressed = false;
+            E_pressed = false;
+            LMB_pressed = false;
+            RMB_pressed = false;
+            player_pressed_LMB_this_frame = false;
+            player_pressed_RMB_this_frame = false;
+            player_held_LMB = false;
+            player_held_RMB = false;
+
+            if (ENTER_PRESSED) {
+                ENTER_PRESSED = false;
+                CURRENT_GAME_STATE = gs_in_game;
+                player_character = fish;
+
+                start_new_run(player_character, all_sounds);
+
+                switch (player_character) {
+                case fish:
+                    swap_player_textures(fish_tex, character(player_character), false);
+                    break;
+                case crystal:
+                    swap_player_textures(crystal_tex, character(player_character), false);
+                    if (!is_Bskin) {
+                        crystal_shield_tex.loadFromFile("res/player/characters/abilities/sprShield.png");
+                        crystal_shield_disappear_tex.loadFromFile("res/player/characters/abilities/sprShield_disappear.png");
+                    }
+                    else {
+                        crystal_shield_tex.loadFromFile("res/player/characters/abilities/sprShieldB.png");
+                        crystal_shield_disappear_tex.loadFromFile("res/player/characters/abilities/sprShieldB_disappear.png");
+                    }
+                    break;
+                case eyes:
+                    swap_player_textures(eyes_tex, character(player_character), false);
+                    break;
+                case melting:
+                    swap_player_textures(melting_tex, character(player_character), false);
+                    break;
+                case plant:
+                    swap_player_textures(plant_tex, character(player_character), false);
+                    break;
+                case YV:
+                    swap_player_textures(YV_tex, character(player_character), false);
+                    break;
+                case steroids:
+                    swap_player_textures(steroids_tex, character(player_character), false);
+                    break;
+                case robot:
+                    swap_player_textures(robot_tex, character(player_character), false);
+                    break;
+                case chicken:
+                    swap_player_textures(chicken_tex, character(player_character), false);
+                    break;
+                case rebel:
+                    swap_player_textures(rebel_tex, character(player_character), false);
+                    break;
+                case horror:
+                    swap_player_textures(horror_tex, character(player_character), false);
+                    break;
+                case rogue:
+                    swap_player_textures(rogue_tex, character(player_character), false);
+                    break;
+                case frog:
+                    swap_player_textures(frog_tex, character(player_character), false);
+                    break;
+                case skeleton:
+                    swap_player_textures(skeleton_tex, character(player_character), false);
+                    break;
+                }
             }
         }
 
+        if (CURRENT_GAME_STATE == gs_in_game) {
+            //if doing a replay, overwrite the players inputs with the inputs of the the replay file
+            if (current_frame_unpaused < replay_size) {
+                if (PLAY_REPLAY) {
+                    mousepos.x = replay_inputs[current_frame_unpaused].mouse_x;
+                    mousepos.y = replay_inputs[current_frame_unpaused].mouse_y;
+
+                    player_move_up = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000000000001) != 0;
+                    player_move_down = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000000000010) != 0;
+                    player_move_left = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000000000100) != 0;
+                    player_move_right = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000000001000) != 0;
+
+                    SHIFT_held = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000000010000) != 0;
+                    SPACE_pressed = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000000100000) != 0;
+                    E_pressed = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000001000000) != 0;
+                    LMB_pressed = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000010000000) != 0;
+                    RMB_pressed = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000000100000000) != 0;
+                    player_pressed_LMB_this_frame = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000001000000000) != 0;
+                    player_pressed_RMB_this_frame = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000010000000000) != 0;
+                    player_held_LMB = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0000100000000000) != 0;
+                    player_held_RMB = (replay_inputs[current_frame_unpaused].keyboard_n_mouse_input & 0b0001000000000000) != 0;
+                }
+                //TODO record replay for now but later have an option to not record or play
+                else {//record input
+                    replay_inputs[current_frame_unpaused].mouse_x = mousepos.x;
+                    replay_inputs[current_frame_unpaused].mouse_y = mousepos.y;
+
+                    replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_move_up * 0b0000000000000001);
+                    replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_move_down * 0b0000000000000010);
+                    replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_move_left * 0b0000000000000100);
+                    replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_move_right * 0b0000000000001000);
+
+                    replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (SHIFT_held * 0b0000000000010000);
+                    replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (SPACE_pressed * 0b0000000000100000);
+                    replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (E_pressed * 0b0000000001000000);
+                    replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (LMB_pressed * 0b0000000010000000);
+                    replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (RMB_pressed * 0b0000000100000000);
+                    replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_pressed_LMB_this_frame * 0b0000001000000000);
+                    replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_pressed_RMB_this_frame * 0b0000010000000000);
+                    replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_held_LMB * 0b0000100000000000);
+                    replay_inputs[current_frame_unpaused].keyboard_n_mouse_input += (player_held_RMB * 0b0001000000000000);
+                }
+            }
+        }
         if (DEBUG_DO_RANDOM_INPUTS && rand() % 5) {
             player_held_LMB = rand() % 2;
             LMB_released = rand() % 2;
@@ -17192,6 +17356,11 @@ int main(int argc, char* argv[])
                 cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x) + /*DEBUG*/debug_camera_offset.x;
                 cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y) + /*DEBUG*/debug_camera_offset.y;
 
+                if (CURRENT_GAME_STATE == gs_character_selection) {
+                    cameraPos.x = (right_physics + left_physics) / 2 * 16 - 160;
+                    cameraPos.y = (top_physics + bottom_physics) / 2 * 16 - 120;
+                }
+
                 //calualte direction to mouse
                 direction_to_mouse = atan2f(allObjects[0].position.y - (mousepos.y + cameraPos.y), allObjects[0].position.x - (mousepos.x + cameraPos.x)) + 180.0f / degreestoradians;
 
@@ -17205,6 +17374,9 @@ int main(int argc, char* argv[])
                     }
                 }
 
+                if (player_pressed_LMB_this_frame) {
+                    can_show_not_enough_ammo_text = true;
+                }
 
                 if (player_pressed_RMB_this_frame) {
                     float tmpXSPD = 0.0f;
@@ -17302,7 +17474,7 @@ int main(int argc, char* argv[])
                                 }
                             }
                             float tmpspd = 0.1f + random_float(0.2f);
-                            create_object(allObjects[nearest_wep_drop_ID].position.x, allObjects[nearest_wep_drop_ID].position.y, tmpspd, tmpspd, smoke, 0, 0);    //smoke
+                            create_object(allObjects[nearest_wep_drop_ID].position.x, allObjects[nearest_wep_drop_ID].position.y, tmpspd, tmpspd, smoke, random_360_radians(), 0);    //smoke
                             if (!has_throne_butt) {
                                 play_sound_on_player(snd_robot_eat_ID);
                                 create_object(allObjects[nearest_wep_drop_ID].position.x, allObjects[nearest_wep_drop_ID].position.y, 0, 0, static_effect, 0, 552);
@@ -18330,7 +18502,7 @@ int main(int argc, char* argv[])
                 //player smoke
                 if (player_smoke_ammount > 0) {
                     float tmpspd = 0.5f + random_float(0.97f);
-                    create_object(allObjects[0].position.x, allObjects[0].position.y, tmpspd, tmpspd, smoke, 0, 0);
+                    create_object(allObjects[0].position.x, allObjects[0].position.y, tmpspd, tmpspd, smoke, random_360_radians(), 0);
                     if (player_smoke_ammount > 15 && rand() % 7 == 0) {
                         create_object(allObjects[0].position.x + random_float(4) - 2, allObjects[0].position.y + random_float(4) - 2, 0, 0, flame, 0, 0);
                     }
@@ -18481,7 +18653,7 @@ int main(int argc, char* argv[])
                     created_portal = true;
                 }
                 else {
-                    if (!killed_throne_2) {
+                    if (!killed_throne_2 && CURRENT_GAME_STATE == gs_in_game) {
                         create_object(create_portal_POS.x, create_portal_POS.y, 0, 0, throne_2, 0, 0);
                     }
                 }
@@ -18506,7 +18678,7 @@ int main(int argc, char* argv[])
             if (!player_shot_flamethrower_this_frame && player_shot_flamethrower_prev_frame) {
                 play_sound_on_player(snd_flamethrower_end_ID);
             }
-
+            
             //play sounds
             float pitch_offset = 0.0f;
             for (int i = 0; i < 1000; i++) {
@@ -19095,7 +19267,7 @@ int main(int argc, char* argv[])
 
                         cursor_sprite.setPosition(sf::Vector2f(mousepos));
 
-                        if (allObjects[0].scale > 0.1f) {
+                        if (allObjects[0].scale > 0.1f && CURRENT_GAME_STATE == gs_in_game) {
                             add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24, draw_shadow24s);
                             shadow24_ArrayIndex++;      //shadow
                         }
@@ -20093,6 +20265,9 @@ int main(int argc, char* argv[])
                             if (choice > 6) {
                                 choice = 0;
                             }
+                            if (allObjects[idx].next_hurt > current_frame) {
+                                choice = int((allObjects[idx].image_index + 6) * 0.4f) + 7;
+                            }
                         }
 
                         switch (allObjects[idx].alarm2) {
@@ -20152,7 +20327,7 @@ int main(int argc, char* argv[])
                             shadow32_ArrayIndex++;      //shadow
                             break;
                         case rad_canister_prop:
-                            add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24 + sf::Vector2f(0, 0), draw_shadow24s);
+                            add_sprite_24(shadow24_ArrayIndex, allObjects[idx].position - cameraPos + offset24 + sf::Vector2f(0, -1), draw_shadow24s);
                             shadow24_ArrayIndex++;      //shadow
 
                             variable_textures_bloom[variableTexturesBloomIndex].setTexture(allPropSprites);
@@ -20560,6 +20735,16 @@ int main(int argc, char* argv[])
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setRotation(0);
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setTextureRect(sf::IntRect{ choice * 32, 0, 32, 32 });
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setOrigin(16, 16);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setScale(1, 1);
+                            variableTexturesTopEnemiesIndex++;
+                        }
+                        else if (allObjects[idx].alarm2 == 17) {//exploder explo
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setTexture(allBigEffectSprites);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setColor({ 255, 255, 255, 255 });
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setPosition(allObjects[idx].position - cameraPos);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setRotation(0);
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setTextureRect(sf::IntRect{ choice * 24, 696, 24, 24 });
+                            variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setOrigin(12, 12);
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setScale(1, 1);
                             variableTexturesTopEnemiesIndex++;
                         }
@@ -21938,63 +22123,64 @@ int main(int argc, char* argv[])
                 buffer_over.draw(portal_sprite);
             }
 
-            if (!crystal_is_shielding && player_alive) {
-                if (bwep != -1) {
-                    buffer_over.draw(bwep_sprite);
-                }
-                if (direction_to_mouse - (180 / degreestoradians) > 0 && wep != -1) {
-                    buffer_over.draw(wep_sprite);
-                }
-            }
-
-            //eyes tk
-
-            if (player_character == eyes) {
-
-                if (eyes_using_TK) {
-                    if (has_throne_butt) {
-                        eyes_TK_sprite.setTexture(eyes_tk_TB_tex);
+            if (CURRENT_GAME_STATE == gs_in_game) {
+                if (!crystal_is_shielding && player_alive) {
+                    if (bwep != -1) {
+                        buffer_over.draw(bwep_sprite);
                     }
-                    else {
-                        eyes_TK_sprite.setTexture(eyes_tk_tex);
+                    if (direction_to_mouse - (180 / degreestoradians) > 0 && wep != -1) {
+                        buffer_over.draw(wep_sprite);
                     }
-                    eyes_TK_sprite.setTextureRect({ 32 * (int(current_frame * 0.4f) % 3), 0, 32, 32 });
                 }
-                else if (eyes_using_ultraB_TK) {
-                    eyes_TK_sprite.setTexture(eyes_tk_ultraB_tex);
-                    eyes_TK_sprite.setTextureRect({ 32 * (int(current_frame * 0.4f) % 6), 0, 32, 32 });
+
+                //eyes tk
+                if (player_character == eyes) {
+
+                    if (eyes_using_TK) {
+                        if (has_throne_butt) {
+                            eyes_TK_sprite.setTexture(eyes_tk_TB_tex);
+                        }
+                        else {
+                            eyes_TK_sprite.setTexture(eyes_tk_tex);
+                        }
+                        eyes_TK_sprite.setTextureRect({ 32 * (int(current_frame * 0.4f) % 3), 0, 32, 32 });
+                    }
+                    else if (eyes_using_ultraB_TK) {
+                        eyes_TK_sprite.setTexture(eyes_tk_ultraB_tex);
+                        eyes_TK_sprite.setTextureRect({ 32 * (int(current_frame * 0.4f) % 6), 0, 32, 32 });
+                    }
+                    eyes_TK_sprite.setScale(player_sprite.getScale());
+                    eyes_TK_sprite.setPosition(allObjects[0].position.x - cameraPos.x, allObjects[0].position.y - cameraPos.y - 6);
+                    buffer_over.draw(eyes_TK_sprite);
                 }
-                eyes_TK_sprite.setScale(player_sprite.getScale());
-                eyes_TK_sprite.setPosition(allObjects[0].position.x - cameraPos.x, allObjects[0].position.y - cameraPos.y - 6);
-                buffer_over.draw(eyes_TK_sprite);
+
+                //player
+                if (player_alive) {
+                    if (current_frame % 4 == 0 && player_character == YV && ultra_picked == 1 && reloaded == false) {
+                        buffer_over.draw(igg_sprite);
+                    }
+
+                    buffer_over.draw(player_sprite);
+
+                    if (current_frame % 4 == 2 && player_character == YV && ultra_picked == 1 && reloaded == false) {
+                        buffer_over.draw(igg_sprite);
+                    }
+                }
+
+                if (!crystal_is_shielding && player_alive && wep != -1) {
+                    if (direction_to_mouse - (180 / degreestoradians) <= 0) {
+                        buffer_over.draw(wep_sprite);
+                    }
+                }
+
+                buffer_over.draw(crystal_shield_sprite);
+                crystal_shield_sprite.setScale(0, 0);
+                buffer_over.draw(crystal_shield_sprite_tele);
+                crystal_shield_sprite_tele.setScale(0, 0);
+
+                buffer_over.draw(wep_swap_sprite);
+                wep_swap_sprite.setScale(0, 0);
             }
-
-            //player
-            if (player_alive) {
-                if (current_frame % 4 == 0 && player_character == YV && ultra_picked == 1 && reloaded == false) {
-                    buffer_over.draw(igg_sprite);
-                }
-
-                buffer_over.draw(player_sprite);
-
-                if (current_frame % 4 == 2 && player_character == YV && ultra_picked == 1 && reloaded == false) {
-                    buffer_over.draw(igg_sprite);
-                }
-            }
-
-            if (!crystal_is_shielding && player_alive && wep != -1) {
-                if (direction_to_mouse - (180 / degreestoradians) <= 0) {
-                    buffer_over.draw(wep_sprite);
-                }
-            }
-
-            buffer_over.draw(crystal_shield_sprite);
-            crystal_shield_sprite.setScale(0, 0);
-            buffer_over.draw(crystal_shield_sprite_tele);
-            crystal_shield_sprite_tele.setScale(0, 0);
-
-            buffer_over.draw(wep_swap_sprite);
-            wep_swap_sprite.setScale(0, 0);
 
             //plasma impact
             for (sf::Sprite spr : plasma_impact_sprites) {
@@ -22190,75 +22376,77 @@ int main(int argc, char* argv[])
             player_level_up_crown.setScale(0, 0);
 
             //ui
-            if (player_alive) {
-                //rads
-                choice = int(16 * player_rads / (player_level * 60 + 600 * ((1 + (ultra_picked == 3 && player_character == horror)) - 1)));
-                if (choice > 16) {
-                    choice = 16;
-                }
-                choice *= 14;
-                xp_bar_spr.setTextureRect({ choice, 0, 14, 24 });
-                player_level_spr.setTextureRect({ (player_level - 1) * 8, 0, 8, 8 });
-
-                buffer_over.draw(xp_bar_spr);
-                buffer_over.draw(player_level_spr);
-                buffer_over.draw(hp_bar_spr);
-                buffer_over.draw(health_bar_spr);
-                if (chicken_beheaded) {
-                    buffer_over.draw(chicken_health_bar_spr);
-                }
-                draw_text_NT(hp_text, buffer_over);
-                go_addy1 = 55;
-                go_addy2 = 3;
-                game_over_time = 0;
-
-                //weapon to pick up text weapon_drop
-                if (nearest_wep_drop_ID != 0) {
-                    draw_weapon_text(allObjects[nearest_wep_drop_ID].size, allObjects[nearest_wep_drop_ID].position, wep_text, buffer_over, wep_arrow_sprite);
-                    
-                }
-                
-                for (int i = 0; i < 13; i++) {
-                    buffer_over.draw(mut_icon_sprite[i]);
-                }
-                for (int i = 0; i < 5; i++) {
-                    buffer_over.draw(mut_icon_sprite_select[i]);
-                }
-            }
-            else {
-
-                sf::RectangleShape dark_screen;
-                dark_screen.setSize(sf::Vector2f(320, 240));
-                dark_screen.setFillColor(sf::Color(0, 0, 0, 153));  //0.6 opacity
-                buffer_over.draw(dark_screen);
-
-                if (game_over_time > 7) {
-                    game_over_time = 7;
-                }
-                if (game_over_time > 0) {
-                    letter_boxes.setTextureRect({ int(game_over_time * 0.4f) * 320, 0, 320, 240 });
-                    buffer_over.draw(letter_boxes);
-                }
-
-                game_over_time++;
-                
-                game_over_text.setString("THE STRUGGLE CONTINUES");
-                game_over_text.setPosition(160 - 88, 64 - 3 + go_addy1 + go_addy2);
-
-                draw_text_NT(game_over_text, buffer_over);
-                if (go_addy2 == 3) {
-                    go_addy2 = 1;
-                }
-                else{
-                    if (go_addy2 == 0){
-                        if (go_addy1 > 1) {
-                            go_addy1 -= 18;
-                        }
-                        else if (go_addy1 == 1) {
-                            go_addy1 = 0;
-                        }
+            if (CURRENT_GAME_STATE == gs_in_game) {
+                if (player_alive) {
+                    //rads
+                    choice = int(16 * player_rads / (player_level * 60 + 600 * ((1 + (ultra_picked == 3 && player_character == horror)) - 1)));
+                    if (choice > 16) {
+                        choice = 16;
                     }
-                    go_addy2 = 0;
+                    choice *= 14;
+                    xp_bar_spr.setTextureRect({ choice, 0, 14, 24 });
+                    player_level_spr.setTextureRect({ (player_level - 1) * 8, 0, 8, 8 });
+
+                    buffer_over.draw(xp_bar_spr);
+                    buffer_over.draw(player_level_spr);
+                    buffer_over.draw(hp_bar_spr);
+                    buffer_over.draw(health_bar_spr);
+                    if (chicken_beheaded) {
+                        buffer_over.draw(chicken_health_bar_spr);
+                    }
+                    draw_text_NT(hp_text, buffer_over);
+                    go_addy1 = 55;
+                    go_addy2 = 3;
+                    game_over_time = 0;
+
+                    //weapon to pick up text weapon_drop
+                    if (nearest_wep_drop_ID != 0) {
+                        draw_weapon_text(allObjects[nearest_wep_drop_ID].size, allObjects[nearest_wep_drop_ID].position, wep_text, buffer_over, wep_arrow_sprite);
+
+                    }
+
+                    for (int i = 0; i < 13; i++) {
+                        buffer_over.draw(mut_icon_sprite[i]);
+                    }
+                    for (int i = 0; i < 5; i++) {
+                        buffer_over.draw(mut_icon_sprite_select[i]);
+                    }
+                }
+                else {
+
+                    sf::RectangleShape dark_screen;
+                    dark_screen.setSize(sf::Vector2f(320, 240));
+                    dark_screen.setFillColor(sf::Color(0, 0, 0, 153));  //0.6 opacity
+                    buffer_over.draw(dark_screen);
+
+                    if (game_over_time > 7) {
+                        game_over_time = 7;
+                    }
+                    if (game_over_time > 0) {
+                        letter_boxes.setTextureRect({ int(game_over_time * 0.4f) * 320, 0, 320, 240 });
+                        buffer_over.draw(letter_boxes);
+                    }
+
+                    game_over_time++;
+
+                    game_over_text.setString("THE STRUGGLE CONTINUES");
+                    game_over_text.setPosition(160 - 88, 64 - 3 + go_addy1 + go_addy2);
+
+                    draw_text_NT(game_over_text, buffer_over);
+                    if (go_addy2 == 3) {
+                        go_addy2 = 1;
+                    }
+                    else {
+                        if (go_addy2 == 0) {
+                            if (go_addy1 > 1) {
+                                go_addy1 -= 18;
+                            }
+                            else if (go_addy1 == 1) {
+                                go_addy1 = 0;
+                            }
+                        }
+                        go_addy2 = 0;
+                    }
                 }
             }
             buffer_over.display();
