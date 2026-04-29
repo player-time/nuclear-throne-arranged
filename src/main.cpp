@@ -400,6 +400,7 @@ int go_addy1 = 55;
 int go_addy2 = 3;
 sf::Text game_over_text;
 int game_over_time = 0;
+int loading_time = 0;
 
 sf::Sprite letter_boxes;
 
@@ -832,7 +833,7 @@ void spiral_cont_step() {
 //generation
 bool want_gen = true;
 bool GENERATE_LEVEL = false;
-int gen_delay_frames = 30;
+int gen_delay_frames = 300;
 int gen_delay_progress = 0;
 
 void draw_text_NT(sf::Text text, sf::RenderTexture &renderer) {
@@ -13523,7 +13524,7 @@ void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[]) {
 
     current_frame = 0;
     current_frame_unpaused = 0;
-    allObjects[0].next_hurt = current_frame + 6;
+    allObjects[0].next_hurt = current_frame;
     reset_all_globals();//TODO
 
     randomize_mutation_pool();
@@ -22434,6 +22435,28 @@ int main(int argc, char* argv[])
             //ui
             if (CURRENT_GAME_STATE == gs_in_game) {
                 if (player_alive) {
+                    if (want_gen) {
+                        if (loading_time > 2) {
+                            loading_time = 2;
+                        }
+                        letter_boxes.setTextureRect({ loading_time * 320, 0, 320, 240 });
+                        buffer_UI.draw(letter_boxes);
+                        loading_time++;
+                    }
+                    else {
+                        if (loading_time > 2) {
+                            loading_time = 2;
+                        }
+
+                        if (loading_time > 0) {
+                            letter_boxes.setTextureRect({ loading_time * 320, 0, 320, 240 });
+                            buffer_UI.draw(letter_boxes);
+                            loading_time--;
+                        }
+                        else {
+                            loading_time = 0;
+                        }
+                    }
                     //rads
                     choice = int(16 * player_rads / (player_level * 60 + 600 * ((1 + (ultra_picked == 3 && player_character == horror)) - 1)));
                     if (choice > 16) {
@@ -22442,6 +22465,7 @@ int main(int argc, char* argv[])
                     choice *= 14;
                     xp_bar_spr.setTextureRect({ choice, 0, 14, 24 });
                     player_level_spr.setTextureRect({ (player_level - 1) * 8, 0, 8, 8 });
+                    player_level_spr.setPosition(7 + (player_level == 1), 12);
 
                     buffer_UI.draw(xp_bar_spr);
                     buffer_UI.draw(player_level_spr);
