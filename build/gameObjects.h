@@ -588,6 +588,8 @@ enum sound_ID {
 
 	snd_idpd_spawn_ID,
 	snd_idpd_spawn_elite_ID,
+
+	snd_meat_explo_ID,
 	
 	//weapon fire snds
 	snd_sword_ID,
@@ -871,6 +873,7 @@ enum hitboxes {
 	no_hitbox = 0,
 	player_hitbox = 4,	//4 default
 	bandit_hitbox = 7, enemy_bullet_hitbox = 3, plasma_hitbox = 5, guardian_bullet_hitbox = 4,
+	player_bullet_hitbox = 5,
 	plasma_impact_hitbox = 32,
 	idpd_explosion_hitbox = 48,
 	explosion_hitbox = 24,
@@ -903,7 +906,6 @@ enum hitboxes {
 };
 
 enum gamestate {
-	gs_title_screen,
 	gs_character_selection,
 	gs_in_game,
 };
@@ -988,7 +990,6 @@ struct gameObject{
 };
 
 struct gridTile {
-	
 	std::vector<int> object_indexes;
 	uint8_t my_grid_type = out_of_bounds;
 	//bool has_line_of_sight = false;
@@ -1031,6 +1032,7 @@ struct portal_spiral {
 	float image_angle = 0.0f;
 
 	bool active = false;
+	bool circle = false;
 };
 
 
@@ -1039,7 +1041,6 @@ struct replay_input {
 	std::uint16_t mouse_x = 0x0000;
 	std::uint8_t mouse_y = 0x00;
 };
-
 
 struct debug_timer {
 	std::chrono::steady_clock::time_point start;

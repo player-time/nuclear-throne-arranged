@@ -6,6 +6,13 @@
 //proto vault
 //loading screen spiral
 
+//missiles look wierd
+
+//gamma guts
+//bolt marrow
+
+//make all sprite arrays dynamic
+
 //check whether going over sprite limit
 //replay system
 
@@ -78,6 +85,7 @@ sf::Vector2f debug_camera_offset = {0.0f, 0.0f};
 
 gamestate CURRENT_GAME_STATE = gs_character_selection;
 bool has_generated_character_selection_screen = false;
+bool on_title_screen = true;    //everything before the character selection screen
 
 int seed = time(NULL);
 
@@ -93,68 +101,69 @@ int gen_curr_floor_index = 0;
 
 
 std::vector<sf::Sprite> bullet_2_batchable;
-int bullet_2_batchable_max = 25000;
+int bullet_2_batchable_max = 1;
 
 std::vector<sf::Sprite> all_enemy_sprites;  //all enemy sprites that fit into a 32x32 box
-int all_enemy_sprites_max = 6000;
+int all_enemy_sprites_max = 1;
 
 std::vector<sf::Sprite> all_enemy_corpses;  //all enemy corpse sprites that fit into a 32x32 box
-int all_enemy_corpses_max = 60;
+int all_enemy_corpses_max = 1;
 
 std::vector<sf::Sprite> rotateable_sprites_bullets;
-int rotateable_sprites_bullets_max = 17000;
+int rotateable_sprites_bullets_max = 1;
 
 //for SPC
 std::vector<sf::Sprite> rotateable_sprites_bullets_huge;
-int rotateable_sprites_bullets_huge_max = 200;
+int rotateable_sprites_bullets_huge_max = 1;
+
 std::vector<sf::Sprite> rotateable_sprites_bullets_huge_bloom;
-int rotateable_sprites_bullets_huge_bloom_max = 200;
+int rotateable_sprites_bullets_huge_bloom_max = 1;
 
 //for SPC
 std::vector<sf::Sprite> rotateable_sprites_bullets_big;
-int rotateable_sprites_bullets_big_max = 1000;
+int rotateable_sprites_bullets_big_max = 1;
 std::vector<sf::Sprite> rotateable_sprites_bullets_big_bloom;
-int rotateable_sprites_bullets_big_bloom_max = 1000;
+int rotateable_sprites_bullets_big_bloom_max = 1;
 
 //explosions
 std::vector<sf::Sprite> explosions_sprites;
-int explosions_sprites_max = 9000;
+int explosions_sprites_max = 1;
 
 std::vector<sf::Sprite> plasma_impact_sprites;
-int plasma_impact_sprites_max = 1800;
+int plasma_impact_sprites_max = 1;
 
 std::vector<sf::Sprite> rotateable_sprites_guns;
-int rotateable_sprites_guns_max = 4000;
+int rotateable_sprites_guns_max = 1;
 
 std::vector<sf::Sprite> rotateable_sprites_guns_top;
-int rotateable_sprites_guns_top_max = 1000;
+int rotateable_sprites_guns_top_max = 1;
 
 //small effects 8x8 unrotateable
 std::vector<sf::Sprite> rotateable_effects_small_bloom;
-int rotateable_effects_small_bloom_max = 7500;
+int rotateable_effects_small_bloom_max = 1;
 //small effects 8x8
 std::vector<sf::Sprite> rotateable_effects_small;
-int rotateable_effects_small_max = 7000;
+int rotateable_effects_small_max = 1;
 //small effects 8x8 underneath
 std::vector<sf::Sprite> under_effects_small;
-int under_effects_small_max = 500;
+int under_effects_small_max = 1;
 
 //medium effects 16x16
 std::vector<sf::Sprite> rotateable_effects_medium;
-int rotateable_effects_medium_max = 6000;
+int rotateable_effects_medium_max = 1;
 
 //large effects 24x24
 std::vector<sf::Sprite> rotateable_effects_large;
-int rotateable_effects_large_max = 18000;
+int rotateable_effects_large_max = 1;
 
 std::vector<sf::Sprite> prop_sprites;
-int prop_sprites_max = 50;
+int prop_sprites_max = 1;
 
 std::vector<sf::Sprite> scorch_sprites;
-int scorch_sprites_max = 1000;
+int scorch_sprites_max = 1;
 
 std::vector<sf::Sprite> weapon_sprites;
-int weapon_sprites_max = 1000;
+int weapon_sprites_max = 1;
 
 sf::Sprite portal_sprite;
 bool portal_drawn = false;
@@ -164,56 +173,56 @@ int T2_object_index = 1;
 bool t2_draw_in_front = true;
 
 std::vector<sf::Sprite> variable_textures_bottom;
-int variable_textures_bottom_max = 2000;
+int variable_textures_bottom_max = 1;
 
 std::vector<sf::Sprite> variable_textures;
-int variable_textures_max = 4000;
+int variable_textures_max = 1;
 
 std::vector<sf::Sprite> variable_textures_top;
-int variable_textures_top_max = 800;
+int variable_textures_top_max = 1;
 
 std::vector<sf::Sprite> variable_textures_top_enemies;
-int variable_textures_top_enemies_max = 800;
+int variable_textures_top_enemies_max = 1;
 
 std::vector<sf::Sprite> wall_shadow_textures;
-int wall_shadow_textures_max = 600;
+int wall_shadow_textures_max = 1;
 
 
 std::vector<sf::Sprite> variable_textures_bloom;
-int variable_textures_bloom_max = 38000;
+int variable_textures_bloom_max = 1;
 
 std::vector<sf::Sprite> lasers_bloom;
-int lasers_bloom_max = 500;
+int lasers_bloom_max = 1;
 
-int wall_textures_max = 600;
 std::vector<sf::Sprite> wall_textures;
+int wall_textures_max = 1;
 
-int rain_textures_max = 100;
 std::vector<sf::Sprite> rain_textures;
+int rain_textures_max = 1;
 
-int wall_boarder_textures_max = 600;
 std::vector<sf::Sprite> wall_boarder_textures;
+int wall_boarder_textures_max = 1;
 
-int floor_textures_max = 180;
 std::vector<sf::Sprite> floor_textures;
+int floor_textures_max = 1;
 
-int floor_textures_bloom_max = 130;
 std::vector<sf::Sprite> floor_textures_bloom;
+int floor_textures_bloom_max = 1;
 
-int floor_textures_B_max = 180;
 std::vector<sf::Sprite> floor_textures_B;
+int floor_textures_B_max = 1;
 
-int wall_textures_bot_max = 260;
 std::vector<sf::Sprite> wall_textures_bot;
+int wall_textures_bot_max = 1;
 
-int explo_tiles_tex_max = 600;
 std::vector<sf::Sprite> explo_tiles_tex;
+int explo_tiles_tex_max = 1;
 
-int T2_explo_tiles_tex_max = 600;
 std::vector<sf::Sprite> T2_explo_tiles_tex;
+int T2_explo_tiles_tex_max = 1;
 
-int T2_floor_tiles_tex_max = 100;
 std::vector<sf::Sprite> T2_floor_tiles_tex;
+int T2_floor_tiles_tex_max = 1;
 
 sf::Vector2f cameraPos = { 24000.0f, 24000.0f };
 
@@ -403,7 +412,12 @@ int game_over_time = 0;
 int loading_time = 0;
 
 sf::Sprite letter_boxes;
+sf::Sprite game_logo;
+sf::Sprite game_logo_glow;
 
+int game_logo_timer = 0;
+
+float game_logo_wave = 0.0f;
 
 bool GAME_OPTION_naitive_cursor_active = true;
 bool GAME_OPTION_hide_cursor_on_loading = true;
@@ -775,13 +789,14 @@ void reset_all_globals() {
 
 }
 
-void create_portal_spiral() {
+void create_portal_spiral(bool is_circle) {
     all_portal_spirals_start++;
     all_portal_spirals_count++;
     if (all_portal_spirals_start > all_portal_spirals_max - 1) {
         all_portal_spirals_start = 0;
     }
     all_portal_spirals[all_portal_spirals_start].grow = 0;
+    all_portal_spirals[all_portal_spirals_start].circle = is_circle;
     all_portal_spirals[all_portal_spirals_start].langle = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (360.0f)));
     all_portal_spirals[all_portal_spirals_start].lanim = -static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (300.0f)));
     all_portal_spirals[all_portal_spirals_start].lsound = 0;
@@ -803,7 +818,7 @@ void portal_spiral_step() {
                 grow *= 1.5
                     UberCont.lisWallsUpdate = 1
             }*/
-            if (all_portal_spirals[i].image_scale > 2 && (all_portal_spirals[i].lanim < 0 || all_portal_spirals[i].lanim > 6)) {
+            if (all_portal_spirals[i].image_scale > 2.5f && (all_portal_spirals[i].lanim < 0 || all_portal_spirals[i].lanim > 6)) {
                 all_portal_spirals_count--;
                 all_portal_spirals[i].active = false;
                 all_portal_spirals[i].image_scale = 0;
@@ -814,8 +829,9 @@ void portal_spiral_step() {
     }
 }
 
-void spiral_cont_step() {
+void spiral_cont_step(bool circular = false) {
     portal_spiral_angle += (8 + (sin(portal_spiral_angle / 300)));
+
     portal_spiral_time++;
 
     portal_spiral_X = center_of_screen_X + (sin(portal_spiral_angle / 921)) * (sin(portal_spiral_angle / 500)) * 80;
@@ -825,15 +841,16 @@ void spiral_cont_step() {
     if (portal_spiral_wave == 1) {
         portal_spiral_wave = 0;
 
-        create_portal_spiral();
+        create_portal_spiral(circular);
     }
 }
 
 
 //generation
+int time_since_generated = 0;
 bool want_gen = true;
 bool GENERATE_LEVEL = false;
-int gen_delay_frames = 300;
+int gen_delay_frames = 15;
 int gen_delay_progress = 0;
 
 void draw_text_NT(sf::Text text, sf::RenderTexture &renderer) {
@@ -938,12 +955,18 @@ void play_sound_in_pool(sound_ID sound, sound_sound_buffer all_sounds[], sf::Sou
     }
 }
 
-void expand_vector(std::vector<sf::Sprite> &vector_to_expand, sf::Vector2f origin, sf::Texture &texture) {
-    sf::Sprite temp;
-    temp.setColor({ 0, 0, 0, 0 });
-    temp.setOrigin(origin);
-    temp.setTexture(texture);
-    vector_to_expand.push_back(temp);
+void expand_vector(std::vector<sf::Sprite> &vector_to_expand, sf::Texture &texture, int sprite_count, int &max_spite_count) {
+    sf::Vector2f origin = vector_to_expand[0].getOrigin();//just get the origin of the first element
+    sf::IntRect rect = vector_to_expand[0].getTextureRect();
+    if (sprite_count >= max_spite_count - 1) {
+        sf::Sprite temp;
+        temp.setColor({ 0, 0, 0, 0 });
+        temp.setOrigin(origin);
+        temp.setTexture(texture);
+        temp.setTextureRect(rect);
+        vector_to_expand.push_back(temp);
+        max_spite_count++;
+    }
 }
 
 bool is_looping_sound(int sound_id) {
@@ -2977,7 +3000,8 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].damage = 7;
 
                 allObjects[i].position = { x, y };
-                allObjects[i].speed = { 0, 0 };
+                allObjects[i].speeddir = 5;
+                allObjects[i].speed = { cos(direction) * 5, sin(direction) * 5 };
                 allObjects[i].direction = direction;
                 allObjects[i].image_index = 0;
 
@@ -3099,7 +3123,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 break;
             case player_bullet_burst:
                 allObjects[i].my_id = obj_id;
-                allObjects[i].my_hitbox = enemy_bullet_hitbox;
+                allObjects[i].my_hitbox = player_bullet_hitbox;
                 allObjects[i].damage = 3;
 
 
@@ -3146,7 +3170,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 break;
             case player_bullet:
                 allObjects[i].my_id = obj_id;
-                allObjects[i].my_hitbox = enemy_bullet_hitbox;
+                allObjects[i].my_hitbox = player_bullet_hitbox;
                 allObjects[i].damage = 3;
 
                 if (image_index == 2) {
@@ -3422,6 +3446,9 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].position = { x, y };
                 allObjects[i].image_index = 0;
                 allObjects[i].team = image_index;   //:)
+                
+                play_sound_on_player(snd_meat_explo_ID);
+
                 break;
             case idpd_explosion:
                 allObjects[i].my_id = obj_id;
@@ -5754,7 +5781,7 @@ void enemy_die(int ENEMY, int PROJ) {
         }
 
         //debug start
-        for (int i = 0; i < 0; i++) {
+        for (int i = 0; i < 10; i++) {
             tmpdir = random_360_radians();
             tmpSpd = random_float(2.0f) + 3.0f;
             tempSpdx = cos(tmpdir) * tmpSpd;
@@ -6812,7 +6839,7 @@ void basic_enemy_collision(int currOBJ, int i, int j) {
                         break;
                     case player_flame:
                         if (allObjects[O].team != enemy_team && is_within_circle(allObjects[currOBJ].position, allObjects[O].position, allObjects[currOBJ].my_hitbox + allObjects[O].my_hitbox)) {
-                            if (rand() % 3 == 0) {
+                            if (rand() % 4 == 0) {
                                 allObjects[currOBJ].next_hurt--;    //lightning buff
                             }
                             if (allObjects[currOBJ].next_hurt < current_frame) {
@@ -7661,7 +7688,7 @@ void idpd_explosion_collision(int currOBJ, int i, int j) {
 
 void meat_explosion_collision(int currOBJ, int i, int j) {
     float tmpdir = 0.0f;
-    if (allObjects[currOBJ].image_index < 5) {
+    if (allObjects[currOBJ].image_index < 1000) {
         for (int w = -2; w < 3; w++) {
             for (int h = -2; h < 3; h++) {
                 for (int O : game_area[i + w][j + h].object_indexes) {
@@ -8180,7 +8207,7 @@ void throne_2_collision(int currOBJ, int i, int j) {
                         break;
                     case player_flame:
                         if (allObjects[O].team != enemy_team && is_within_throne_2(allObjects[currOBJ].position, allObjects[O].position, allObjects[O].my_hitbox)) {
-                            if (rand() % 3 == 0) {
+                            if (rand() % 4 == 0) {
                                 allObjects[currOBJ].next_hurt--;    //lightning buff
                             }
                             if (allObjects[currOBJ].next_hurt < current_frame) {
@@ -13500,19 +13527,33 @@ void randomize_mutation_pool() {
 }
 
 //reset all global variables and set random seed to be randomized, or set to a specific seed if replay
-void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[]) {
+void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[], sf::Music& current_music) {
+
+    current_music.openFromFile("mus/mus1.ogg");
+    current_music.setVolume(100.0f);
+    current_music.play();
+
     player_character = chararcter_choice;
 
     //set what mutations are garuanteed
     muts_want[1] = true;//debug
+    muts_want[3] = true;//debug
+    muts_want[7] = true;//debug
+    muts_want[11] = true;//debug
+    muts_want[13] = true;//debug
+    muts_want[17] = true;//debug
+    muts_want[18] = true;//debug
+    muts_want[20] = true;//debug
 
-    wep = 104;   //revolver
-    bwep = -1;
+    LOOPS = 30;
+
+    wep = 0;   //revolver 29
+    bwep = 11;
     player_bullets = 96;
     player_bolts = 0;
     player_shells = 0;
     player_explosives = 0;
-    player_energy = 0;
+    player_energy = 55;
 
     player_max_speed = 4.0f;
     player_alive = true;
@@ -13705,11 +13746,19 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
 
     allObjects[0].position = { 24016.0f, 24016.0f };
 
-
+    current_music.setLoop(true);
     if (area == 0) {    //throne 2
         //all_sounds[snd_music_ID].sound.setVolume(0.0f);
-        current_music.setVolume(0.0f);
-        current_music.openFromFile("mus/musBoss4B.ogg");
+        if (CURRENT_GAME_STATE == gs_character_selection) {
+            current_music.openFromFile("mus/musThemeB.ogg");
+            current_music.setVolume(100.0f);
+            current_music.play();
+            current_music.setLoop(false);
+        }
+        else {
+            current_music.setVolume(0.0f);
+            current_music.openFromFile("mus/musBoss4B.ogg");
+        }
         generate_floors(240, 0, 6, 1, 5, 19, 22, 1, 4);
 
         //generate enemies
@@ -14940,6 +14989,8 @@ int main(int argc, char* argv[])
 
 
     //other
+    add_new_sound(snd_meat_explo_ID, "snd/meat_explo.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
+
     add_new_sound(snd_nade_hit_wall_ID, "snd/nade_hit_wall.wav", all_sounds, all_sounds_mirror, 0.1f, 0.01f);
 
     add_new_sound(snd_IDPD_nade_load_ID, "snd/IDPD_nade_load.wav", all_sounds, all_sounds_mirror, 0.1f, 0.004f);
@@ -15235,7 +15286,7 @@ int main(int argc, char* argv[])
     add_new_sound(snd_portal_strike_loop_ID, "snd/portal_strike_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
     add_new_sound(snd_snow_bot_slide_loop_ID, "snd/snow_bot_slide_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
     add_new_sound(snd_salamander_fire_loop_ID, "snd/salamander_fire_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
-    add_new_sound(snd_logo_loop_ID, "snd/logo_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
+    add_new_sound(snd_logo_loop_ID, "snd/logo_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 40.0f);
     add_new_sound(snd_nothing_beam_loop_ID, "snd/nothing_beam_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
     add_new_sound(snd_ball_mom_loop_ID, "snd/ball_mom_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
 
@@ -15725,12 +15776,19 @@ int main(int argc, char* argv[])
         idpdPortalClose.loadFromFile("res/sprIDPDPortalClose.png");
 
 
+        sf::Texture portal_spiral_circle_tex;
+        portal_spiral_circle_tex.loadFromFile("res/portal_spiral_circle.png");
+
+        sf::Sprite portal_spiral_circle_spr;
+        portal_spiral_circle_spr.setTexture(portal_spiral_circle_tex);
+        portal_spiral_circle_spr.setOrigin(640, 640);
+
         sf::Texture portal_spiral_tex;
         portal_spiral_tex.loadFromFile("res/portal_spiral.png");
 
         sf::Sprite portal_spiral_spr;
         portal_spiral_spr.setTexture(portal_spiral_tex);
-        portal_spiral_spr.setOrigin(320, 320);
+        portal_spiral_spr.setOrigin(640, 640);
 
         //wall1 shadow
         sf::Texture Wall1shadow;
@@ -15878,7 +15936,7 @@ int main(int argc, char* argv[])
         sf::Texture bullet1_2tex;
         bullet1_2tex.loadFromFile("res/enemy_bullets/sprEnemyBullet1_2.png");
         std::vector<sf::Sprite> bullet_1_batchable;
-        int bullet_1_batchable_max = 3000;
+        int bullet_1_batchable_max = 1;
        
         //bullet1_2BIG
         sf::Texture bullet1_2BIGtex;
@@ -16355,6 +16413,20 @@ int main(int argc, char* argv[])
 
         letter_boxes.setTexture(letter_boxes_sprite);
 
+
+        sf::Texture game_logo_sprite;
+        game_logo_sprite.loadFromFile("res/game_logo.png");
+
+        game_logo.setTexture(game_logo_sprite);
+        game_logo.setPosition(31, 72);
+
+        sf::Texture game_logo_glow_sprite;
+        game_logo_glow_sprite.loadFromFile("res/game_logo_glow.png");
+
+        game_logo_glow.setTexture(game_logo_glow_sprite);
+        game_logo_glow.setTextureRect({ 0, 0, 258, 96 });
+        game_logo_glow.setColor({255, 255, 255, 13});
+
     //initialize the area, this should be reset every level to regenerate the next level
     for (int i = 0; i < gridSize; i++) {
         for (int j = 0; j < gridSize; j++) {
@@ -16371,7 +16443,6 @@ int main(int argc, char* argv[])
 
     //reverve max object count
     allObjects.reserve(max_objects);
-    //rotateable_sprites_bullets.reserve(rotateable_sprites_bullets_max);
 
     allObjects.push_back(player);
 
@@ -16683,7 +16754,7 @@ int main(int argc, char* argv[])
 
     player_character = horror;
 
-    start_new_run(player_character, all_sounds);
+    //start_new_run(player_character, all_sounds);
 
     reset_mutations();
     randomize_mutation_pool();
@@ -16780,7 +16851,7 @@ int main(int argc, char* argv[])
                         if (player_character > 13) {
                             player_character = fish;
                         }
-                        start_new_run(player_character, all_sounds);
+                        start_new_run(player_character, all_sounds, current_music);
 
 
                         switch (player_character) {
@@ -16990,7 +17061,7 @@ int main(int argc, char* argv[])
             mousepos.y = 0;
         }
 
-        if (CURRENT_GAME_STATE == gs_character_selection) {
+        if (CURRENT_GAME_STATE == gs_character_selection && !on_title_screen) {
             if (!has_generated_character_selection_screen) {
                 area = 0;
                 sub_area = 1;
@@ -17031,7 +17102,7 @@ int main(int argc, char* argv[])
                 CURRENT_GAME_STATE = gs_in_game;
                 player_character = fish;
 
-                start_new_run(player_character, all_sounds);
+                start_new_run(player_character, all_sounds, current_music);
 
                 switch (player_character) {
                 case fish:
@@ -17085,6 +17156,17 @@ int main(int argc, char* argv[])
                     swap_player_textures(skeleton_tex, character(player_character), false);
                     break;
                 }
+            }
+        }
+
+        if (on_title_screen) {
+            time_since_generated = 0;
+            want_gen = false;
+            GENERATE_LEVEL = false;
+            GAME_PAUSED = true;
+            if (ENTER_PRESSED) {
+                ENTER_PRESSED = false;
+                on_title_screen = false;
             }
         }
 
@@ -17194,7 +17276,16 @@ int main(int argc, char* argv[])
             break;
         }
 
+        if (want_gen && time_since_generated > 1) {
+            //initalize portal spirals
+            for (int i = 0; i < 200; i++) {
+                spiral_cont_step();
+                portal_spiral_step();
+            }
+        }
+
         if (want_gen) {
+            time_since_generated = 0;
             GAME_PAUSED = true;
             //pause game logic for player to pick mutation or portal animation
             bool continue_to_next_level = true;
@@ -17211,6 +17302,12 @@ int main(int argc, char* argv[])
                 GENERATE_LEVEL = true;
             }
         }
+        else {
+            if (!on_title_screen) {
+                time_since_generated++;
+            }
+        }
+
 
         if (GENERATE_LEVEL) {
             want_gen = false;
@@ -18709,94 +18806,7 @@ int main(int argc, char* argv[])
                 play_sound_on_player(snd_flamethrower_end_ID);
             }
             
-            //play sounds
-            float pitch_offset = 0.0f;
-            for (int i = 0; i < 1000; i++) {
-                if (is_looping_sound(i)) {
-                    if (play_sounds_this_frame_count[i] > 0) {
-
-                        //play_sound_in_pool(sound_ID(i), all_sounds, sound_pool, sound_pool_ids_mirror);
-                        bool skip_next = false;
-                        for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
-                            if (sound_pool_ids_mirror[snd__] == sound_ID(i)) {
-                                //float PV = all_sounds_mirror[i].pitch_variance;
-                                //sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
-                                //sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
-                                sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                                //sound_pool[snd__].setLoop(true);
-                                //sound_pool[snd__].play();
-                                skip_next = true;
-                                break;
-                            }
-                        }
-                        //if no same sound is already playing
-                        if (!skip_next) {
-                            for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
-                                if (sound_pool[snd__].getStatus() != sf::Sound::Playing) {
-                                    float PV = all_sounds_mirror[i].pitch_variance;
-                                    sound_pool[snd__].setBuffer(all_sounds[i]);
-                                    sound_pool[snd__].setVolume(all_sounds_mirror[i].volume);
-                                    sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
-                                    sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
-                                    sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                                    sound_pool[snd__].setLoop(true);
-                                    sound_pool[snd__].play();
-                                    sound_pool_ids_mirror[snd__] = sound_ID(i);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    else {
-                        for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
-                            if (sound_pool_ids_mirror[snd__] == sound_ID(i)) {
-                                sound_pool[snd__].stop();
-                                sound_pool_ids_mirror[snd__] = snd_none_ID;
-                                break;
-                            }
-                        }
-                    }
-                }
-                else {
-                    if (play_sounds_this_frame_count[i] > 0) {
-
-                        //play_sound_in_pool(sound_ID(i), all_sounds, sound_pool, sound_pool_ids_mirror);
-                        bool skip_next = false;
-                        for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
-                            if (sound_pool_ids_mirror[snd__] == sound_ID(i)) {
-                                float PV = all_sounds_mirror[i].pitch_variance;
-                                sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
-                                sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
-                                sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                                sound_pool[snd__].setLoop(false);
-                                sound_pool[snd__].play();
-                                skip_next = true;
-                                break;
-                            }
-                        }
-                        //if no same sound is already playing
-                        if (!skip_next) {
-                            for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
-                                if (sound_pool[snd__].getStatus() != sf::Sound::Playing) {
-                                    float PV = all_sounds_mirror[i].pitch_variance;
-                                    sound_pool[snd__].setBuffer(all_sounds[i]);
-                                    sound_pool[snd__].setVolume(all_sounds_mirror[i].volume);
-                                    sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
-                                    sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
-                                    sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
-                                    sound_pool[snd__].setLoop(false);
-                                    sound_pool[snd__].play();
-                                    sound_pool_ids_mirror[snd__] = sound_ID(i);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-                play_sounds_this_frame_count[i] = 0;
-                play_sounds_this_frame_pos[i].x = 0;
-                play_sounds_this_frame_pos[i].y = 0;
-            }
+           
 
 
             //set looping sounds to not play if not set next frame
@@ -18836,6 +18846,96 @@ int main(int argc, char* argv[])
             add_object_indexs_to_2Dvector(0, max_objects);
             //so they still get drawn
         }
+
+        //play sounds
+        float pitch_offset = 0.0f;
+        for (int i = 0; i < 1000; i++) {
+            if (is_looping_sound(i)) {
+                if (play_sounds_this_frame_count[i] > 0) {
+
+                    //play_sound_in_pool(sound_ID(i), all_sounds, sound_pool, sound_pool_ids_mirror);
+                    bool skip_next = false;
+                    for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
+                        if (sound_pool_ids_mirror[snd__] == sound_ID(i)) {
+                            //float PV = all_sounds_mirror[i].pitch_variance;
+                            //sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
+                            //sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
+                            sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
+                            //sound_pool[snd__].setLoop(true);
+                            //sound_pool[snd__].play();
+                            skip_next = true;
+                            break;
+                        }
+                    }
+                    //if no same sound is already playing
+                    if (!skip_next) {
+                        for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
+                            if (sound_pool[snd__].getStatus() != sf::Sound::Playing) {
+                                float PV = all_sounds_mirror[i].pitch_variance;
+                                sound_pool[snd__].setBuffer(all_sounds[i]);
+                                sound_pool[snd__].setVolume(all_sounds_mirror[i].volume);
+                                sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
+                                sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
+                                sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
+                                sound_pool[snd__].setLoop(true);
+                                sound_pool[snd__].play();
+                                sound_pool_ids_mirror[snd__] = sound_ID(i);
+                                break;
+                            }
+                        }
+                    }
+                }
+                else {
+                    for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
+                        if (sound_pool_ids_mirror[snd__] == sound_ID(i)) {
+                            sound_pool[snd__].stop();
+                            sound_pool_ids_mirror[snd__] = snd_none_ID;
+                            break;
+                        }
+                    }
+                }
+            }
+            else {
+                if (play_sounds_this_frame_count[i] > 0) {
+
+                    //play_sound_in_pool(sound_ID(i), all_sounds, sound_pool, sound_pool_ids_mirror);
+                    bool skip_next = false;
+                    for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
+                        if (sound_pool_ids_mirror[snd__] == sound_ID(i)) {
+                            float PV = all_sounds_mirror[i].pitch_variance;
+                            sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
+                            sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
+                            sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
+                            sound_pool[snd__].setLoop(false);
+                            sound_pool[snd__].play();
+                            skip_next = true;
+                            break;
+                        }
+                    }
+                    //if no same sound is already playing
+                    if (!skip_next) {
+                        for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
+                            if (sound_pool[snd__].getStatus() != sf::Sound::Playing) {
+                                float PV = all_sounds_mirror[i].pitch_variance;
+                                sound_pool[snd__].setBuffer(all_sounds[i]);
+                                sound_pool[snd__].setVolume(all_sounds_mirror[i].volume);
+                                sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
+                                sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
+                                sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
+                                sound_pool[snd__].setLoop(false);
+                                sound_pool[snd__].play();
+                                sound_pool_ids_mirror[snd__] = sound_ID(i);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            play_sounds_this_frame_count[i] = 0;
+            play_sounds_this_frame_pos[i].x = 0;
+            play_sounds_this_frame_pos[i].y = 0;
+        }
+
         //end of everything that shouldnt happen when paused
 
         //get camera position to determine what cells to draw
@@ -19044,12 +19144,14 @@ int main(int argc, char* argv[])
                         floor_textures_B[floor_textures_BArrayIndex].setPosition(currDrawPosition - sf::Vector2f{ 0, 0 });
                         floor_textures_B[floor_textures_BArrayIndex].setTextureRect(sf::IntRect{ 32 * choice, 36, 32, 32 });
                         floor_textures_BArrayIndex++;
+                        expand_vector(floor_textures_B, allFloorsBs_tex, floor_textures_BArrayIndex, floor_textures_B_max);
 
                         //bloom
                         floor_textures_bloom[floor_textures_bloomArrayIndex].setColor({ 255, 255, 255, 255 });
                         floor_textures_bloom[floor_textures_bloomArrayIndex].setPosition(currDrawPosition - sf::Vector2f(4, 4));
                         floor_textures_bloom[floor_textures_bloomArrayIndex].setTextureRect(sf::IntRect{ 0, 0, 40, 40 });
                         floor_textures_bloomArrayIndex++;
+                        expand_vector(floor_textures_bloom, floor_b_2_1_bloom, floor_textures_bloomArrayIndex, floor_textures_bloom_max);
                         //draw light in dark level
                         draw_light(currDrawPosition + cameraPos + sf::Vector2f(16, 16), the_darkness, 32 + rand() % 4, 0);
                     }
@@ -19061,6 +19163,7 @@ int main(int argc, char* argv[])
                         floor_textures[floor_texturesArrayIndex].setPosition(currDrawPosition);
                         floor_textures[floor_texturesArrayIndex].setTextureRect(sf::IntRect{ 32 * choice, 32 * area, 32, 32 });
                         floor_texturesArrayIndex++;
+                        expand_vector(floor_textures, allFloors_tex, floor_texturesArrayIndex, floor_textures_max);
                     }
                 }
                 else if (area == 0) {
@@ -19071,11 +19174,13 @@ int main(int argc, char* argv[])
                     floor_textures[floor_texturesArrayIndex].setPosition(currDrawPosition);
                     floor_textures[floor_texturesArrayIndex].setTextureRect(sf::IntRect{ 32 * choice, 32 * area, 32, 32 });
                     floor_texturesArrayIndex++;
+                    expand_vector(floor_textures, allFloors_tex, floor_texturesArrayIndex, floor_textures_max);
 
                     T2_floor_tiles_tex[T2_floor_tiles_texArrayIndex].setColor({ 255, 255, 255, 255 });
                     T2_floor_tiles_tex[T2_floor_tiles_texArrayIndex].setPosition(currDrawPosition - sf::Vector2f{ 16 , 16 });
                     T2_floor_tiles_tex[T2_floor_tiles_texArrayIndex].setTextureRect(sf::IntRect{ 64 * choice, 0, 64, 96 });
                     T2_floor_tiles_texArrayIndex++;
+                    expand_vector(T2_floor_tiles_tex, Floor_T2_Tiles_2, T2_floor_tiles_texArrayIndex, T2_floor_tiles_tex_max);
                 }
                 else {
                     if (is_b_tile) {
@@ -19088,6 +19193,7 @@ int main(int argc, char* argv[])
                         floor_textures_B[floor_textures_BArrayIndex].setPosition(currDrawPosition - sf::Vector2f{ float(Btile_size - 32) / 2, float(Btile_size - 32) / 2 });
                         floor_textures_B[floor_textures_BArrayIndex].setTextureRect(sf::IntRect{ Btile_size * choice, area_offset_, Btile_size, Btile_size });
                         floor_textures_BArrayIndex++;
+                        expand_vector(floor_textures_B, allFloorsBs_tex, floor_textures_BArrayIndex, floor_textures_B_max);
                         
                     }
                     else {
@@ -19104,6 +19210,7 @@ int main(int argc, char* argv[])
                         floor_textures[floor_texturesArrayIndex].setPosition(currDrawPosition);
                         floor_textures[floor_texturesArrayIndex].setTextureRect(sf::IntRect{ 32 * choice, 32 * area, 32, 32 });
                         floor_texturesArrayIndex++;
+                        expand_vector(floor_textures, allFloors_tex, floor_texturesArrayIndex, floor_textures_max);
                     }
                 }
             }
@@ -19185,12 +19292,14 @@ int main(int argc, char* argv[])
                     wall_boarder_textures[wallBoardeArrayIndex].setPosition(currDrawPosition - sf::Vector2f{ 0, 8 });
                     wall_boarder_textures[wallBoardeArrayIndex].setTextureRect(sf::IntRect{ 24 * area, 24 * choice2, 24, 24 });
                     wallBoardeArrayIndex++;
+                    expand_vector(wall_boarder_textures, allWallBoarders, wallBoardeArrayIndex, wall_boarder_textures_max);
 
 
                     wall_shadow_textures[wall_shadow_texturesIndex].setColor({ 255, 255, 255, 255 });
                     wall_shadow_textures[wall_shadow_texturesIndex].setPosition(currDrawPosition - sf::Vector2f{ 4, -8 });
                     wall_shadow_textures[wall_shadow_texturesIndex].setTextureRect(sf::IntRect{ 24 * area, 24 * choice2, 24, 24 });
                     wall_shadow_texturesIndex++;
+                    expand_vector(wall_shadow_textures, Wall1shadow, wall_shadow_texturesIndex, wall_shadow_textures_max);
 
                     int wall_transition = 8;
 
@@ -19206,6 +19315,7 @@ int main(int argc, char* argv[])
                     wall_textures[wall_texturesArrayIndex].setPosition(currDrawPosition - sf::Vector2f{0, 8});
                     wall_textures[wall_texturesArrayIndex].setTextureRect(sf::IntRect{ 16 * choice, 16 * (area + wall_transition), 16, 16 });
                     wall_texturesArrayIndex++;
+                    expand_vector(wall_textures, allWallTops, wall_texturesArrayIndex, wall_textures_max);
 
                     if (game_area[i][j + 1].my_grid_type != wall) {     //if there isnt a wall undernearth a bottom wall needs to be drawn
                         int choice = (i + j) % 4;
@@ -19213,6 +19323,7 @@ int main(int argc, char* argv[])
                         wall_textures_bot[wall_textures_botArrayIndex].setPosition(currDrawPosition);
                         wall_textures_bot[wall_textures_botArrayIndex].setTextureRect(sf::IntRect{ 16 * choice, 16 * area, 16, 16 });
                         wall_textures_botArrayIndex++;
+                        expand_vector(wall_textures_bot, allWallBots, wall_textures_botArrayIndex, wall_textures_bot_max);
                     }
                 }
                 else if (game_area[i][j].my_grid_type == boarder) {
@@ -19226,11 +19337,14 @@ int main(int argc, char* argv[])
                     explo_tiles_tex[explo_tiles_texArrayIndex].setPosition(currDrawPosition - sf::Vector2f{1, 1});
                     explo_tiles_tex[explo_tiles_texArrayIndex].setTextureRect(sf::IntRect{ 18 * choice, 18 * area, 18, 18 });
                     explo_tiles_texArrayIndex++;
+                    expand_vector(explo_tiles_tex, allExploTiles, explo_tiles_texArrayIndex, explo_tiles_tex_max);
+
                     if (area == 0) {
                         T2_explo_tiles_tex[T2_explo_tiles_texArrayIndex].setColor({ 255, 255, 255, 255 });
                         T2_explo_tiles_tex[T2_explo_tiles_texArrayIndex].setPosition(currDrawPosition - sf::Vector2f{ 1 + 7 , 1 + 7 });
                         T2_explo_tiles_tex[T2_explo_tiles_texArrayIndex].setTextureRect(sf::IntRect{ 32 * choice, 0, 32, 48 });
                         T2_explo_tiles_texArrayIndex++;
+                        expand_vector(T2_explo_tiles_tex, Explo_T2_Tiles, T2_explo_tiles_texArrayIndex, T2_explo_tiles_tex_max);
                     }
                     
                     if (area == 1) {
@@ -19290,6 +19404,7 @@ int main(int argc, char* argv[])
                                 variable_textures_top[variableTexturesTopIndex].setOrigin(24, 24);
                                 variable_textures_top[variableTexturesTopIndex].setScale(1, 1);
                                 variableTexturesTopIndex++;
+                                expand_vector(variable_textures_top, weapons_tex, variableTexturesTopIndex, variable_textures_top_max);
                             }
                         }
 
@@ -19447,6 +19562,7 @@ int main(int argc, char* argv[])
                             variable_textures[variableTexturesIndex].setOrigin(0, 0);
                             variable_textures[variableTexturesIndex].setScale(300, 1);
                             variableTexturesIndex++;
+                            expand_vector(variable_textures, weapons_tex, variableTexturesIndex, variable_textures_max);
                         }
 
                         if (crystal_teleport_time > 0) {
@@ -19577,6 +19693,7 @@ int main(int argc, char* argv[])
                         variable_textures[variableTexturesIndex].setOrigin(16, 16);
                         variable_textures[variableTexturesIndex].setScale(1, 1);
                         variableTexturesIndex++;
+                        expand_vector(variable_textures, weapons_tex, variableTexturesIndex, variable_textures_max);
                         break;
                     case bullet1:       //bullets
                         if (allObjects[idx].image_index == 0) {
@@ -19589,6 +19706,7 @@ int main(int argc, char* argv[])
                             variable_textures_bloom[variableTexturesBloomIndex].setOrigin(16, 16);
                             variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
                             variableTexturesBloomIndex++;
+                            expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
                         }
                         else {
                             bullet_1_batchable[bullet_1_batchableIndex].setColor({ 255, 255, 255, 255 });
@@ -19596,7 +19714,7 @@ int main(int argc, char* argv[])
                             bullet_1_batchable[bullet_1_batchableIndex].setRotation(allObjects[idx].direction + 180.0f);
                             //add_rotateable_sprite(bullet_1_batchableIndex, allObjects[idx].position - cameraPos, allObjects[idx].direction + 180.0f, bullet_1_batchable, bullet1_2tex);
                             bullet_1_batchableIndex++;
-
+                            expand_vector(bullet_1_batchable, bullet1_2tex, bullet_1_batchableIndex, bullet_1_batchable_max);
                         }
 
                         break;
@@ -19615,6 +19733,7 @@ int main(int argc, char* argv[])
                         variable_textures[variableTexturesIndex].setOrigin(4, 4);
                         variable_textures[variableTexturesIndex].setScale(1, 1);
                         variableTexturesIndex++;
+                        expand_vector(variable_textures, weapons_tex, variableTexturesIndex, variable_textures_max);
 
                         break;
                     case plant_tangle:
@@ -19640,6 +19759,7 @@ int main(int argc, char* argv[])
                                 variable_textures[variableTexturesIndex].setOrigin(24, 24);
                                 variable_textures[variableTexturesIndex].setScale(allObjects[idx].scale, 1);
                                 variableTexturesIndex++;
+                                expand_vector(variable_textures, weapons_tex, variableTexturesIndex, variable_textures_max);
                             }
                         }
 
@@ -19651,10 +19771,12 @@ int main(int argc, char* argv[])
                         variable_textures[variableTexturesIndex].setOrigin(24, 24);
                         variable_textures[variableTexturesIndex].setScale(allObjects[idx].scale, 1);
                         variableTexturesIndex++;
+                        expand_vector(variable_textures, weapons_tex, variableTexturesIndex, variable_textures_max);
 
                         break;
                     case revenge_bullet:
                         choice = int(allObjects[idx].image_index * 0.4f) % 5;
+                        expand_vector(rotateable_sprites_bullets, revenge_bullet_1tex, rotateableSpriteBulletIndex, rotateable_sprites_bullets_max);
                         switch (choice) {
                         default:
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(revenge_bullet_1tex);
@@ -19679,6 +19801,7 @@ int main(int argc, char* argv[])
                         rotateableSpriteBulletIndex++;
                         break;
                     case idpd_bullet:       //bullets destroy animation
+                        expand_vector(rotateable_sprites_bullets, revenge_bullet_1tex, rotateableSpriteBulletIndex, rotateable_sprites_bullets_max);
                         if (allObjects[idx].image_index == 1) {
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(idpd_bullettex);
                         }
@@ -19702,9 +19825,11 @@ int main(int argc, char* argv[])
                             variable_textures_bloom[variableTexturesBloomIndex].setOrigin(26, 26);
                             variable_textures_bloom[variableTexturesBloomIndex].setScale((allObjects[idx].speed.x > 0) * 2 - 1, 1);
                             variableTexturesBloomIndex++;
+                            expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
                         }
                         else {
                             choice = int(allObjects[idx].image_index * 0.4f) % 4;
+                            expand_vector(rotateable_sprites_bullets, revenge_bullet_1tex, rotateableSpriteBulletIndex, rotateable_sprites_bullets_max);
                             switch (choice) {
                             default:
                                 rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(guardian_bullet_1tex);
@@ -19743,6 +19868,7 @@ int main(int argc, char* argv[])
                         variable_textures_bloom[variableTexturesBloomIndex].setOrigin(16, 16);
                         variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
                         variableTexturesBloomIndex++;
+                        expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
 
                         break;
                     case T2_bullet:
@@ -19755,9 +19881,11 @@ int main(int argc, char* argv[])
                         variable_textures_bloom[variableTexturesBloomIndex].setOrigin(16, 16);
                         variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
                         variableTexturesBloomIndex++;
+                        expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
                         break;
                     case guardian_bullet_destroy:
                         choice = int(allObjects[idx].rotation);
+                        expand_vector(rotateable_sprites_bullets, revenge_bullet_1tex, rotateableSpriteBulletIndex, rotateable_sprites_bullets_max);
                         switch (choice) {
                         default:
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(guardian_bullet_destroy_1tex);
@@ -19782,7 +19910,7 @@ int main(int argc, char* argv[])
                         rotateableSpriteBulletIndex++;
                         break;
                     case bullet2:
-                        
+                        expand_vector(bullet_2_batchable, bullet2_1tex, bullet_2_batchableIndex, bullet_2_batchable_max);
                         bullet_2_batchable[bullet_2_batchableIndex].setColor({ 255, 255, 255, 255 });
                         bullet_2_batchable[bullet_2_batchableIndex].setPosition(allObjects[idx].position - cameraPos);
                         bullet_2_batchable[bullet_2_batchableIndex].setRotation(allObjects[idx].direction);
@@ -19793,6 +19921,7 @@ int main(int argc, char* argv[])
                         break;
                     case bullet1_destroy:       //bullets destroy animation
                         choice = int(allObjects[idx].image_index * 0.4f);
+                        expand_vector(rotateable_sprites_bullets, revenge_bullet_1tex, rotateableSpriteBulletIndex, rotateable_sprites_bullets_max);
                         switch (choice) {
                         case 0:
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(bullet1_destroy1tex);
@@ -19814,6 +19943,7 @@ int main(int argc, char* argv[])
                         break;
                     case idpd_bullet_destroy:       //bullets destroy animation
                         choice = int(allObjects[idx].image_index * 0.4f);
+                        expand_vector(rotateable_sprites_bullets, revenge_bullet_1tex, rotateableSpriteBulletIndex, rotateable_sprites_bullets_max);
                         switch (choice) {
                         case 0:
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(idpd_bullet_destroy1tex);
@@ -19848,6 +19978,7 @@ int main(int argc, char* argv[])
                             explosions_sprites[explosionIndex].setTextureRect(sf::IntRect{ 48 * choice, 248, 48, 48 });
                         }
                         explosionIndex++;
+                        expand_vector(explosions_sprites, explosion_tex, explosionIndex, explosions_sprites_max);
                         //draw light in dark level
                         draw_light(allObjects[idx].position, the_darkness, 160 + rand() % 4, 110 + rand() % 3);
                         break;
@@ -19858,6 +19989,7 @@ int main(int argc, char* argv[])
                         explosions_sprites[explosionIndex].setPosition(allObjects[idx].position - cameraPos);
                         explosions_sprites[explosionIndex].setTextureRect(sf::IntRect{ 32 * choice, 216, 32, 32 });
                         explosionIndex++;
+                        expand_vector(explosions_sprites, explosion_tex, explosionIndex, explosions_sprites_max);
                         //draw light in dark level
                         draw_light(allObjects[idx].position, the_darkness, 140 + rand() % 4, 40 + rand() % 3);
                         break;
@@ -19878,6 +20010,7 @@ int main(int argc, char* argv[])
                             explosions_sprites[explosionIndex].setTextureRect(sf::IntRect{ 48 * choice, 144, 48, 48 });
                         }
                         explosionIndex++;
+                        expand_vector(explosions_sprites, explosion_tex, explosionIndex, explosions_sprites_max);
                         //draw light in dark level
                         draw_light(allObjects[idx].position, the_darkness, 160 + rand() % 4, 110 + rand() % 3);
                         break;
@@ -19888,12 +20021,14 @@ int main(int argc, char* argv[])
                         plasma_impact_sprites[plasmaImpactIDX].setPosition(allObjects[idx].position - cameraPos);
                         plasma_impact_sprites[plasmaImpactIDX].setTextureRect({ 32 * choice, 0, 32, 32 });
                         plasmaImpactIDX++;
+                        expand_vector(plasma_impact_sprites, plasma_impact_tex, plasmaImpactIDX, plasma_impact_sprites_max);
                         break;
                     case scorch:
                         scorch_sprites[scorch_spritesIndex].setColor({ 255, 255, 255, 255 });
                         scorch_sprites[scorch_spritesIndex].setPosition(allObjects[idx].position - cameraPos);
                         scorch_sprites[scorch_spritesIndex].setTextureRect({ 0, 0, 48, 48 });
                         scorch_spritesIndex++;
+                        expand_vector(scorch_sprites, scorch_tex, scorch_spritesIndex, scorch_sprites_max);
                         break;
                     case weapon_drop:
                     case thrown_wep:
@@ -19903,6 +20038,7 @@ int main(int argc, char* argv[])
                         weapon_sprites[weapon_spritesIndex].setRotation(allObjects[idx].growspeed);
                         weapon_sprites[weapon_spritesIndex].setTextureRect({ 0, allObjects[idx].size * 36, 36, 36 });
                         weapon_spritesIndex++;
+                        expand_vector(weapon_sprites, weapons_tex, weapon_spritesIndex, weapon_sprites_max);
                         break;
                     case nade:
                         if (allObjects[idx].alarm3 != -1) {
@@ -19947,8 +20083,10 @@ int main(int argc, char* argv[])
                                 }
                                 rotateable_effects_small[rotateableEffectsSmallIndex].setTextureRect(sf::IntRect{ choice * 8, choice2, 8, 8 });
                                 rotateableEffectsSmallIndex++;
+                                expand_vector(rotateable_effects_small, allSmallEffectSprites, rotateableEffectsSmallIndex, rotateable_effects_small_max);
                             }
                             else if (A3 == 4 || A3 == 5 || A3 == 15 || A3 == 16) {//medium effects
+                                expand_vector(rotateable_effects_medium, allMediumEffectSprites, rotateableEffectsMediumIndex, rotateable_effects_medium_max);
                                 rotateable_effects_medium[rotateableEffectsMediumIndex].setColor({ 255, 255, 255, 255 });
                                 rotateable_effects_medium[rotateableEffectsMediumIndex].setPosition(allObjects[idx].position - cameraPos);
                                 rotateable_effects_medium[rotateableEffectsMediumIndex].setRotation(allObjects[idx].direction * degreestoradians);
@@ -19957,45 +20095,57 @@ int main(int argc, char* argv[])
                                     choice = 0;
                                     choice2 = 288;
                                     //flame on back of rocket
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setColor({ 255, 255, 255, 255 });
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setPosition(allObjects[idx].position - cameraPos - sf::Vector2f(allObjects[idx].speed.x * 1.2, allObjects[idx].speed.y * 1.2));
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setRotation(allObjects[idx].direction * degreestoradians);
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ (int(allObjects[idx].alarm1 * 0.4f) % 3) * 24, 504, 24, 24 });
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setScale(sf::Vector2f(1, 1));
-                                    rotateableEffectsLargeIndex++;
+                                    variable_textures_bloom[variableTexturesBloomIndex].setTexture(allBigEffectSprites);
+                                    variable_textures_bloom[variableTexturesBloomIndex].setColor({ 255, 255, 255, 255 });
+                                    variable_textures_bloom[variableTexturesBloomIndex].setPosition(allObjects[idx].position - cameraPos - sf::Vector2f(allObjects[idx].speed.x * 0.45, allObjects[idx].speed.y * 0.45));
+                                    variable_textures_bloom[variableTexturesBloomIndex].setRotation(allObjects[idx].direction * degreestoradians);
+                                    variable_textures_bloom[variableTexturesBloomIndex].setTextureRect(sf::IntRect{ (int(allObjects[idx].alarm1 * 0.4f) % 3) * 24, 504, 24, 24 });
+                                    variable_textures_bloom[variableTexturesBloomIndex].setOrigin(24, 12);
+                                    variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
+                                    variableTexturesBloomIndex++;
+                                    expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
                                 }
                                 if (allObjects[idx].alarm3 == 5) {
                                     choice = 0;
                                     choice2 = 304;
                                     //flame on back of nuke
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setColor({ 255, 255, 255, 255 });
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setPosition(allObjects[idx].position - cameraPos - sf::Vector2f(allObjects[idx].speed.x * 4, allObjects[idx].speed.y * 4));
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setRotation(allObjects[idx].direction* degreestoradians);
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ (int(allObjects[idx].alarm1 * 0.4f) % 3) * 24, 528, 24, 24 });
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setScale(sf::Vector2f(1, 1));
-                                    rotateableEffectsLargeIndex++;
+                                    variable_textures_bloom[variableTexturesBloomIndex].setTexture(allBigEffectSprites);
+                                    variable_textures_bloom[variableTexturesBloomIndex].setColor({ 255, 255, 255, 255 });
+                                    variable_textures_bloom[variableTexturesBloomIndex].setPosition(allObjects[idx].position - cameraPos - sf::Vector2f(allObjects[idx].speed.x * 1, allObjects[idx].speed.y * 1));
+                                    variable_textures_bloom[variableTexturesBloomIndex].setRotation(allObjects[idx].direction* degreestoradians);
+                                    variable_textures_bloom[variableTexturesBloomIndex].setTextureRect(sf::IntRect{ (int(allObjects[idx].alarm1 * 0.4f) % 3) * 24, 528, 24, 24 });
+                                    variable_textures_bloom[variableTexturesBloomIndex].setOrigin(24, 12);
+                                    variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
+                                    variableTexturesBloomIndex++;
+                                    expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
                                 }
                                 if (allObjects[idx].alarm3 == 15) {
                                     choice = 1;
                                     choice2 = 288;
                                     //flame on back of rocket
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setColor({ 255, 255, 255, 255 });
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setPosition(allObjects[idx].position - cameraPos - sf::Vector2f(allObjects[idx].speed.x * 1.2, allObjects[idx].speed.y * 1.2));
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setRotation(allObjects[idx].direction* degreestoradians);
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ (int(allObjects[idx].alarm1 * 0.4f) % 3) * 24, 504, 24, 24 });
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setScale(sf::Vector2f(1, 1));
-                                    rotateableEffectsLargeIndex++;
+                                    variable_textures_bloom[variableTexturesBloomIndex].setTexture(allBigEffectSprites);
+                                    variable_textures_bloom[variableTexturesBloomIndex].setColor({ 255, 255, 255, 255 });
+                                    variable_textures_bloom[variableTexturesBloomIndex].setPosition(allObjects[idx].position - cameraPos - sf::Vector2f(allObjects[idx].speed.x * 0.45, allObjects[idx].speed.y * 0.45));
+                                    variable_textures_bloom[variableTexturesBloomIndex].setRotation(allObjects[idx].direction * degreestoradians);
+                                    variable_textures_bloom[variableTexturesBloomIndex].setTextureRect(sf::IntRect{ (int(allObjects[idx].alarm1 * 0.4f) % 3) * 24, 504, 24, 24 });
+                                    variable_textures_bloom[variableTexturesBloomIndex].setOrigin(24, 12);
+                                    variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
+                                    variableTexturesBloomIndex++;
+                                    expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
                                 }
                                 if (allObjects[idx].alarm3 == 16) {
                                     choice = 1;
                                     choice2 = 304;
                                     //flame on back of nuke
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setColor({ 255, 255, 255, 255 });
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setPosition(allObjects[idx].position - cameraPos - sf::Vector2f(allObjects[idx].speed.x * 4, allObjects[idx].speed.y * 4));
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setRotation(allObjects[idx].direction * degreestoradians);
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ (int(allObjects[idx].alarm1 * 0.4f) % 3) * 24, 528, 24, 24 });
-                                    rotateable_effects_large[rotateableEffectsLargeIndex].setScale(sf::Vector2f(1, 1));
-                                    rotateableEffectsLargeIndex++;
+                                    variable_textures_bloom[variableTexturesBloomIndex].setTexture(allBigEffectSprites);
+                                    variable_textures_bloom[variableTexturesBloomIndex].setColor({ 255, 255, 255, 255 });
+                                    variable_textures_bloom[variableTexturesBloomIndex].setPosition(allObjects[idx].position - cameraPos - sf::Vector2f(allObjects[idx].speed.x * 1, allObjects[idx].speed.y * 1));
+                                    variable_textures_bloom[variableTexturesBloomIndex].setRotation(allObjects[idx].direction * degreestoradians);
+                                    variable_textures_bloom[variableTexturesBloomIndex].setTextureRect(sf::IntRect{ (int(allObjects[idx].alarm1 * 0.4f) % 3) * 24, 528, 24, 24 });
+                                    variable_textures_bloom[variableTexturesBloomIndex].setOrigin(24, 12);
+                                    variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
+                                    variableTexturesBloomIndex++;
+                                    expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
                                 }
                                 rotateable_effects_medium[rotateableEffectsMediumIndex].setTextureRect(sf::IntRect{ choice * 16, choice2, 16, 16 });
                                 rotateableEffectsMediumIndex++;
@@ -20014,6 +20164,7 @@ int main(int argc, char* argv[])
                                     rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ (int((allObjects[idx].alarm1 + 300) * 0.4f) % 6) * 24, choice2, 24, 24 });
                                 }
                                 rotateableEffectsLargeIndex++;
+                                expand_vector(rotateable_effects_large, allBigEffectSprites, rotateableEffectsLargeIndex, rotateable_effects_large_max);
                             }
                         }
                         break;
@@ -20024,6 +20175,7 @@ int main(int argc, char* argv[])
                         rotateable_effects_small[rotateableEffectsSmallIndex].setRotation(allObjects[idx].rotation);
                         rotateable_effects_small[rotateableEffectsSmallIndex].setTextureRect(sf::IntRect{choice * 8, 32, 8, 8 });
                         rotateableEffectsSmallIndex++;
+                        expand_vector(rotateable_effects_small, allSmallEffectSprites, rotateableEffectsSmallIndex, rotateable_effects_small_max);
                         break;
                     case idpd_nade_remove:
                         choice = int(allObjects[idx].image_index * 0.4f);
@@ -20050,6 +20202,7 @@ int main(int argc, char* argv[])
                         rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setRotation(allObjects[idx].rotation);
                         rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setScale(1, 1);
                         rotateableSpriteBulletHugeIndex++;
+                        expand_vector(rotateable_sprites_bullets_huge, idpd_nade_remove_1, rotateableSpriteBulletHugeIndex, rotateable_sprites_bullets_huge_max);
                         break;
                     case idpd_portal_charge:
                         choice = int(allObjects[idx].image_index * 0.4f);
@@ -20058,6 +20211,7 @@ int main(int argc, char* argv[])
                         rotateable_effects_small[rotateableEffectsSmallIndex].setRotation(0.0f);
                         rotateable_effects_small[rotateableEffectsSmallIndex].setTextureRect(sf::IntRect{ allObjects[idx].image_index * 8, 40, 8, 8});
                         rotateableEffectsSmallIndex++;
+                        expand_vector(rotateable_effects_small, allSmallEffectSprites, rotateableEffectsSmallIndex, rotateable_effects_small_max);
                         break;
                     case idpd_spawn:
 
@@ -20068,6 +20222,7 @@ int main(int argc, char* argv[])
                             rotateable_effects_small_bloom[rotateableEffectsSmallBloomIndex].setRotation(0.0f);
                             rotateable_effects_small_bloom[rotateableEffectsSmallBloomIndex].setTextureRect(sf::IntRect{ choice * 8, 104, 8, 8 });
                             rotateableEffectsSmallBloomIndex++;
+                            expand_vector(rotateable_effects_small_bloom, allSmallEffectSprites, rotateableEffectsSmallBloomIndex, rotateable_effects_small_bloom_max);
                         }
                         else if (allObjects[idx].alarm2 >= 13) {
                             choice = int(allObjects[idx].image_index * 0.4f) % 4;
@@ -20076,6 +20231,7 @@ int main(int argc, char* argv[])
                             rotateable_effects_small_bloom[rotateableEffectsSmallBloomIndex].setRotation(0.0f);
                             rotateable_effects_small_bloom[rotateableEffectsSmallBloomIndex].setTextureRect(sf::IntRect{ choice * 8, 40, 8, 8 });
                             rotateableEffectsSmallBloomIndex++;
+                            expand_vector(rotateable_effects_small_bloom, allSmallEffectSprites, rotateableEffectsSmallBloomIndex, rotateable_effects_small_bloom_max);
                         }
                         else {
                             choice = int(allObjects[idx].image_index * 0.4f);
@@ -20087,12 +20243,14 @@ int main(int argc, char* argv[])
                             variable_textures_bloom[variableTexturesBloomIndex].setOrigin(16, 16);
                             variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
                             variableTexturesBloomIndex++;
+                            expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
                         }
 
 
                         break;
                     case melee_slash:
                         choice = int(allObjects[idx].image_index * 0.4f);
+                        expand_vector(rotateable_sprites_bullets_huge, idpd_nade_remove_1, rotateableSpriteBulletHugeIndex, rotateable_sprites_bullets_huge_max);
                         if (choice == 0) {
                             switch (allObjects[idx].damage) {
                             default:
@@ -20177,6 +20335,7 @@ int main(int argc, char* argv[])
                         rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setRotation(allObjects[idx].direction* degreestoradians);
                         rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setScale(1, 1);
                         rotateableSpriteBulletHugeIndex++;
+                        expand_vector(rotateable_sprites_bullets_huge, idpd_nade_remove_1, rotateableSpriteBulletHugeIndex, rotateable_sprites_bullets_huge_max);
 
                         break;
                     case melee_shank:
@@ -20217,6 +20376,7 @@ int main(int argc, char* argv[])
                         rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setRotation(allObjects[idx].direction * degreestoradians);
                         rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setScale(1, 1);
                         rotateableSpriteBulletHugeIndex++;
+                        expand_vector(rotateable_sprites_bullets_huge, idpd_nade_remove_1, rotateableSpriteBulletHugeIndex, rotateable_sprites_bullets_huge_max);
 
                         break;
                     case debris:
@@ -20226,10 +20386,12 @@ int main(int argc, char* argv[])
                         rotateable_effects_small[rotateableEffectsSmallIndex].setRotation(allObjects[idx].friction);
                         rotateable_effects_small[rotateableEffectsSmallIndex].setTextureRect(sf::IntRect{ 8 * choice, 8 * (14 + area), 8, 8 });
                         rotateableEffectsSmallIndex++;
+                        expand_vector(rotateable_effects_small, allSmallEffectSprites, rotateableEffectsSmallIndex, rotateable_effects_small_max);
                         
                         break;
                     case dust:
                         choice = allObjects[idx].image_index;
+                        expand_vector(rotateable_effects_medium, allMediumEffectSprites, rotateableEffectsMediumIndex, rotateable_effects_medium_max);
                         rotateable_effects_medium[rotateableEffectsMediumIndex].setColor({ 255, 255, 255, 255 });
                         rotateable_effects_medium[rotateableEffectsMediumIndex].setPosition(allObjects[idx].position - cameraPos);
                         rotateable_effects_medium[rotateableEffectsMediumIndex].setRotation(allObjects[idx].direction);
@@ -20248,6 +20410,7 @@ int main(int argc, char* argv[])
                         variable_textures_bloom[variableTexturesBloomIndex].setOrigin(12, 12);
                         variable_textures_bloom[variableTexturesBloomIndex].setScale(sf::Vector2f(allObjects[idx].scale, allObjects[idx].scale));
                         variableTexturesBloomIndex++;
+                        expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
 
                         break;
                     case smoke:
@@ -20258,6 +20421,7 @@ int main(int argc, char* argv[])
                         rotateable_effects_large[rotateableEffectsLargeIndex].setScale(sf::Vector2f(allObjects[idx].scale, allObjects[idx].scale));
                         rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ 24 * choice, 0, 24, 24 });
                         rotateableEffectsLargeIndex++;
+                        expand_vector(rotateable_effects_large, allBigEffectSprites, rotateableEffectsLargeIndex, rotateable_effects_large_max);
 
                         break;
                     case deflect:
@@ -20268,6 +20432,7 @@ int main(int argc, char* argv[])
                         rotateable_effects_large[rotateableEffectsLargeIndex].setScale(sf::Vector2f(1, 1));
                         rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ 24 * choice, 24, 24, 24 });
                         rotateableEffectsLargeIndex++;
+                        expand_vector(rotateable_effects_large, allBigEffectSprites, rotateableEffectsLargeIndex, rotateable_effects_large_max);
 
                         break;
                     case toxic_gas_destroy:
@@ -20280,6 +20445,7 @@ int main(int argc, char* argv[])
                         variable_textures_bloom[variableTexturesBloomIndex].setOrigin(12, 12);
                         variable_textures_bloom[variableTexturesBloomIndex].setScale(sf::Vector2f(allObjects[idx].scale, allObjects[idx].scale));
                         variableTexturesBloomIndex++;
+                        expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
 
                         break;
                     case prop:
@@ -20368,6 +20534,7 @@ int main(int argc, char* argv[])
                             variable_textures_bloom[variableTexturesBloomIndex].setOrigin(8, 8);
                             variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
                             variableTexturesBloomIndex++;
+                            expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
 
                             break;
                         default:
@@ -20390,6 +20557,7 @@ int main(int argc, char* argv[])
                         prop_sprites[prop_spritesIndex].setScale(sf::Vector2f(1, 1));
                         prop_sprites[prop_spritesIndex].setTextureRect(sf::IntRect{ choice, choice2, choice_width, choice_height });
                         prop_spritesIndex++;
+                        expand_vector(prop_sprites, allPropSprites, prop_spritesIndex, prop_sprites_max);
 
                         break;
                     case prop_dead:
@@ -20410,6 +20578,7 @@ int main(int argc, char* argv[])
                         prop_sprites[prop_spritesIndex].setScale(sf::Vector2f(1, 1));
                         prop_sprites[prop_spritesIndex].setTextureRect(sf::IntRect{ choice, choice2, choice_width, choice_height });
                         prop_spritesIndex++;
+                        expand_vector(prop_sprites, allPropSprites, prop_spritesIndex, prop_sprites_max);
 
                         break;
                     case detail:
@@ -20425,6 +20594,7 @@ int main(int argc, char* argv[])
                             under_effects_small[underEffectsSmallIndex].setTextureRect(sf::IntRect{ 12 * choice, 48 + area * 8, 12, 8 });
                         }
                         underEffectsSmallIndex++;
+                        expand_vector(under_effects_small, allSmallEffectSprites, underEffectsSmallIndex, under_effects_small_max);
 
                         break;
                     case chest:
@@ -20449,6 +20619,7 @@ int main(int argc, char* argv[])
                                 choice2 = 512;
                                 break;
                             }
+                            expand_vector(rotateable_effects_medium, allMediumEffectSprites, rotateableEffectsMediumIndex, rotateable_effects_medium_max);
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setColor({ 255, 255, 255, 255 });
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setPosition(allObjects[idx].position - cameraPos);
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setRotation(0);
@@ -20466,6 +20637,7 @@ int main(int argc, char* argv[])
                             if (choice > 6) {
                                 choice = 0;
                             }
+                            expand_vector(rotateable_effects_medium, allMediumEffectSprites, rotateableEffectsMediumIndex, rotateable_effects_medium_max);
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setColor({ 255, 255, 255, 255 });
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setPosition(allObjects[idx].position - cameraPos);
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setRotation(0);
@@ -20476,7 +20648,7 @@ int main(int argc, char* argv[])
                         break;
                     case ammo_pack_destroy:
                         choice = int(allObjects[idx].image_index * 0.4f);
-
+                        expand_vector(rotateable_effects_medium, allMediumEffectSprites, rotateableEffectsMediumIndex, rotateable_effects_medium_max);
                         rotateable_effects_medium[rotateableEffectsMediumIndex].setColor({ 255, 255, 255, 255 });
                         rotateable_effects_medium[rotateableEffectsMediumIndex].setPosition(allObjects[idx].position - cameraPos);
                         rotateable_effects_medium[rotateableEffectsMediumIndex].setRotation(0);
@@ -20486,7 +20658,7 @@ int main(int argc, char* argv[])
                         break;
                     case heal_FX:
                         choice = int(allObjects[idx].image_index * 0.4f);
-
+                        expand_vector(rotateable_effects_medium, allMediumEffectSprites, rotateableEffectsMediumIndex, rotateable_effects_medium_max);
                         rotateable_effects_medium[rotateableEffectsMediumIndex].setColor({ 255, 255, 255, 255 });
                         rotateable_effects_medium[rotateableEffectsMediumIndex].setPosition(allObjects[idx].position - cameraPos);
                         rotateable_effects_medium[rotateableEffectsMediumIndex].setRotation(0);
@@ -20503,6 +20675,7 @@ int main(int argc, char* argv[])
                         rotateable_effects_large[rotateableEffectsLargeIndex].setScale(1, 1);
                         rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ 24 * choice, allObjects[idx].size * 24, 24, 24 });
                         rotateableEffectsLargeIndex++;
+                        expand_vector(rotateable_effects_large, allBigEffectSprites, rotateableEffectsLargeIndex, rotateable_effects_large_max);
                         break;
                     case the_wind:
                         choice = int(allObjects[idx].image_index * 0.4f);
@@ -20513,6 +20686,7 @@ int main(int argc, char* argv[])
                         rotateable_effects_large[rotateableEffectsLargeIndex].setScale(1, 1);
                         rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ 24 * choice, (5 + area) * 24, 24, 24 });
                         rotateableEffectsLargeIndex++;
+                        expand_vector(rotateable_effects_large, allBigEffectSprites, rotateableEffectsLargeIndex, rotateable_effects_large_max);
                         break;
                     case flame:
                         choice = int(allObjects[idx].image_index * allObjects[idx].speeddir) % 8;
@@ -20525,6 +20699,7 @@ int main(int argc, char* argv[])
                         variable_textures_bloom[variableTexturesBloomIndex].setOrigin(8, 8);
                         variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
                         variableTexturesBloomIndex++;
+                        expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
 
                         break;
                     case plasma_particle:
@@ -20535,6 +20710,7 @@ int main(int argc, char* argv[])
                         rotateable_effects_small_bloom[rotateableEffectsSmallBloomIndex].setScale(1, 1);
                         rotateable_effects_small_bloom[rotateableEffectsSmallBloomIndex].setTextureRect(sf::IntRect{ 8 * choice, 24, 8, 8 });
                         rotateableEffectsSmallBloomIndex++;
+                        expand_vector(rotateable_effects_small_bloom, allSmallEffectSprites, rotateableEffectsSmallBloomIndex, rotateable_effects_small_bloom_max);
 
                         break;
                     
@@ -20547,6 +20723,7 @@ int main(int argc, char* argv[])
                             rotateable_effects_small_bloom[rotateableEffectsSmallBloomIndex].setScale(1, 1);
                             rotateable_effects_small_bloom[rotateableEffectsSmallBloomIndex].setTextureRect(sf::IntRect{ 8 * choice, 8, 8, 8 });
                             rotateableEffectsSmallBloomIndex++;
+                            expand_vector(rotateable_effects_small_bloom, allSmallEffectSprites, rotateableEffectsSmallBloomIndex, rotateable_effects_small_bloom_max);
                         }
                         break;
                     case throne_beam_charge_particle:
@@ -20557,6 +20734,7 @@ int main(int argc, char* argv[])
                         rotateable_effects_small_bloom[rotateableEffectsSmallBloomIndex].setScale(1, 1);
                         rotateable_effects_small_bloom[rotateableEffectsSmallBloomIndex].setTextureRect(sf::IntRect{ 8 * choice, 22 * 8, 8, 8 });
                         rotateableEffectsSmallBloomIndex++;
+                        expand_vector(rotateable_effects_small_bloom, allSmallEffectSprites, rotateableEffectsSmallBloomIndex, rotateable_effects_small_bloom_max);
                         break;
                     case rad_destroy:
                         choice = allObjects[idx].image_index;
@@ -20565,6 +20743,7 @@ int main(int argc, char* argv[])
                         rotateable_effects_small[rotateableEffectsSmallIndex].setRotation(0);
                         rotateable_effects_small[rotateableEffectsSmallIndex].setTextureRect(sf::IntRect{ 8 * choice, 16, 8, 8 });
                         rotateableEffectsSmallIndex++;
+                        expand_vector(rotateable_effects_small, allSmallEffectSprites, rotateableEffectsSmallIndex, rotateable_effects_small_max);
                         break;
                     case feather:
                         choice = allObjects[idx].my_hp;
@@ -20573,6 +20752,7 @@ int main(int argc, char* argv[])
                         rotateable_effects_small[rotateableEffectsSmallIndex].setRotation(allObjects[idx].direction);
                         rotateable_effects_small[rotateableEffectsSmallIndex].setTextureRect(sf::IntRect{ choice, 184, 8, 8 });
                         rotateableEffectsSmallIndex++;
+                        expand_vector(rotateable_effects_small, allSmallEffectSprites, rotateableEffectsSmallIndex, rotateable_effects_small_max);
                         break;
                     case stress_sweat:
                         choice = allObjects[idx].image_index;
@@ -20581,6 +20761,7 @@ int main(int argc, char* argv[])
                         rotateable_effects_small[rotateableEffectsSmallIndex].setRotation(allObjects[idx].direction);
                         rotateable_effects_small[rotateableEffectsSmallIndex].setTextureRect(sf::IntRect{ choice, 192, 8, 8 });
                         rotateableEffectsSmallIndex++;
+                        expand_vector(rotateable_effects_small, allSmallEffectSprites, rotateableEffectsSmallIndex, rotateable_effects_small_max);
                         break;
                     case static_effect:
                         choice = int(allObjects[idx].image_index * 0.4f);
@@ -20588,6 +20769,7 @@ int main(int argc, char* argv[])
                             if (allObjects[idx].size == 448 && is_Bskin) {
                                 allObjects[idx].size = 448 + 16;
                             }
+                            expand_vector(rotateable_effects_medium, allMediumEffectSprites, rotateableEffectsMediumIndex, rotateable_effects_medium_max);
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setColor({ 255, 255, 255, 255 });
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setPosition(allObjects[idx].position - cameraPos);
                             rotateable_effects_medium[rotateableEffectsMediumIndex].setRotation(allObjects[idx].direction);
@@ -20602,6 +20784,7 @@ int main(int argc, char* argv[])
                             rotateable_effects_large[rotateableEffectsLargeIndex].setScale(1, 1);
                             rotateable_effects_large[rotateableEffectsLargeIndex].setTextureRect(sf::IntRect{ choice * 24, allObjects[idx].size, 24, 24 });
                             rotateableEffectsLargeIndex++;
+                            expand_vector(rotateable_effects_large, allBigEffectSprites, rotateableEffectsLargeIndex, rotateable_effects_large_max);
                         }
                         else if (allObjects[idx].alarm2 == 4) {
                             variable_textures[variableTexturesIndex].setTexture(allBigEffectSprites);
@@ -20612,6 +20795,7 @@ int main(int argc, char* argv[])
                             variable_textures[variableTexturesIndex].setOrigin(12, 12);
                             variable_textures[variableTexturesIndex].setScale(1, 1);
                             variableTexturesIndex++;
+                            expand_vector(variable_textures, weapons_tex, variableTexturesIndex, variable_textures_max);
                         }
                         else if (allObjects[idx].alarm2 == 5) {
                             variable_textures[variableTexturesIndex].setTexture(allBigEffectSprites);
@@ -20622,6 +20806,7 @@ int main(int argc, char* argv[])
                             variable_textures[variableTexturesIndex].setOrigin(8, 8);
                             variable_textures[variableTexturesIndex].setScale(1, 1);
                             variableTexturesIndex++;
+                            expand_vector(variable_textures, weapons_tex, variableTexturesIndex, variable_textures_max);
                         }
                         else if (allObjects[idx].alarm2 == 6) {
                             //level up
@@ -20649,6 +20834,7 @@ int main(int argc, char* argv[])
                                 rain_textures[rain_texturesIndex].setRotation(0);
                                 rain_textures[rain_texturesIndex].setScale(1, 1);
                                 rain_texturesIndex++;
+                                expand_vector(rain_textures, allBigEffectSprites, rain_texturesIndex, rain_textures_max);
                             }
                             else {
                                 choice = int((allObjects[idx].image_index - 15) * 0.4f);
@@ -20663,6 +20849,7 @@ int main(int argc, char* argv[])
                                     variable_textures[variableTexturesIndex].setRotation(0);
                                     variable_textures[variableTexturesIndex].setScale(1, 1);
                                     variableTexturesIndex++;
+                                    expand_vector(variable_textures, weapons_tex, variableTexturesIndex, variable_textures_max);
                                 }
                                 else {
                                     rain_textures[rain_texturesIndex].setTextureRect(sf::IntRect{ choice * 12 + 32, allObjects[idx].size, 12, 12 });
@@ -20672,6 +20859,7 @@ int main(int argc, char* argv[])
                                     rain_textures[rain_texturesIndex].setRotation(0);
                                     rain_textures[rain_texturesIndex].setScale(1, 1);
                                     rain_texturesIndex++;
+                                    expand_vector(rain_textures, allBigEffectSprites, rain_texturesIndex, rain_textures_max);
                                 }
                             }
                         }
@@ -20687,6 +20875,7 @@ int main(int argc, char* argv[])
                             rain_textures[rain_texturesIndex].setRotation(0);
                             rain_textures[rain_texturesIndex].setScale(allObjects[idx].facing_right * 2 - 1, 1);
                             rain_texturesIndex++;
+                            expand_vector(rain_textures, allBigEffectSprites, rain_texturesIndex, rain_textures_max);
                         }
                         else if (allObjects[idx].alarm2 == 9) {
                             variable_textures_bloom[variableTexturesBloomIndex].setTexture(allBigEffectSprites);
@@ -20697,6 +20886,7 @@ int main(int argc, char* argv[])
                             variable_textures_bloom[variableTexturesBloomIndex].setOrigin(12, 12);
                             variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
                             variableTexturesBloomIndex++;
+                            expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
                         }
                         else if (allObjects[idx].alarm2 == 10) {
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setTexture(allBigEffectSprites);
@@ -20707,6 +20897,7 @@ int main(int argc, char* argv[])
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setOrigin(12, 12);
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setScale(1, 1);
                             variableTexturesTopEnemiesIndex++;
+                            expand_vector(variable_textures_top_enemies, weapons_tex, variableTexturesTopEnemiesIndex, variable_textures_top_enemies_max);
                         }
                         else if (allObjects[idx].alarm2 == 11) {
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setTexture(chicken_ultra_B_tex);
@@ -20717,6 +20908,7 @@ int main(int argc, char* argv[])
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setOrigin(16, 16);
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setScale(1, 1);
                             variableTexturesTopEnemiesIndex++;
+                            expand_vector(variable_textures_top_enemies, weapons_tex, variableTexturesTopEnemiesIndex, variable_textures_top_enemies_max);
                         }
                         else if (allObjects[idx].alarm2 == 12) {
                             variable_textures_top[variableTexturesTopIndex].setTexture(gun_warrant_disappear_tex);
@@ -20727,6 +20919,7 @@ int main(int argc, char* argv[])
                             variable_textures_top[variableTexturesTopIndex].setOrigin(32, 32);
                             variable_textures_top[variableTexturesTopIndex].setScale(1, 1);
                             variableTexturesTopIndex++;
+                            expand_vector(variable_textures_top, weapons_tex, variableTexturesTopIndex, variable_textures_top_max);
                         }
                         else if (allObjects[idx].alarm2 == 13) {//fx chest
                             variable_textures_top[variableTexturesTopIndex].setTexture(fx_chest_open_tex);
@@ -20737,6 +20930,7 @@ int main(int argc, char* argv[])
                             variable_textures_top[variableTexturesTopIndex].setOrigin(16, 16);
                             variable_textures_top[variableTexturesTopIndex].setScale(1, 1);
                             variableTexturesTopIndex++;
+                            expand_vector(variable_textures_top, weapons_tex, variableTexturesTopIndex, variable_textures_top_max);
                         }
                         else if (allObjects[idx].alarm2 == 14) {//verg big heal
                             variable_textures_top[variableTexturesTopIndex].setTexture(fx_very_big_heal_tex);
@@ -20747,6 +20941,7 @@ int main(int argc, char* argv[])
                             variable_textures_top[variableTexturesTopIndex].setOrigin(18, 42);
                             variable_textures_top[variableTexturesTopIndex].setScale(1, 1);
                             variableTexturesTopIndex++;
+                            expand_vector(variable_textures_top, weapons_tex, variableTexturesTopIndex, variable_textures_top_max);
                         }
                         else if (allObjects[idx].alarm2 == 15) {//fishA
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setTexture(fx_fishA_tex);
@@ -20757,6 +20952,7 @@ int main(int argc, char* argv[])
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setOrigin(16, 16);
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setScale(1, 1);
                             variableTexturesTopEnemiesIndex++;
+                            expand_vector(variable_textures_top_enemies, weapons_tex, variableTexturesTopEnemiesIndex, variable_textures_top_enemies_max);
                         }
                         else if (allObjects[idx].alarm2 == 16) {//robot_eat_TB
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setTexture(robot_eat_TB_tex);
@@ -20767,6 +20963,7 @@ int main(int argc, char* argv[])
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setOrigin(16, 16);
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setScale(1, 1);
                             variableTexturesTopEnemiesIndex++;
+                            expand_vector(variable_textures_top_enemies, weapons_tex, variableTexturesTopEnemiesIndex, variable_textures_top_enemies_max);
                         }
                         else if (allObjects[idx].alarm2 == 17) {//exploder explo
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setTexture(allBigEffectSprites);
@@ -20777,6 +20974,7 @@ int main(int argc, char* argv[])
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setOrigin(12, 12);
                             variable_textures_top_enemies[variableTexturesTopEnemiesIndex].setScale(1, 1);
                             variableTexturesTopEnemiesIndex++;
+                            expand_vector(variable_textures_top_enemies, weapons_tex, variableTexturesTopEnemiesIndex, variable_textures_top_enemies_max);
                         }
                         break;
                     case rebel_ally:
@@ -20789,10 +20987,9 @@ int main(int argc, char* argv[])
                         rotateable_sprites_guns[rotateableSpriteGunIndex].setScale(1, 1);
                         rotateable_sprites_guns[rotateableSpriteGunIndex].setRotation(allObjects[idx].direction * degreestoradians);
                         rotateableSpriteGunIndex++;    //gun
+                        expand_vector(rotateable_sprites_guns, bandit_guntex, rotateableSpriteGunIndex, rotateable_sprites_guns_max);
 
-                        all_enemy_sprites[allEnemySpritesIndex].setColor({ 255, 255, 255, 255 });
-                        all_enemy_sprites[allEnemySpritesIndex].setPosition(allObjects[idx].position - cameraPos);
-                        all_enemy_sprites[allEnemySpritesIndex].setScale(allObjects[idx].facing_right * 2 - 1, 1);
+
 
                         if (allObjects[idx].image_index >= 0) {
                             if (abs(allObjects[idx].speed.x) < 0.01f && abs(allObjects[idx].speed.y) < 0.01f) {
@@ -20818,6 +21015,10 @@ int main(int argc, char* argv[])
                         }
                         choice2 += 9;
 
+                        expand_vector(all_enemy_sprites, allEnemySprites, allEnemySpritesIndex, all_enemy_sprites_max);
+                        all_enemy_sprites[allEnemySpritesIndex].setColor({ 255, 255, 255, 255 });
+                        all_enemy_sprites[allEnemySpritesIndex].setPosition(allObjects[idx].position - cameraPos);
+                        all_enemy_sprites[allEnemySpritesIndex].setScale(allObjects[idx].facing_right * 2 - 1, 1);
                         all_enemy_sprites[allEnemySpritesIndex].setTextureRect(sf::IntRect{ 48 * choice, 48 * choice2, 48, 48 });
                         allEnemySpritesIndex++;
 
@@ -20832,10 +21033,9 @@ int main(int argc, char* argv[])
                         rotateable_sprites_guns[rotateableSpriteGunIndex].setScale(1, 1);
                         rotateable_sprites_guns[rotateableSpriteGunIndex].setRotation(allObjects[idx].direction * degreestoradians);
                         rotateableSpriteGunIndex++;    //gun
+                        expand_vector(rotateable_sprites_guns, bandit_guntex, rotateableSpriteGunIndex, rotateable_sprites_guns_max);
 
-                        all_enemy_sprites[allEnemySpritesIndex].setColor({ 255, 255, 255, 255 });
-                        all_enemy_sprites[allEnemySpritesIndex].setPosition(allObjects[idx].position - cameraPos);
-                        all_enemy_sprites[allEnemySpritesIndex].setScale(allObjects[idx].facing_right * 2 - 1, 1);
+
 
                         if (allObjects[idx].image_index >= 0) {
                             if (abs(allObjects[idx].speed.x) < 0.01f && abs(allObjects[idx].speed.y) < 0.01f) {
@@ -20860,6 +21060,10 @@ int main(int argc, char* argv[])
                             choice2 = 2;
                         }
 
+                        expand_vector(all_enemy_sprites, allEnemySprites, allEnemySpritesIndex, all_enemy_sprites_max);
+                        all_enemy_sprites[allEnemySpritesIndex].setColor({ 255, 255, 255, 255 });
+                        all_enemy_sprites[allEnemySpritesIndex].setPosition(allObjects[idx].position - cameraPos);
+                        all_enemy_sprites[allEnemySpritesIndex].setScale(allObjects[idx].facing_right * 2 - 1, 1);
                         all_enemy_sprites[allEnemySpritesIndex].setTextureRect(sf::IntRect{ 48 * choice, 48 * choice2, 48, 48 });
                         allEnemySpritesIndex++;
 
@@ -20891,6 +21095,8 @@ int main(int argc, char* argv[])
                                 rotateable_sprites_guns[rotateableSpriteGunIndex].setScale(1, 1);
                             }
                             rotateableSpriteGunIndex++;    //gun
+                            expand_vector(rotateable_sprites_guns, bandit_guntex, rotateableSpriteGunIndex, rotateable_sprites_guns_max);
+
                         }
                         else {
                             rotateable_sprites_guns_top[rotateableSpriteGunTopIndex].setTexture(idpd_freak_guntex);
@@ -20906,11 +21112,10 @@ int main(int argc, char* argv[])
                                 rotateable_sprites_guns_top[rotateableSpriteGunTopIndex].setScale(1, 1);
                             }
                             rotateableSpriteGunTopIndex++;    //gun
+                            expand_vector(rotateable_sprites_guns_top, idpd_freak_guntex, rotateableSpriteGunTopIndex, rotateable_sprites_guns_top_max);
+
                         }
 
-                        all_enemy_sprites[allEnemySpritesIndex].setColor({ 255, 255, 255, 255 });
-                        all_enemy_sprites[allEnemySpritesIndex].setPosition(allObjects[idx].position - cameraPos);
-                        all_enemy_sprites[allEnemySpritesIndex].setScale(allObjects[idx].facing_right * 2 - 1, 1);
 
                         if (allObjects[idx].image_index < 0) {
                             choice2 = 2;
@@ -20937,14 +21142,16 @@ int main(int argc, char* argv[])
 
                         choice2 += 3;
 
+                        expand_vector(all_enemy_sprites, allEnemySprites, allEnemySpritesIndex, all_enemy_sprites_max);
+                        all_enemy_sprites[allEnemySpritesIndex].setColor({ 255, 255, 255, 255 });
+                        all_enemy_sprites[allEnemySpritesIndex].setPosition(allObjects[idx].position - cameraPos);
+                        all_enemy_sprites[allEnemySpritesIndex].setScale(allObjects[idx].facing_right * 2 - 1, 1);
                         all_enemy_sprites[allEnemySpritesIndex].setTextureRect(sf::IntRect{ 48 * choice, 48 * choice2, 48, 48 });
                         allEnemySpritesIndex++;
                         break;
                     case melt_splat:
-                        if (allEnemyCorpsesIndex >= all_enemy_corpses_max - 1) {
-                            expand_vector(all_enemy_corpses, {24, 24}, allEnemySprites);
-                            all_enemy_corpses_max++;
-                        }
+                        expand_vector(all_enemy_corpses, allEnemySprites, allEnemyCorpsesIndex, all_enemy_corpses_max);
+
                         all_enemy_corpses[allEnemyCorpsesIndex].setColor({ 255, 255, 255, 255 });
                         all_enemy_corpses[allEnemyCorpsesIndex].setPosition(allObjects[idx].position - cameraPos);
                         all_enemy_corpses[allEnemyCorpsesIndex].setScale(allObjects[idx].facing_right * 2 - 1, 1);
@@ -20962,10 +21169,8 @@ int main(int argc, char* argv[])
                         allEnemyCorpsesIndex++;
                         break;
                     case chicken_head:
-                        if (allEnemyCorpsesIndex >= all_enemy_corpses_max - 1) {
-                            expand_vector(all_enemy_corpses, { 24, 24 }, allEnemySprites);
-                            all_enemy_corpses_max++;
-                        }
+                        expand_vector(all_enemy_corpses, allEnemySprites, allEnemyCorpsesIndex, all_enemy_corpses_max);
+
                         all_enemy_corpses[allEnemyCorpsesIndex].setColor({ 255, 255, 255, 255 });
                         all_enemy_corpses[allEnemyCorpsesIndex].setPosition(allObjects[idx].position - cameraPos);
                         all_enemy_corpses[allEnemyCorpsesIndex].setScale(allObjects[idx].size, 1);
@@ -20981,10 +21186,8 @@ int main(int argc, char* argv[])
 
                         break;
                     case enemy_corpse:
-                        if (allEnemyCorpsesIndex >= all_enemy_corpses_max - 1) {
-                            expand_vector(all_enemy_corpses, { 24, 24 }, allEnemySprites);
-                            all_enemy_corpses_max++;
-                        }
+                        expand_vector(all_enemy_corpses, allEnemySprites, allEnemyCorpsesIndex, all_enemy_corpses_max);
+
                         all_enemy_corpses[allEnemyCorpsesIndex].setColor({ 255, 255, 255, 255 });
                         all_enemy_corpses[allEnemyCorpsesIndex].setPosition(allObjects[idx].position - cameraPos);
                         all_enemy_corpses[allEnemyCorpsesIndex].setScale(allObjects[idx].facing_right * 2 - 1, 1);
@@ -21001,10 +21204,8 @@ int main(int argc, char* argv[])
 
                         break;
                     case idpd_freak_corpse:
-                        if (allEnemyCorpsesIndex >= all_enemy_corpses_max - 1) {
-                            expand_vector(all_enemy_corpses, { 24, 24 }, allEnemySprites);
-                            all_enemy_corpses_max++;
-                        }
+                        expand_vector(all_enemy_corpses, allEnemySprites, allEnemyCorpsesIndex, all_enemy_corpses_max);
+
                         all_enemy_corpses[allEnemyCorpsesIndex].setColor({ 255, 255, 255, 255 });
                         all_enemy_corpses[allEnemyCorpsesIndex].setPosition(allObjects[idx].position - cameraPos);
                         all_enemy_corpses[allEnemyCorpsesIndex].setScale(allObjects[idx].facing_right * 2 - 1, 1);
@@ -21029,6 +21230,7 @@ int main(int argc, char* argv[])
                             variable_textures[variableTexturesIndex].setOrigin(18, 20);
                             variable_textures[variableTexturesIndex].setScale(1, 1);
                             variableTexturesIndex++;
+                            expand_vector(variable_textures, weapons_tex, variableTexturesIndex, variable_textures_max);
                         }
 
                         break;
@@ -21042,6 +21244,7 @@ int main(int argc, char* argv[])
                         variable_textures_bottom[variableTexturesBottomIndex].setOrigin(2, 4);
                         variable_textures_bottom[variableTexturesBottomIndex].setScale(1, 1);
                         variableTexturesBottomIndex++;
+                        expand_vector(variable_textures_bottom, weapons_tex, variableTexturesBottomIndex, variable_textures_bottom_max);
                         break;
                     case idpd_freak_revive:
                         choice = int(allObjects[idx].image_index * 0.4f);
@@ -21053,6 +21256,7 @@ int main(int argc, char* argv[])
                         variable_textures[variableTexturesIndex].setOrigin(24, 40);
                         variable_textures[variableTexturesIndex].setScale(1, 1);
                         variableTexturesIndex++;
+                        expand_vector(variable_textures, weapons_tex, variableTexturesIndex, variable_textures_max);
                         break;
                     case laser_brain_FX:
                         choice = int(allObjects[idx].image_index * 0.4f);
@@ -21064,6 +21268,7 @@ int main(int argc, char* argv[])
                         variable_textures[variableTexturesIndex].setOrigin(-3, 8);
                         variable_textures[variableTexturesIndex].setScale(1, allObjects[idx].scale);
                         variableTexturesIndex++;
+                        expand_vector(variable_textures, weapons_tex, variableTexturesIndex, variable_textures_max);
                         break;
                     case player_laser_burst:
                         variable_textures_bloom[variableTexturesBloomIndex].setTexture(plasma_1tex);
@@ -21074,6 +21279,7 @@ int main(int argc, char* argv[])
                         variable_textures_bloom[variableTexturesBloomIndex].setOrigin(12, 12);
                         variable_textures_bloom[variableTexturesBloomIndex].setScale(allObjects[idx].scale, allObjects[idx].scale);
                         variableTexturesBloomIndex++;
+                        expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
                         break;
                     case player_laser:
                         lasers_bloom[lasers_bloomIndex].setTexture(laser_tex);
@@ -21084,7 +21290,7 @@ int main(int argc, char* argv[])
                         lasers_bloom[lasers_bloomIndex].setOrigin(0, 3);
                         lasers_bloom[lasers_bloomIndex].setScale(allObjects[idx].size, allObjects[idx].scale);
                         lasers_bloomIndex++;
-
+                        expand_vector(lasers_bloom, laser_tex, lasers_bloomIndex, lasers_bloom_max);
 
                         //laser start
                         choice = int(allObjects[idx].image_index * 0.5f);
@@ -21096,6 +21302,7 @@ int main(int argc, char* argv[])
                         variable_textures_bloom[variableTexturesBloomIndex].setOrigin(8, 8);
                         variable_textures_bloom[variableTexturesBloomIndex].setScale(allObjects[idx].scale, allObjects[idx].scale);
                         variableTexturesBloomIndex++;
+                        expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
                         //laser end
                         
                         variable_textures_bloom[variableTexturesBloomIndex].setTexture(player_laser_end_tex);
@@ -21106,6 +21313,7 @@ int main(int argc, char* argv[])
                         variable_textures_bloom[variableTexturesBloomIndex].setOrigin(8, 8);
                         variable_textures_bloom[variableTexturesBloomIndex].setScale(allObjects[idx].scale, allObjects[idx].scale * 1.4f);
                         variableTexturesBloomIndex++;
+                        expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
 
 
                         break;
@@ -21119,6 +21327,7 @@ int main(int argc, char* argv[])
                         variable_textures_bloom[variableTexturesBloomIndex].setOrigin(8, 8);
                         variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
                         variableTexturesBloomIndex++;
+                        expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
 
                         break;
                     case player_lightning:
@@ -21131,6 +21340,7 @@ int main(int argc, char* argv[])
                         variable_textures_bloom[variableTexturesBloomIndex].setOrigin(0, 0);
                         variable_textures_bloom[variableTexturesBloomIndex].setScale(allObjects[idx].scale, 2);
                         variableTexturesBloomIndex++;
+                        expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
 
                         break;
                     case player_lightning_orb:
@@ -21143,6 +21353,7 @@ int main(int argc, char* argv[])
                         variable_textures_bloom[variableTexturesBloomIndex].setOrigin(16, 16);
                         variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
                         variableTexturesBloomIndex++;
+                        expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
                         break;
                     case bolt_trail:
                         //line
@@ -21155,6 +21366,7 @@ int main(int argc, char* argv[])
                         variable_textures[variableTexturesIndex].setOrigin(0, 1);
                         variable_textures[variableTexturesIndex].setScale(allObjects[idx].size, allObjects[idx].scale);
                         variableTexturesIndex++;
+                        expand_vector(variable_textures, weapons_tex, variableTexturesIndex, variable_textures_max);
                         break;
                     case player_bolt:__fallthrough;
                     case player_bolt_stick:
@@ -21195,10 +21407,12 @@ int main(int argc, char* argv[])
                             variable_textures_top[variableTexturesTopIndex].setOrigin(16 + choice2, 8);
                             variable_textures_top[variableTexturesTopIndex].setScale(1, 1);
                             variableTexturesTopIndex++;
+                            expand_vector(variable_textures_top, weapons_tex, variableTexturesTopIndex, variable_textures_top_max);
 
                         break;
                     case player_bullet:
                         if (allObjects[idx].image_index == 1) {
+                            expand_vector(rotateable_sprites_bullets, revenge_bullet_1tex, rotateableSpriteBulletIndex, rotateable_sprites_bullets_max);
                             if (allObjects[idx].size == 0 || allObjects[idx].size == 1) {
                                 rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(playerbullet1_1tex);
                             }
@@ -21217,6 +21431,7 @@ int main(int argc, char* argv[])
                             rotateableSpriteBulletIndex++;
                         }
                         else {
+                            expand_vector(rotateable_sprites_bullets, revenge_bullet_1tex, rotateableSpriteBulletIndex, rotateable_sprites_bullets_max);
                             if (allObjects[idx].size == 0) {
                                 rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(playerbullet1_2tex);
                             }
@@ -21246,6 +21461,7 @@ int main(int argc, char* argv[])
                             rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setRotation(allObjects[idx].direction);
                             rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setScale(0.5f + allObjects[idx].scale / 2, 0.5f + allObjects[idx].scale / 2);
                             rotateableSpriteBulletHugeIndex++;
+                            expand_vector(rotateable_sprites_bullets_huge, idpd_nade_remove_1, rotateableSpriteBulletHugeIndex, rotateable_sprites_bullets_huge_max);
 
                             rotateable_sprites_bullets_huge_bloom[rotateableSpriteBulletHugeBloomIndex].setTexture(plasma_huge_1_bloomtex);
                             rotateable_sprites_bullets_huge_bloom[rotateableSpriteBulletHugeBloomIndex].setColor({ 255, 255, 255, 255 });
@@ -21253,6 +21469,7 @@ int main(int argc, char* argv[])
                             rotateable_sprites_bullets_huge_bloom[rotateableSpriteBulletHugeBloomIndex].setRotation(allObjects[idx].direction);
                             rotateable_sprites_bullets_huge_bloom[rotateableSpriteBulletHugeBloomIndex].setScale(0.5f + allObjects[idx].scale / 2, 0.5f + allObjects[idx].scale / 2);
                             rotateableSpriteBulletHugeBloomIndex++;
+                            expand_vector(rotateable_sprites_bullets_huge_bloom, idpd_nade_remove_1, rotateableSpriteBulletHugeBloomIndex, rotateable_sprites_bullets_huge_bloom_max);
                         }
                         else {
                             rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setTexture(plasma_huge_2tex);
@@ -21261,6 +21478,7 @@ int main(int argc, char* argv[])
                             rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setRotation(allObjects[idx].direction);
                             rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setScale(0.5f + allObjects[idx].scale / 2, 0.5f + allObjects[idx].scale / 2);
                             rotateableSpriteBulletHugeIndex++;
+                            expand_vector(rotateable_sprites_bullets_huge, idpd_nade_remove_1, rotateableSpriteBulletHugeIndex, rotateable_sprites_bullets_huge_max);
 
                             rotateable_sprites_bullets_huge_bloom[rotateableSpriteBulletHugeBloomIndex].setTexture(plasma_huge_2_bloomtex);
                             rotateable_sprites_bullets_huge_bloom[rotateableSpriteBulletHugeBloomIndex].setColor({ 255, 255, 255, 255 });
@@ -21268,6 +21486,7 @@ int main(int argc, char* argv[])
                             rotateable_sprites_bullets_huge_bloom[rotateableSpriteBulletHugeBloomIndex].setRotation(allObjects[idx].direction);
                             rotateable_sprites_bullets_huge_bloom[rotateableSpriteBulletHugeBloomIndex].setScale(0.5f + allObjects[idx].scale / 2, 0.5f + allObjects[idx].scale / 2);
                             rotateableSpriteBulletHugeBloomIndex++;
+                            expand_vector(rotateable_sprites_bullets_huge_bloom, idpd_nade_remove_1, rotateableSpriteBulletHugeBloomIndex, rotateable_sprites_bullets_huge_bloom_max);
                         }
                         break;
                     case plasma_big:
@@ -21278,6 +21497,7 @@ int main(int argc, char* argv[])
                             rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setRotation(allObjects[idx].direction);
                             rotateable_sprites_bullets_huge[rotateableSpriteBulletHugeIndex].setScale(0.5f + allObjects[idx].scale / 2, 0.5f + allObjects[idx].scale / 2);
                             rotateableSpriteBulletHugeIndex++;
+                            expand_vector(rotateable_sprites_bullets_huge, idpd_nade_remove_1, rotateableSpriteBulletHugeIndex, rotateable_sprites_bullets_huge_max);
 
                             rotateable_sprites_bullets_huge_bloom[rotateableSpriteBulletHugeBloomIndex].setTexture(plasma_big_1_bloomtex);
                             rotateable_sprites_bullets_huge_bloom[rotateableSpriteBulletHugeBloomIndex].setColor({ 255, 255, 255, 255 });
@@ -21285,6 +21505,7 @@ int main(int argc, char* argv[])
                             rotateable_sprites_bullets_huge_bloom[rotateableSpriteBulletHugeBloomIndex].setRotation(allObjects[idx].direction);
                             rotateable_sprites_bullets_huge_bloom[rotateableSpriteBulletHugeBloomIndex].setScale(0.5f + allObjects[idx].scale / 2, 0.5f + allObjects[idx].scale / 2);
                             rotateableSpriteBulletHugeBloomIndex++;
+                            expand_vector(rotateable_sprites_bullets_huge_bloom, idpd_nade_remove_1, rotateableSpriteBulletHugeBloomIndex, rotateable_sprites_bullets_huge_bloom_max);
                         }
                         else {
                             rotateable_sprites_bullets_big[rotateableSpriteBulletBigIndex].setTexture(plasma_big_2tex);
@@ -21293,6 +21514,7 @@ int main(int argc, char* argv[])
                             rotateable_sprites_bullets_big[rotateableSpriteBulletBigIndex].setRotation(allObjects[idx].direction);
                             rotateable_sprites_bullets_big[rotateableSpriteBulletBigIndex].setScale(0.5f + allObjects[idx].scale / 2, 0.5f + allObjects[idx].scale / 2);
                             rotateableSpriteBulletBigIndex++;
+                            expand_vector(rotateable_sprites_bullets_big, idpd_nade_remove_1, rotateableSpriteBulletBigIndex, rotateable_sprites_bullets_big_max);
 
                             rotateable_sprites_bullets_big_bloom[rotateableSpriteBulletBigBloomIndex].setTexture(plasma_big_2_bloomtex);
                             rotateable_sprites_bullets_big_bloom[rotateableSpriteBulletBigBloomIndex].setColor({ 255, 255, 255, 255 });
@@ -21300,6 +21522,7 @@ int main(int argc, char* argv[])
                             rotateable_sprites_bullets_big_bloom[rotateableSpriteBulletBigBloomIndex].setRotation(allObjects[idx].direction);
                             rotateable_sprites_bullets_big_bloom[rotateableSpriteBulletBigBloomIndex].setScale(0.5f + allObjects[idx].scale / 2, 0.5f + allObjects[idx].scale / 2);
                             rotateableSpriteBulletBigBloomIndex++;
+                            expand_vector(rotateable_sprites_bullets_big_bloom, idpd_nade_remove_1, rotateableSpriteBulletBigBloomIndex, rotateable_sprites_bullets_big_bloom_max);
                         }
                         break;
                     case plasma:
@@ -21310,6 +21533,7 @@ int main(int argc, char* argv[])
                             rotateable_sprites_bullets_big[rotateableSpriteBulletBigIndex].setRotation(allObjects[idx].direction);
                             rotateable_sprites_bullets_big[rotateableSpriteBulletBigIndex].setScale(0.5f + allObjects[idx].scale / 2, 0.5f + allObjects[idx].scale / 2);
                             rotateableSpriteBulletBigIndex++;
+                            expand_vector(rotateable_sprites_bullets_big, idpd_nade_remove_1, rotateableSpriteBulletBigIndex, rotateable_sprites_bullets_big_max);
 
                             rotateable_sprites_bullets_big_bloom[rotateableSpriteBulletBigBloomIndex].setTexture(plasma_bloom_1tex);
                             rotateable_sprites_bullets_big_bloom[rotateableSpriteBulletBigBloomIndex].setColor({ 255, 255, 255, 255 });
@@ -21317,6 +21541,7 @@ int main(int argc, char* argv[])
                             rotateable_sprites_bullets_big_bloom[rotateableSpriteBulletBigBloomIndex].setRotation(allObjects[idx].direction);
                             rotateable_sprites_bullets_big_bloom[rotateableSpriteBulletBigBloomIndex].setScale(0.5f + allObjects[idx].scale / 2, 0.5f + allObjects[idx].scale / 2);
                             rotateableSpriteBulletBigBloomIndex++;
+                            expand_vector(rotateable_sprites_bullets_big_bloom, idpd_nade_remove_1, rotateableSpriteBulletBigBloomIndex, rotateable_sprites_bullets_big_bloom_max);
                         }
                         else {
                             rotateable_sprites_bullets_big[rotateableSpriteBulletBigIndex].setTexture(plasma_2tex);
@@ -21325,6 +21550,7 @@ int main(int argc, char* argv[])
                             rotateable_sprites_bullets_big[rotateableSpriteBulletBigIndex].setRotation(allObjects[idx].direction);
                             rotateable_sprites_bullets_big[rotateableSpriteBulletBigIndex].setScale(0.5f + allObjects[idx].scale / 2, 0.5f + allObjects[idx].scale / 2);
                             rotateableSpriteBulletBigIndex++;
+                            expand_vector(rotateable_sprites_bullets_big, idpd_nade_remove_1, rotateableSpriteBulletBigIndex, rotateable_sprites_bullets_big_max);
 
                             rotateable_sprites_bullets_big_bloom[rotateableSpriteBulletBigBloomIndex].setTexture(plasma_bloom_2tex);
                             rotateable_sprites_bullets_big_bloom[rotateableSpriteBulletBigBloomIndex].setColor({ 255, 255, 255, 255 });
@@ -21332,10 +21558,12 @@ int main(int argc, char* argv[])
                             rotateable_sprites_bullets_big_bloom[rotateableSpriteBulletBigBloomIndex].setRotation(allObjects[idx].direction);
                             rotateable_sprites_bullets_big_bloom[rotateableSpriteBulletBigBloomIndex].setScale(0.5f + allObjects[idx].scale / 2, 0.5f + allObjects[idx].scale / 2);
                             rotateableSpriteBulletBigBloomIndex++;
+                            expand_vector(rotateable_sprites_bullets_big_bloom, idpd_nade_remove_1, rotateableSpriteBulletBigBloomIndex, rotateable_sprites_bullets_big_bloom_max);
                         }
                         break;
                     case plasma_hit:
                         choice = int(allObjects[idx].image_index * 0.4f);
+                        expand_vector(rotateable_sprites_bullets, revenge_bullet_1tex, rotateableSpriteBulletIndex, rotateable_sprites_bullets_max);
                         switch (choice) {
                         default:
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(plasma_hit_1tex);
@@ -21359,6 +21587,7 @@ int main(int argc, char* argv[])
                         break;
                     case player_shell:
                         if (allObjects[idx].image_index < 2 || allObjects[idx].size == 5 || allObjects[idx].size == 6) {
+                            expand_vector(rotateable_sprites_bullets, revenge_bullet_1tex, rotateableSpriteBulletIndex, rotateable_sprites_bullets_max);
                             switch (allObjects[idx].size) {
                             default:
                                 if(allObjects[idx].image_index == 0){ rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(player_shell_0); }
@@ -21439,6 +21668,7 @@ int main(int argc, char* argv[])
                             variable_textures_bloom[variableTexturesBloomIndex].setOrigin(spr_width / 2, spr_height / 2);
                             variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
                             variableTexturesBloomIndex++;
+                            expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
                         }
                         break;
                     case player_shell_destroy: //TODO
@@ -21476,9 +21706,11 @@ int main(int argc, char* argv[])
                         variable_textures_bloom[variableTexturesBloomIndex].setOrigin(spr_width / 2, spr_height / 2);
                         variable_textures_bloom[variableTexturesBloomIndex].setScale(1, 1);
                         variableTexturesBloomIndex++;
+                        expand_vector(variable_textures_bloom, Wall1shadow, variableTexturesBloomIndex, variable_textures_bloom_max);
                         break;
                     case player_bullet_destroy:
                         choice = int(allObjects[idx].image_index * 0.4f);
+                        expand_vector(rotateable_sprites_bullets, revenge_bullet_1tex, rotateableSpriteBulletIndex, rotateable_sprites_bullets_max);
                         switch (choice) {
                         case 0:
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(playerbulletdelete1);
@@ -21499,6 +21731,7 @@ int main(int argc, char* argv[])
                         rotateableSpriteBulletIndex++;
                         break;
                     case horror_bullet:
+                        expand_vector(rotateable_sprites_bullets, revenge_bullet_1tex, rotateableSpriteBulletIndex, rotateable_sprites_bullets_max);
                         if (allObjects[idx].image_index == 1) {
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(horror_beamA1);
                         }
@@ -21515,6 +21748,7 @@ int main(int argc, char* argv[])
                         break;
                     case horror_bullet_destroy:
                         choice = int(allObjects[idx].image_index * 0.4f);
+                        expand_vector(rotateable_sprites_bullets, revenge_bullet_1tex, rotateableSpriteBulletIndex, rotateable_sprites_bullets_max);
                         switch (choice) {
                         case 0:
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(horror_beam_destroyA1);
@@ -21536,6 +21770,7 @@ int main(int argc, char* argv[])
                         break;
                     case bullet2_destroy:
                         choice = int(allObjects[idx].image_index * 0.4f);
+                        expand_vector(rotateable_sprites_bullets, revenge_bullet_1tex, rotateableSpriteBulletIndex, rotateable_sprites_bullets_max);
                         switch (choice) {
                         case 0:
                             rotateable_sprites_bullets[rotateableSpriteBulletIndex].setTexture(enemy_bullet_destroy2_1);
@@ -21665,8 +21900,22 @@ int main(int argc, char* argv[])
 
             //portal spirals in background
 
-
-            if (area == 0 || want_gen) {
+            if (time_since_generated > 0) {
+                if (time_since_generated == 1) {
+                    spiral_cont_step(true);
+                }
+                int iter_count = (time_since_generated);
+                if (time_since_generated < 30) {
+                    for (int i = 0; i < iter_count; i++) {
+                        portal_spiral_step();
+                    }
+                }
+                else {
+                    spiral_cont_step();
+                    portal_spiral_step();
+                }
+            }
+            if ((area == 0 || want_gen) && time_since_generated <= 0) {
                 spiral_cont_step();
                 portal_spiral_step();
             }
@@ -21679,7 +21928,8 @@ int main(int argc, char* argv[])
                 while (portals_amount_left > 0) {
                     portal_spiral_spr.setPosition(all_portal_spirals[portals_sprital_position].position);
                     portal_spiral_spr.setRotation(all_portal_spirals[portals_sprital_position].image_angle + 45);
-                    portal_spiral_spr.setScale(all_portal_spirals[portals_sprital_position].image_scale, all_portal_spirals[portals_sprital_position].image_scale);
+                    portal_spiral_spr.setScale(all_portal_spirals[portals_sprital_position].image_scale / 2.0f, all_portal_spirals[portals_sprital_position].image_scale / 2.0f);
+                    portal_spiral_spr.setTexture(portal_spiral_tex);
                     int darkness = 255 * (all_portal_spirals[portals_sprital_position].image_scale + 0.2f);
                     if (darkness > 255) {
                         darkness = 255;
@@ -21696,7 +21946,7 @@ int main(int argc, char* argv[])
             }
 
             //generating level, draw loading screen
-            if (want_gen) {
+            if (time_since_generated < 30) {
                 //portal_spiral first
                 int portals_amount_left = all_portal_spirals_count;
                 int portals_sprital_position = all_portal_spirals_start;
@@ -21704,7 +21954,15 @@ int main(int argc, char* argv[])
                 while (portals_amount_left > 0) {
                     portal_spiral_spr.setPosition(all_portal_spirals[portals_sprital_position].position);
                     portal_spiral_spr.setRotation(all_portal_spirals[portals_sprital_position].image_angle + 45);
-                    portal_spiral_spr.setScale(all_portal_spirals[portals_sprital_position].image_scale, all_portal_spirals[portals_sprital_position].image_scale);
+                    portal_spiral_spr.setScale(all_portal_spirals[portals_sprital_position].image_scale / 2.0f, all_portal_spirals[portals_sprital_position].image_scale / 2.0f);
+
+                    if (all_portal_spirals[portals_sprital_position].circle) {
+                        portal_spiral_spr.setTexture(portal_spiral_circle_tex);
+                    }
+                    else {
+                        portal_spiral_spr.setTexture(portal_spiral_tex);
+                    }
+
                     int darkness = 255 * (all_portal_spirals[portals_sprital_position].image_scale + 0.2f);
                     if (darkness > 255) {
                         darkness = 255;
@@ -22162,7 +22420,6 @@ int main(int argc, char* argv[])
             debug3.setColor(sf::Color::White);
             debug3.setPosition({ 2, 152 });
 
-
             for (sf::Sprite spr : lasers_bloom) {
                 if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
                     break;
@@ -22431,6 +22688,57 @@ int main(int argc, char* argv[])
             }
             buffer_over.draw(player_level_up_crown);
             player_level_up_crown.setScale(0, 0);
+
+            //letter boxes on title/character selection screen
+            if (CURRENT_GAME_STATE == gs_character_selection) {
+                if (loading_time > 2) {
+                    loading_time = 2;
+                }
+                letter_boxes.setTextureRect({ loading_time * 320, 0, 320, 240 });
+                buffer_UI.draw(letter_boxes);
+                loading_time++;
+                if (on_title_screen) {
+                    game_logo_timer++;
+                    int temp_glt = 0;
+                    if (game_logo_timer < 20) {
+                        temp_glt = 0;
+                    }
+                    else if (game_logo_timer < 32) {
+                        temp_glt = int((game_logo_timer - 20) / 2.0f);
+                        if (game_logo_timer % 2 == 0) {
+                            play_sound_on_player(snd_machinegun_ID);
+                        }
+                    }
+                    else if (game_logo_timer < 52) {
+                        temp_glt = 6;
+                    }
+                    else{
+                        temp_glt = 7;
+                    }
+                    if (game_logo_timer == 52){
+                        play_sound_on_player(snd_shovel_ID);
+                        play_sound_on_player(snd_meat_explo_ID);
+                        play_sound_on_player(snd_explosion_ID);
+                    }
+
+                    game_logo.setTextureRect({ temp_glt * 258, 0, 258, 96 });
+                    buffer_UI.draw(game_logo);
+
+                    if (temp_glt == 7) {
+                        play_sound_on_player(snd_logo_loop_ID);
+                        sf::Vector2f temp_pos = game_logo.getPosition();
+                        for (int i = 0; i < 8; i++) {
+                            temp_pos.x = game_logo.getPosition().x + cos(i * 45 / degreestoradians) * (sin(game_logo_wave) * (2 + random_float(1)) + 4);
+                            temp_pos.y = game_logo.getPosition().y + sin(i * 45 / degreestoradians) * (sin(game_logo_wave) * (2 + random_float(1)) + 4) + 3;//move down a bit
+                            game_logo_wave += random_float(0.02f);
+                            game_logo_glow.setPosition(temp_pos);
+
+                            buffer_UI.draw(game_logo_glow, RendererBloom);
+                        }
+                        game_logo_wave += 0.05f;
+                    }
+                }
+            }
 
             //ui
             if (CURRENT_GAME_STATE == gs_in_game) {
