@@ -1041,6 +1041,125 @@ struct flashing_gray_text {
 	int active_frames = 0;
 };
 
+struct colored_text {
+	std::vector<sf::Text> text_string;
+
+	void set_string(std::string str, sf::Font &font) {
+		text_string.clear();
+
+		std::string string_block;	//block of characters that have the same color and y pos
+
+		for (int i = 0; i < str.size(); i++) {
+			if (str[i] == *"*") {
+				str[i] = *"0";
+			}
+		}
+
+		str.push_back(*"*");
+
+		sf::Color next_col = sf::Color::White;
+		float y_off = 0;
+
+		for (int i = 0; i < str.length(); i++) {
+			if (str[i] == *"*") {
+				sf::Text add_me;
+				add_me.setCharacterSize(8);
+				add_me.setFont(font);
+				add_me.setString(string_block);
+				add_me.setColor(next_col);
+				text_string.push_back(add_me);
+
+				sf::Text add_me_nl;
+				add_me_nl.setString("~");
+				text_string.push_back(add_me_nl);//newline
+				break;
+			}
+			if (str[i] != *"@" && str[i] != *"#") {
+				string_block.push_back(str[i]);
+			}
+			else {
+
+				if (str[i] == *"#") {
+					sf::Text add_me;
+					add_me.setCharacterSize(8);
+					add_me.setFont(font);
+					add_me.setString(string_block);
+					add_me.setColor(next_col);
+					text_string.push_back(add_me);
+					string_block.clear();
+					sf::Text add_me_nl;
+					add_me_nl.setString("~");
+					text_string.push_back(add_me_nl);//newline
+				}
+				else {
+					sf::Text add_me;
+					add_me.setCharacterSize(8);
+					add_me.setFont(font);
+					add_me.setString(string_block);
+					add_me.setColor(next_col);
+					text_string.push_back(add_me);
+					string_block.clear();
+
+					if (str[i + 1] == *"r") {
+						next_col = sf::Color::Red;
+					}
+					else if (str[i + 1] == *"b") {
+						next_col = sf::Color::Blue;
+					}
+					else if (str[i + 1] == *"w") {
+						next_col = sf::Color::White;
+					}
+					else if (str[i + 1] == *"g") {
+						next_col = sf::Color::Green;
+					}
+					else if (str[i + 1] == *"q") {
+						next_col = sf::Color::Magenta;
+					}
+					else if (str[i + 1] == *"s") {
+						next_col = sf::Color{ 128, 128, 128, 255 };//gray
+					}
+					else if (str[i + 1] == *"p") {
+						next_col = sf::Color::Magenta;
+					}
+					else if (str[i + 1] == *"y") {
+						next_col = sf::Color::Yellow;
+					}
+					i++;
+				}
+			}
+		}
+	}
+
+	void set_position(sf::Vector2f pos) {
+		float letter_spacing = 8;
+		float x_off = 0;
+		float y_off = 0;
+		int idx_go_back = 0;
+		for (int i = 0; i < text_string.size(); i++) {
+			if (text_string[i].getString() != "~") {
+				text_string[i].setPosition(pos.x + x_off, pos.y + y_off);
+				x_off += text_string[i].getString().getSize() * 8;
+			}
+			else {
+				//center text
+				for (int j = idx_go_back; j < i; j++) {
+					if (text_string[j].getString() != "~") {
+						text_string[j].setPosition(160 - x_off / 2, pos.y + y_off);
+						x_off -= text_string[j].getString().getSize() * 8;
+					}
+				}
+				idx_go_back = i;
+				y_off += 8;
+				x_off = 0;
+			}
+		}
+	}
+
+	void set_character_col(int start_char, int end_char) {
+
+	}
+};
+
 struct replay_input {
 	std::uint16_t keyboard_n_mouse_input = 0x0000;
 	std::uint16_t mouse_x = 0x0000;
@@ -1063,3 +1182,5 @@ struct debug_timer {
 		time_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
 	}
 };
+
+

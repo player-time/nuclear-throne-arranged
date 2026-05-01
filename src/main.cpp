@@ -858,7 +858,7 @@ void spiral_cont_step(bool circular = false) {
 int time_since_generated = 0;
 bool want_gen = true;
 bool GENERATE_LEVEL = false;
-int gen_delay_frames = 15;
+int gen_delay_frames = 50;
 int gen_delay_progress = 0;
 
 void draw_text_NT(sf::Text text, sf::RenderTexture &renderer, sf::Color col = sf::Color::White) {
@@ -5789,7 +5789,7 @@ void enemy_die(int ENEMY, int PROJ) {
         }
 
         //debug start
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 0; i++) {
             tmpdir = random_360_radians();
             tmpSpd = random_float(2.0f) + 3.0f;
             tempSpdx = cos(tmpdir) * tmpSpd;
@@ -12104,7 +12104,6 @@ void idpd_freak_step(int i) {
 
 void nade_step(int i) {     //NOW
     if (allObjects[i].alarm3 == 10) {//hyper launcher
-        debug_timer_.timing_us_start();
         bool collided = false;
         float X_prev = allObjects[0].position.x;
         float Y_prev = allObjects[0].position.y;
@@ -12186,7 +12185,6 @@ void nade_step(int i) {     //NOW
         }
         create_object(X_prev + random_float(1.0f) - 0.5f, Y_prev + random_float(1.0f) - 0.5f, 0, 0, explosion, 0, 0);
         allObjects[i].my_id = nothing;
-        debug_timer_.timing_us_end();
         return;
     }
 
@@ -12252,6 +12250,91 @@ void nade_step(int i) {     //NOW
     case 4:case 5:case 10:case 15:case 16:
         //nothing for now
         break;
+    }
+}
+
+void do_melee_collision() {
+    int start = int((allObjects[0].position.x - 160) / 16);
+    int end = int((allObjects[0].position.x + 160) / 16);
+
+    int top = int((allObjects[0].position.y - 160) / 16);
+    int bottom = int((allObjects[0].position.y + 160) / 16);
+
+    for (int i = start; i < end; i++) {
+        for (int j = top; j < bottom; j++) {    //the physics bounds should start and end at the highest and lowest explotile
+            float tmpdir = 0.0f;
+            float diffx = 0.0f;
+            float diffy = 0.0f;
+            float tempSpdx = 0.0f;
+            float tempSpdy = 0.0f;
+            bool horizontalcontact = false;
+            bool verticalcontact = false;
+            float prevX = 0.0f;
+            float prevY = 0.0f;
+            bool bouncedH = false;
+            bool bouncedV = false;
+            int parsedObjects = 0; //maybe use this
+            switch (game_area[i][j].my_grid_type) {
+
+            case void_tile:
+                for (int w = -1; w < 2; w++) {      //each wall checks around it for possible collisions with objects that are supposed to be bigger than a single point
+                    for (int h = -1; h < 2; h++) {
+                        for (int O : game_area[i + w][j + h].object_indexes) {      //walls collisions and bounce
+                            switch (allObjects[O].my_id) {
+                            case melee_slash:
+                                if (allObjects[O].image_index < 5 && w == 0 && h == 0) {
+                                    ultra_slash_collision(O, i, j);
+                                }
+                                break;
+                            case melee_shank:
+                                if (allObjects[O].image_index < 5 && w == 0 && h == 0) {
+                                    melee_shank_collision(O, i, j);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                break;
+            case wall:
+                for (int w = -1; w < 2; w++) {      //each wall checks around it for possible collisions with objects that are supposed to be bigger than a single point
+                    for (int h = -1; h < 2; h++) {
+                        for (int O : game_area[i + w][j + h].object_indexes) {      //walls collisions and bounce
+                            switch (allObjects[O].my_id) {
+                            case objectID::melee_slash:
+                                if (allObjects[O].image_index < 5) {
+                                    ultra_slash_collision(O, i, j);
+                                }
+                                break;
+                            case objectID::melee_shank:
+                                if (allObjects[O].image_index < 5) {
+                                    melee_shank_collision(O, i, j);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                break;
+            case floor_tile:
+            case exlpo_tile:        //ignore bullets on these tiles ie do logic with enemy to bullet not the other way around
+                for (int currOBJ : game_area[i][j].object_indexes) {
+                    switch (allObjects[currOBJ].my_id) {
+                    case melee_slash:
+                        if (allObjects[currOBJ].image_index < 5) {
+                            ultra_slash_collision(currOBJ, i, j);
+                        }
+                        break;
+                    case melee_shank:
+                        if (allObjects[currOBJ].image_index < 5) {
+                            melee_shank_collision(currOBJ, i, j);
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+        }
     }
 }
 
@@ -14583,6 +14666,64 @@ std::string get_what_mut_text(mutation_icon mut) {
     case skeleton_ultra_B_icon : return "DAMNATION";break;
     case cuz_ultra_A_icon : return "ARSENAL";break;
     case cuz_ultra_B_icon : return "EMOTIONALEMOTIONAL";break;
+
+    }
+}
+
+std::string get_what_mut_text_description(mutation_icon mut) {
+    switch (mut) {
+    case none_mut_icon:return ""; break;
+    case rhino_skin_icon:return "RHINO SKIN"; break;
+    case extra_feet_icon: return "EXTRA FEET"; break;
+    case plutonium_hunger_icon: return "PLUTONIUM HUNGER"; break;
+    case rabbit_paw_icon: return "RABBIT PAW"; break;
+    case throne_butt_icon: return "THRONE BUTT"; break;
+    case lucky_shot_icon: return "LUCKY SHOT"; break;
+    case bloodlust_icon: return "BLOODLUST"; break;
+    case gamma_guts_icon: return "GAMMA GUTS"; break;
+    case second_stomach_icon: return "SECOND STOMACH"; break;
+    case back_muscle_icon: return "BACK MUSCLE"; break;
+    case scarier_face_icon: return "SCARIER FACE"; break;
+    case euphoria_icon: return "EUPHORIA"; break;
+    case long_arms_icon: return "LONG ARMS"; break;
+    case boiling_veins_icon: return "BOILING VEINS"; break;
+    case laser_brain_icon: return "LASER BRAIN"; break;
+    case bolt_marrow_icon: return "BOLT MARROW"; break;
+    case stress_icon: return "STRESS"; break;
+    case trigger_fingers_icon: return "TRIGGER FINGERS"; break;
+    case hammerhead_icon: return "HAMMERHEAD"; break;
+    case strong_spirit_icon: return "STRONG SPIRIT"; break;
+    case fish_ultra_A_icon: return "CONFISCATE"; break;
+    case fish_ultra_B_icon: return "GUN WARRANT"; break;
+    case crystal_ultra_A_icon: return "FORTRESS"; break;
+    case crystal_ultra_B_icon: return "JUGGERNAUT"; break;
+    case eyes_ultra_A_icon: return "PROJECTILE STYLE"; break;
+    case eyes_ultra_B_icon: return "MONSTER STYLE"; break;
+    case melting_ultra_A_icon: return "BRAIN CAPACITY"; break;
+    case melting_ultra_B_icon: return "DETACHMENT"; break;
+    case plant_ultra_A_icon: return "TRAPPER"; break;
+    case plant_ultra_B_icon: return "KILLER"; break;
+    case YV_ultra_A_icon: return "IMA GUN GOD"; break;
+    case YV_ultra_B_icon: return "BACK 2 BIZNIZ"; break;
+    case steroids_ultra_A_icon: return "AMBIDEXTROUS"; break;
+    case steroids_ultra_B_icon: return "GET LOADED"; break;
+    case robot_ultra_A_icon: return "REFINED TASTE"; break;
+    case robot_ultra_B_icon: return "REGURGITATE"; break;
+    case chicken_ultra_A_icon: return "HARDER TO KILL"; break;
+    case chicken_ultra_B_icon: return "DETERMINATION"; break;
+    case rebel_ultra_A_icon: return "PERSONAL GUARD"; break;
+    case rebel_ultra_B_icon: return "RIOT"; break;
+    case horror_ultra_A_icon: return "STALKER"; break;
+    case horror_ultra_B_icon: return "ANOMALY"; break;
+    case horror_ultra_C_icon: return "MELTDOWN"; break;
+    case rogue_ultra_A_icon: return "SUPER PORTAL STRIKE"; break;
+    case rogue_ultra_B_icon: return "SUPER BLAST ARMOR"; break;
+    case frog_ultra_A_icon: return "DISTANCE"; break;
+    case frog_ultra_B_icon: return "INTIMACY"; break;
+    case skeleton_ultra_A_icon: return "REDEMPTION"; break;
+    case skeleton_ultra_B_icon: return "DAMNATION"; break;
+    case cuz_ultra_A_icon: return "ARSENAL"; break;
+    case cuz_ultra_B_icon: return "EMOTIONALEMOTIONAL"; break;
 
     }
 }
@@ -18719,7 +18860,13 @@ int main(int argc, char* argv[])
             enemy_index_fire_at = find_nearest_LOS_enemy(allObjects[0].position);
             heal_all_allys = false;
 
+            //do seperately first so melee swings dont get interupted wierdly mid frame
+            debug_timer_.timing_us_start();
+            do_melee_collision();
+            debug_timer_.timing_us_end();
+
             do_object_collision(left_physics_adjusted, right_physics_adjusted, 0);
+            
             destroy_on_screen_corpses = false;
 
             if (player_alive) {
@@ -19331,7 +19478,6 @@ int main(int argc, char* argv[])
             }
         }
         
-        //debug_timer_.timing_us_start();
         for (int i = cameraBoundsLeft; i < cameraBoundsRight; i++) {
             for (int j = cameraBoundsTop; j < cameraBoundsBottom; j++) {
                 if (game_area[i][j].my_grid_type == wall) {         //drawing walls, will have to make this draw different things based on the surrounding walls
@@ -21916,7 +22062,6 @@ int main(int argc, char* argv[])
                 }
             }
         }
-        //debug_timer_.timing_us_end();
 
         //2nd_pass for larger objects and light sources
 
@@ -22835,10 +22980,10 @@ int main(int argc, char* argv[])
                     else if (game_logo_timer < 52) {
                         temp_glt = 6;
                     }
-                    else{
+                    else {
                         temp_glt = 7;
                     }
-                    if (game_logo_timer == 52){
+                    if (game_logo_timer == 52) {
                         play_sound_on_player(snd_shovel_ID);
                         play_sound_on_player(snd_meat_explo_ID);
                         play_sound_on_player(snd_explosion_ID);
@@ -22925,12 +23070,15 @@ int main(int argc, char* argv[])
 
                     if (global_hover_over_mut > 0) {
 
-                        sf::Text temp_text;
-                        temp_text.setCharacterSize(8);
-                        temp_text.setFont(font);
-                        temp_text.setString("TEST");
-                        temp_text.setPosition(50, 160 - hover_over_mut_time);
-                        draw_text_NT(temp_text, buffer_UI);
+                        std::string mut_string = get_what_mut_text(mutation_SELECT_icons[global_hover_over_mut - 1]);
+
+                        colored_text temp_text;
+                        temp_text.set_string(mut_string, font);
+                        int string_len = temp_text.text_string.size();
+                        temp_text.set_position({ float(160 - string_len * 4), float(130) - hover_over_mut_time });
+                        for (sf::Text tex : temp_text.text_string) {
+                            draw_text_NT(tex, buffer_UI, tex.getColor());
+                        }
 
                         hover_over_mut_time++;
                         if (hover_over_mut_time > 2) {
@@ -23025,15 +23173,6 @@ int main(int argc, char* argv[])
 
         }
 
-
-        if(area == 2){
-
-        }
-        //debug_timer_.timing_us_end();
-
-
-        //draw_text_NT(hp_text, buffer_over);
-        //buffer_over.draw(c);
 
         sf::Text tTime;
         tTime.setString("time elapsed: " + std::to_string((debug_timer_.time_elapsed)) + "us");
