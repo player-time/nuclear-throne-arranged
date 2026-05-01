@@ -1,9 +1,1 @@
-﻿  Transformable.cpp
-  Shape.cpp
-  CircleShape.cpp
-  RectangleShape.cpp
-  ConvexShape.cpp
-  Sprite.cpp
-  Text.cpp
-  Generating Code...
-  sfml-graphics.vcxproj -> C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\_deps\sfml-build\lib\Release\sfml-graphics-s.lib
+﻿  sfml-graphics.vcxproj -> C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\_deps\sfml-build\lib\Release\sfml-graphics-s.lib

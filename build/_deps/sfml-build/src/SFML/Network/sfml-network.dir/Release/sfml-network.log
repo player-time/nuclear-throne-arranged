@@ -1,12 +1,1 @@
-﻿  Ftp.cpp
-  Http.cpp
-  IpAddress.cpp
-  Packet.cpp
-  Socket.cpp
-  SocketSelector.cpp
-  TcpListener.cpp
-  TcpSocket.cpp
-  UdpSocket.cpp
-  SocketImpl.cpp
-  Generating Code...
-  sfml-network.vcxproj -> C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\_deps\sfml-build\lib\Release\sfml-network-s.lib
+﻿  sfml-network.vcxproj -> C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\_deps\sfml-build\lib\Release\sfml-network-s.lib

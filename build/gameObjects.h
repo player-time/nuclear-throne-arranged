@@ -1035,6 +1035,11 @@ struct portal_spiral {
 	bool circle = false;
 };
 
+struct flashing_gray_text {
+	mutation_icon mut_text;
+	bool active = false;
+	int active_frames = 0;
+};
 
 struct replay_input {
 	std::uint16_t keyboard_n_mouse_input = 0x0000;

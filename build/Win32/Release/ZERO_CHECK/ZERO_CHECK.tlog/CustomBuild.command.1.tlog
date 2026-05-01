@@ -1,0 +1,10 @@
+^C:\USERS\SVT16\DESKTOP\NUCLEAR THRONE ARRANGED\CMAKE-SFML-PROJECT\BUILD\CMAKEFILES\43D24F648377D787B13683E06220EDF0\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SC:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project" "-BC:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build" --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file "C:/Users/svt16/Desktop/Nuclear Throne Arranged/cmake-sfml-project/build/CMakeSFMLProject.sln"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

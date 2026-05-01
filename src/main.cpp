@@ -11,6 +11,8 @@
 //gamma guts
 //bolt marrow
 
+//brain capacity and detach mut
+
 //make all sprite arrays dynamic
 
 //check whether going over sprite limit
@@ -560,6 +562,8 @@ mutation_icon mutation_HUD_icons[13];   //max of 12 mutations as melting, +1 fro
 sf::Sprite mut_icon_sprite[13];
 int mutation_HUD_icons_idx = 0;
 
+flashing_gray_text flashing_gray_mut_text[13];
+
 mutation_icon mutation_SELECT_icons[5];
 sf::Sprite mut_icon_sprite_select[5];
 
@@ -732,6 +736,10 @@ void get_back_muscle() {
 int global_mutation_icon_count = 4;
 int global_hover_over_mut = 0;
 bool global_draw_mut_icons = false;
+bool global_hoverd_over_mut = false;
+int global_hoverd_over_mut_delay = 0;
+
+int hover_over_mut_time = 0;
 
 bool player_alive = true;
 std::int32_t kill_count = 0;
@@ -853,7 +861,7 @@ bool GENERATE_LEVEL = false;
 int gen_delay_frames = 15;
 int gen_delay_progress = 0;
 
-void draw_text_NT(sf::Text text, sf::RenderTexture &renderer) {
+void draw_text_NT(sf::Text text, sf::RenderTexture &renderer, sf::Color col = sf::Color::White) {
     text.setColor(sf::Color::Black);
     text.setPosition(text.getPosition() + sf::Vector2f{ 1, 0 });
     renderer.draw(text);
@@ -863,7 +871,7 @@ void draw_text_NT(sf::Text text, sf::RenderTexture &renderer) {
     renderer.draw(text);
 
     text.setPosition(text.getPosition() + sf::Vector2f{ 0, -1 });
-    text.setColor(sf::Color::White);
+    text.setColor(col);
     renderer.draw(text);
 }
 
@@ -13570,6 +13578,11 @@ void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[], sf
 
     randomize_mutation_pool();
 
+    for (int i = 0; i < 13; i++) {
+        flashing_gray_mut_text[i].active = false;
+        flashing_gray_mut_text[i].active_frames = 0;
+    }
+
 
     allObjects[0].position = {24016,24016 };
 
@@ -14516,8 +14529,67 @@ void poll_movement_inputs(int& poll_move_up, int& poll_move_down, int& poll_move
     }
 }
 
+std::string get_what_mut_text(mutation_icon mut) {
+    switch (mut) {
+    case none_mut_icon:return "";break;
+    case rhino_skin_icon:return "RHINO SKIN"; break;
+    case extra_feet_icon : return "EXTRA FEET";break;
+    case plutonium_hunger_icon : return "PLUTONIUM HUNGER";break;
+    case rabbit_paw_icon : return "RABBIT PAW";break;
+    case throne_butt_icon : return "THRONE BUTT";break;
+    case lucky_shot_icon : return "LUCKY SHOT";break;
+    case bloodlust_icon : return "BLOODLUST";break;
+    case gamma_guts_icon : return "GAMMA GUTS";break;
+    case second_stomach_icon : return "SECOND STOMACH";break;
+    case back_muscle_icon : return "BACK MUSCLE";break;
+    case scarier_face_icon : return "SCARIER FACE";break;
+    case euphoria_icon : return "EUPHORIA";break;
+    case long_arms_icon : return "LONG ARMS";break;
+    case boiling_veins_icon : return "BOILING VEINS";break;
+    case laser_brain_icon : return "LASER BRAIN";break;
+    case bolt_marrow_icon : return "BOLT MARROW";break;
+    case stress_icon : return "STRESS";break;
+    case trigger_fingers_icon : return "TRIGGER FINGERS";break;
+    case hammerhead_icon : return "HAMMERHEAD";break;
+    case strong_spirit_icon : return "STRONG SPIRIT";break;
+    case fish_ultra_A_icon : return "CONFISCATE";break;
+    case fish_ultra_B_icon : return "GUN WARRANT";break;
+    case crystal_ultra_A_icon : return "FORTRESS";break;
+    case crystal_ultra_B_icon : return "JUGGERNAUT";break;
+    case eyes_ultra_A_icon : return "PROJECTILE STYLE";break;
+    case eyes_ultra_B_icon : return "MONSTER STYLE";break;
+    case melting_ultra_A_icon : return "BRAIN CAPACITY";break;
+    case melting_ultra_B_icon : return "DETACHMENT";break;
+    case plant_ultra_A_icon : return "TRAPPER";break;
+    case plant_ultra_B_icon : return "KILLER";break;
+    case YV_ultra_A_icon : return "IMA GUN GOD";break;
+    case YV_ultra_B_icon : return "BACK 2 BIZNIZ";break;
+    case steroids_ultra_A_icon : return "AMBIDEXTROUS";break;
+    case steroids_ultra_B_icon : return "GET LOADED";break;
+    case robot_ultra_A_icon : return "REFINED TASTE";break;
+    case robot_ultra_B_icon : return "REGURGITATE";break;
+    case chicken_ultra_A_icon : return "HARDER TO KILL";break;
+    case chicken_ultra_B_icon : return "DETERMINATION";break;
+    case rebel_ultra_A_icon : return "PERSONAL GUARD";break;
+    case rebel_ultra_B_icon : return "RIOT";break;
+    case horror_ultra_A_icon : return "STALKER";break;
+    case horror_ultra_B_icon : return "ANOMALY";break;
+    case horror_ultra_C_icon : return "MELTDOWN";break;
+    case rogue_ultra_A_icon : return "SUPER PORTAL STRIKE";break;
+    case rogue_ultra_B_icon : return "SUPER BLAST ARMOR";break;
+    case frog_ultra_A_icon : return "DISTANCE";break;
+    case frog_ultra_B_icon : return "INTIMACY";break;
+    case skeleton_ultra_A_icon : return "REDEMPTION";break;
+    case skeleton_ultra_B_icon : return "DAMNATION";break;
+    case cuz_ultra_A_icon : return "ARSENAL";break;
+    case cuz_ultra_B_icon : return "EMOTIONALEMOTIONAL";break;
+
+    }
+}
+
 void pick_ultra(int num) {
     mutation_icon temp_icon = none_mut_icon;
+    mutation_icon mut = none_mut_icon;
     //mutation_HUD_icons[1] = temp_icon;
     //move all mutations over
     for (int i = 12; i > 0; i--) {
@@ -14532,6 +14604,19 @@ void pick_ultra(int num) {
         mutation_HUD_icons[0] = mutation_icon(player_character * 2 + 22 + num);
     }
     mutation_HUD_icons_idx++;
+    global_hoverd_over_mut_delay = 0;
+
+    mut = mutation_HUD_icons[0];
+
+    //gray text
+    for (int i = 0; i < 13; i++) {
+        if (!flashing_gray_mut_text[i].active) {
+            flashing_gray_mut_text[i].active = true;
+            flashing_gray_mut_text[i].active_frames = 0;
+            flashing_gray_mut_text[i].mut_text = mut;
+            break;
+        }
+    }
 }
 
 void player_pick_ultra_A() {
@@ -14609,6 +14694,17 @@ void get_mutation(int mut) {
     mutation_HUD_icons_idx++;
     skill_points--;
     randomize_mutation_pool();
+    global_hoverd_over_mut_delay = 0;
+
+    //gray text
+    for (int i = 0; i < 13; i++) {
+        if (!flashing_gray_mut_text[i].active) {
+            flashing_gray_mut_text[i].active = true;
+            flashing_gray_mut_text[i].active_frames = 0;
+            flashing_gray_mut_text[i].mut_text = (mutation_icon)mut;
+            break;
+        }
+    }
 }
 
 void check_if_clicked_on_mut(bool pressed_LMB, sf::Vector2i mouse_pos) {
@@ -14726,6 +14822,9 @@ void check_if_clicked_on_mut(bool pressed_LMB, sf::Vector2i mouse_pos) {
             }
             break;
         }
+    }
+    if (global_hover_over_mut > 0) {
+        global_hoverd_over_mut = true;
     }
 }
 
@@ -15602,6 +15701,7 @@ int main(int argc, char* argv[])
 
         sf::Sprite player_level_spr;
         sf::Sprite xp_bar_spr;
+        sf::Sprite xp_bar_spr_outline;
         sf::Sprite hp_bar_spr;
         sf::Sprite health_bar_spr;
         sf::Sprite chicken_health_bar_spr;
@@ -15610,6 +15710,8 @@ int main(int argc, char* argv[])
         player_level_tex.loadFromFile("res/sprPlayerLevel.png");
         sf::Texture xp_bar;
         xp_bar.loadFromFile("res/sprExpBar.png");
+        sf::Texture xp_bar_outline;
+        xp_bar_outline.loadFromFile("res/ExpBarOutline.png");
         sf::Texture hp_bar;
         hp_bar.loadFromFile("res/player/hp_bar.png");
         sf::Texture health_bar;
@@ -15643,6 +15745,11 @@ int main(int argc, char* argv[])
         xp_bar_spr.setPosition(4, 4);
         xp_bar_spr.setTextureRect({0, 0, 14, 24});
 
+        xp_bar_spr_outline.setTexture(xp_bar_outline);
+        xp_bar_spr_outline.setOrigin(0, 0);
+        xp_bar_spr_outline.setPosition(3, 3);
+        xp_bar_spr_outline.setTextureRect({ 0, 0, 16, 26 });
+
         hp_bar_spr.setTexture(hp_bar);
         hp_bar_spr.setOrigin(0, 0);
         hp_bar_spr.setPosition(20, 4);
@@ -15666,6 +15773,13 @@ int main(int argc, char* argv[])
         wep_text.setCharacterSize(8);
         wep_text.setFont(font);
 
+
+        sf::Texture mut_splatTex;
+        mut_splatTex.loadFromFile("res/MutationSplat.png");
+        sf::Sprite mut_splat;
+        mut_splat.setTexture(mut_splatTex);
+        mut_splat.setPosition(160, 240 - 36);
+        mut_splat.setOrigin(130, 82);
 
         sf::Texture wep_arrow_tex;
         wep_arrow_tex.loadFromFile("res/wep_arrow.png");
@@ -15945,9 +16059,6 @@ int main(int argc, char* argv[])
         //bullet2_1BIG
         sf::Texture bullet2_1BIGtex;
         bullet2_1BIGtex.loadFromFile("res/enemy_bullets/sprEnemyBullet2_1BIG.png");
-        /* OLD
-        sf::VertexArray draw_bullet2_1BIGs = create_vertex_array(bullet2_1BIGtex, 20000);
-        */
 
         //bullet2_1
         sf::Texture bullet2_1tex;
@@ -17284,6 +17395,8 @@ int main(int argc, char* argv[])
             }
         }
 
+        global_hover_over_mut = 0;
+
         if (want_gen) {
             time_since_generated = 0;
             GAME_PAUSED = true;
@@ -17314,6 +17427,8 @@ int main(int argc, char* argv[])
             GENERATE_LEVEL = false;
             GAME_PAUSED = false;
             gen_delay_progress = 0;
+
+            global_hoverd_over_mut = false;
 
             area++;
             if (area > 7) {
@@ -19603,6 +19718,14 @@ int main(int argc, char* argv[])
                             }
                             global_mutation_icon_count = 0;
                             global_draw_mut_icons = false;
+
+                            if (global_hoverd_over_mut) {
+                                global_hoverd_over_mut_delay++;
+                                if (global_hoverd_over_mut_delay > 3) {
+                                    global_hoverd_over_mut_delay = 3;
+                                }
+                                mut_splat.setTextureRect({ global_hoverd_over_mut_delay * 260, 0, 260, 82 });
+                            }
                         }
 
                         break;
@@ -22765,6 +22888,9 @@ int main(int argc, char* argv[])
                             loading_time = 0;
                         }
                     }
+                    if (skill_points > 0 || ultra_points > 0) {
+                        buffer_UI.draw(xp_bar_spr_outline);
+                    }
                     //rads
                     choice = int(16 * player_rads / (player_level * 60 + 600 * ((1 + (ultra_picked == 3 && player_character == horror)) - 1)));
                     if (choice > 16) {
@@ -22791,6 +22917,56 @@ int main(int argc, char* argv[])
                     if (nearest_wep_drop_ID != 0) {
                         draw_weapon_text(allObjects[nearest_wep_drop_ID].size, allObjects[nearest_wep_drop_ID].position, wep_text, buffer_over, wep_arrow_sprite);
 
+                    }
+
+                    if (global_hoverd_over_mut && (skill_points > 0 || ultra_points > 0)) {
+                        buffer_UI.draw(mut_splat);
+                    }
+
+                    if (global_hover_over_mut > 0) {
+
+                        sf::Text temp_text;
+                        temp_text.setCharacterSize(8);
+                        temp_text.setFont(font);
+                        temp_text.setString("TEST");
+                        temp_text.setPosition(50, 160 - hover_over_mut_time);
+                        draw_text_NT(temp_text, buffer_UI);
+
+                        hover_over_mut_time++;
+                        if (hover_over_mut_time > 2) {
+                            hover_over_mut_time = 2;
+                        }
+                    }
+                    else {
+                        hover_over_mut_time = 0;
+                    }
+
+                    //flashing gray text
+                    if (want_gen) {
+                        for (int i = 0; i < 13; i++) {
+                            if (flashing_gray_mut_text[i].active) {
+                                sf::Text temp_text;
+                                temp_text.setCharacterSize(8);
+                                temp_text.setFont(font);
+                                temp_text.setString(get_what_mut_text(flashing_gray_mut_text[i].mut_text));
+                                int string_len = temp_text.getString().getSize();
+                                temp_text.setPosition(160 - string_len * 4, 160 + 10 * i);
+                                flashing_gray_mut_text[i].active_frames++;
+                                if (flashing_gray_mut_text[i].active_frames < 40 || flashing_gray_mut_text[i].active_frames % 2) {
+                                    draw_text_NT(temp_text, buffer_UI, sf::Color{ 128, 128, 128, 255 });
+                                }
+
+                                if (flashing_gray_mut_text[i].active_frames > 50) {
+                                    flashing_gray_mut_text[i].active = false;
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        for (int i = 0; i < 13; i++) {
+                            flashing_gray_mut_text[i].active = false;
+                            flashing_gray_mut_text[i].active_frames = 0;
+                        }
                     }
 
                     for (int i = 0; i < 13; i++) {
