@@ -10,10 +10,11 @@
 
 //gamma guts
 //bolt marrow
+//hammerhead visual
 
 //brain capacity and detach mut
 
-//make all sprite arrays dynamic
+//change mutation descriptions get_what_mut_text_description
 
 //check whether going over sprite limit
 //replay system
@@ -14665,7 +14666,7 @@ std::string get_what_mut_text(mutation_icon mut) {
     case skeleton_ultra_A_icon : return "REDEMPTION";break;
     case skeleton_ultra_B_icon : return "DAMNATION";break;
     case cuz_ultra_A_icon : return "ARSENAL";break;
-    case cuz_ultra_B_icon : return "EMOTIONALEMOTIONAL";break;
+    case cuz_ultra_B_icon : return "EMOTIONAL";break;
 
     }
 }
@@ -14673,57 +14674,57 @@ std::string get_what_mut_text(mutation_icon mut) {
 std::string get_what_mut_text_description(mutation_icon mut) {
     switch (mut) {
     case none_mut_icon:return ""; break;
-    case rhino_skin_icon:return "RHINO SKIN"; break;
-    case extra_feet_icon: return "EXTRA FEET"; break;
-    case plutonium_hunger_icon: return "PLUTONIUM HUNGER"; break;
-    case rabbit_paw_icon: return "RABBIT PAW"; break;
-    case throne_butt_icon: return "THRONE BUTT"; break;
-    case lucky_shot_icon: return "LUCKY SHOT"; break;
-    case bloodlust_icon: return "BLOODLUST"; break;
-    case gamma_guts_icon: return "GAMMA GUTS"; break;
-    case second_stomach_icon: return "SECOND STOMACH"; break;
-    case back_muscle_icon: return "BACK MUSCLE"; break;
-    case scarier_face_icon: return "SCARIER FACE"; break;
-    case euphoria_icon: return "EUPHORIA"; break;
-    case long_arms_icon: return "LONG ARMS"; break;
-    case boiling_veins_icon: return "BOILING VEINS"; break;
-    case laser_brain_icon: return "LASER BRAIN"; break;
-    case bolt_marrow_icon: return "BOLT MARROW"; break;
-    case stress_icon: return "STRESS"; break;
-    case trigger_fingers_icon: return "TRIGGER FINGERS"; break;
-    case hammerhead_icon: return "HAMMERHEAD"; break;
-    case strong_spirit_icon: return "STRONG SPIRIT"; break;
-    case fish_ultra_A_icon: return "CONFISCATE"; break;
-    case fish_ultra_B_icon: return "GUN WARRANT"; break;
-    case crystal_ultra_A_icon: return "FORTRESS"; break;
-    case crystal_ultra_B_icon: return "JUGGERNAUT"; break;
-    case eyes_ultra_A_icon: return "PROJECTILE STYLE"; break;
-    case eyes_ultra_B_icon: return "MONSTER STYLE"; break;
-    case melting_ultra_A_icon: return "BRAIN CAPACITY"; break;
-    case melting_ultra_B_icon: return "DETACHMENT"; break;
-    case plant_ultra_A_icon: return "TRAPPER"; break;
-    case plant_ultra_B_icon: return "KILLER"; break;
-    case YV_ultra_A_icon: return "IMA GUN GOD"; break;
-    case YV_ultra_B_icon: return "BACK 2 BIZNIZ"; break;
-    case steroids_ultra_A_icon: return "AMBIDEXTROUS"; break;
-    case steroids_ultra_B_icon: return "GET LOADED"; break;
-    case robot_ultra_A_icon: return "REFINED TASTE"; break;
-    case robot_ultra_B_icon: return "REGURGITATE"; break;
-    case chicken_ultra_A_icon: return "HARDER TO KILL"; break;
-    case chicken_ultra_B_icon: return "DETERMINATION"; break;
-    case rebel_ultra_A_icon: return "PERSONAL GUARD"; break;
-    case rebel_ultra_B_icon: return "RIOT"; break;
-    case horror_ultra_A_icon: return "STALKER"; break;
-    case horror_ultra_B_icon: return "ANOMALY"; break;
-    case horror_ultra_C_icon: return "MELTDOWN"; break;
-    case rogue_ultra_A_icon: return "SUPER PORTAL STRIKE"; break;
+    case rhino_skin_icon:return "+4 @rMAX HP@s"; break;
+    case extra_feet_icon: return "MORE @wSPEED@s#WALK NORMAL ON ALL TERRAIN"; break;
+    case plutonium_hunger_icon: return "ATTRACT @wDROPS@s AND @gRADS@s FROM FURTHER"; break;
+    case rabbit_paw_icon: return "MORE @rHP@s AND @yAMMO@s DROPS"; break;
+    case throne_butt_icon: return "UPGRADES YOUR SPECIAL ABILITY"; break;
+    case lucky_shot_icon: return "SOME KILLS REGENERATE @yAMMO@s"; break;
+    case bloodlust_icon: return "SOME KILLS REGENERATE @rHP@s"; break;
+    case gamma_guts_icon: return "@wENEMIES@s TOUCHING YOU TAKE DAMAGE"; break;
+    case second_stomach_icon: return "MORE @rHP@s FROM MEDKITS"; break;
+    case back_muscle_icon: return "HIGHER @yAMMO@s MAX"; break;
+    case scarier_face_icon: return "LESS ENEMY @rHP@s"; break;
+    case euphoria_icon: return "SLOWER @wENEMY PROJECTILES@s"; break;
+    case long_arms_icon: return "MORE @wMELEE@s RANGE"; break;
+    case boiling_veins_icon: return "@wNO DAMAGE@s FROM EXPLOSIONS AND FIRE#WHEN UNDER 4 @rHP@s"; break;
+    case laser_brain_icon: return "@wENERGY WEAPONS@s DEAL MORE DAMAGE"; break;
+    case bolt_marrow_icon: return "HOMING @wBOLTS@s"; break;
+    case stress_icon: return "HIGHER @wRATE OF FIRE@s#AS @rHP@s GETS LOWER"; break;
+    case trigger_fingers_icon: return "@wKILLS@s LOWER YOUR @wRELOAD TIME@s"; break;
+    case hammerhead_icon: return "PUSH THROUGH A LIMITED NUMBER OF @wWALLS@s#"; break;
+    case strong_spirit_icon: return "PREVENTS @wDEATH@s ONCE#RECHARGES AT FULL @rHP@s IN THE NEXT AREA"; break;
+    case fish_ultra_A_icon: return "@wENEMIES@s SOMETIMES DROP @wCHESTS@s"; break;
+    case fish_ultra_B_icon: return "@yINFINITE AMMO@s THE FIRST 7 SECONDS#AFTER EXITING A @pPORTAL@s"; break;
+    case crystal_ultra_A_icon: return "+6 MAX @rHP@s"; break;
+    case crystal_ultra_B_icon: return "MOVE WHILE @wSHIELDED@s"; break;
+    case eyes_ultra_A_icon: return "@wTELEKINESIS@s HOLDS YOUR @wPROJECTILES@s"; break;
+    case eyes_ultra_B_icon: return "PUSH NEARBY @wENEMIES@s AWAY#WHEN NOT USING @wTELEKINESIS@s"; break;
+    case melting_ultra_A_icon: return "BLOW UP @rLOW HP @wENEMIES@s"; break;
+    case melting_ultra_B_icon: return "3 MORE @gMUTATIONS@s#LOSE HALF OF YOUR @rHP@s"; break;
+    case plant_ultra_A_icon: return "BIG @wSNARE@s"; break;
+    case plant_ultra_B_icon: return "@wENEMIES@s KILLED ON YOUR @wSNARE@s#SPAWN @wSAPLINGS@s"; break;
+    case YV_ultra_A_icon: return "HIGHER @wRATE OF FIRE@s"; break;
+    case YV_ultra_B_icon: return "FREE @wPOP POP@s UPGRADE"; break;
+    case steroids_ultra_A_icon: return "DOUBLE @wWEAPONS@s FROM @wCHESTS@s"; break;
+    case steroids_ultra_B_icon: return "@yAMMO CHESTS@s CONTAIN ALL @yAMMO TYPES@s"; break;
+    case robot_ultra_A_icon: return "HIGH TIER @wWEAPONS@s ONLY#AUTO EAT @wWEAPONS@s LEFT BEHIND"; break;
+    case robot_ultra_B_icon: return "EATING @wWEAPONS@s CAN DROP @wCHESTS@s#AUTO EAT @wWEAPONS@s LEFT BEHIND"; break;
+    case chicken_ultra_A_icon: return "KILLS EXTEND BLEED TIME"; break;
+    case chicken_ultra_B_icon: return "THROWN @wWEAPONS@s CAN TELEPORT BACK#TO YOUR SECONDARY SLOT"; break;
+    case rebel_ultra_A_icon: return "START A LEVEL WITH 2 @wALLIES@s#ALL @wALLIES@s HAVE MORE @rHP@s"; break;
+    case rebel_ultra_B_icon: return "DOUBLE @wALLY@s SPAWNS"; break;
+    case horror_ultra_A_icon: return "@wENEMIES@s EXPLODE IN @gRADIATION@s ON DEATH"; break;
+    case horror_ultra_B_icon: return "@pPORTALS@s APPEAR EARLIER"; break;
+    case horror_ultra_C_icon: return "DOUBLE @gRAD@s CAPACITY"; break;
+    case rogue_ultra_A_icon: return "QUADRUPLE @bPORTAL STRIKE@s PICKUPS#AND CAPACITY"; break;
     case rogue_ultra_B_icon: return "SUPER BLAST ARMOR"; break;
-    case frog_ultra_A_icon: return "DISTANCE"; break;
-    case frog_ultra_B_icon: return "INTIMACY"; break;
-    case skeleton_ultra_A_icon: return "REDEMPTION"; break;
-    case skeleton_ultra_B_icon: return "DAMNATION"; break;
-    case cuz_ultra_A_icon: return "ARSENAL"; break;
-    case cuz_ultra_B_icon: return "EMOTIONALEMOTIONAL"; break;
+    case frog_ultra_A_icon: return "RADS CAN SPAWN TOXIC @gGAS@s"; break;
+    case frog_ultra_B_icon: return "CONTINUOUSLY SPAWN TOXIC @gGAS@s"; break;
+    case skeleton_ultra_A_icon: return "BACK IN THE FLESH"; break;
+    case skeleton_ultra_B_icon: return "FAST RELOAD AFTER BLOOD GAMBLE"; break;
+    case cuz_ultra_A_icon: return "TWICE AS MANY GUNS"; break;
+    case cuz_ultra_B_icon: return "TWICE AS MANY @bTEARS@w"; break;
 
     }
 }
@@ -15919,7 +15920,7 @@ int main(int argc, char* argv[])
         mut_splatTex.loadFromFile("res/MutationSplat.png");
         sf::Sprite mut_splat;
         mut_splat.setTexture(mut_splatTex);
-        mut_splat.setPosition(160, 240 - 36);
+        mut_splat.setPosition(165, 240 - 36);
         mut_splat.setOrigin(130, 82);
 
         sf::Texture wep_arrow_tex;
@@ -23070,13 +23071,24 @@ int main(int argc, char* argv[])
 
                     if (global_hover_over_mut > 0) {
 
+                        //mut name
                         std::string mut_string = get_what_mut_text(mutation_SELECT_icons[global_hover_over_mut - 1]);
 
                         colored_text temp_text;
                         temp_text.set_string(mut_string, font);
                         int string_len = temp_text.text_string.size();
-                        temp_text.set_position({ float(160 - string_len * 4), float(130) - hover_over_mut_time });
+                        temp_text.set_position({ float(160 - string_len * 4), float(162) - hover_over_mut_time });
                         for (sf::Text tex : temp_text.text_string) {
+                            draw_text_NT(tex, buffer_UI, tex.getColor());
+                        }
+                        //mut description
+                        mut_string = get_what_mut_text_description(mutation_SELECT_icons[global_hover_over_mut - 1]);
+
+                        colored_text temp_text_desc;
+                        temp_text_desc.set_string(mut_string, font, sf::Color{128, 128, 128, 255});
+                        string_len = temp_text_desc.text_string.size();
+                        temp_text_desc.set_position({ float(160 - string_len * 4), float(174) - hover_over_mut_time });
+                        for (sf::Text tex : temp_text_desc.text_string) {
                             draw_text_NT(tex, buffer_UI, tex.getColor());
                         }
 
@@ -23098,7 +23110,7 @@ int main(int argc, char* argv[])
                                 temp_text.setFont(font);
                                 temp_text.setString(get_what_mut_text(flashing_gray_mut_text[i].mut_text));
                                 int string_len = temp_text.getString().getSize();
-                                temp_text.setPosition(160 - string_len * 4, 160 + 10 * i);
+                                temp_text.setPosition(160 - string_len * 4, 140 - 10 * i);
                                 flashing_gray_mut_text[i].active_frames++;
                                 if (flashing_gray_mut_text[i].active_frames < 40 || flashing_gray_mut_text[i].active_frames % 2) {
                                     draw_text_NT(temp_text, buffer_UI, sf::Color{ 128, 128, 128, 255 });

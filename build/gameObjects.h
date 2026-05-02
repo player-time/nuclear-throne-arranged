@@ -1044,7 +1044,7 @@ struct flashing_gray_text {
 struct colored_text {
 	std::vector<sf::Text> text_string;
 
-	void set_string(std::string str, sf::Font &font) {
+	void set_string(std::string str, sf::Font &font, sf::Color start_col = sf::Color::White) {
 		text_string.clear();
 
 		std::string string_block;	//block of characters that have the same color and y pos
@@ -1057,7 +1057,7 @@ struct colored_text {
 
 		str.push_back(*"*");
 
-		sf::Color next_col = sf::Color::White;
+		sf::Color next_col = start_col;
 		float y_off = 0;
 
 		for (int i = 0; i < str.length(); i++) {
@@ -1113,16 +1113,16 @@ struct colored_text {
 						next_col = sf::Color::Green;
 					}
 					else if (str[i + 1] == *"q") {
-						next_col = sf::Color::Magenta;
+						next_col = sf::Color{ 86, 34, 110, 255 };//purple
 					}
 					else if (str[i + 1] == *"s") {
 						next_col = sf::Color{ 128, 128, 128, 255 };//gray
 					}
 					else if (str[i + 1] == *"p") {
-						next_col = sf::Color::Magenta;
+						next_col = sf::Color{ 86, 34, 110, 255 };//purple
 					}
 					else if (str[i + 1] == *"y") {
-						next_col = sf::Color::Yellow;
+						next_col = sf::Color{ 250, 171, 0, 255 };//yellow
 					}
 					i++;
 				}
@@ -1145,7 +1145,7 @@ struct colored_text {
 				for (int j = idx_go_back; j < i; j++) {
 					if (text_string[j].getString() != "~") {
 						text_string[j].setPosition(160 - x_off / 2, pos.y + y_off);
-						x_off -= text_string[j].getString().getSize() * 8;
+						x_off -= text_string[j].getString().getSize() * 16;
 					}
 				}
 				idx_go_back = i;
