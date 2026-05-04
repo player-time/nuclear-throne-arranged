@@ -4,9 +4,6 @@
 
 //fix light sources
 //proto vault
-//loading screen spiral
-
-//missiles look wierd
 
 //gamma guts
 //bolt marrow
@@ -16,7 +13,6 @@
 
 //change mutation descriptions get_what_mut_text_description
 
-//check whether going over sprite limit
 //replay system
 
 #include <SFML/Graphics.hpp>
@@ -580,6 +576,17 @@ int ultra_picked = 0;   //0 = no ultra
 
 int skill_points = 1;
 int ultra_points = 0;
+
+//game map
+sf::Sprite game_map_top;
+sf::Sprite game_map_bottom;
+sf::Sprite game_map_crown;
+
+sf::Sprite map_icon;
+
+//ui stuff
+sf::Sprite score_splat;
+sf::Sprite score_skull;
 
 character player_character = fish;
 
@@ -13618,8 +13625,63 @@ void randomize_mutation_pool() {
     }
 }
 
+sf::Color HSV_to_RGB(int hue, int sat, int val) {
+    double      hh, p, q, t, ff;
+    long        i;
+    sf::Color   out;
+
+    double inh = double(hue) / 255.0 * 360.0;
+    double inv = double(val) / 255.0;
+    double ins = double(sat) / 255.0;
+
+    hh = inh;
+    if (hh >= 360.0) hh = 0.0;
+    hh /= 60.0;
+    i = (long)hh;
+    ff = hh - i;
+    p = inv * (1.0 - ins);
+    q = inv * (1.0 - (ins * ff));
+    t = inv * (1.0 - (ins * (1.0 - ff)));
+
+    switch (i) {
+    case 0:
+        out.r = uint8_t(inv * 255.0);
+        out.g = uint8_t(t * 255.0);
+        out.b = uint8_t(p * 255.0);
+        break;
+    case 1:
+        out.r = uint8_t(q * 255.0);
+        out.g = uint8_t(inv * 255.0);
+        out.b = uint8_t(p * 255.0);
+        break;
+    case 2:
+        out.r = uint8_t(p * 255.0);
+        out.g = uint8_t(inv * 255.0);
+        out.b = uint8_t(t * 255.0);
+        break;
+
+    case 3:
+        out.r = uint8_t(p * 255.0);
+        out.g = uint8_t(q * 255.0);
+        out.b = uint8_t(inv * 255.0);
+        break;
+    case 4:
+        out.r = uint8_t(t * 255.0);
+        out.g = uint8_t(p * 255.0);
+        out.b = uint8_t(inv * 255.0);
+        break;
+    case 5:
+    default:
+        out.r = uint8_t(inv * 255.0);
+        out.g = uint8_t(p * 255.0);
+        out.b = uint8_t(q * 255.0);
+        break;
+    }
+    return out;
+}
+
 //reset all global variables and set random seed to be randomized, or set to a specific seed if replay
-void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[], sf::Music& current_music) {
+void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[], sf::Music& current_music, sf::Texture &map_textrue) {
 
     current_music.openFromFile("mus/mus1.ogg");
     current_music.setVolume(100.0f);
@@ -13668,7 +13730,7 @@ void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[], sf
     }
 
 
-    allObjects[0].position = {24016,24016 };
+    allObjects[0].position = { 24016, 24016 };
 
     if(PLAY_REPLAY){
         //TODO set to replay seed
@@ -13678,6 +13740,26 @@ void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[], sf
         //TODO set to a random seed
         srand(0);
     }
+
+    //reset map
+    game_map_top.setPosition(79 + 10, 120 + 2);
+    game_map_top.setTexture(map_textrue);
+    game_map_bottom.setPosition(79 + 10, 120 + 2);
+    game_map_bottom.setTexture(map_textrue);
+    game_map_crown.setPosition(218, 120 + 2);
+    game_map_crown.setTexture(map_textrue);
+
+    game_map_top.setTextureRect({ 10, 0, 10, 10 });
+    game_map_bottom.setTextureRect({ 10, 0, 140, 10 });
+    game_map_crown.setTextureRect({ 139, 0, 11, 10 });
+
+    sf::Color color_new = HSV_to_RGB(LOOPS * 39, 200, 200);
+
+    game_map_top.setColor(color_new);
+    game_map_bottom.setColor(sf::Color::White);
+    game_map_crown.setColor(sf::Color::White);
+
+    map_icon.setTextureRect({ player_character * 40 + (is_Bskin * 20), 0, 20, 20 });
 
     //reset global variables
     eyes_using_TK = false;
@@ -13769,7 +13851,96 @@ void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[], sf
 
 }
 
+int get_map_pos() {
+    int area_ = (area + 1);
+    if (area_ > 7) {
+        area_ = 0;
+    }
+    if (area == 7 && sub_area != 3) {
+        if (sub_area == 2) {
+            return 118 + 31;
+        }
+        return 118 + 27;
+    }
+    switch (area_) {
+    case 0:
+        return 4;
+        break;
+    case 1:
+        return 10;
+        break;
+    case 2:
+        return 37;
+        break;
+    case 3:
+        return 46;
+        break;
+    case 4:
+        return 73;
+        break;
+    case 5:
+        return 82;
+        break;
+    case 6:
+        return 109;
+        break;
+    case 7:
+        return 118;
+        break;
+    }
+}
+
 void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
+
+    //update map
+    if (area == 7 && sub_area == 3) {
+        sf::Color color_old = HSV_to_RGB(LOOPS * 39, 200, 200);
+
+        sf::Color color_new = HSV_to_RGB((LOOPS + 1) * 39, 200, 200);
+
+        game_map_top.setColor(color_new);
+        game_map_bottom.setColor(color_old);
+    }
+    int top_x_start = 0;
+    int top_x_end = 0;
+
+    if (LOOPS == 0) {
+        top_x_start = 10;
+    }
+
+    int sub_area_off = 0;
+    if (sub_area == 2 && area % 2 == 1) {
+        sub_area_off = -8;
+    }
+    if (sub_area == 3) {
+        sub_area_off = 0;
+    }
+    if (sub_area == 1 && area % 2 == 0) {
+        sub_area_off = 0;
+    }
+    if (sub_area == 1 && area % 2 == 1) {
+        sub_area_off = -16;
+    }
+
+    if (area == 7 && sub_area == 3) {
+        sub_area_off = 0;
+        top_x_start = 0;
+        top_x_end = 0;
+    }
+
+    top_x_end = get_map_pos() + sub_area_off;
+
+    game_map_top.setTextureRect({ top_x_start, 0, top_x_end, 10 });
+    game_map_top.setPosition(79 + top_x_start, 120 + 2);
+
+    game_map_bottom.setTextureRect({ top_x_start, 0, 140, 10 });
+    game_map_bottom.setPosition(79 + top_x_start, 120 + 2);
+
+    int area_0_off = 0;
+    if (area == 7 && sub_area == 3) {
+        area_0_off = -3;
+    }
+    map_icon.setPosition(79 + 1 + top_x_end + area_0_off, 125 + 2);
 
     //reset area
     for (int i = left_physics - 2; i <= right_physics + 2; i++) {
@@ -16680,6 +16851,23 @@ int main(int argc, char* argv[])
         game_logo_glow.setTextureRect({ 0, 0, 258, 96 });
         game_logo_glow.setColor({255, 255, 255, 13});
 
+        sf::Texture map_textrue;
+        map_textrue.loadFromFile("res/map.png");
+
+        sf::Texture map_icon_textrue;
+        map_icon_textrue.loadFromFile("res/map_icon.png");
+        map_icon.setTexture(map_icon_textrue);
+        map_icon.setOrigin(10, 10);
+
+        sf::Texture score_splat_tex;
+        score_splat_tex.loadFromFile("res/score_splat.png");
+        score_splat.setTexture(score_splat_tex);
+
+        sf::Texture score_skull_tex;
+        score_skull_tex.loadFromFile("res/score_skull.png");
+        score_skull.setTexture(score_skull_tex);
+
+
     //initialize the area, this should be reset every level to regenerate the next level
     for (int i = 0; i < gridSize; i++) {
         for (int j = 0; j < gridSize; j++) {
@@ -17104,7 +17292,7 @@ int main(int argc, char* argv[])
                         if (player_character > 13) {
                             player_character = fish;
                         }
-                        start_new_run(player_character, all_sounds, current_music);
+                        start_new_run(player_character, all_sounds, current_music, map_textrue);
 
 
                         switch (player_character) {
@@ -17355,7 +17543,7 @@ int main(int argc, char* argv[])
                 CURRENT_GAME_STATE = gs_in_game;
                 player_character = fish;
 
-                start_new_run(player_character, all_sounds, current_music);
+                start_new_run(player_character, all_sounds, current_music, map_textrue);
 
                 switch (player_character) {
                 case fish:
@@ -17572,9 +17760,17 @@ int main(int argc, char* argv[])
 
             global_hoverd_over_mut = false;
 
-            area++;
+            if (area % 2 == 0 || sub_area == 3) {
+                sub_area = 1;
+                area++;
+            }
+            else if (area % 2 == 1) {
+                sub_area++;
+            }
+
             if (area > 7) {
                 area = 0;
+                sub_area = 1;
                 LOOPS++;
             }
 
@@ -23105,12 +23301,18 @@ int main(int argc, char* argv[])
                     if (want_gen) {
                         for (int i = 0; i < 13; i++) {
                             if (flashing_gray_mut_text[i].active) {
+
+                                int y_off = 0;
+                                if (skill_points <= 0 && ultra_points <= 0) {
+                                    y_off = 36;
+                                }
+
                                 sf::Text temp_text;
                                 temp_text.setCharacterSize(8);
                                 temp_text.setFont(font);
                                 temp_text.setString(get_what_mut_text(flashing_gray_mut_text[i].mut_text));
                                 int string_len = temp_text.getString().getSize();
-                                temp_text.setPosition(160 - string_len * 4, 140 - 10 * i);
+                                temp_text.setPosition(160 - string_len * 4, 140 - 10 * i + y_off);
                                 flashing_gray_mut_text[i].active_frames++;
                                 if (flashing_gray_mut_text[i].active_frames < 40 || flashing_gray_mut_text[i].active_frames % 2) {
                                     draw_text_NT(temp_text, buffer_UI, sf::Color{ 128, 128, 128, 255 });
@@ -23135,6 +23337,24 @@ int main(int argc, char* argv[])
                     for (int i = 0; i < 5; i++) {
                         buffer_UI.draw(mut_icon_sprite_select[i]);
                     }
+
+                    if (want_gen && skill_points <= 0 && ultra_points <= 0) {
+                        buffer_UI.draw(game_map_bottom);
+                        buffer_UI.draw(game_map_top);
+                        buffer_UI.draw(game_map_crown);
+
+                        buffer_UI.draw(map_icon);
+
+                        score_splat.setPosition(164, 93);
+                        buffer_UI.draw(score_splat);
+
+                        score_splat.setPosition(87, 93);
+                        buffer_UI.draw(score_splat);
+
+                        score_skull.setPosition(169, 100);
+                        buffer_UI.draw(score_skull);
+                    }
+
                 }
                 else {
 
