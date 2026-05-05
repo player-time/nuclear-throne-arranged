@@ -538,6 +538,7 @@ int gamma_guts_immune = 0;
 bool gamma_guts_immune_increase_this_frame = false;
 int gamma_guts_proc = 0;
 sf::Sprite gamma_guts_sprite;
+sf::Sprite gamma_guts_glow_sprite;
 
 int has_rhino_skin = 1;
 
@@ -594,6 +595,54 @@ sf::Sprite score_splat;
 sf::Sprite score_skull;
 
 character player_character = fish;
+
+
+bool player_alive = true;
+std::int32_t kill_count = 0;
+bool has_died = false;
+int player_corpse_id = 0;
+
+//sounds
+
+//these two are for 2d sound
+std::vector<sf::Vector3f> play_sounds_this_frame_pos;
+std::vector<int> play_sounds_this_frame_count;
+
+void play_sound_relative_to_player(sound_ID sound_id, float x, float y) {
+    if (player_alive) {
+        play_sounds_this_frame_pos[sound_id].x += x - allObjects[0].position.x;
+        play_sounds_this_frame_pos[sound_id].y += y - allObjects[0].position.y;
+    }
+    else {
+        play_sounds_this_frame_pos[sound_id].x += x - allObjects[player_corpse_id].position.x;
+        play_sounds_this_frame_pos[sound_id].y += y - allObjects[player_corpse_id].position.y;
+    }
+    play_sounds_this_frame_count[sound_id]++;
+}
+
+void play_sound_on_player(sound_ID sound_id) {
+    play_sounds_this_frame_pos[sound_id].x = 0;
+    play_sounds_this_frame_pos[sound_id].y = 0;
+    play_sounds_this_frame_count[sound_id]++;
+}
+
+void stop_looping_sound(sound_ID sound_id) {
+    play_sounds_this_frame_pos[sound_id].x = 0;
+    play_sounds_this_frame_pos[sound_id].y = 0;
+    play_sounds_this_frame_count[sound_id] = -1;
+}
+
+int add_new_sound(enum sound_ID sound_id, std::string filename_path, sf::SoundBuffer(&all_sounds)[1000], sound_sound_buffer(&all_sounds_mirror)[1000], float pitch_variance, float attenuation = 1.0f, float volume = 100.0f) {
+    if (!all_sounds[sound_id].loadFromFile(filename_path)) {
+        EXIT_PROGRAM_NOW = (int)sound_id;
+        return -1;
+    }
+    all_sounds_mirror[sound_id].attenuation = attenuation;
+    all_sounds_mirror[sound_id].volume = volume;
+    all_sounds_mirror[sound_id].pitch_variance = pitch_variance;
+
+    return 1;
+}
 
 void reset_skill_points() {
     skill_points = 1;
@@ -672,31 +721,40 @@ void reset_mutations() {//includes ultra
 
 //get mutation funcs
 void get_plutonium_hunger() {
+    play_sound_on_player(snd_get_plutonium_hunger_ID);
     plutonium_hunger = 140;       //set to 120 when mutation got 80 when not    nerfed from 140
     plutonium_hunger_ammo = 70;  //set to 60 when mutation got 30 when not      nerfed from 70
 }
 void get_long_arms() {
+    play_sound_on_player(snd_get_long_arms_ID);
     long_arms = 1.0f;         //0.0f if no long arms, 1.0f if long arms
 }
 void get_trigger_fingers() {
+    play_sound_on_player(snd_get_trigger_fingers_ID);
     trigger_fingers = 0.6f;
 }
 void get_laser_brain() {
+    play_sound_on_player(snd_get_laser_brain_ID);
     laser_brain = 1.2f;
 }
 void get_second_stomach() {
+    play_sound_on_player(snd_get_second_stomach_ID);
     second_stomach = 1;
 }
 void get_stress() {
+    play_sound_on_player(snd_get_stress_ID);
     stress = 1.0f;
 }
 void get_bloodlust() {
+    play_sound_on_player(snd_get_bloodlust_ID);
     bloodlust = 1;
 }
 void get_lucky_shot() {
+    play_sound_on_player(snd_get_lucky_shot_ID);
     lucky_shot = 1;
 }
 void get_hammerhead() {
+    play_sound_on_player(snd_get_hammerhead_ID);
     has_hammerhead = true;
     hammerhead_charges = 0;
     can_hammerhead = false;
@@ -705,32 +763,40 @@ void get_hammerhead() {
     hammerhead_destroyed_wall = 0;
 }
 void get_boiling_veins() {
+    play_sound_on_player(snd_get_boiling_veins_ID);
     has_boiling_veins = true;
     player_smoke_ammount = 0;
 }
 void get_gamma_guts() {
+    play_sound_on_player(snd_get_gamma_guts_ID);
     has_gamma_guts = true;
     gamma_guts_immune = 0;
     gamma_guts_immune_increase_this_frame = false;
     gamma_guts_proc = 0;
 }
-void get_rhino_skin(){
+void get_rhino_skin() {
+    play_sound_on_player(snd_get_rhino_skin_ID);
     has_rhino_skin = 1;
     player_max_hp += 4;
 }
-void get_extra_feet(){
+void get_extra_feet() {
+    play_sound_on_player(snd_get_extra_feet_ID);
     extra_feet = 0.5f;
 }
-void get_euphoria(){
+void get_euphoria() {
+    play_sound_on_player(snd_get_euphoria_ID);
     euphoria = 0.8f;
 }
-void get_rabbit_paw(){
+void get_rabbit_paw() {
+    play_sound_on_player(snd_get_rabbit_paw_ID);
     rabbit_paw = true;
 }
-void get_bolt_marrow(){
+void get_bolt_marrow() {
+    play_sound_on_player(snd_get_bolt_marrow_ID);
     bolt_marrow = true;
 }
 void get_spirit() {
+    play_sound_on_player(snd_get_spirit_ID);
     has_spirit = true;
     has_spirit_mut = true;
     can_recover_spirit = false;
@@ -738,12 +804,15 @@ void get_spirit() {
     player_wave = 0;
 }
 void get_scarier_face() {
+    play_sound_on_player(snd_get_scarier_face_ID);
     scarier_face = 0.8f;
 }
 void get_throne_butt() {
+    play_sound_on_player(snd_get_throne_butt_ID);
     has_throne_butt = true;
 }
 void get_back_muscle() {
+    play_sound_on_player(snd_get_back_muscle_ID);
     player_bullets_max = 555;
     player_bolts_max = 99;
     player_shells_max = 99;
@@ -760,11 +829,6 @@ int global_hoverd_over_mut_delay = 0;
 
 int hover_over_mut_time = 0;
 
-bool player_alive = true;
-std::int32_t kill_count = 0;
-bool has_died = false;
-int player_corpse_id = 0;
-
 //chicken stuff
 int chicken_headless_timer = 150;
 bool chicken_beheaded = false;
@@ -775,12 +839,6 @@ int player_character_idle_frames = 6;
 int player_character_walk_frames = 6;
 int player_character_death_frames = 6;
 int player_character_hurt_frames = 3;
-
-//sounds
-
-//these two are for 2d sound
-std::vector<sf::Vector3f> play_sounds_this_frame_pos;
-std::vector<int> play_sounds_this_frame_count;
 
 
 //portal spiral stuff
@@ -895,41 +953,7 @@ void draw_text_NT(sf::Text text, sf::RenderTexture &renderer, sf::Color col = sf
 
 
 
-void play_sound_relative_to_player(sound_ID sound_id, float x, float y) {
-    if (player_alive) {
-        play_sounds_this_frame_pos[sound_id].x += x - allObjects[0].position.x;
-        play_sounds_this_frame_pos[sound_id].y += y - allObjects[0].position.y;
-    }
-    else {
-        play_sounds_this_frame_pos[sound_id].x += x - allObjects[player_corpse_id].position.x;
-        play_sounds_this_frame_pos[sound_id].y += y - allObjects[player_corpse_id].position.y;
-    }
-    play_sounds_this_frame_count[sound_id]++;
-}
 
-void play_sound_on_player(sound_ID sound_id) {
-    play_sounds_this_frame_pos[sound_id].x = 0;
-    play_sounds_this_frame_pos[sound_id].y = 0;
-    play_sounds_this_frame_count[sound_id]++;
-}
-
-void stop_looping_sound(sound_ID sound_id) {
-    play_sounds_this_frame_pos[sound_id].x = 0;
-    play_sounds_this_frame_pos[sound_id].y = 0;
-    play_sounds_this_frame_count[sound_id] = -1;
-}
-
-int add_new_sound(enum sound_ID sound_id, std::string filename_path, sf::SoundBuffer (&all_sounds)[1000], sound_sound_buffer (&all_sounds_mirror)[1000], float pitch_variance, float attenuation = 1.0f, float volume = 100.0f) {
-    if (!all_sounds[sound_id].loadFromFile(filename_path)) {
-        EXIT_PROGRAM_NOW = (int)sound_id;
-        return -1;
-    }
-    all_sounds_mirror[sound_id].attenuation = attenuation;
-    all_sounds_mirror[sound_id].volume = volume;
-    all_sounds_mirror[sound_id].pitch_variance = pitch_variance;
-
-    return 1;
-}
 
 /*int change_sound_buffer(enum sound_ID sound_id, sound_sound_buffer all_sounds[], enum sound_ID sound_buffer_id, sf::SoundBuffer all_extra_sound_buffers[], float pitch_variance, float attenuation = 1.0f, float volume = 100.0f) {
     all_sounds[sound_id].sound.stop();
@@ -15849,6 +15873,27 @@ int main(int argc, char* argv[])
     add_new_sound(snd_throne_1_idle_loop_ID, "snd/throne_1_idle_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
     add_new_sound(snd_fish_TB_loop_ID, "snd/fish_TB_loop.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f, 100.0f);
 
+    //get mutation sfx
+    add_new_sound(snd_get_plutonium_hunger_ID, "snd/get_plutonium_hunger.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_long_arms_ID, "snd/get_long_arms.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_trigger_fingers_ID, "snd/get_trigger_fingers.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_laser_brain_ID, "snd/get_laser_brain.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_second_stomach_ID, "snd/get_second_stomach.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_stress_ID, "snd/get_stress.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_bloodlust_ID, "snd/get_bloodlust.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_lucky_shot_ID, "snd/get_lucky_shot.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_hammerhead_ID, "snd/get_hammerhead.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_boiling_veins_ID, "snd/get_boiling_veins.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_gamma_guts_ID, "snd/get_gamma_guts.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_rhino_skin_ID, "snd/get_rhino_skin.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_extra_feet_ID, "snd/get_extra_feet.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_euphoria_ID, "snd/get_euphoria.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_rabbit_paw_ID, "snd/get_rabbit_paw.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_bolt_marrow_ID, "snd/get_bolt_marrow.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_spirit_ID, "snd/get_spirit.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_scarier_face_ID, "snd/get_scarier_face.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_throne_butt_ID, "snd/get_throne_butt.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_get_back_muscle_ID, "snd/get_back_muscle.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
 
     //footsteps
     float foot_step_vol = 11.0f;
@@ -17014,6 +17059,13 @@ int main(int argc, char* argv[])
         gamma_guts_sprite.setColor({255, 255, 255, 50});
         gamma_guts_sprite.setTextureRect({0, 0, 0, 0});
         gamma_guts_sprite.setOrigin(48, 48);
+
+        sf::Texture gamma_guts_glow_tex;
+        gamma_guts_glow_tex.loadFromFile("res/gamma_guts_glow.png");
+        gamma_guts_glow_sprite.setTexture(gamma_guts_glow_tex);
+        gamma_guts_glow_sprite.setColor({ 255, 255, 255, 40 });
+        gamma_guts_glow_sprite.setTextureRect({ 0, 0, 0, 0 });
+        gamma_guts_glow_sprite.setOrigin(12, 12);
 
     //initialize the area, this should be reset every level to regenerate the next level
     for (int i = 0; i < gridSize; i++) {
@@ -20200,6 +20252,13 @@ int main(int argc, char* argv[])
                         else {
                             gamma_guts_sprite.setTextureRect({0, 0, 0, 0});
                         }
+                        if (has_gamma_guts) {
+                            gamma_guts_glow_sprite.setTextureRect({ (int(current_frame * 0.4f) % 8) * 24, 0, 24, 24 });
+                            gamma_guts_glow_sprite.setPosition(allObjects[0].position - cameraPos);
+                        }
+                        else {
+                            gamma_guts_glow_sprite.setTextureRect({ 0, 0, 0, 0 });
+                        }
 
                         //mutation HUD
                         if (ultra_picked == 0) {
@@ -23277,6 +23336,7 @@ int main(int argc, char* argv[])
             if (gamma_guts_proc > 0) {
                 buffer_over.draw(gamma_guts_sprite, RendererBloom);
             }
+            buffer_over.draw(gamma_guts_glow_sprite, RendererBloom);
 
             //player
             //buffer_over.draw(c);

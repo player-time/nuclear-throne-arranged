@@ -757,6 +757,28 @@ enum sound_ID {
 	snd_throne_1_idle_loop_ID,
 	snd_fish_TB_loop_ID,
 
+	//mutation get sfx
+	snd_get_plutonium_hunger_ID,
+	snd_get_long_arms_ID,
+	snd_get_trigger_fingers_ID,
+	snd_get_laser_brain_ID,
+	snd_get_second_stomach_ID,
+	snd_get_stress_ID,
+	snd_get_bloodlust_ID,
+	snd_get_lucky_shot_ID,
+	snd_get_hammerhead_ID,
+	snd_get_boiling_veins_ID,
+	snd_get_gamma_guts_ID,
+	snd_get_rhino_skin_ID,
+	snd_get_extra_feet_ID,
+	snd_get_euphoria_ID,
+	snd_get_rabbit_paw_ID,
+	snd_get_bolt_marrow_ID,
+	snd_get_spirit_ID,
+	snd_get_scarier_face_ID,
+	snd_get_throne_butt_ID,
+	snd_get_back_muscle_ID,
+
 
 	snd_foot_metmetal_1_ID,
 	snd_foot_metmetal_2_ID,
