@@ -568,6 +568,9 @@ enum sound_ID {
 	snd_hammerhead_proc_ID,
 	snd_hammerhead_end_ID,
 
+	snd_gamma_guts_proc_ID,
+	snd_gamma_guts_kill_ID,
+
 	//chest
 	snd_ammo_chest_ID,
 	snd_weapon_chest_ID,
@@ -886,6 +889,8 @@ enum hitboxes {
 	portal_clear_hitbox = 32,
 	ammo_hitbox = 4,
 
+	gamma_guts_hitbox = 16,
+
 	hyper_slugger_hitbox = 1,
 
 	small_prop_hitbox = 7,
@@ -937,6 +942,8 @@ struct gameObject{
 	int size = 0;
 
 	int damage = 0;
+
+	int melee_damage = 0;
 
 	int corpse_id = 0;
 
@@ -1024,9 +1031,9 @@ struct sound_sound_buffer {
 struct portal_spiral {
 	sf::Vector2f position = {0, 0};
 	float grow = 0.0f;
-	float langle = 0.0f;
-	float lanim = 0.0f;
-	int lsound = 0;
+	//float langle = 0.0f;
+	//float lanim = 0.0f;
+	//int lsound = 0;
 
 	float image_scale = 0.0f;
 	float image_angle = 0.0f;

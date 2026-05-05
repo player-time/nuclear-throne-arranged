@@ -306,6 +306,7 @@ int extra_physics = 20;
 gridTile game_area[gridSize][gridSize];
 
 bool global_stop_music = false;
+bool changed_music = false;
 
 //player stuff
 int player_level = 1;
@@ -533,6 +534,10 @@ bool has_boiling_veins = true;
 int player_smoke_ammount = 0;
 
 bool has_gamma_guts = true;
+int gamma_guts_immune = 0;
+bool gamma_guts_immune_increase_this_frame = false;
+int gamma_guts_proc = 0;
+sf::Sprite gamma_guts_sprite;
 
 int has_rhino_skin = 1;
 
@@ -591,7 +596,7 @@ sf::Sprite score_skull;
 character player_character = fish;
 
 void reset_skill_points() {
-    skill_points = 0;
+    skill_points = 1;
     ultra_points = 0;
 }
 
@@ -618,6 +623,9 @@ void reset_mutations() {//includes ultra
     player_smoke_ammount = 0;
 
     has_gamma_guts = false;
+    gamma_guts_immune = 0;
+    gamma_guts_immune_increase_this_frame = false;
+    gamma_guts_proc = 0;
 
     has_rhino_skin = 0;
     player_max_hp = 8;
@@ -702,6 +710,9 @@ void get_boiling_veins() {
 }
 void get_gamma_guts() {
     has_gamma_guts = true;
+    gamma_guts_immune = 0;
+    gamma_guts_immune_increase_this_frame = false;
+    gamma_guts_proc = 0;
 }
 void get_rhino_skin(){
     has_rhino_skin = 1;
@@ -776,7 +787,7 @@ std::vector<int> play_sounds_this_frame_count;
 
 int all_portal_spirals_start = 0;   //determines which portal spiral is drawn first
 int all_portal_spirals_count = 0;
-const int all_portal_spirals_max = 1250;
+const int all_portal_spirals_max = 500;
 portal_spiral all_portal_spirals[all_portal_spirals_max];
 
 //center of screen
@@ -813,9 +824,6 @@ void create_portal_spiral(bool is_circle) {
     }
     all_portal_spirals[all_portal_spirals_start].grow = 0;
     all_portal_spirals[all_portal_spirals_start].circle = is_circle;
-    all_portal_spirals[all_portal_spirals_start].langle = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (360.0f)));
-    all_portal_spirals[all_portal_spirals_start].lanim = -static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (300.0f)));
-    all_portal_spirals[all_portal_spirals_start].lsound = 0;
     all_portal_spirals[all_portal_spirals_start].image_scale = 0.0f;
     all_portal_spirals[all_portal_spirals_start].image_angle = portal_spiral_angle;
     all_portal_spirals[all_portal_spirals_start].active = true;
@@ -834,13 +842,12 @@ void portal_spiral_step() {
                 grow *= 1.5
                     UberCont.lisWallsUpdate = 1
             }*/
-            if (all_portal_spirals[i].image_scale > 2.5f && (all_portal_spirals[i].lanim < 0 || all_portal_spirals[i].lanim > 6)) {
+            if (all_portal_spirals[i].image_scale > 2.5f) {
                 all_portal_spirals_count--;
                 all_portal_spirals[i].active = false;
                 all_portal_spirals[i].image_scale = 0;
                 all_portal_spirals[i].grow = 0;
             }
-            all_portal_spirals[i].lanim += (0.2 + random_float(0.3));
         }
     }
 }
@@ -2521,6 +2528,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].max_hp = allObjects[i].my_hp;
 
                 allObjects[i].dead = false;
+                allObjects[i].melee_damage = 10;
 
                 allObjects[i].rad_drop = 70;
 
@@ -2812,6 +2820,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].speed = { 0, 0 };
 
                 allObjects[i].dead = false;
+                allObjects[i].melee_damage = 0;
 
                 allObjects[i].speeddir = 0.0f;
                 allObjects[i].direction = random_360_radians();
@@ -2853,6 +2862,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].speed = { 0, 0 };
 
                 allObjects[i].dead = false;
+                allObjects[i].melee_damage = 0;
 
                 allObjects[i].speeddir = 0.0f;
                 allObjects[i].direction = random_360_radians();
@@ -2885,6 +2895,7 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].speed = { 0, 0 };
 
                 allObjects[i].dead = false;
+                allObjects[i].melee_damage = 5;
 
                 allObjects[i].speeddir = 0.0f;
                 allObjects[i].walk_direction = random_360_radians();
@@ -3465,8 +3476,18 @@ int create_object(float x, float y, float xspd, float yspd, objectID obj_id, flo
                 allObjects[i].position = { x, y };
                 allObjects[i].image_index = 0;
                 allObjects[i].team = image_index;   //:)
-                
-                play_sound_on_player(snd_meat_explo_ID);
+
+                if (xspd > 1) {
+                    allObjects[i].melee_damage = 1; //gamma_guts
+                    allObjects[i].damage = 6;
+                    play_sound_on_player(snd_gamma_guts_kill_ID);
+                    allObjects[i].my_hitbox = gamma_guts_hitbox;
+                    gamma_guts_proc = 3;
+                }
+                else {
+                    allObjects[i].melee_damage = 0; //normal meat
+                    play_sound_on_player(snd_meat_explo_ID);
+                }
 
                 break;
             case idpd_explosion:
@@ -6471,6 +6492,42 @@ void player_collision(int i, int j, int currOBJ) {
                             tmpdir = atan2f(diffy, diffx) + 180.0f / degreestoradians;
 
                             motion_add_dir(tmpdir, 0.5f, currOBJ);  //the bigger the enemy the more it pushes: speed = size * 0.5
+
+                            if (allObjects[O].melee_damage > 0) {
+                                if (!has_gamma_guts || gamma_guts_immune > 3) {
+                                    if (allObjects[O].next_melee < current_frame && allObjects[currOBJ].next_hurt < current_frame && !player_invincible) {
+                                        play_player_hurt_sound();
+                                        rogue_blast_armor();
+                                        allObjects[O].next_melee = current_frame + 25;
+                                        player_hp -= allObjects[O].melee_damage;
+                                        allObjects[currOBJ].next_hurt = current_frame + 6;
+                                        allObjects[currOBJ].image_index = 0;
+                                        motion_add_dir(tmpdir, 4.0f, currOBJ);
+                                    }
+                                }
+                                else {
+                                    if (!gamma_guts_immune_increase_this_frame) {
+                                        gamma_guts_immune_increase_this_frame = true;
+                                        gamma_guts_immune += 2;
+                                    }
+                                }
+                            }
+
+                            if (has_gamma_guts) {   //hurt_enemy
+                                allObjects[O].my_hp -= 6;
+
+                                if (allObjects[O].my_hp > 0) {
+                                    enemy_hurt(O, 0);
+                                    play_sound_on_player(snd_gamma_guts_proc_ID);
+                                }
+                                else {  //dead
+                                    enemy_die(O, 0);
+                                    create_object(allObjects[0].position.x, allObjects[0].position.y, 2, 2, meat_explosion, 0, player_team);
+                                }
+
+                                tmpdir = atan2f(diffy, diffx);
+                                motion_add_dir(tmpdir, 3.0f, O);
+                            }
                         }
                         break;
                     case objectID::idpd_freak:
@@ -6480,14 +6537,40 @@ void player_collision(int i, int j, int currOBJ) {
                             tmpdir = atan2f(diffy, diffx) + 180.0f / degreestoradians;
 
                             motion_add_dir(tmpdir, 1.0f, currOBJ);  //the bigger the enemy the more it pushes: speed = size * 0.5
-                            if (allObjects[O].next_melee < current_frame && allObjects[currOBJ].next_hurt < current_frame && !player_invincible) { //melee cooldown
-                                play_player_hurt_sound();
-                                rogue_blast_armor();
-                                allObjects[O].next_melee = current_frame + 25;
-                                player_hp -= 5;
-                                allObjects[currOBJ].next_hurt = current_frame + 6;
-                                allObjects[currOBJ].image_index = 0;
-                                motion_add_dir(tmpdir, 4.0f, currOBJ);
+                            if (allObjects[O].melee_damage > 0) {
+                                if (!has_gamma_guts || gamma_guts_immune > 3) {
+                                    if (allObjects[O].next_melee < current_frame && allObjects[currOBJ].next_hurt < current_frame && !player_invincible) {
+                                        play_player_hurt_sound();
+                                        rogue_blast_armor();
+                                        allObjects[O].next_melee = current_frame + 25;
+                                        player_hp -= allObjects[O].melee_damage;
+                                        allObjects[currOBJ].next_hurt = current_frame + 6;
+                                        allObjects[currOBJ].image_index = 0;
+                                        motion_add_dir(tmpdir, 4.0f, currOBJ);
+                                    }
+                                }
+                                else {
+                                    if (!gamma_guts_immune_increase_this_frame) {
+                                        gamma_guts_immune_increase_this_frame = true;
+                                        gamma_guts_immune += 2;
+                                    }
+                                }
+                            }
+
+                            if (has_gamma_guts) {   //hurt_enemy
+                                allObjects[O].my_hp -= 6;
+
+                                if (allObjects[O].my_hp > 0) {
+                                    enemy_hurt(O, 0);
+                                    play_sound_on_player(snd_gamma_guts_proc_ID);
+                                }
+                                else {  //dead
+                                    enemy_die(O, 0);
+                                    create_object(allObjects[0].position.x, allObjects[0].position.y, 2, 2, meat_explosion, 0, player_team);
+                                }
+
+                                tmpdir = atan2f(diffy, diffx);
+                                motion_add_dir(tmpdir, 3.0f, O);
                             }
                         }
                         break;
@@ -6498,14 +6581,40 @@ void player_collision(int i, int j, int currOBJ) {
                             tmpdir = atan2f(diffy, diffx) + 180.0f / degreestoradians;
 
                             //motion_add_dir(tmpdir, 1.0f, currOBJ);  //the bigger the enemy the more it pushes: speed = size * 0.5
-                            if (allObjects[O].alarm1 < 0 && allObjects[O].next_melee < current_frame && allObjects[currOBJ].next_hurt < current_frame && !player_invincible) { //melee cooldown
-                                play_player_hurt_sound();
-                                rogue_blast_armor();
-                                allObjects[O].next_melee = current_frame + 30;
-                                player_hp -= 10;
-                                allObjects[currOBJ].next_hurt = current_frame + 6;
-                                allObjects[currOBJ].image_index = 0;
-                                motion_add_dir(tmpdir, 4.0f, currOBJ);
+                            if (allObjects[O].melee_damage > 0) {
+                                if (!has_gamma_guts || gamma_guts_immune > 3) {
+                                    if (allObjects[O].alarm1 < 0 && allObjects[O].next_melee < current_frame && allObjects[currOBJ].next_hurt < current_frame && !player_invincible) {
+                                        play_player_hurt_sound();
+                                        rogue_blast_armor();
+                                        allObjects[O].next_melee = current_frame + 30;
+                                        player_hp -= allObjects[O].melee_damage;
+                                        allObjects[currOBJ].next_hurt = current_frame + 6;
+                                        allObjects[currOBJ].image_index = 0;
+                                        motion_add_dir(tmpdir, 4.0f, currOBJ);
+                                    }
+                                }
+                                else {
+                                    if (!gamma_guts_immune_increase_this_frame) {
+                                        gamma_guts_immune_increase_this_frame = true;
+                                        gamma_guts_immune += 2;
+                                    }
+                                }
+                            }
+
+                            if (has_gamma_guts) {   //hurt_enemy
+                                allObjects[O].my_hp -= 6;
+
+                                if (allObjects[O].my_hp > 0) {
+                                    enemy_hurt(O, 0);
+                                    play_sound_on_player(snd_gamma_guts_proc_ID);
+                                }
+                                else {  //dead
+                                    enemy_die(O, 0);
+                                    create_object(allObjects[0].position.x, allObjects[0].position.y, 2, 2, meat_explosion, 0, player_team);
+                                }
+
+                                tmpdir = atan2f(diffy, diffx);
+                                motion_add_dir(tmpdir, 3.0f, O);
                             }
                         }
                         break;
@@ -7714,7 +7823,7 @@ void meat_explosion_collision(int currOBJ, int i, int j) {
                     if (O != currOBJ) {
                         switch (allObjects[O].my_id) {
                         case meat_explosion:
-                            if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (meat_explosion_hitbox + meat_explosion_hitbox))) {
+                            if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (meat_explosion_hitbox + meat_explosion_hitbox)) && allObjects[currOBJ].melee_damage == 0) {
 
                                 tmpdir = atan2f(allObjects[currOBJ].position.y - allObjects[O].position.y, allObjects[currOBJ].position.x - allObjects[O].position.x);
                                 allObjects[currOBJ].position.x += cos(tmpdir) * 8;
@@ -7722,7 +7831,7 @@ void meat_explosion_collision(int currOBJ, int i, int j) {
                             }
                             break;
                         case idpd_nade:
-                            if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (idpd_nade_hitbox + meat_explosion_hitbox))) {
+                            if (is_within_circle(allObjects[O].position, allObjects[currOBJ].position, (idpd_nade_hitbox + meat_explosion_hitbox)) && allObjects[currOBJ].melee_damage == 0) {
                                 destroy_projectile(O);
                             }
                             break;
@@ -13854,6 +13963,72 @@ void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[], sf
 
 }
 
+void change_music(sf::Music& current_music) {
+    int area_ = area;
+    int sub_area_ = sub_area;
+
+    sub_area_++;
+
+    if (area_ % 2 == 1) {
+        if (sub_area_ > 3) {
+            sub_area_ = 1;
+            area_++;
+        }
+        if (area_ > 7) {
+            area_ = 0;
+        }
+    }
+    else {
+        sub_area_ = 1;
+        area_++;
+    }
+
+    if (sub_area_ == 1) {
+        switch (area_) {
+        case 0:
+            current_music.setVolume(0.0f);
+            current_music.openFromFile("mus/musBoss4B.ogg");
+            break;
+        default:
+        case 1:
+            current_music.openFromFile("mus/mus1.ogg");
+            current_music.setVolume(100.0f);
+            current_music.play();
+            break;
+        case 2:
+            current_music.openFromFile("mus/mus2.ogg");
+            current_music.setVolume(100.0f);
+            current_music.play();
+            break;
+        case 3:
+            current_music.openFromFile("mus/mus3.ogg");
+            current_music.setVolume(100.0f);
+            current_music.play();
+            break;
+        case 4:
+            current_music.openFromFile("mus/mus4.ogg");
+            current_music.setVolume(100.0f);
+            current_music.play();
+            break;
+        case 5:
+            current_music.openFromFile("mus/mus5.ogg");
+            current_music.setVolume(100.0f);
+            current_music.play();
+            break;
+        case 6:
+            current_music.openFromFile("mus/mus6.ogg");
+            current_music.setVolume(100.0f);
+            current_music.play();
+            break;
+        case 7:
+            current_music.openFromFile("mus/mus7.ogg");
+            current_music.setVolume(100.0f);
+            current_music.play();
+            break;
+        }
+    }
+}
+
 int get_map_pos() {
     int area_ = (area + 1);
     if (area_ > 7) {
@@ -13895,6 +14070,13 @@ int get_map_pos() {
 
 void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
 
+    //reset_reloads
+    wep_reload = 0.0f;
+    bwep_reload = 0.0f;
+
+    reloaded = true;
+    breloaded = true;
+    
     //update map
     if (area == 7 && sub_area == 3) {
         sf::Color color_old = HSV_to_RGB(   (LOOPS * 39)       % 256    , 200, 200);
@@ -14027,8 +14209,8 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
             current_music.setLoop(false);
         }
         else {
-            current_music.setVolume(0.0f);
-            current_music.openFromFile("mus/musBoss4B.ogg");
+            //current_music.setVolume(0.0f);
+            //current_music.openFromFile("mus/musBoss4B.ogg");
         }
         generate_floors(240, 0, 6, 1, 5, 19, 22, 1, 4);
 
@@ -14059,11 +14241,6 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
         int tmp_num_of_enemies_to_spawn = 1;
         int enemy_choice = 0;
         if (sub_area == 1) {
-
-
-            current_music.openFromFile("mus/mus1.ogg");
-            current_music.setVolume(100.0f);
-            current_music.play();
 
 
             for (int i = left_physics; i <= right_physics; i++) {
@@ -14128,12 +14305,6 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
         int enemy_choice = 0;
         if (sub_area == 1) {
 
-
-            current_music.openFromFile("mus/mus2.ogg");
-            current_music.setVolume(100.0f);
-            current_music.play();
-
-
             for (int i = left_physics; i <= right_physics; i++) {
                 for (int j = top_physics; j <= bottom_physics; j++) {
                     //if its the top left of a floor tile place enemy in center of tile
@@ -14190,13 +14361,6 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
         int tmp_num_of_enemies_to_spawn = 1;
         int enemy_choice = 0;
         if (sub_area == 1) {
-
-
-            current_music.openFromFile("mus/mus3.ogg");
-            current_music.setVolume(100.0f);
-            current_music.play();
-
-
             for (int i = left_physics; i <= right_physics; i++) {
                 for (int j = top_physics; j <= bottom_physics; j++) {
                     //if its the top left of a floor tile place enemy in center of tile
@@ -14253,13 +14417,6 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
         int tmp_num_of_enemies_to_spawn = 1;
         int enemy_choice = 0;
         if (sub_area == 1) {
-
-
-            current_music.openFromFile("mus/mus4.ogg");
-            current_music.setVolume(100.0f);
-            current_music.play();
-
-
             for (int i = left_physics; i <= right_physics; i++) {
                 for (int j = top_physics; j <= bottom_physics; j++) {
                     //if its the top left of a floor tile place enemy in center of tile
@@ -14316,13 +14473,6 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
         int tmp_num_of_enemies_to_spawn = 1;
         int enemy_choice = 0;
         if (sub_area == 1) {
-
-
-            current_music.openFromFile("mus/mus5.ogg");
-            current_music.setVolume(100.0f);
-            current_music.play();
-
-
             for (int i = left_physics; i <= right_physics; i++) {
                 for (int j = top_physics; j <= bottom_physics; j++) {
                     //if its the top left of a floor tile place enemy in center of tile
@@ -14378,13 +14528,6 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
         int tmp_num_of_enemies_to_spawn = 1;
         int enemy_choice = 0;
         if (sub_area == 1) {
-
-
-            current_music.openFromFile("mus/mus6.ogg");
-            current_music.setVolume(100.0f);
-            current_music.play();
-
-
             for (int i = left_physics; i <= right_physics; i++) {
                 for (int j = top_physics; j <= bottom_physics; j++) {
                     //if its the top left of a floor tile place enemy in center of tile
@@ -14439,13 +14582,6 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
         int tmp_num_of_enemies_to_spawn = 1;
         int enemy_choice = 0;
         if (sub_area == 1) {
-
-
-            current_music.openFromFile("mus/mus7.ogg");
-            current_music.setVolume(100.0f);
-            current_music.play();
-
-
             for (int i = left_physics; i <= right_physics; i++) {
                 for (int j = top_physics; j <= bottom_physics; j++) {
                     //if its the top left of a floor tile place enemy in center of tile
@@ -15540,6 +15676,10 @@ int main(int argc, char* argv[])
     add_new_sound(snd_lucky_shot_proc_ID, "snd/lucky_shot_proc.wav", all_sounds, all_sounds_mirror, 0.07f, 0.01f);
     add_new_sound(snd_hammerhead_proc_ID, "snd/hammer_head_proc.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
     add_new_sound(snd_hammerhead_end_ID, "snd/hammer_head_end.wav", all_sounds, all_sounds_mirror, 0.1f, 0.0f);
+
+    add_new_sound(snd_gamma_guts_proc_ID, "snd/gamma_guts_proc.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_gamma_guts_kill_ID, "snd/gamma_guts_kill.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+
 
     add_new_sound(snd_empty_ID, "snd/empty.wav", all_sounds, all_sounds_mirror, 0.02f, 0.00f, 90.0f);
 
@@ -16870,6 +17010,10 @@ int main(int argc, char* argv[])
         score_skull_tex.loadFromFile("res/score_skull.png");
         score_skull.setTexture(score_skull_tex);
 
+        gamma_guts_sprite.setTexture(explosion_tex);
+        gamma_guts_sprite.setColor({255, 255, 255, 50});
+        gamma_guts_sprite.setTextureRect({0, 0, 0, 0});
+        gamma_guts_sprite.setOrigin(48, 48);
 
     //initialize the area, this should be reset every level to regenerate the next level
     for (int i = 0; i < gridSize; i++) {
@@ -17731,6 +17875,10 @@ int main(int argc, char* argv[])
         global_hover_over_mut = 0;
 
         if (want_gen) {
+            if (!changed_music) {
+                change_music(current_music);
+                changed_music = true;
+            }
             time_since_generated = 0;
             GAME_PAUSED = true;
             //pause game logic for player to pick mutation or portal animation
@@ -17756,6 +17904,7 @@ int main(int argc, char* argv[])
 
 
         if (GENERATE_LEVEL) {
+            changed_music = false;
             gen_percent = 0.0f;
             want_gen = false;
             GENERATE_LEVEL = false;
@@ -19109,6 +19258,12 @@ int main(int argc, char* argv[])
                     //create_object(allObjects[0].position.x, allObjects[0].position.y, 0, 0, idpd_explosion, 0, 1);
                 }
             }
+            
+            //gamma_guts
+            if (gamma_guts_immune > 0) {
+                gamma_guts_immune--;
+            }
+            gamma_guts_immune_increase_this_frame = false;
 
             player_invincible--;
             if (player_invincible < 0) {
@@ -20036,6 +20191,16 @@ int main(int argc, char* argv[])
                             crystal_shield_sprite_tele.setScale(1, 1);
                         }
                         
+                        //gamma_guts
+                        if (gamma_guts_proc > 0) {
+                            gamma_guts_sprite.setTextureRect({ (3 - gamma_guts_proc) * 96, 296, 96, 96 });
+                            gamma_guts_sprite.setPosition(allObjects[0].position - cameraPos);
+                            gamma_guts_proc--;
+                        }
+                        else {
+                            gamma_guts_sprite.setTextureRect({0, 0, 0, 0});
+                        }
+
                         //mutation HUD
                         if (ultra_picked == 0) {
                             mut_icon_sprite[0].setPosition(301, 4);
@@ -20454,12 +20619,17 @@ int main(int argc, char* argv[])
                         break;
                     case meat_explosion:
                         choice = int(allObjects[idx].image_index * 0.4f);
-                        explosions_sprites[explosionIndex].setOrigin(16, 16);
-                        explosions_sprites[explosionIndex].setColor({ 255, 255, 255, 255 });
-                        explosions_sprites[explosionIndex].setPosition(allObjects[idx].position - cameraPos);
-                        explosions_sprites[explosionIndex].setTextureRect(sf::IntRect{ 32 * choice, 216, 32, 32 });
-                        explosionIndex++;
-                        expand_vector(explosions_sprites, explosion_tex, explosionIndex, explosions_sprites_max);
+                        if (allObjects[idx].melee_damage == 0) {
+                            explosions_sprites[explosionIndex].setOrigin(16, 16);
+                            explosions_sprites[explosionIndex].setColor({ 255, 255, 255, 255 });
+                            explosions_sprites[explosionIndex].setPosition(allObjects[idx].position - cameraPos);
+                            explosions_sprites[explosionIndex].setTextureRect(sf::IntRect{ 32 * choice, 216, 32, 32 });
+                            explosionIndex++;
+                            expand_vector(explosions_sprites, explosion_tex, explosionIndex, explosions_sprites_max);
+                        }
+                        else {//gamma_guts
+                            //draw elseware
+                        }
                         //draw light in dark level
                         draw_light(allObjects[idx].position, the_darkness, 140 + rand() % 4, 40 + rand() % 3);
                         break;
@@ -22323,7 +22493,7 @@ int main(int argc, char* argv[])
 
         sf::Text debug2;
 
-        debug2.setString("GLOBAL_DEBUG_INT: " + std::to_string(skill_points));
+        debug2.setString("GLOBAL_DEBUG_INT: " + std::to_string(all_portal_spirals_count));
         debug2.setCharacterSize(8);
         debug2.setFont(font);
         debug2.setColor(sf::Color::White);
@@ -22409,7 +22579,7 @@ int main(int argc, char* argv[])
                     portals_amount_left--;
                     portals_sprital_position--;
                     if (portals_sprital_position < 0) {
-                        portals_sprital_position = 999;
+                        portals_sprital_position = all_portal_spirals_max - 1;
                     }
                 }
             }
@@ -22442,7 +22612,7 @@ int main(int argc, char* argv[])
                     portals_amount_left--;
                     portals_sprital_position--;
                     if (portals_sprital_position < 0) {
-                        portals_sprital_position = 999;
+                        portals_sprital_position = all_portal_spirals_max - 1;
                     }
                 }
             }
@@ -23103,6 +23273,10 @@ int main(int argc, char* argv[])
             buffer_over.draw(batcher_bullet1, RendererBloom);
             reset_rotateable_sprites(bullet_1_batchable, bullet_1_batchableIndex);
 
+            //gamma_guts
+            if (gamma_guts_proc > 0) {
+                buffer_over.draw(gamma_guts_sprite, RendererBloom);
+            }
 
             //player
             //buffer_over.draw(c);
@@ -23212,6 +23386,7 @@ int main(int argc, char* argv[])
             //ui
             if (CURRENT_GAME_STATE == gs_in_game) {
                 if (player_alive) {
+
                     if (want_gen) {
                         if (loading_time > 2) {
                             loading_time = 2;
@@ -23418,8 +23593,8 @@ int main(int argc, char* argv[])
 
                         gen_percent += 100.0f / (float)gen_delay_frames * (1.0f + random_float(gen_percent_speed));
 
-                        if (rand() % 13 == 0) {
-                            gen_percent_speed = random_float(2.0f) + 0.01f;
+                        if (rand() % 11 == 0) {
+                            gen_percent_speed = random_float(4.0f) + 0.01f;
                         }
 
                         temp_text.setString(temp_str);
