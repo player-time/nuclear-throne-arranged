@@ -776,7 +776,7 @@ std::vector<int> play_sounds_this_frame_count;
 
 int all_portal_spirals_start = 0;   //determines which portal spiral is drawn first
 int all_portal_spirals_count = 0;
-const int all_portal_spirals_max = 1000;
+const int all_portal_spirals_max = 1250;
 portal_spiral all_portal_spirals[all_portal_spirals_max];
 
 //center of screen
@@ -868,6 +868,9 @@ bool want_gen = true;
 bool GENERATE_LEVEL = false;
 int gen_delay_frames = 50;
 int gen_delay_progress = 0;
+
+float gen_percent = 0.0f;
+float gen_percent_speed = 1.0f;
 
 void draw_text_NT(sf::Text text, sf::RenderTexture &renderer, sf::Color col = sf::Color::White) {
     text.setColor(sf::Color::Black);
@@ -13894,9 +13897,9 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
 
     //update map
     if (area == 7 && sub_area == 3) {
-        sf::Color color_old = HSV_to_RGB(LOOPS * 39, 200, 200);
+        sf::Color color_old = HSV_to_RGB(   (LOOPS * 39)       % 256    , 200, 200);
 
-        sf::Color color_new = HSV_to_RGB((LOOPS + 1) * 39, 200, 200);
+        sf::Color color_new = HSV_to_RGB(   ((LOOPS + 1) * 39) % 256    , 200, 200);
 
         game_map_top.setColor(color_new);
         game_map_bottom.setColor(color_old);
@@ -17753,6 +17756,7 @@ int main(int argc, char* argv[])
 
 
         if (GENERATE_LEVEL) {
+            gen_percent = 0.0f;
             want_gen = false;
             GENERATE_LEVEL = false;
             GAME_PAUSED = false;
@@ -23331,6 +23335,8 @@ int main(int argc, char* argv[])
                         }
                     }
 
+
+
                     for (int i = 0; i < 13; i++) {
                         buffer_UI.draw(mut_icon_sprite[i]);
                     }
@@ -23353,6 +23359,73 @@ int main(int argc, char* argv[])
 
                         score_skull.setPosition(169, 100);
                         buffer_UI.draw(score_skull);
+
+                        //loading screen text
+                        sf::Text temp_text;
+                        temp_text.setCharacterSize(8);
+                        temp_text.setFont(font);
+                        temp_text.setString(std::to_string(kill_count));
+                        temp_text.setPosition(186, 103);
+
+                        draw_text_NT(temp_text, buffer_UI);
+
+                        int area_ = area;
+                        int sub_area_ = sub_area;
+
+                        sub_area_++;
+
+                        if (area_ % 2 == 1) {
+                            if (sub_area_ > 3) {
+                                sub_area_ = 1;
+                                area_++;
+                            }
+                            if (area_ > 7) {
+                                area_ = 0;
+                            }
+                        }
+                        else {
+                            sub_area_ = 1;
+                            area_++;
+                        }
+
+                        std::string temp_str = std::to_string(area_) + "-" + std::to_string(sub_area_);
+                        if (LOOPS > 0 || area_ == 0) {
+                            temp_str.append(" L" + std::to_string(LOOPS + (area_ == 0)));
+                        }
+
+                        temp_text.setString(temp_str);
+                        temp_text.setPosition(96, 103);
+
+                        draw_text_NT(temp_text, buffer_UI);
+
+                        //generating %
+                        temp_str.clear();
+                        if (player_character != YV) {
+                            temp_str.append("GENERATING... ");
+                        }
+                        else {
+                            temp_str.append("VERIFYING.... ");
+                        }
+
+                        int gen_percent_INT = int(gen_percent);
+                        if (gen_percent_INT < 10) {
+                            temp_str.append("0");
+                        }
+                        if (gen_percent_INT < 100) {
+                            temp_str.append("0");
+                        }
+                        temp_str.append(std::to_string(gen_percent_INT) + "%");
+
+                        gen_percent += 100.0f / (float)gen_delay_frames * (1.0f + random_float(gen_percent_speed));
+
+                        if (rand() % 13 == 0) {
+                            gen_percent_speed = random_float(2.0f) + 0.01f;
+                        }
+
+                        temp_text.setString(temp_str);
+                        temp_text.setPosition(88, 83);
+
+                        draw_text_NT(temp_text, buffer_UI, sf::Color{ 128, 128, 128, 255 });
                     }
 
                 }
