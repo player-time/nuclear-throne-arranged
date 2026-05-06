@@ -875,7 +875,7 @@ enum sound_ID {
 enum gridType : uint8_t { out_of_bounds, wall, exlpo_tile, boarder , floor_tile, void_tile, T2_boarder }; //, secret_wall, secret_explotile, vault_wall, vault_explotile};
 enum subWallType{upLeft, up, upRight, right, downRight, down, downLeft, left, middle };	//which sprite to use for a wall
 
-enum character{ fish, crystal, eyes, melting, plant, YV, steroids, robot, chicken, rebel, horror, rogue, frog, skeleton };
+enum character{ fish, crystal, eyes, melting, plant, YV, steroids, robot, chicken, rebel, horror, rogue, frog, skeleton, YC, none_character };
 
 enum weapon_types {		//cutoffs for weapon types
 	melee_weps = 8,
@@ -1211,5 +1211,3 @@ struct debug_timer {
 		time_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
 	}
 };
-
-

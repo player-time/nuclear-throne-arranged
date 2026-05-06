@@ -85,6 +85,8 @@ sf::Vector2f debug_camera_offset = {0.0f, 0.0f};
 gamestate CURRENT_GAME_STATE = gs_character_selection;
 bool has_generated_character_selection_screen = false;
 bool on_title_screen = true;    //everything before the character selection screen
+bool START_RUN = false;
+character character_selected = none_character;
 
 int seed = time(NULL);
 
@@ -571,6 +573,12 @@ mutation_icon mutation_SELECT_icons[5];
 sf::Sprite mut_icon_sprite_select[5];
 
 mutation_icon current_mutation_pool[5];
+
+//title screen
+sf::Sprite character_tile_sprite;
+character character_hovered_over = none_character;
+
+sf::Sprite character_text_sprite;
 
 const int total_mut_count = 20 + 1;
 bool muts_want[total_mut_count];    //20 total muts + 1 nothing mut
@@ -6546,6 +6554,7 @@ void player_collision(int i, int j, int currOBJ) {
                                 }
                                 else {  //dead
                                     enemy_die(O, 0);
+                                    gamma_guts_immune = 0;  //kills reset the timer
                                     create_object(allObjects[0].position.x, allObjects[0].position.y, 2, 2, meat_explosion, 0, player_team);
                                 }
 
@@ -6590,6 +6599,7 @@ void player_collision(int i, int j, int currOBJ) {
                                 }
                                 else {  //dead
                                     enemy_die(O, 0);
+                                    gamma_guts_immune = 0;  //kills reset the timer
                                     create_object(allObjects[0].position.x, allObjects[0].position.y, 2, 2, meat_explosion, 0, player_team);
                                 }
 
@@ -6634,6 +6644,7 @@ void player_collision(int i, int j, int currOBJ) {
                                 }
                                 else {  //dead
                                     enemy_die(O, 0);
+                                    gamma_guts_immune = 0;  //kills reset the timer
                                     create_object(allObjects[0].position.x, allObjects[0].position.y, 2, 2, meat_explosion, 0, player_team);
                                 }
 
@@ -13761,6 +13772,29 @@ void randomize_mutation_pool() {
     }
 }
 
+void check_character_selection_screen(bool clicked) {
+    //hover over
+    character_hovered_over = none_character;
+    if (mousepos.y > 240 - 31 && mousepos.y < 240 - 7) {
+        int x_off = mousepos.x - 6;
+        if (x_off < 0) {
+            x_off = 0;
+        }
+        int x = (x_off) / 19;
+        if ((x_off) % 19 < 16 && mousepos.x - 6 > 0 && x < 14) {
+            character_hovered_over = character(x);
+        }
+    }
+    if (clicked) {
+        if (character_selected == character_hovered_over && character_hovered_over != none_character) {
+            START_RUN = true;
+        }
+        if (character_hovered_over != none_character) {
+            character_selected = character_hovered_over;
+        }
+    }
+}
+
 sf::Color HSV_to_RGB(int hue, int sat, int val) {
     double      hh, p, q, t, ff;
     long        i;
@@ -17067,6 +17101,16 @@ int main(int argc, char* argv[])
         gamma_guts_glow_sprite.setTextureRect({ 0, 0, 0, 0 });
         gamma_guts_glow_sprite.setOrigin(12, 12);
 
+        sf::Texture character_tile_tex;
+        character_tile_tex.loadFromFile("res/character_select.png");
+        character_tile_sprite.setTexture(character_tile_tex);
+        character_tile_sprite.setColor({128, 128, 128, 255});
+
+        sf::Texture character_text_tex;
+        character_text_tex.loadFromFile("res/character_text.png");
+        character_text_sprite.setTexture(character_text_tex);
+        character_text_sprite.setColor({ 255, 255, 255, 255 });
+
     //initialize the area, this should be reset every level to regenerate the next level
     for (int i = 0; i < gridSize; i++) {
         for (int j = 0; j < gridSize; j++) {
@@ -17721,6 +17765,10 @@ int main(int argc, char* argv[])
             }
             player_rads = 0;
 
+            bool LMB_pressed_tenp = LMB_pressed;
+
+            check_character_selection_screen(LMB_pressed_tenp);
+
             //clear all inputs so player character cant move
             player_move_up = false;
             player_move_down = false;
@@ -17737,10 +17785,10 @@ int main(int argc, char* argv[])
             player_held_LMB = false;
             player_held_RMB = false;
 
-            if (ENTER_PRESSED) {
-                ENTER_PRESSED = false;
+            if (START_RUN) {
+                START_RUN = false;
                 CURRENT_GAME_STATE = gs_in_game;
-                player_character = fish;
+                player_character = character_selected;
 
                 start_new_run(player_character, all_sounds, current_music, map_textrue);
 
@@ -17804,8 +17852,8 @@ int main(int argc, char* argv[])
             want_gen = false;
             GENERATE_LEVEL = false;
             GAME_PAUSED = true;
-            if (ENTER_PRESSED) {
-                ENTER_PRESSED = false;
+            if (LMB_pressed) {
+                LMB_pressed = false;
                 on_title_screen = false;
             }
         }
@@ -20280,10 +20328,12 @@ int main(int argc, char* argv[])
                             int start_X = 160 - 16 * global_mutation_icon_count;
                             for (int i_ = 0; i_ < global_mutation_icon_count; i_++) {
                                 int hover_over_offset = 0;
+                                sf::Color temp_color = {128, 128, 128, 255};
                                 if (global_hover_over_mut - 1 == i_) {
                                     hover_over_offset = 2;
+                                    temp_color = { 255, 255, 255, 255 };
                                 }
-                                mut_icon_sprite_select[i_].setColor({ 255, 255, 255, 255 });
+                                mut_icon_sprite_select[i_].setColor(temp_color);
                                 mut_icon_sprite_select[i_].setPosition(start_X + i_ * 32 + 4, 203 - hover_over_offset);
                                 mut_icon_sprite_select[i_].setTextureRect(sf::IntRect{ mutation_SELECT_icons[i_] * 24, 0, 24, 32 });
                             }
@@ -20949,7 +20999,6 @@ int main(int argc, char* argv[])
                         break;
                     case melee_slash:
                         choice = int(allObjects[idx].image_index * 0.4f);
-                        expand_vector(rotateable_sprites_bullets_huge, idpd_nade_remove_1, rotateableSpriteBulletHugeIndex, rotateable_sprites_bullets_huge_max);
                         if (choice == 0) {
                             switch (allObjects[idx].damage) {
                             default:
@@ -22602,7 +22651,7 @@ int main(int argc, char* argv[])
                 if (time_since_generated == 1) {
                     spiral_cont_step(true);
                 }
-                int iter_count = (time_since_generated);
+                int iter_count = (time_since_generated) + 1;
                 if (time_since_generated < 30) {
                     for (int i = 0; i < iter_count; i++) {
                         portal_spiral_step();
@@ -22649,6 +22698,36 @@ int main(int argc, char* argv[])
                 int portals_amount_left = all_portal_spirals_count;
                 int portals_sprital_position = all_portal_spirals_start;
 
+                if (time_since_generated < 10 && time_since_generated > 3) {
+                    //modify smallest spirals to make transition better
+                    int spiral_modify_ammount = 48;
+                    int portals_amount_left_2 = all_portal_spirals_count;
+                    int portals_sprital_position_2 = all_portal_spirals_start;
+
+                    int target_idx = all_portal_spirals_start - all_portal_spirals_count;
+                    if (target_idx < 0) {
+                        target_idx += all_portal_spirals_max - 1;//should be largest spiral
+                    }
+
+                    float target_angle = all_portal_spirals[target_idx].image_angle;
+                    float interpolate_ammount = 0.045f;
+                    while (portals_amount_left_2 > 0) {
+
+                        if (all_portal_spirals[portals_sprital_position_2].image_scale < 0.5f || 1) {
+                            
+                            all_portal_spirals[portals_sprital_position_2].image_angle -=
+                                (all_portal_spirals[portals_sprital_position_2].image_angle - target_angle) * (interpolate_ammount / (all_portal_spirals[portals_sprital_position_2].image_scale * 2.0f + 0.4f));
+                        }
+                        
+                        portals_amount_left_2--;
+                        portals_sprital_position_2--;
+
+                        if (portals_sprital_position_2 < 0) {
+                            portals_sprital_position_2 = all_portal_spirals_max - 1;
+                        }
+                    }
+                }
+
                 while (portals_amount_left > 0) {
                     portal_spiral_spr.setPosition(all_portal_spirals[portals_sprital_position].position);
                     portal_spiral_spr.setRotation(all_portal_spirals[portals_sprital_position].image_angle + 45);
@@ -22662,9 +22741,22 @@ int main(int argc, char* argv[])
                     }
 
                     int darkness = 255 * (all_portal_spirals[portals_sprital_position].image_scale + 0.2f);
+                    int darkness_inverted = 255 - darkness / 6;
                     if (darkness > 255) {
                         darkness = 255;
                     }
+
+                    if (darkness_inverted < 0) {
+                        darkness_inverted = 0;
+                    }
+                    //invert darkness to back of plane to fromt
+                    //interpolate between the two
+                    float interpolate_ammount_ = (float)time_since_generated / 6.0f;
+                    if (interpolate_ammount_ > 1.0f) {
+                        interpolate_ammount_ = 1.0f;
+                    }
+                    darkness -= (darkness - darkness_inverted) * interpolate_ammount_;
+
                     sf::Uint8 color_darkness = darkness;
                     portal_spiral_spr.setColor({ color_darkness, color_darkness, color_darkness });
                     buffer_UI.draw(portal_spiral_spr);
@@ -23699,6 +23791,48 @@ int main(int argc, char* argv[])
                         }
                         go_addy2 = 0;
                     }
+                }
+            }
+
+            if (CURRENT_GAME_STATE == gs_character_selection && !on_title_screen) {
+                //draw character selection screen
+                //character tiles
+                for (int i = 0; i < 14; i++) {
+                    character_tile_sprite.setPosition(6 + 19 * i, 240 - 31);
+                    character_tile_sprite.setTextureRect({ i * 16, 0, 16, 24});
+                    sf::Uint8 brightness = 128;
+                    if (character_hovered_over == i) {
+                        brightness = 204;
+                    }
+                    if (character_selected == i) {
+                        brightness = 255;
+                    }
+                    character_tile_sprite.setColor({ brightness, brightness, brightness, 255});
+                    buffer_UI.draw(character_tile_sprite);
+                }
+                //splats
+                choice = current_frame;
+                if (choice > 3) {
+                    choice = 3;
+                }
+
+
+                if (character_selected != none_character) {
+                    character_text_sprite.setColor({0, 0, 0, 255});
+                    character_text_sprite.setTextureRect({ 0, character_selected * 36, 173, 36 });
+
+                    character_text_sprite.setPosition(1, 140);
+                    buffer_UI.draw(character_text_sprite);
+
+                    character_text_sprite.setPosition(1, 142);
+                    buffer_UI.draw(character_text_sprite);
+
+                    character_text_sprite.setPosition(0, 142);
+                    buffer_UI.draw(character_text_sprite);
+
+                    character_text_sprite.setColor({ 255, 255, 255, 255 });
+                    character_text_sprite.setPosition(0, 140);
+                    buffer_UI.draw(character_text_sprite);
                 }
             }
 
