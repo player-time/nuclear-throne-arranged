@@ -579,6 +579,11 @@ sf::Sprite character_tile_sprite;
 character character_hovered_over = none_character;
 
 sf::Sprite character_text_sprite;
+sf::Sprite splat_left_sprite;
+sf::Sprite splat_right_sprite;
+sf::Sprite go_button_sprite;
+int go_button_hover_frames = 0;
+int go_button_appear_frame = 0;
 
 const int total_mut_count = 20 + 1;
 bool muts_want[total_mut_count];    //20 total muts + 1 nothing mut
@@ -786,6 +791,9 @@ void get_rhino_skin() {
     play_sound_on_player(snd_get_rhino_skin_ID);
     has_rhino_skin = 1;
     player_max_hp += 4;
+    if (player_character == melting) {
+        player_max_hp += 1;
+    }
 }
 void get_extra_feet() {
     play_sound_on_player(snd_get_extra_feet_ID);
@@ -13784,14 +13792,27 @@ void check_character_selection_screen(bool clicked) {
         if ((x_off) % 19 < 16 && mousepos.x - 6 > 0 && x < 14) {
             character_hovered_over = character(x);
         }
+
+        if (mousepos.x > 320 - 41 && mousepos.x < 320 - 4) {
+            character_hovered_over = go_button;
+            go_button_hover_frames++;
+        }
+        else{
+            go_button_hover_frames = 0;
+        }
     }
     if (clicked) {
-        if (character_selected == character_hovered_over && character_hovered_over != none_character) {
+        if ((character_selected == character_hovered_over || (character_hovered_over == go_button && character_selected != none_character)) && character_hovered_over != none_character ) {
             START_RUN = true;
+            go_button_appear_frame = 0;
         }
-        if (character_hovered_over != none_character) {
+        if (character_hovered_over != none_character && character_hovered_over != go_button) {
             character_selected = character_hovered_over;
         }
+    }
+
+    if (character_selected != none_character) {
+        go_button_appear_frame++;
     }
 }
 
@@ -13919,7 +13940,7 @@ void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[], sf
     game_map_crown.setPosition(218, 120 + 2);
     game_map_crown.setTexture(map_textrue);
 
-    game_map_top.setTextureRect({ 10, 0, 10, 10 });
+    game_map_top.setTextureRect({ 10, 0, 0, 10 });
     game_map_bottom.setTextureRect({ 10, 0, 140, 10 });
     game_map_crown.setTextureRect({ 139, 0, 11, 10 });
 
@@ -15042,14 +15063,21 @@ std::string get_what_mut_text(mutation_icon mut) {
 std::string get_what_mut_text_description(mutation_icon mut) {
     switch (mut) {
     case none_mut_icon:return ""; break;
-    case rhino_skin_icon:return "+4 @rMAX HP@s"; break;
+    case rhino_skin_icon:
+        if (player_character == melting) {
+            return "+5 @rMAX HP@s";
+        }
+        else {
+            return "+4 @rMAX HP@s";
+        }
+        break;
     case extra_feet_icon: return "MORE @wSPEED@s#WALK NORMAL ON ALL TERRAIN"; break;
     case plutonium_hunger_icon: return "ATTRACT @wDROPS@s AND @gRADS@s FROM FURTHER"; break;
     case rabbit_paw_icon: return "MORE @rHP@s AND @yAMMO@s DROPS"; break;
     case throne_butt_icon: return "UPGRADES YOUR SPECIAL ABILITY"; break;
     case lucky_shot_icon: return "SOME KILLS REGENERATE @yAMMO@s"; break;
     case bloodlust_icon: return "SOME KILLS REGENERATE @rHP@s"; break;
-    case gamma_guts_icon: return "@wENEMIES@s TOUCHING YOU TAKE DAMAGE"; break;
+    case gamma_guts_icon: return "@wENEMIES@s TOUCHING YOU TAKE DAMAGE#@wIMMUNE@s TO CONTACT DAMAGE FOR A SHORT PERIOD"; break;
     case second_stomach_icon: return "MORE @rHP@s FROM MEDKITS"; break;
     case back_muscle_icon: return "HIGHER @yAMMO@s MAX"; break;
     case scarier_face_icon: return "LESS ENEMY @rHP@s"; break;
@@ -15065,19 +15093,19 @@ std::string get_what_mut_text_description(mutation_icon mut) {
     case fish_ultra_A_icon: return "@wENEMIES@s SOMETIMES DROP @wCHESTS@s"; break;
     case fish_ultra_B_icon: return "@yINFINITE AMMO@s THE FIRST 7 SECONDS#AFTER EXITING A @pPORTAL@s"; break;
     case crystal_ultra_A_icon: return "+6 MAX @rHP@s"; break;
-    case crystal_ultra_B_icon: return "MOVE WHILE @wSHIELDED@s"; break;
-    case eyes_ultra_A_icon: return "@wTELEKINESIS@s HOLDS YOUR @wPROJECTILES@s"; break;
+    case crystal_ultra_B_icon: return "+2 MAX @rHP@s#MOVE WHILE @wSHIELDED@s"; break;
+    case eyes_ultra_A_icon: return "NOPE"; break;
     case eyes_ultra_B_icon: return "PUSH NEARBY @wENEMIES@s AWAY#WHEN NOT USING @wTELEKINESIS@s"; break;
-    case melting_ultra_A_icon: return "BLOW UP @rLOW HP @wENEMIES@s"; break;
-    case melting_ultra_B_icon: return "3 MORE @gMUTATIONS@s#LOSE HALF OF YOUR @rHP@s"; break;
+    case melting_ultra_A_icon: return "1 MORE @gMUTATION@s#BLOW UP @rLOW HP @wENEMIES@s"; break;
+    case melting_ultra_B_icon: return "3 MORE @gMUTATIONS@s#LOSE 1 MAX @rHEALTH@s"; break;
     case plant_ultra_A_icon: return "BIG @wSNARE@s"; break;
-    case plant_ultra_B_icon: return "@wENEMIES@s KILLED ON YOUR @wSNARE@s#SPAWN @wSAPLINGS@s"; break;
+    case plant_ultra_B_icon: return "@AUTOMATIC@s SNARE THAT DEALS DAMAGE"; break;
     case YV_ultra_A_icon: return "HIGHER @wRATE OF FIRE@s"; break;
     case YV_ultra_B_icon: return "FREE @wPOP POP@s UPGRADE"; break;
-    case steroids_ultra_A_icon: return "DOUBLE @wWEAPONS@s FROM @wCHESTS@s"; break;
-    case steroids_ultra_B_icon: return "@yAMMO CHESTS@s CONTAIN ALL @yAMMO TYPES@s"; break;
-    case robot_ultra_A_icon: return "HIGH TIER @wWEAPONS@s ONLY#AUTO EAT @wWEAPONS@s LEFT BEHIND"; break;
-    case robot_ultra_B_icon: return "EATING @wWEAPONS@s CAN DROP @wCHESTS@s#AUTO EAT @wWEAPONS@s LEFT BEHIND"; break;
+    case steroids_ultra_A_icon: return "MORE @wACCURACY@s"; break;
+    case steroids_ultra_B_icon: return "MORE @wACCURACY@s"; break;
+    case robot_ultra_A_icon: return "AUTO SCAVANGE @wWEAPONS@s ON THE GROUND"; break;
+    case robot_ultra_B_icon: return "NO @wKNOCKBACK@s"; break;
     case chicken_ultra_A_icon: return "KILLS EXTEND BLEED TIME"; break;
     case chicken_ultra_B_icon: return "THROWN @wWEAPONS@s CAN TELEPORT BACK#TO YOUR SECONDARY SLOT"; break;
     case rebel_ultra_A_icon: return "START A LEVEL WITH 2 @wALLIES@s#ALL @wALLIES@s HAVE MORE @rHP@s"; break;
@@ -15088,7 +15116,7 @@ std::string get_what_mut_text_description(mutation_icon mut) {
     case rogue_ultra_A_icon: return "QUADRUPLE @bPORTAL STRIKE@s PICKUPS#AND CAPACITY"; break;
     case rogue_ultra_B_icon: return "SUPER BLAST ARMOR"; break;
     case frog_ultra_A_icon: return "RADS CAN SPAWN TOXIC @gGAS@s"; break;
-    case frog_ultra_B_icon: return "CONTINUOUSLY SPAWN TOXIC @gGAS@s"; break;
+    case frog_ultra_B_icon: return "CONTINUOUSLY SPAWN TOXIC @gGAS@s#@gGAS@s SLOWS PROJECTILES"; break;
     case skeleton_ultra_A_icon: return "BACK IN THE FLESH"; break;
     case skeleton_ultra_B_icon: return "FAST RELOAD AFTER BLOOD GAMBLE"; break;
     case cuz_ultra_A_icon: return "TWICE AS MANY GUNS"; break;
@@ -15137,6 +15165,9 @@ void player_pick_ultra_A() {
         player_max_hp += 6;
         player_hp += 6;
     }
+    if (player_character == melting) {
+        skill_points++;
+    }
 }
 
 void player_pick_ultra_B() {
@@ -15146,6 +15177,13 @@ void player_pick_ultra_B() {
     if (player_character == crystal) {
         player_max_hp += 2;
         player_hp += 2;
+    }
+    if (player_character == melting) {
+        skill_points += 3;
+        player_max_hp -= 1;
+        if (player_hp > player_max_hp) {
+            player_hp = player_max_hp;
+        }
     }
 }
 
@@ -17110,6 +17148,21 @@ int main(int argc, char* argv[])
         character_text_tex.loadFromFile("res/character_text.png");
         character_text_sprite.setTexture(character_text_tex);
         character_text_sprite.setColor({ 255, 255, 255, 255 });
+
+        sf::Texture splat_left_tex;
+        splat_left_tex.loadFromFile("res/left_splat.png");
+        splat_left_sprite.setTexture(splat_left_tex);
+        splat_left_sprite.setPosition(0, 140);
+
+        sf::Texture splat_right_tex;
+        splat_right_tex.loadFromFile("res/right_splat.png");
+        splat_right_sprite.setTexture(splat_right_tex);
+        splat_right_sprite.setPosition(320 - 109, 135);
+
+        sf::Texture go_button_tex;
+        go_button_tex.loadFromFile("res/go_button.png");
+        go_button_sprite.setTexture(go_button_tex);
+        go_button_sprite.setPosition(320 - 41, 240 - 27);
 
     //initialize the area, this should be reset every level to regenerate the next level
     for (int i = 0; i < gridSize; i++) {
@@ -22698,7 +22751,7 @@ int main(int argc, char* argv[])
                 int portals_amount_left = all_portal_spirals_count;
                 int portals_sprital_position = all_portal_spirals_start;
 
-                if (time_since_generated < 10 && time_since_generated > 3) {
+                if (time_since_generated < 12 && time_since_generated > 5) {
                     //modify smallest spirals to make transition better
                     int spiral_modify_ammount = 48;
                     int portals_amount_left_2 = all_portal_spirals_count;
@@ -22710,13 +22763,13 @@ int main(int argc, char* argv[])
                     }
 
                     float target_angle = all_portal_spirals[target_idx].image_angle;
-                    float interpolate_ammount = 0.045f;
+                    float interpolate_ammount = 0.06f;
                     while (portals_amount_left_2 > 0) {
 
                         if (all_portal_spirals[portals_sprital_position_2].image_scale < 0.5f || 1) {
                             
                             all_portal_spirals[portals_sprital_position_2].image_angle -=
-                                (all_portal_spirals[portals_sprital_position_2].image_angle - target_angle) * (interpolate_ammount / (all_portal_spirals[portals_sprital_position_2].image_scale * 2.0f + 0.4f));
+                                (all_portal_spirals[portals_sprital_position_2].image_angle - target_angle) * (interpolate_ammount / (all_portal_spirals[portals_sprital_position_2].image_scale * 6.0f + 0.25f));
                         }
                         
                         portals_amount_left_2--;
@@ -23810,12 +23863,38 @@ int main(int argc, char* argv[])
                     character_tile_sprite.setColor({ brightness, brightness, brightness, 255});
                     buffer_UI.draw(character_tile_sprite);
                 }
+                //go button
+                choice = int(go_button_hover_frames * 0.4f) % 8;
+                if (choice > 5) {
+                    choice = 0;
+                }
+                go_button_sprite.setColor({255, 255, 255, 255});
+                if (character_hovered_over != go_button) {
+                    go_button_sprite.setColor({ 128, 128, 128, 255 });
+                    choice = 0;
+                }
+                int choice2 = 3 - go_button_appear_frame;
+                if (choice2 < 0) {
+                    choice2 = 0;
+                }
+                if (choice2 == 2) {
+                    choice2 = 1;
+                }
+                go_button_sprite.setPosition(320 - 41, 240 - 27 - (go_button_hover_frames > 0) + (choice2));
+                go_button_sprite.setTextureRect({ choice * 35, 0, 35, 19 });
+                if (go_button_appear_frame > 0) {
+                    buffer_UI.draw(go_button_sprite);
+                }
                 //splats
                 choice = current_frame;
                 if (choice > 3) {
                     choice = 3;
                 }
+                splat_left_sprite.setTextureRect({ 154 * choice, 0, 154, 64 });
+                buffer_UI.draw(splat_left_sprite);
 
+                splat_right_sprite.setTextureRect({ 109 * choice, 0, 109, 69 });
+                buffer_UI.draw(splat_right_sprite);
 
                 if (character_selected != none_character) {
                     character_text_sprite.setColor({0, 0, 0, 255});
