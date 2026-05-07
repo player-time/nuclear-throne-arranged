@@ -886,6 +886,16 @@ debug_timer debug_timer_;
 debug_timer debug_timer_startup;
 debug_timer debug_timer_fps;
 
+//generation
+int time_since_generated = 0;
+bool want_gen = true;
+bool GENERATE_LEVEL = false;
+int gen_delay_frames = 50;
+int gen_delay_progress = 0;
+
+float gen_percent = 0.0f;
+float gen_percent_speed = 1.0f;
+
 void reset_all_globals() {
 
 }
@@ -911,6 +921,10 @@ void portal_spiral_step() {
             all_portal_spirals[i].grow += 0.0002;
             all_portal_spirals[i].image_scale += all_portal_spirals[i].grow;
             all_portal_spirals[i].grow = (all_portal_spirals[i].grow + 1) * (1 + 0.0005f * all_portal_spirals[i].image_scale) - 1;
+
+            if (time_since_generated > 0 && time_since_generated < 30) {
+                all_portal_spirals[i].grow *= 1.5f;
+            }
             /*if (!instance_exists(SpiralCont))
             {
                 grow *= 1.5
@@ -942,16 +956,6 @@ void spiral_cont_step(bool circular = false) {
     }
 }
 
-
-//generation
-int time_since_generated = 0;
-bool want_gen = true;
-bool GENERATE_LEVEL = false;
-int gen_delay_frames = 50;
-int gen_delay_progress = 0;
-
-float gen_percent = 0.0f;
-float gen_percent_speed = 1.0f;
 
 void draw_text_NT(sf::Text text, sf::RenderTexture &renderer, sf::Color col = sf::Color::White) {
     text.setColor(sf::Color::Black);
@@ -18017,7 +18021,7 @@ int main(int argc, char* argv[])
             break;
         }
 
-        if (want_gen && time_since_generated > 1) {
+        if (time_since_generated == 30) {
             //initalize portal spirals
             for (int i = 0; i < 200; i++) {
                 spiral_cont_step();
@@ -22706,9 +22710,9 @@ int main(int argc, char* argv[])
                 }
                 int iter_count = (time_since_generated) + 1;
                 if (time_since_generated < 30) {
-                    for (int i = 0; i < iter_count; i++) {
+                    //for (int i = 0; i < iter_count; i++) {
                         portal_spiral_step();
-                    }
+                    //}
                 }
                 else {
                     spiral_cont_step();
@@ -22751,36 +22755,6 @@ int main(int argc, char* argv[])
                 int portals_amount_left = all_portal_spirals_count;
                 int portals_sprital_position = all_portal_spirals_start;
 
-                if (time_since_generated < 12 && time_since_generated > 5) {
-                    //modify smallest spirals to make transition better
-                    int spiral_modify_ammount = 48;
-                    int portals_amount_left_2 = all_portal_spirals_count;
-                    int portals_sprital_position_2 = all_portal_spirals_start;
-
-                    int target_idx = all_portal_spirals_start - all_portal_spirals_count;
-                    if (target_idx < 0) {
-                        target_idx += all_portal_spirals_max - 1;//should be largest spiral
-                    }
-
-                    float target_angle = all_portal_spirals[target_idx].image_angle;
-                    float interpolate_ammount = 0.06f;
-                    while (portals_amount_left_2 > 0) {
-
-                        if (all_portal_spirals[portals_sprital_position_2].image_scale < 0.5f || 1) {
-                            
-                            all_portal_spirals[portals_sprital_position_2].image_angle -=
-                                (all_portal_spirals[portals_sprital_position_2].image_angle - target_angle) * (interpolate_ammount / (all_portal_spirals[portals_sprital_position_2].image_scale * 6.0f + 0.25f));
-                        }
-                        
-                        portals_amount_left_2--;
-                        portals_sprital_position_2--;
-
-                        if (portals_sprital_position_2 < 0) {
-                            portals_sprital_position_2 = all_portal_spirals_max - 1;
-                        }
-                    }
-                }
-
                 while (portals_amount_left > 0) {
                     portal_spiral_spr.setPosition(all_portal_spirals[portals_sprital_position].position);
                     portal_spiral_spr.setRotation(all_portal_spirals[portals_sprital_position].image_angle + 45);
@@ -22794,21 +22768,9 @@ int main(int argc, char* argv[])
                     }
 
                     int darkness = 255 * (all_portal_spirals[portals_sprital_position].image_scale + 0.2f);
-                    int darkness_inverted = 255 - darkness / 6;
                     if (darkness > 255) {
                         darkness = 255;
                     }
-
-                    if (darkness_inverted < 0) {
-                        darkness_inverted = 0;
-                    }
-                    //invert darkness to back of plane to fromt
-                    //interpolate between the two
-                    float interpolate_ammount_ = (float)time_since_generated / 6.0f;
-                    if (interpolate_ammount_ > 1.0f) {
-                        interpolate_ammount_ = 1.0f;
-                    }
-                    darkness -= (darkness - darkness_inverted) * interpolate_ammount_;
 
                     sf::Uint8 color_darkness = darkness;
                     portal_spiral_spr.setColor({ color_darkness, color_darkness, color_darkness });
