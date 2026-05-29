@@ -102,69 +102,69 @@ int gen_curr_floor_index = 0;
 
 
 std::vector<sf::Sprite> bullet_2_batchable;
-int bullet_2_batchable_max = 1;
+int bullet_2_batchable_max = 10;
 
 std::vector<sf::Sprite> all_enemy_sprites;  //all enemy sprites that fit into a 32x32 box
-int all_enemy_sprites_max = 1;
+int all_enemy_sprites_max = 10;
 
 std::vector<sf::Sprite> all_enemy_corpses;  //all enemy corpse sprites that fit into a 32x32 box
-int all_enemy_corpses_max = 1;
+int all_enemy_corpses_max = 10;
 
 std::vector<sf::Sprite> rotateable_sprites_bullets;
-int rotateable_sprites_bullets_max = 1;
+int rotateable_sprites_bullets_max = 10;
 
 //for SPC
 std::vector<sf::Sprite> rotateable_sprites_bullets_huge;
-int rotateable_sprites_bullets_huge_max = 1;
+int rotateable_sprites_bullets_huge_max = 10;
 
 std::vector<sf::Sprite> rotateable_sprites_bullets_huge_bloom;
-int rotateable_sprites_bullets_huge_bloom_max = 1;
+int rotateable_sprites_bullets_huge_bloom_max = 10;
 
 //for SPC
 std::vector<sf::Sprite> rotateable_sprites_bullets_big;
-int rotateable_sprites_bullets_big_max = 1;
+int rotateable_sprites_bullets_big_max = 10;
 std::vector<sf::Sprite> rotateable_sprites_bullets_big_bloom;
-int rotateable_sprites_bullets_big_bloom_max = 1;
+int rotateable_sprites_bullets_big_bloom_max = 10;
 
 //explosions
 std::vector<sf::Sprite> explosions_sprites;
-int explosions_sprites_max = 1;
+int explosions_sprites_max = 10;
 
 std::vector<sf::Sprite> plasma_impact_sprites;
-int plasma_impact_sprites_max = 1;
+int plasma_impact_sprites_max = 10;
 
 std::vector<sf::Sprite> rotateable_sprites_guns;
-int rotateable_sprites_guns_max = 1;
+int rotateable_sprites_guns_max = 10;
 
 std::vector<sf::Sprite> rotateable_sprites_guns_top;
-int rotateable_sprites_guns_top_max = 1;
+int rotateable_sprites_guns_top_max = 10;
 
 //small effects 8x8 unrotateable
 std::vector<sf::Sprite> rotateable_effects_small_bloom;
-int rotateable_effects_small_bloom_max = 1;
+int rotateable_effects_small_bloom_max = 10;
 //small effects 8x8
 std::vector<sf::Sprite> rotateable_effects_small;
-int rotateable_effects_small_max = 1;
+int rotateable_effects_small_max = 10;
 //small effects 8x8 underneath
 std::vector<sf::Sprite> under_effects_small;
-int under_effects_small_max = 1;
+int under_effects_small_max = 10;
 
 //medium effects 16x16
 std::vector<sf::Sprite> rotateable_effects_medium;
-int rotateable_effects_medium_max = 1;
+int rotateable_effects_medium_max = 10;
 
 //large effects 24x24
 std::vector<sf::Sprite> rotateable_effects_large;
-int rotateable_effects_large_max = 1;
+int rotateable_effects_large_max = 10;
 
 std::vector<sf::Sprite> prop_sprites;
-int prop_sprites_max = 1;
+int prop_sprites_max = 10;
 
 std::vector<sf::Sprite> scorch_sprites;
-int scorch_sprites_max = 1;
+int scorch_sprites_max = 10;
 
 std::vector<sf::Sprite> weapon_sprites;
-int weapon_sprites_max = 1;
+int weapon_sprites_max = 10;
 
 sf::Sprite portal_sprite;
 bool portal_drawn = false;
@@ -174,56 +174,56 @@ int T2_object_index = 1;
 bool t2_draw_in_front = true;
 
 std::vector<sf::Sprite> variable_textures_bottom;
-int variable_textures_bottom_max = 1;
+int variable_textures_bottom_max = 10;
 
 std::vector<sf::Sprite> variable_textures;
-int variable_textures_max = 1;
+int variable_textures_max = 10;
 
 std::vector<sf::Sprite> variable_textures_top;
-int variable_textures_top_max = 1;
+int variable_textures_top_max = 10;
 
 std::vector<sf::Sprite> variable_textures_top_enemies;
-int variable_textures_top_enemies_max = 1;
+int variable_textures_top_enemies_max = 10;
 
 std::vector<sf::Sprite> wall_shadow_textures;
-int wall_shadow_textures_max = 1;
+int wall_shadow_textures_max = 10;
 
 
 std::vector<sf::Sprite> variable_textures_bloom;
-int variable_textures_bloom_max = 1;
+int variable_textures_bloom_max = 10;
 
 std::vector<sf::Sprite> lasers_bloom;
-int lasers_bloom_max = 1;
+int lasers_bloom_max = 10;
 
 std::vector<sf::Sprite> wall_textures;
-int wall_textures_max = 1;
+int wall_textures_max = 10;
 
 std::vector<sf::Sprite> rain_textures;
-int rain_textures_max = 1;
+int rain_textures_max = 10;
 
 std::vector<sf::Sprite> wall_boarder_textures;
-int wall_boarder_textures_max = 1;
+int wall_boarder_textures_max = 10;
 
 std::vector<sf::Sprite> floor_textures;
-int floor_textures_max = 1;
+int floor_textures_max = 10;
 
 std::vector<sf::Sprite> floor_textures_bloom;
-int floor_textures_bloom_max = 1;
+int floor_textures_bloom_max = 10;
 
 std::vector<sf::Sprite> floor_textures_B;
-int floor_textures_B_max = 1;
+int floor_textures_B_max = 10;
 
 std::vector<sf::Sprite> wall_textures_bot;
-int wall_textures_bot_max = 1;
+int wall_textures_bot_max = 10;
 
 std::vector<sf::Sprite> explo_tiles_tex;
-int explo_tiles_tex_max = 1;
+int explo_tiles_tex_max = 10;
 
 std::vector<sf::Sprite> T2_explo_tiles_tex;
-int T2_explo_tiles_tex_max = 1;
+int T2_explo_tiles_tex_max = 10;
 
 std::vector<sf::Sprite> T2_floor_tiles_tex;
-int T2_floor_tiles_tex_max = 1;
+int T2_floor_tiles_tex_max = 10;
 
 sf::Vector2f cameraPos = { 24000.0f, 24000.0f };
 
@@ -579,6 +579,7 @@ sf::Sprite character_tile_sprite;
 character character_hovered_over = none_character;
 
 sf::Sprite character_text_sprite;
+sf::Sprite character_portrait_sprite;
 sf::Sprite splat_left_sprite;
 sf::Sprite splat_right_sprite;
 sf::Sprite go_button_sprite;
@@ -10721,7 +10722,7 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
             if (allObjects[i].alarm2 < 0) {
                 allObjects[i].alarm2 = 40;
                 if (created_portal) {
-                    allObjects[i].alarm2 = 5; 
+                    allObjects[i].alarm2 = 2; 
                 }
                 allObjects[i].my_hp -= 1;
 
@@ -13787,36 +13788,38 @@ void randomize_mutation_pool() {
 void check_character_selection_screen(bool clicked) {
     //hover over
     character_hovered_over = none_character;
-    if (mousepos.y > 240 - 31 && mousepos.y < 240 - 7) {
-        int x_off = mousepos.x - 6;
-        if (x_off < 0) {
-            x_off = 0;
+    if (current_frame > 30) {
+        if (mousepos.y > 240 - 31 && mousepos.y < 240 - 7) {
+            int x_off = mousepos.x - 6;
+            if (x_off < 0) {
+                x_off = 0;
+            }
+            int x = (x_off) / 19;
+            if ((x_off) % 19 < 16 && mousepos.x - 6 > 0 && x < 14) {
+                character_hovered_over = character(x);
+            }
+
+            if (mousepos.x > 320 - 41 && mousepos.x < 320 - 4) {
+                character_hovered_over = go_button;
+                go_button_hover_frames++;
+            }
+            else {
+                go_button_hover_frames = 0;
+            }
         }
-        int x = (x_off) / 19;
-        if ((x_off) % 19 < 16 && mousepos.x - 6 > 0 && x < 14) {
-            character_hovered_over = character(x);
+        if (clicked) {
+            if ((character_selected == character_hovered_over || (character_hovered_over == go_button && character_selected != none_character)) && character_hovered_over != none_character) {
+                START_RUN = true;
+                go_button_appear_frame = 0;
+            }
+            if (character_hovered_over != none_character && character_hovered_over != go_button) {
+                character_selected = character_hovered_over;
+            }
         }
 
-        if (mousepos.x > 320 - 41 && mousepos.x < 320 - 4) {
-            character_hovered_over = go_button;
-            go_button_hover_frames++;
+        if (character_selected != none_character) {
+            go_button_appear_frame++;
         }
-        else{
-            go_button_hover_frames = 0;
-        }
-    }
-    if (clicked) {
-        if ((character_selected == character_hovered_over || (character_hovered_over == go_button && character_selected != none_character)) && character_hovered_over != none_character ) {
-            START_RUN = true;
-            go_button_appear_frame = 0;
-        }
-        if (character_hovered_over != none_character && character_hovered_over != go_button) {
-            character_selected = character_hovered_over;
-        }
-    }
-
-    if (character_selected != none_character) {
-        go_button_appear_frame++;
     }
 }
 
@@ -13877,6 +13880,11 @@ sf::Color HSV_to_RGB(int hue, int sat, int val) {
 
 //reset all global variables and set random seed to be randomized, or set to a specific seed if replay
 void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[], sf::Music& current_music, sf::Texture &map_textrue) {
+
+    for (int i = 0; i < 200; i++) {
+        spiral_cont_step();
+        portal_spiral_step();
+    }
 
     current_music.openFromFile("mus/mus1.ogg");
     current_music.setVolume(100.0f);
@@ -14956,7 +14964,7 @@ void do_network_stuff() {
 
 
 
-
+//unused now
 void poll_movement_inputs(int& poll_move_up, int& poll_move_down, int& poll_move_left, int& poll_move_right, int &poll_move_total) {
     bool poll_move_up_pressed = false;
     bool poll_move_down_pressed = false;
@@ -16095,13 +16103,13 @@ int main(int argc, char* argv[])
     window_size_x = 320.0f * window_scale;
     window_size_y = 240.0f * window_scale;
 
-    int poll_move_up = 0;
+    /*int poll_move_up = 0;
     int poll_move_down = 0;
     int poll_move_left = 0;
     int poll_move_right = 0;
     int poll_move_total = 0;
     std::thread movement_poll_thread = std::thread(poll_movement_inputs, std::ref(poll_move_up), std::ref(poll_move_down), std::ref(poll_move_left), std::ref(poll_move_right), std::ref(poll_move_total));
-    movement_poll_thread.detach();
+    movement_poll_thread.detach();*/
 
 
     const int replay_size = 5184000 / 48;
@@ -17153,6 +17161,11 @@ int main(int argc, char* argv[])
         character_text_sprite.setTexture(character_text_tex);
         character_text_sprite.setColor({ 255, 255, 255, 255 });
 
+        sf::Texture character_portrait_tex;
+        character_portrait_tex.loadFromFile("res/character_portrait.png");
+        character_portrait_sprite.setTexture(character_portrait_tex);
+        character_portrait_sprite.setColor({ 255, 255, 255, 255 });
+
         sf::Texture splat_left_tex;
         splat_left_tex.loadFromFile("res/left_splat.png");
         splat_left_sprite.setTexture(splat_left_tex);
@@ -17587,59 +17600,6 @@ int main(int argc, char* argv[])
                     if (event.key.code == sf::Keyboard::Left) { debug_camera_offset.x -= 10; }
                     if (event.key.code == sf::Keyboard::Right) { debug_camera_offset.x += 10; }
 
-                    if (event.key.code == sf::Keyboard::O) {
-                        player_character = character(int(player_character) + 1);
-                        if (player_character > 13) {
-                            player_character = fish;
-                        }
-                        start_new_run(player_character, all_sounds, current_music, map_textrue);
-
-
-                        switch (player_character) {
-                        case fish:
-                            swap_player_textures(fish_tex, character(player_character), false);
-                            break;
-                        case crystal:
-                            swap_player_textures(crystal_tex, character(player_character), false);
-                            break;
-                        case eyes:
-                            swap_player_textures(eyes_tex, character(player_character), false);
-                            break;
-                        case melting:
-                            swap_player_textures(melting_tex, character(player_character), false);
-                            break;
-                        case plant:
-                            swap_player_textures(plant_tex, character(player_character), false);
-                            break;
-                        case YV:
-                            swap_player_textures(YV_tex, character(player_character), false);
-                            break;
-                        case steroids:
-                            swap_player_textures(steroids_tex, character(player_character), false);
-                            break;
-                        case robot:
-                            swap_player_textures(robot_tex, character(player_character), false);
-                            break;
-                        case chicken:
-                            swap_player_textures(chicken_tex, character(player_character), false);
-                            break;
-                        case rebel:
-                            swap_player_textures(rebel_tex, character(player_character), false);
-                            break;
-                        case horror:
-                            swap_player_textures(horror_tex, character(player_character), false);
-                            break;
-                        case rogue:
-                            swap_player_textures(rogue_tex, character(player_character), false);
-                            break;
-                        case frog:
-                            swap_player_textures(frog_tex, character(player_character), false);
-                            break;
-                        case skeleton:
-                            swap_player_textures(skeleton_tex, character(player_character), false);
-                            break;
-                        }
-                    }
                     //debug
                     if (event.key.code == sf::Keyboard::P && P_released) {
                         GAME_PAUSED = !GAME_PAUSED;
@@ -18548,23 +18508,23 @@ int main(int argc, char* argv[])
                         dirto_add = C * degreestoradians;*/
                     }
 
-                    if (poll_move_total == 0) {
+                    /*if (poll_move_total == 0) {
                         poll_move_up++;
                         poll_move_down++;
                         poll_move_left++;
                         poll_move_right++;
                         poll_move_total++;
-                    }
+                    }*/
                     
                     //dirto_add = atan2f(((float)poll_move_down / (float)poll_move_total) - ((float)poll_move_up / (float)poll_move_total), ((float)poll_move_right / (float)poll_move_total) - ((float)poll_move_left / (float)poll_move_total)) * degreestoradians;
 
                     if (PRECISE_MOVEMENT && roll <= 0 && player_character != frog) {
-                        hori_move = ((float)poll_move_right - (float)poll_move_left) / (float)poll_move_total;
+                        /*hori_move = ((float)poll_move_right - (float)poll_move_left) / (float)poll_move_total;
                         veri_move = ((float)poll_move_down - (float)poll_move_up) / (float)poll_move_total;
 
                         dirto_add = atan2f(veri_move, hori_move);
 
-                        player_acceleration *= sqrt(veri_move * veri_move + hori_move * hori_move);
+                        player_acceleration *= sqrt(veri_move * veri_move + hori_move * hori_move);*/
                     }
                     else {
                         dirto_add /= degreestoradians;
@@ -18589,11 +18549,11 @@ int main(int argc, char* argv[])
                 }
 
                 //poll inputs over the current frame
-                poll_move_up = 0;
+                /*poll_move_up = 0;
                 poll_move_down = 0;
                 poll_move_left = 0;
                 poll_move_right = 0;
-                poll_move_total = 0;
+                poll_move_total = 0;*/
 
                 //shouldnt go higher than 8
                 if (allObjects[0].speeddir > player_max_speed + extra_feet + (roll > 0) * 2 + (roll > 0 && has_throne_butt)) {
@@ -18978,7 +18938,7 @@ int main(int argc, char* argv[])
                     wep_kick++;
                 }
 
-                if (player_held_LMB) {      //player shooting logic
+                if (player_held_LMB && allObjects[0].scale > 0.1f) {      //player shooting logic
                     //wep = current_frame % 110;
                     fire_weapon(wep, direction_to_mouse);
                     /*wep_reload = -1;
@@ -18994,7 +18954,7 @@ int main(int argc, char* argv[])
 
                 play_sounds_this_frame_count[snd_horror_beam_hold_ID] = -1;
 
-                if (player_held_RMB) {    //player active logic
+                if (player_held_RMB && allObjects[0].scale > 0.1f) {    //player active logic
                     switch (player_character) {
                     case horror:        //unnerfed beam
                         xspd = cos(direction_to_mouse) * 12;
@@ -23501,11 +23461,21 @@ int main(int argc, char* argv[])
 
             //letter boxes on title/character selection screen
             if (CURRENT_GAME_STATE == gs_character_selection) {
+
                 if (loading_time > 2) {
                     loading_time = 2;
                 }
                 letter_boxes.setTextureRect({ loading_time * 320, 0, 320, 240 });
                 buffer_UI.draw(letter_boxes);
+
+                if (character_selected != none_character) { //character text and portrait, drawn on top of letter boxes apparently
+                    character_portrait_sprite.setColor({ 255, 255, 255, 255 });
+                    character_portrait_sprite.setTextureRect({ (character_selected * 2 + is_Bskin) * 200, 0, 200, 200 });
+
+                    character_portrait_sprite.setPosition(-42, -3);
+                    buffer_UI.draw(character_portrait_sprite);
+                }
+
                 loading_time++;
                 if (on_title_screen) {
                     game_logo_timer++;
@@ -23858,9 +23828,13 @@ int main(int argc, char* argv[])
                 splat_right_sprite.setTextureRect({ 109 * choice, 0, 109, 69 });
                 buffer_UI.draw(splat_right_sprite);
 
-                if (character_selected != none_character) {
-                    character_text_sprite.setColor({0, 0, 0, 255});
+                if (character_selected != none_character) { //character text and portrait
+                    
+                    character_text_sprite.setColor({ 0, 0, 0, 255 });
                     character_text_sprite.setTextureRect({ 0, character_selected * 36, 173, 36 });
+
+                    character_text_sprite.setPosition(1, 140);
+                    buffer_UI.draw(character_text_sprite);
 
                     character_text_sprite.setPosition(1, 140);
                     buffer_UI.draw(character_text_sprite);
