@@ -13786,6 +13786,11 @@ void randomize_mutation_pool() {
 }
 
 void check_character_selection_screen(bool clicked) {
+    
+    if (character_hovered_over != go_button) {
+        go_button_hover_frames = 0;
+    }
+    
     //hover over
     character_hovered_over = none_character;
     if (current_frame > 30) {
@@ -13799,7 +13804,7 @@ void check_character_selection_screen(bool clicked) {
                 character_hovered_over = character(x);
             }
 
-            if (mousepos.x > 320 - 41 && mousepos.x < 320 - 4) {
+            if (mousepos.x > 320 - 47 && mousepos.x < 320 - 4) {
                 character_hovered_over = go_button;
                 go_button_hover_frames++;
             }
@@ -16365,6 +16370,7 @@ int main(int argc, char* argv[])
         mut_splat.setTexture(mut_splatTex);
         mut_splat.setPosition(165, 240 - 36);
         mut_splat.setOrigin(130, 82);
+        mut_splat.setTextureRect({ 0, 0, 260, 82 });
 
         sf::Texture wep_arrow_tex;
         wep_arrow_tex.loadFromFile("res/wep_arrow.png");
@@ -17214,7 +17220,7 @@ int main(int argc, char* argv[])
         mut_icon_sprite_select[i].setTexture(mutation_select_icon_tex);
         mut_icon_sprite_select[i].setColor({ 255, 255, 255, 255 });
         mut_icon_sprite_select[i].setPosition(0, 0);
-        mut_icon_sprite_select[i].setTextureRect(sf::IntRect{ 0, 0, 18, 18 });
+        mut_icon_sprite_select[i].setTextureRect(sf::IntRect{ 0, 0, 24, 32 });
         mut_icon_sprite_select[i].setOrigin(0, 0);
         mutation_SELECT_icons[i] = none_mut_icon;
     }
@@ -17971,16 +17977,6 @@ int main(int argc, char* argv[])
             }
         }
 
-        //area background color
-        switch (area) {
-        case 1:
-            BGColor = {175, 143, 106, 0};
-            break;
-        default:
-            BGColor = { 0, 0, 0, 0 };
-            break;
-        }
-
         if (time_since_generated == 30) {
             //initalize portal spirals
             for (int i = 0; i < 200; i++) {
@@ -18058,7 +18054,6 @@ int main(int argc, char* argv[])
 
         }
         //debug to see where the background bleeds through
-        //BGColor = { 255, 0, 0, 0};
         window.clear(sf::Color::Black);
         buffer_over.clear(sf::Color::Transparent);
         buffer_UI.clear(sf::Color::Transparent);
@@ -20334,36 +20329,6 @@ int main(int argc, char* argv[])
                         }
                         for (int i_ = 0; i_ < 13; i_++) {
                             mut_icon_sprite[i_].setTextureRect(sf::IntRect{ mutation_HUD_icons[i_] * 18, 0, 18, 18 });
-                        }
-
-
-                        for (int i_ = 0; i_ < 5; i_++) {
-                            mut_icon_sprite_select[i_].setColor({ 0, 0, 0, 0 });
-                        }
-                        //select mutations on loading screen
-                        if (global_draw_mut_icons) {
-                            int start_X = 160 - 16 * global_mutation_icon_count;
-                            for (int i_ = 0; i_ < global_mutation_icon_count; i_++) {
-                                int hover_over_offset = 0;
-                                sf::Color temp_color = {128, 128, 128, 255};
-                                if (global_hover_over_mut - 1 == i_) {
-                                    hover_over_offset = 2;
-                                    temp_color = { 255, 255, 255, 255 };
-                                }
-                                mut_icon_sprite_select[i_].setColor(temp_color);
-                                mut_icon_sprite_select[i_].setPosition(start_X + i_ * 32 + 4, 203 - hover_over_offset);
-                                mut_icon_sprite_select[i_].setTextureRect(sf::IntRect{ mutation_SELECT_icons[i_] * 24, 0, 24, 32 });
-                            }
-                            global_mutation_icon_count = 0;
-                            global_draw_mut_icons = false;
-
-                            if (global_hoverd_over_mut) {
-                                global_hoverd_over_mut_delay++;
-                                if (global_hoverd_over_mut_delay > 3) {
-                                    global_hoverd_over_mut_delay = 3;
-                                }
-                                mut_splat.setTextureRect({ global_hoverd_over_mut_delay * 260, 0, 260, 82 });
-                            }
                         }
 
                         break;
@@ -23648,6 +23613,35 @@ int main(int argc, char* argv[])
                     }
 
 
+                    for (int i_ = 0; i_ < 5; i_++) {
+                        mut_icon_sprite_select[i_].setColor({ 0, 0, 0, 0 });
+                    }
+                    //select mutations on loading screen
+                    if (global_draw_mut_icons) {
+                        int start_X = 160 - 16 * global_mutation_icon_count;
+                        for (int i_ = 0; i_ < global_mutation_icon_count; i_++) {
+                            int hover_over_offset = 0;
+                            sf::Color temp_color = { 128, 128, 128, 255 };
+                            if (global_hover_over_mut - 1 == i_) {
+                                hover_over_offset = 2;
+                                temp_color = { 255, 255, 255, 255 };
+                            }
+                            mut_icon_sprite_select[i_].setColor(temp_color);
+                            mut_icon_sprite_select[i_].setPosition(start_X + i_ * 32 + 4, 203 - hover_over_offset);
+                            mut_icon_sprite_select[i_].setTextureRect(sf::IntRect{ mutation_SELECT_icons[i_] * 24, 0, 24, 32 });
+                        }
+                        global_mutation_icon_count = 0;
+                        global_draw_mut_icons = false;
+
+                        if (global_hoverd_over_mut) {
+                            global_hoverd_over_mut_delay++;
+                            if (global_hoverd_over_mut_delay > 3) {
+                                global_hoverd_over_mut_delay = 3;
+                            }
+                            mut_splat.setTextureRect({ global_hoverd_over_mut_delay * 260, 0, 260, 82 });
+                        }
+                    }
+
 
                     for (int i = 0; i < 13; i++) {
                         buffer_UI.draw(mut_icon_sprite[i]);
@@ -23797,7 +23791,7 @@ int main(int argc, char* argv[])
                 }
                 //go button
                 choice = int(go_button_hover_frames * 0.4f) % 8;
-                if (choice > 5) {
+                if (choice > 6) {
                     choice = 0;
                 }
                 go_button_sprite.setColor({255, 255, 255, 255});
@@ -23812,8 +23806,8 @@ int main(int argc, char* argv[])
                 if (choice2 == 2) {
                     choice2 = 1;
                 }
-                go_button_sprite.setPosition(320 - 41, 240 - 27 - (go_button_hover_frames > 0) + (choice2));
-                go_button_sprite.setTextureRect({ choice * 35, 0, 35, 19 });
+                go_button_sprite.setPosition(320 - 47, 240 - 27 - (go_button_hover_frames > 0) + (choice2));
+                go_button_sprite.setTextureRect({ choice * 45, 0, 45, 19 });
                 if (go_button_appear_frame > 0) {
                     buffer_UI.draw(go_button_sprite);
                 }
