@@ -14970,7 +14970,7 @@ void do_network_stuff() {
 
 
 //unused now
-void poll_movement_inputs(int& poll_move_up, int& poll_move_down, int& poll_move_left, int& poll_move_right, int &poll_move_total) {
+/*void poll_movement_inputs(int& poll_move_up, int& poll_move_down, int& poll_move_left, int& poll_move_right, int &poll_move_total) {
     bool poll_move_up_pressed = false;
     bool poll_move_down_pressed = false;
     bool poll_move_left_pressed = false;
@@ -15016,6 +15016,54 @@ void poll_movement_inputs(int& poll_move_up, int& poll_move_down, int& poll_move
 
         //timer_1.timing_us_end();
         polling_window.display();
+    }
+}*/
+
+std::string get_character_active_description_text() {
+    switch (character_selected) {
+    default:
+    case fish:      return "CAN @wROLL@s";break;
+    case crystal:   return "CAN @wSHIELD@s";break;
+    case eyes:      return "TELEKINESIS";break;
+    case melting:   return "EXPLODE @wCORPSES@s";break;
+    case plant:     return "@wSNARE@s ENEMIES";break;
+    case YV:        return "@wPOP POP";break;
+    case steroids:  return "DUAL WIELDING";break;
+    case robot:     return "CAN EAT @wWEAPONS@s";break;
+    case chicken:   return "CAN THROW @wWEAPONS@s";break;
+    case rebel:     return "CAN SPAWN @wALLIES@s";break;
+    case horror:    return "@gRADIATION@w BEAM";break;
+    case rogue:     return "@bPORTAL STRIKE@s";break;
+    case frog:      return "@gTOXIC@w CLOUD";break;
+    case skeleton:  return "@bCRY";break;
+    case YC:        return "@bCRY";break;
+    }
+}
+std::string get_character_passive_description_text() {
+    switch (character_selected) {
+    default:
+    case fish:      return "GETS MORE @yAMMO@w";break;
+    case crystal:   return "MORE MAX @rHP@w";break;
+    case eyes:      return "SEES IN THE DARK";break;
+    case melting:   return "MORE @gRADS@w";break;
+    case plant:     return "IS FASTER";break;
+    case YV:        return "HIGHER @wRATE OF FIRE@s";break;
+    case steroids:  return "AUTOMATIC WEAPONS";break;
+    case robot:     return "LESS @sKNOCKBACK";break;
+    case chicken:   return "HARD TO KILL";break;
+    case rebel:     return "PORTALS @rHEAL@w";break;
+    case horror:    return "EXTRA @gMUTATION@w CHOICE";break;
+    case rogue:     return "BLAST ARMOR, @bHEAT@w";break;
+    case frog:      return "CAN'T STAND STILL";break;
+    case skeleton:  return "3 WEAPONS";break;
+    case YC:        return "3 WEAPONS";break;
+    }
+}
+std::string get_character_passive_description_text_2() {
+    switch (character_selected) {
+    default:
+    case melting:   return "LESS MAX @rHP@w"; break;
+    case steroids:  return "INACCURATE"; break;
     }
 }
 
@@ -15136,7 +15184,7 @@ std::string get_what_mut_text_description(mutation_icon mut) {
     case frog_ultra_B_icon: return "CONTINUOUSLY SPAWN TOXIC @gGAS@s#@gGAS@s SLOWS PROJECTILES"; break;
     case skeleton_ultra_A_icon: return "BACK IN THE FLESH"; break;
     case skeleton_ultra_B_icon: return "FAST RELOAD AFTER BLOOD GAMBLE"; break;
-    case cuz_ultra_A_icon: return "TWICE AS MANY GUNS"; break;
+    case cuz_ultra_A_icon: return "TWO EXTRA GUNS"; break;
     case cuz_ultra_B_icon: return "TWICE AS MANY @bTEARS@w"; break;
 
     }
@@ -23824,23 +23872,54 @@ int main(int argc, char* argv[])
 
                 if (character_selected != none_character) { //character text and portrait
                     
+                    colored_text charater_abilities_text;
+                    //active
+                    charater_abilities_text.set_string(get_character_active_description_text(), font);
+
+                    charater_abilities_text.set_position(sf::Vector2f(7, 188), false);
+
+                    for (sf::Text tex : charater_abilities_text.text_string) {
+                        draw_text_NT(tex, buffer_UI, tex.getColor());
+                    }
+
+                    //passive
+                    charater_abilities_text.set_string(get_character_passive_description_text(), font);
+
+                    charater_abilities_text.set_position(sf::Vector2f(7, 180), false);
+
+                    for (sf::Text tex : charater_abilities_text.text_string) {
+                        draw_text_NT(tex, buffer_UI, tex.getColor());
+                    }
+
+                    //passive top
+                    if (character_selected == melting || character_selected == steroids) {
+                        charater_abilities_text.set_string(get_character_passive_description_text_2(), font);
+
+                        charater_abilities_text.set_position(sf::Vector2f(7, 172), false);
+
+                        for (sf::Text tex : charater_abilities_text.text_string) {
+                            draw_text_NT(tex, buffer_UI, tex.getColor());
+                        }
+                    }
+
+
                     character_text_sprite.setColor({ 0, 0, 0, 255 });
                     character_text_sprite.setTextureRect({ 0, character_selected * 36, 173, 36 });
 
-                    character_text_sprite.setPosition(1, 140);
+                    character_text_sprite.setPosition(0, 135);
                     buffer_UI.draw(character_text_sprite);
 
-                    character_text_sprite.setPosition(1, 140);
+                    character_text_sprite.setPosition(0, 135);
                     buffer_UI.draw(character_text_sprite);
 
-                    character_text_sprite.setPosition(1, 142);
+                    character_text_sprite.setPosition(0, 137);
                     buffer_UI.draw(character_text_sprite);
 
-                    character_text_sprite.setPosition(0, 142);
+                    character_text_sprite.setPosition(-1, 137);
                     buffer_UI.draw(character_text_sprite);
 
                     character_text_sprite.setColor({ 255, 255, 255, 255 });
-                    character_text_sprite.setPosition(0, 140);
+                    character_text_sprite.setPosition(-1, 135);
                     buffer_UI.draw(character_text_sprite);
                 }
             }

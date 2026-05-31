@@ -1159,7 +1159,7 @@ struct colored_text {
 		}
 	}
 
-	void set_position(sf::Vector2f pos) {
+	void set_position(sf::Vector2f pos, bool centered = true) {
 		float letter_spacing = 8;
 		float x_off = 0;
 		float y_off = 0;
@@ -1169,7 +1169,7 @@ struct colored_text {
 				text_string[i].setPosition(pos.x + x_off, pos.y + y_off);
 				x_off += text_string[i].getString().getSize() * 8;
 			}
-			else {
+			else if (centered) {
 				//center text
 				for (int j = idx_go_back; j < i; j++) {
 					if (text_string[j].getString() != "~") {
