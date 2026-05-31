@@ -88,6 +88,8 @@ bool on_title_screen = true;    //everything before the character selection scre
 bool START_RUN = false;
 character character_selected = none_character;
 
+int character_text_desc_offset = 0;
+
 int seed = time(NULL);
 
 bool PRECISE_MOVEMENT = false;
@@ -13819,6 +13821,7 @@ void check_character_selection_screen(bool clicked) {
             }
             if (character_hovered_over != none_character && character_hovered_over != go_button) {
                 character_selected = character_hovered_over;
+                character_text_desc_offset = 3;
             }
         }
 
@@ -23485,7 +23488,19 @@ int main(int argc, char* argv[])
                     character_portrait_sprite.setColor({ 255, 255, 255, 255 });
                     character_portrait_sprite.setTextureRect({ (character_selected * 2 + is_Bskin) * 200, 0, 200, 200 });
 
-                    character_portrait_sprite.setPosition(-42, -3);
+                    if (character_text_desc_offset == 2) {
+                        character_portrait_sprite.setPosition(-42 - 88, -3);
+                    }
+                    else if (character_text_desc_offset == 1) {
+                        character_portrait_sprite.setPosition(-42 + 2, -3);
+                    }
+                    else if (character_text_desc_offset == 0) {
+                        character_portrait_sprite.setPosition(-42, -3);
+                    }
+                    else {//offscreen
+                        character_portrait_sprite.setPosition(-42 - 1000, -3);
+                    }
+
                     buffer_UI.draw(character_portrait_sprite);
                 }
 
@@ -23872,11 +23887,16 @@ int main(int argc, char* argv[])
 
                 if (character_selected != none_character) { //character text and portrait
                     
+                    character_text_desc_offset -= 1;
+                    if (character_text_desc_offset < 0) {
+                        character_text_desc_offset = 0;
+                    }
+
                     colored_text charater_abilities_text;
                     //active
                     charater_abilities_text.set_string(get_character_active_description_text(), font);
 
-                    charater_abilities_text.set_position(sf::Vector2f(7, 188), false);
+                    charater_abilities_text.set_position(sf::Vector2f(7, 188 + character_text_desc_offset), false);
 
                     for (sf::Text tex : charater_abilities_text.text_string) {
                         draw_text_NT(tex, buffer_UI, tex.getColor());
@@ -23885,7 +23905,7 @@ int main(int argc, char* argv[])
                     //passive
                     charater_abilities_text.set_string(get_character_passive_description_text(), font);
 
-                    charater_abilities_text.set_position(sf::Vector2f(7, 180), false);
+                    charater_abilities_text.set_position(sf::Vector2f(7, 180 + character_text_desc_offset), false);
 
                     for (sf::Text tex : charater_abilities_text.text_string) {
                         draw_text_NT(tex, buffer_UI, tex.getColor());
@@ -23895,7 +23915,7 @@ int main(int argc, char* argv[])
                     if (character_selected == melting || character_selected == steroids) {
                         charater_abilities_text.set_string(get_character_passive_description_text_2(), font);
 
-                        charater_abilities_text.set_position(sf::Vector2f(7, 172), false);
+                        charater_abilities_text.set_position(sf::Vector2f(7, 172 + character_text_desc_offset), false);
 
                         for (sf::Text tex : charater_abilities_text.text_string) {
                             draw_text_NT(tex, buffer_UI, tex.getColor());
