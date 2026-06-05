@@ -82,6 +82,13 @@ bool RECORD_REPLAY = false;
 
 sf::Vector2f debug_camera_offset = {0.0f, 0.0f};
 
+sf::Vector2f campfire = { 0.0f, 0.0f };
+sf::Sprite campfire_sprite;
+
+sf::Vector2f campfire_character[14];
+sf::Sprite campfire_character_sprite[14];
+int campfire_character_anim_frame[14] = {0};
+
 gamestate CURRENT_GAME_STATE = gs_character_selection;
 bool has_generated_character_selection_screen = false;
 bool on_title_screen = true;    //everything before the character selection screen
@@ -13392,7 +13399,7 @@ int generate_2x2_tile(int x, int y, int nub_chance, bool Btile) {  //x, y is the
         allFloors[gen_curr_floor_index].setOrigin(Btile, choice);
         gen_curr_floor_index++;
     }
-    if (removedwalls == 4) {
+    if (removedwalls == 4 && CURRENT_GAME_STATE == gs_in_game) {    //dont generate props in the character selection screen
         if (((!Btile || area == 3 || area == 5 || area == 6 || area == 7) && rand() % 11 == 0 || (area == 0 && rand() % 9 == 0))) {
             int prop_range_bottom = 0;
             int prop_range_size = 0;
@@ -13473,6 +13480,37 @@ void generate_floors(int initial_goal, int safe_dist, int direction_choice_total
     level_generators[0].active = true;
     generators_active++;
 
+    if (CURRENT_GAME_STATE == gs_character_selection) { //make it so its more likely that a big area in the middle is generated
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++) {
+
+                goal -= generate_2x2_tile(1500 - 4 + i * 2,
+                    1500 - 4 + j * 2, 0, false);
+            }
+        }
+        campfire.x = 24016;
+        campfire.y = 24016;
+
+        for (int i = 1; i < 9; i++) {
+            int x_off = i % 3;
+            int y_off = int(float(i) / 3.0f - 0.01f);
+            level_generators[i].x = 1500 - 2 + x_off * 2; level_generators[i].y = 1500 - 2 + y_off * 2;
+
+
+            level_generators[i].spdx = rand() % 2;
+            if (level_generators[i].spdx == 1) {
+                level_generators[i].spdx = (rand() % 2) * 2 - 1;
+                level_generators[i].spdy = 0;
+            }
+            else {
+                level_generators[i].spdy = (rand() % 2) * 2 - 1;
+            }
+
+            level_generators[i].active = true;
+            generators_active++;
+        }
+    }
+
     int biasx = ((rand() % 2) * 2 - 1) * 2;
     int biasy = ((rand() % 2) * 2 - 1) * 2;
     int extra = 0;
@@ -13490,7 +13528,7 @@ void generate_floors(int initial_goal, int safe_dist, int direction_choice_total
         for (int i = 0; i < 254; i++) {
             if (level_generators[i].active) {
                 if (goal < initial_goal - safe_dist) {
-                    if (rand() % (lower_gen_rand + generators_active) > upper_gen_rand) {
+                    if (rand() % (lower_gen_rand + generators_active) > upper_gen_rand && CURRENT_GAME_STATE == gs_in_game) {
                         level_generators[i].active = false;
                         generators_active--;
                     }
@@ -14316,7 +14354,7 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
         //generate enemies
         int tmp_num_of_enemies_to_spawn = LOOPS * 3;
         int enemies_spawned = 0;
-        if (sub_area == 1 && CURRENT_GAME_STATE == gs_in_game) {
+        if (CURRENT_GAME_STATE == gs_in_game) {
             while (tmp_num_of_enemies_to_spawn > enemies_spawned) {
                 for (int i = left_physics; i <= right_physics; i++) {
                     for (int j = top_physics; j <= bottom_physics; j++) {
@@ -14331,6 +14369,15 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
                     }
                 }
             }
+        }
+        else {//generate title screen characters
+            //campfire in center
+            //campfire.x = (right_physics + left_physics) / 2 * 16;
+            //campfire.y = (top_physics + bottom_physics) / 2 * 16;
+
+            campfire_character[0].x = campfire.x;
+            campfire_character[0].y = campfire.y - 32;
+
         }
     }
     if (area == 1) {
@@ -15167,7 +15214,7 @@ std::string get_what_mut_text_description(mutation_icon mut) {
     case melting_ultra_A_icon: return "1 MORE @gMUTATION@s#BLOW UP @rLOW HP @wENEMIES@s"; break;
     case melting_ultra_B_icon: return "3 MORE @gMUTATIONS@s#LOSE 1 MAX @rHEALTH@s"; break;
     case plant_ultra_A_icon: return "BIG @wSNARE@s"; break;
-    case plant_ultra_B_icon: return "@AUTOMATIC@s SNARE THAT DEALS DAMAGE"; break;
+    case plant_ultra_B_icon: return "AUTOMATIC@s SNARE THAT DEALS DAMAGE"; break;
     case YV_ultra_A_icon: return "HIGHER @wRATE OF FIRE@s"; break;
     case YV_ultra_B_icon: return "FREE @wPOP POP@s UPGRADE"; break;
     case steroids_ultra_A_icon: return "MORE @wACCURACY@s"; break;
@@ -17238,6 +17285,12 @@ int main(int argc, char* argv[])
         go_button_sprite.setTexture(go_button_tex);
         go_button_sprite.setPosition(320 - 41, 240 - 27);
 
+        sf::Texture campfire_tex;
+        campfire_tex.loadFromFile("res/campfire.png");
+        campfire_sprite.setTexture(campfire_tex);
+        campfire_sprite.setTextureRect({0, 0, 52, 52});
+        campfire_sprite.setOrigin(26, 26);
+
     //initialize the area, this should be reset every level to regenerate the next level
     for (int i = 0; i < gridSize; i++) {
         for (int j = 0; j < gridSize; j++) {
@@ -17829,8 +17882,8 @@ int main(int argc, char* argv[])
                 GAME_PAUSED = false;
                 generate_level(all_sounds, current_music);
                 //clear out area in middle of camera for campfire
-                cameraPos.x = (right_physics + left_physics) / 2 * 16;
-                cameraPos.y = (top_physics + bottom_physics) / 2 * 16;
+                cameraPos.x = campfire.x;//(right_physics + left_physics) / 2 * 16;
+                cameraPos.y = campfire.y;//(top_physics + bottom_physics) / 2 * 16;
                 allObjects[0].position = cameraPos;
                 create_object(cameraPos.x, cameraPos.y, 0, 0, portal_clear, 0, 0);
                 player_sprite.setScale(0, 0);
@@ -18253,8 +18306,8 @@ int main(int argc, char* argv[])
                 cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y) + /*DEBUG*/debug_camera_offset.y;
 
                 if (CURRENT_GAME_STATE == gs_character_selection) {
-                    cameraPos.x = (right_physics + left_physics) / 2 * 16 - 160;
-                    cameraPos.y = (top_physics + bottom_physics) / 2 * 16 - 120;
+                    cameraPos.x = campfire.x - 160;
+                    cameraPos.y = campfire.y - 120;
                 }
 
                 //calualte direction to mouse
@@ -23837,6 +23890,17 @@ int main(int argc, char* argv[])
             }
 
             if (CURRENT_GAME_STATE == gs_character_selection && !on_title_screen) {
+
+                //campfire characters
+                campfire_sprite.setPosition(campfire.x - cameraPos.x, campfire.y - cameraPos.y);
+                campfire_sprite.setTextureRect({(int(current_frame * 0.4f) % 4) * 52, 0, 52, 52});
+
+                buffer_over.draw(campfire_sprite);
+
+                for (int i = 0; i < 14; i++) {
+                    campfire_character_sprite[i].setPosition(campfire_character[i] - cameraPos);
+                }
+
                 //draw character selection screen
                 //character tiles
                 for (int i = 0; i < 14; i++) {
