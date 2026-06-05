@@ -85,9 +85,10 @@ sf::Vector2f debug_camera_offset = {0.0f, 0.0f};
 sf::Vector2f campfire = { 0.0f, 0.0f };
 sf::Sprite campfire_sprite;
 
-sf::Vector2f campfire_character[14];
+sf::Vector2f campfire_character[14] = {sf::Vector2f(0, 0)};
 sf::Sprite campfire_character_sprite[14];
 int campfire_character_anim_frame[14] = {0};
+campfire_character_state_ campfire_character_state[14] = {idle};
 
 gamestate CURRENT_GAME_STATE = gs_character_selection;
 bool has_generated_character_selection_screen = false;
@@ -235,6 +236,7 @@ std::vector<sf::Sprite> T2_floor_tiles_tex;
 int T2_floor_tiles_tex_max = 10;
 
 sf::Vector2f cameraPos = { 24000.0f, 24000.0f };
+sf::Vector2f cameraPos_campfire = { 24000.0f, 24000.0f };
 
 sf::Image game_icon;
 
@@ -17291,6 +17293,15 @@ int main(int argc, char* argv[])
         campfire_sprite.setTextureRect({0, 0, 52, 52});
         campfire_sprite.setOrigin(26, 26);
 
+        sf::Texture campfire_character_tex;
+        campfire_character_tex.loadFromFile("res/player/characters/campfire/campfire_characters.png");
+        for (int i = 0; i < 14; i++) {
+            campfire_character_sprite[i].setTexture(campfire_character_tex);
+            campfire_character_sprite[i].setTextureRect({0, 0, 24, 24});
+            campfire_character_sprite[i].setOrigin(12, 12);
+        }
+       
+
     //initialize the area, this should be reset every level to regenerate the next level
     for (int i = 0; i < gridSize; i++) {
         for (int j = 0; j < gridSize; j++) {
@@ -17882,6 +17893,7 @@ int main(int argc, char* argv[])
                 GAME_PAUSED = false;
                 generate_level(all_sounds, current_music);
                 //clear out area in middle of camera for campfire
+
                 cameraPos.x = campfire.x;//(right_physics + left_physics) / 2 * 16;
                 cameraPos.y = campfire.y;//(top_physics + bottom_physics) / 2 * 16;
                 allObjects[0].position = cameraPos;
@@ -18294,20 +18306,31 @@ int main(int argc, char* argv[])
                 allObjects[0].team = player_team;
 
 
-                //calualte direction to mouse
-                mouse_offset_window_center_x = (mousepos.x - window_size_x / (window_scale * 2)) / (6 - weapon_camera_type);
-                mouse_offset_window_center_y = (mousepos.y - window_size_y / (window_scale * 2)) / (6 - weapon_camera_type);
-
-                camera_want_x = floor(allObjects[0].position.x + cameraOffset.x + mouse_offset_window_center_x + portal_camera_offset.x - chicken_head_camera_offset.x);
-                camera_want_y = floor(allObjects[0].position.y + cameraOffset.y + mouse_offset_window_center_y + portal_camera_offset.y - chicken_head_camera_offset.y);
-                portal_camera_offset = { 0, 0 };
-
-                cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x) + /*DEBUG*/debug_camera_offset.x;
-                cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y) + /*DEBUG*/debug_camera_offset.y;
-
                 if (CURRENT_GAME_STATE == gs_character_selection) {
-                    cameraPos.x = campfire.x - 160;
-                    cameraPos.y = campfire.y - 120;
+                    if (character_selected == none_character) {
+                        cameraPos_campfire.x = campfire.x - 160;
+                        cameraPos_campfire.y = campfire.y - 120;
+                    }
+                    else {
+                        camera_want_x = (campfire_character[character_selected].x - 160);
+                        camera_want_y = (campfire_character[character_selected].y - 120);
+                        cameraPos_campfire.x = ((camera_want_x - cameraPos_campfire.x) / 20.0f + cameraPos_campfire.x);
+                        cameraPos_campfire.y = ((camera_want_y - cameraPos_campfire.y) / 20.0f + cameraPos_campfire.y);
+                    }
+                    cameraPos.x = floor(cameraPos_campfire.x);
+                    cameraPos.y = floor(cameraPos_campfire.y);
+                }
+                else {
+                    //calualte direction to mouse
+                    mouse_offset_window_center_x = (mousepos.x - window_size_x / (window_scale * 2)) / (6 - weapon_camera_type);
+                    mouse_offset_window_center_y = (mousepos.y - window_size_y / (window_scale * 2)) / (6 - weapon_camera_type);
+
+                    camera_want_x = floor(allObjects[0].position.x + cameraOffset.x + mouse_offset_window_center_x + portal_camera_offset.x - chicken_head_camera_offset.x);
+                    camera_want_y = floor(allObjects[0].position.y + cameraOffset.y + mouse_offset_window_center_y + portal_camera_offset.y - chicken_head_camera_offset.y);
+                    portal_camera_offset = { 0, 0 };
+
+                    cameraPos.x = floor((camera_want_x - cameraPos.x) / 3 + cameraPos.x) + /*DEBUG*/debug_camera_offset.x;
+                    cameraPos.y = floor((camera_want_y - cameraPos.y) / 3 + cameraPos.y) + /*DEBUG*/debug_camera_offset.y;
                 }
 
                 //calualte direction to mouse
@@ -23897,8 +23920,61 @@ int main(int argc, char* argv[])
 
                 buffer_over.draw(campfire_sprite);
 
+                for (int i = 0; i < 14; i++) {//enumerate through characters
+                    int idle_frames = 48 * 2.5f;
+                    int select_frames = 16 * 2.5f;
+                    int selected_frames = 24 * 2.5f;
+                    int deselect_frames = 16 * 2.5f;
+                    campfire_character_anim_frame[i]++;
+
+                    switch (i) {
+                    default:
+                    case fish:
+                        if (character_selected == fish) {
+                            if ((int)campfire_character_state[i] == (int)idle && campfire_character_anim_frame[i] >= idle_frames) {
+                                campfire_character_anim_frame[i] = 0;
+                                campfire_character_state[i] = select__;
+                            }
+                            else if ((int)campfire_character_state[i] == (int)select__ && campfire_character_anim_frame[i] >= select_frames) {
+                                campfire_character_anim_frame[i] = 0;
+                                campfire_character_state[i] = selected;
+                            }
+                            else if ((int)campfire_character_state[i] == (int)deselect && campfire_character_anim_frame[i] >= deselect_frames) {
+                                campfire_character_anim_frame[i] = 0;
+                                campfire_character_state[i] = select__;
+                            }
+                            else if ((int)campfire_character_state[i] == (int)selected && campfire_character_anim_frame[i] >= selected_frames) {
+                                campfire_character_anim_frame[i] = 0;
+                                campfire_character_state[i] = selected;
+                            }
+                        }
+                        else {  //not selected
+                            if ((int)campfire_character_state[i] == (int)idle && campfire_character_anim_frame[i] >= idle_frames) {
+                                campfire_character_anim_frame[i] = 0;
+                                campfire_character_state[i] = idle;
+                            }
+                            else if ((int)campfire_character_state[i] == (int)select__ && campfire_character_anim_frame[i] >= select_frames) {
+                                campfire_character_anim_frame[i] = 0;
+                                campfire_character_state[i] = deselect;
+                            }
+                            else if ((int)campfire_character_state[i] == (int)deselect && campfire_character_anim_frame[i] >= deselect_frames) {
+                                campfire_character_anim_frame[i] = 0;
+                                campfire_character_state[i] = idle;
+                            }
+                            else if ((int)campfire_character_state[i] == (int)selected && campfire_character_anim_frame[i] >= selected_frames) {
+                                campfire_character_anim_frame[i] = 0;
+                                campfire_character_state[i] = deselect;
+                            }
+                        }
+                        break;
+                    }
+                }
+
                 for (int i = 0; i < 14; i++) {
                     campfire_character_sprite[i].setPosition(campfire_character[i] - cameraPos);
+                    campfire_character_sprite[i].setTextureRect({ int(campfire_character_anim_frame[i] * 0.4f) * 24, (int)campfire_character_state[i] * 24, 24, 24 });
+
+                    buffer_over.draw(campfire_character_sprite[i]);
                 }
 
                 //draw character selection screen

@@ -239,6 +239,10 @@ enum player_material {
 	no_footstep
 };
 
+enum campfire_character_state_ {
+	idle, select__, selected, deselect
+};
+
 enum mutation_icon {
 	none_mut_icon,
 	rhino_skin_icon,
@@ -1211,3 +1215,4 @@ struct debug_timer {
 		time_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
 	}
 };
+
