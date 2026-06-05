@@ -1,6 +1,6 @@
 wall_boarder_textures: 475 / 477
 wall_textures: 475 / 477
-under_effects_small: 3 / 10
+under_effects_small: 5 / 10
 rotateable_effects_large: 2 / 10
 rotateable_sprites_guns_top: 0 / 10
 variable_textures_top_enemies: 0 / 10

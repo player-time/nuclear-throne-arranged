@@ -82,6 +82,9 @@ bool RECORD_REPLAY = false;
 
 sf::Vector2f debug_camera_offset = {0.0f, 0.0f};
 
+sf::Vector2f campfire_log = {0.0f, 0.0f};
+sf::Sprite campfire_log_sprite;
+
 sf::Vector2f campfire = { 0.0f, 0.0f };
 sf::Sprite campfire_sprite;
 
@@ -14380,6 +14383,11 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
             campfire_character[0].x = campfire.x;
             campfire_character[0].y = campfire.y - 32;
 
+            campfire_character[1].x = campfire.x;
+            campfire_character[1].y = campfire.y + 32;
+
+            campfire_log.x = campfire.x;
+            campfire_log.y = campfire.y - 30;
         }
     }
     if (area == 1) {
@@ -17287,19 +17295,101 @@ int main(int argc, char* argv[])
         go_button_sprite.setTexture(go_button_tex);
         go_button_sprite.setPosition(320 - 41, 240 - 27);
 
+        sf::Texture campfire_log_tex;
+        campfire_log_tex.loadFromFile("res/log.png");
+        campfire_log_sprite.setTexture(campfire_log_tex);
+        campfire_log_sprite.setTextureRect({ 0, 0, 48, 48 });
+        campfire_log_sprite.setOrigin(24, 24);
+
         sf::Texture campfire_tex;
         campfire_tex.loadFromFile("res/campfire.png");
         campfire_sprite.setTexture(campfire_tex);
         campfire_sprite.setTextureRect({0, 0, 52, 52});
         campfire_sprite.setOrigin(26, 26);
 
-        sf::Texture campfire_character_tex;
-        campfire_character_tex.loadFromFile("res/player/characters/campfire/campfire_characters.png");
-        for (int i = 0; i < 14; i++) {
-            campfire_character_sprite[i].setTexture(campfire_character_tex);
-            campfire_character_sprite[i].setTextureRect({0, 0, 24, 24});
-            campfire_character_sprite[i].setOrigin(12, 12);
-        }
+        sf::Texture campfire_character_fish_tex;
+        campfire_character_fish_tex.loadFromFile("res/player/characters/campfire/campfire_characters_fish.png");
+        campfire_character_sprite[0].setTexture(campfire_character_fish_tex);
+        campfire_character_sprite[0].setTextureRect({0, 0, 24, 24});
+        campfire_character_sprite[0].setOrigin(12, 12);
+
+        sf::Texture campfire_character_crystal_tex;
+        campfire_character_crystal_tex.loadFromFile("res/player/characters/campfire/campfire_characters_crystal.png");
+        campfire_character_sprite[0].setTexture(campfire_character_crystal_tex);
+        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[0].setOrigin(12, 12);
+
+        sf::Texture campfire_character_eyes_tex;
+        campfire_character_eyes_tex.loadFromFile("res/player/characters/campfire/campfire_characters_eyes.png");
+        campfire_character_sprite[0].setTexture(campfire_character_eyes_tex);
+        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[0].setOrigin(12, 12);
+
+        sf::Texture campfire_character_melting_tex;
+        campfire_character_melting_tex.loadFromFile("res/player/characters/campfire/campfire_characters_melting.png");
+        campfire_character_sprite[0].setTexture(campfire_character_melting_tex);
+        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[0].setOrigin(12, 12);
+
+        sf::Texture campfire_character_plant_tex;
+        campfire_character_plant_tex.loadFromFile("res/player/characters/campfire/campfire_characters_plant.png");
+        campfire_character_sprite[0].setTexture(campfire_character_plant_tex);
+        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[0].setOrigin(12, 12);
+
+        sf::Texture campfire_character_YV_tex;
+        campfire_character_YV_tex.loadFromFile("res/player/characters/campfire/campfire_characters_YV.png");
+        campfire_character_sprite[0].setTexture(campfire_character_YV_tex);
+        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[0].setOrigin(12, 12);
+
+        sf::Texture campfire_character_steroids_tex;
+        campfire_character_steroids_tex.loadFromFile("res/player/characters/campfire/campfire_characters_steroids.png");
+        campfire_character_sprite[0].setTexture(campfire_character_steroids_tex);
+        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[0].setOrigin(12, 12);
+
+        sf::Texture campfire_character_robot_tex;
+        campfire_character_robot_tex.loadFromFile("res/player/characters/campfire/campfire_characters_robot.png");
+        campfire_character_sprite[0].setTexture(campfire_character_robot_tex);
+        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[0].setOrigin(12, 12);
+
+        sf::Texture campfire_character_chicken_tex;
+        campfire_character_chicken_tex.loadFromFile("res/player/characters/campfire/campfire_characters_chicken.png");
+        campfire_character_sprite[0].setTexture(campfire_character_chicken_tex);
+        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[0].setOrigin(12, 12);
+
+        sf::Texture campfire_character_rebel_tex;
+        campfire_character_rebel_tex.loadFromFile("res/player/characters/campfire/campfire_characters_rebel.png");
+        campfire_character_sprite[0].setTexture(campfire_character_rebel_tex);
+        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[0].setOrigin(12, 12);
+
+        sf::Texture campfire_character_horror_tex;
+        campfire_character_horror_tex.loadFromFile("res/player/characters/campfire/campfire_characters_horror.png");
+        campfire_character_sprite[0].setTexture(campfire_character_horror_tex);
+        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[0].setOrigin(12, 12);
+
+        sf::Texture campfire_character_rogue_tex;
+        campfire_character_rogue_tex.loadFromFile("res/player/characters/campfire/campfire_characters_rogue.png");
+        campfire_character_sprite[0].setTexture(campfire_character_rogue_tex);
+        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[0].setOrigin(12, 12);
+
+        sf::Texture campfire_character_frog_tex;
+        campfire_character_frog_tex.loadFromFile("res/player/characters/campfire/campfire_characters_frog.png");
+        campfire_character_sprite[0].setTexture(campfire_character_frog_tex);
+        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[0].setOrigin(12, 12);
+
+        sf::Texture campfire_character_YC_tex;
+        campfire_character_YC_tex.loadFromFile("res/player/characters/campfire/campfire_characters_YC.png");
+        campfire_character_sprite[0].setTexture(campfire_character_YC_tex);
+        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[0].setOrigin(12, 12);
        
 
     //initialize the area, this should be reset every level to regenerate the next level
@@ -18314,8 +18404,8 @@ int main(int argc, char* argv[])
                     else {
                         camera_want_x = (campfire_character[character_selected].x - 160);
                         camera_want_y = (campfire_character[character_selected].y - 120);
-                        cameraPos_campfire.x = ((camera_want_x - cameraPos_campfire.x) / 20.0f + cameraPos_campfire.x);
-                        cameraPos_campfire.y = ((camera_want_y - cameraPos_campfire.y) / 20.0f + cameraPos_campfire.y);
+                        cameraPos_campfire.x = ((camera_want_x - cameraPos_campfire.x) / 16.0f + cameraPos_campfire.x);
+                        cameraPos_campfire.y = ((camera_want_y - cameraPos_campfire.y) / 16.0f + cameraPos_campfire.y);
                     }
                     cameraPos.x = floor(cameraPos_campfire.x);
                     cameraPos.y = floor(cameraPos_campfire.y);
@@ -22975,6 +23065,22 @@ int main(int argc, char* argv[])
             //window.draw(combinedunder);
             buffer_over.draw(combinedunder);
 
+            if (CURRENT_GAME_STATE == gs_character_selection && !on_title_screen) {
+                for (int i = 0; i < 14; i++) {
+                    sf::Vector2f camp_char_offset = sf::Vector2f(0, 3);
+                    switch (i) {
+                    case fish:
+                        camp_char_offset = sf::Vector2f(0, 3);
+                        break;
+                    default:
+                    case crystal:
+                        camp_char_offset = sf::Vector2f(0, 1);
+                        break;
+                    }
+                    add_sprite_24(shadow24_ArrayIndex, campfire_character[i] - cameraPos + offset24 + camp_char_offset, draw_shadow24s);
+                    shadow24_ArrayIndex++;      //shadow
+                }
+            }
 
             //shadows now drawn
 
@@ -23917,62 +24023,157 @@ int main(int argc, char* argv[])
                 //campfire characters
                 campfire_sprite.setPosition(campfire.x - cameraPos.x, campfire.y - cameraPos.y);
                 campfire_sprite.setTextureRect({(int(current_frame * 0.4f) % 4) * 52, 0, 52, 52});
-
                 buffer_over.draw(campfire_sprite);
 
+                campfire_log_sprite.setPosition(campfire_log - cameraPos);
+                campfire_log_sprite.setTextureRect({ (int(current_frame * 0.4f) % 2) * 48, 0, 48, 48 });
+                buffer_over.draw(campfire_log_sprite);
+
+                int idle_frames = 48 * 2.5f;
+                int select_frames = 16 * 2.5f;
+                int selected_frames = 24 * 2.5f;
+                int deselect_frames = 16 * 2.5f;
+                int character_width = 24;
+                int character_height = 24;
+
                 for (int i = 0; i < 14; i++) {//enumerate through characters
-                    int idle_frames = 48 * 2.5f;
-                    int select_frames = 16 * 2.5f;
-                    int selected_frames = 24 * 2.5f;
-                    int deselect_frames = 16 * 2.5f;
+
                     campfire_character_anim_frame[i]++;
 
                     switch (i) {
                     default:
                     case fish:
-                        if (character_selected == fish) {
-                            if ((int)campfire_character_state[i] == (int)idle && campfire_character_anim_frame[i] >= idle_frames) {
-                                campfire_character_anim_frame[i] = 0;
-                                campfire_character_state[i] = select__;
-                            }
-                            else if ((int)campfire_character_state[i] == (int)select__ && campfire_character_anim_frame[i] >= select_frames) {
-                                campfire_character_anim_frame[i] = 0;
-                                campfire_character_state[i] = selected;
-                            }
-                            else if ((int)campfire_character_state[i] == (int)deselect && campfire_character_anim_frame[i] >= deselect_frames) {
-                                campfire_character_anim_frame[i] = 0;
-                                campfire_character_state[i] = select__;
-                            }
-                            else if ((int)campfire_character_state[i] == (int)selected && campfire_character_anim_frame[i] >= selected_frames) {
-                                campfire_character_anim_frame[i] = 0;
-                                campfire_character_state[i] = selected;
-                            }
-                        }
-                        else {  //not selected
-                            if ((int)campfire_character_state[i] == (int)idle && campfire_character_anim_frame[i] >= idle_frames) {
-                                campfire_character_anim_frame[i] = 0;
-                                campfire_character_state[i] = idle;
-                            }
-                            else if ((int)campfire_character_state[i] == (int)select__ && campfire_character_anim_frame[i] >= select_frames) {
-                                campfire_character_anim_frame[i] = 0;
-                                campfire_character_state[i] = deselect;
-                            }
-                            else if ((int)campfire_character_state[i] == (int)deselect && campfire_character_anim_frame[i] >= deselect_frames) {
-                                campfire_character_anim_frame[i] = 0;
-                                campfire_character_state[i] = idle;
-                            }
-                            else if ((int)campfire_character_state[i] == (int)selected && campfire_character_anim_frame[i] >= selected_frames) {
-                                campfire_character_anim_frame[i] = 0;
-                                campfire_character_state[i] = deselect;
-                            }
-                        }
+                        idle_frames = 48;
+                        select_frames = 16;
+                        selected_frames = 24;
+                        deselect_frames = 16;
                         break;
+                    case crystal:
+                        idle_frames = 3;
+                        select_frames = 5;
+                        selected_frames = 36;
+                        deselect_frames = 2;
+                        break;
+                    case eyes:
+                        idle_frames = 3;
+                        select_frames = 5;
+                        selected_frames = 36;
+                        deselect_frames = 2;
+                        break;
+                    case :
+                        idle_frames = 3;
+                        select_frames = 5;
+                        selected_frames = 36;
+                        deselect_frames = 2;
+                        break;
+                    case crystal:
+                        idle_frames = 3;
+                        select_frames = 5;
+                        selected_frames = 36;
+                        deselect_frames = 2;
+                        break;
+                    case crystal:
+                        idle_frames = 3;
+                        select_frames = 5;
+                        selected_frames = 36;
+                        deselect_frames = 2;
+                        break;
+                    case crystal:
+                        idle_frames = 3;
+                        select_frames = 5;
+                        selected_frames = 36;
+                        deselect_frames = 2;
+                        break;
+                    case crystal:
+                        idle_frames = 3;
+                        select_frames = 5;
+                        selected_frames = 36;
+                        deselect_frames = 2;
+                        break;
+                    case crystal:
+                        idle_frames = 3;
+                        select_frames = 5;
+                        selected_frames = 36;
+                        deselect_frames = 2;
+                        break;
+                    case crystal:
+                        idle_frames = 3;
+                        select_frames = 5;
+                        selected_frames = 36;
+                        deselect_frames = 2;
+                        break;
+                    case crystal:
+                        idle_frames = 3;
+                        select_frames = 5;
+                        selected_frames = 36;
+                        deselect_frames = 2;
+                        break;
+                    case crystal:
+                        idle_frames = 3;
+                        select_frames = 5;
+                        selected_frames = 36;
+                        deselect_frames = 2;
+                        break;
+                    case crystal:
+                        idle_frames = 3;
+                        select_frames = 5;
+                        selected_frames = 36;
+                        deselect_frames = 2;
+                        break;
+                    case crystal:
+                        idle_frames = 3;
+                        select_frames = 5;
+                        selected_frames = 36;
+                        deselect_frames = 2;
+                        break;
+                    }
+
+                    idle_frames     *= 2.5f;
+                    select_frames   *= 2.5f;
+                    selected_frames *= 2.5f;
+                    deselect_frames *= 2.5f;
+
+                    if (character_selected == i) {
+                        if ((int)campfire_character_state[i] == (int)idle && campfire_character_anim_frame[i] >= idle_frames) {
+                            campfire_character_anim_frame[i] = 0;
+                            campfire_character_state[i] = select__;
+                        }
+                        else if ((int)campfire_character_state[i] == (int)select__ && campfire_character_anim_frame[i] >= select_frames) {
+                            campfire_character_anim_frame[i] = 0;
+                            campfire_character_state[i] = selected;
+                        }
+                        else if ((int)campfire_character_state[i] == (int)deselect && campfire_character_anim_frame[i] >= deselect_frames) {
+                            campfire_character_anim_frame[i] = 0;
+                            campfire_character_state[i] = select__;
+                        }
+                        else if ((int)campfire_character_state[i] == (int)selected && campfire_character_anim_frame[i] >= selected_frames) {
+                            campfire_character_anim_frame[i] = 0;
+                            campfire_character_state[i] = selected;
+                        }
+                    }
+                    else {  //not selected
+                        if ((int)campfire_character_state[i] == (int)idle && campfire_character_anim_frame[i] >= idle_frames) {
+                            campfire_character_anim_frame[i] = 0;
+                            campfire_character_state[i] = idle;
+                        }
+                        else if ((int)campfire_character_state[i] == (int)select__ && campfire_character_anim_frame[i] >= select_frames) {
+                            campfire_character_anim_frame[i] = 0;
+                            campfire_character_state[i] = deselect;
+                        }
+                        else if ((int)campfire_character_state[i] == (int)deselect && campfire_character_anim_frame[i] >= deselect_frames) {
+                            campfire_character_anim_frame[i] = 0;
+                            campfire_character_state[i] = idle;
+                        }
+                        else if ((int)campfire_character_state[i] == (int)selected && campfire_character_anim_frame[i] >= selected_frames) {
+                            campfire_character_anim_frame[i] = 0;
+                            campfire_character_state[i] = deselect;
+                        }
                     }
                 }
 
                 for (int i = 0; i < 14; i++) {
                     campfire_character_sprite[i].setPosition(campfire_character[i] - cameraPos);
-                    campfire_character_sprite[i].setTextureRect({ int(campfire_character_anim_frame[i] * 0.4f) * 24, (int)campfire_character_state[i] * 24, 24, 24 });
+                    campfire_character_sprite[i].setTextureRect({ int(campfire_character_anim_frame[i] * 0.4f) * character_width, (int)campfire_character_state[i] * character_height, character_width, character_height});
 
                     buffer_over.draw(campfire_character_sprite[i]);
                 }
