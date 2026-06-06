@@ -14380,11 +14380,105 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
             //campfire.x = (right_physics + left_physics) / 2 * 16;
             //campfire.y = (top_physics + bottom_physics) / 2 * 16;
 
+            for (int i = 0; i < 14; i++) {
+                campfire_character[i] = {0, 0};//out of bounds so cant be collided with
+            }
+
             campfire_character[0].x = campfire.x;
             campfire_character[0].y = campfire.y - 32;
 
             campfire_character[1].x = campfire.x;
             campfire_character[1].y = campfire.y + 32;
+
+            campfire_character[2].x = campfire.x + 40;
+            campfire_character[2].y = campfire.y;
+
+            campfire_character[3].x = campfire.x - 40;
+            campfire_character[3].y = campfire.y;
+
+            float x_min = left_physics * 16;
+            float x_width = (right_physics - left_physics) * 16;
+            float y_min = top_physics * 16;
+            float y_height = (bottom_physics - top_physics) * 16;
+            
+            //place randomly then check if valid
+            float temp_x = x_min + random_float(x_width);
+            float temp_y = y_min + random_float(y_height);
+
+            bool collided = true;
+
+            float size_reduction = 0.0f;
+
+            while (collided) {
+                collided = false;
+                temp_x = x_min + random_float(x_width);
+                temp_y = y_min + random_float(y_height);
+                int grid_x = int(temp_x / 16.0f);
+                int grid_y = int(temp_y / 16.0f);
+
+                //check if walls nearby
+                for (int i = -2; i < 3; i++) {
+                    for (int j = -5; j < 3; j++) {
+                        if (game_area[grid_x + i][grid_y + j].my_grid_type == wall) {
+                            collided = true;
+                        }
+                    }
+                }
+                //check other characters and campfire collision
+                for (int i = 0; i < 14; i++) {
+                    if (i != chicken) {
+                        if (is_within_circle(sf::Vector2f(temp_x, temp_y), campfire_character[i], 16 + 16 - size_reduction) || is_within_circle(sf::Vector2f(temp_x, temp_y) + sf::Vector2f(0, -40)/*chickens tv*/, campfire_character[i], 32 + 16 - size_reduction)) {
+                            collided = true;
+                        }
+                    }
+                }
+                if (is_within_circle(sf::Vector2f(temp_x, temp_y), campfire, 16 + 48 - size_reduction) || is_within_circle(sf::Vector2f(temp_x, temp_y) + sf::Vector2f(0, -40)/*chickens tv*/, campfire, 32 + 48 - size_reduction)) {
+                    collided = true;
+                }
+                
+                size_reduction += 0.001f;
+            }
+
+            campfire_character[chicken].x = round(temp_x);
+            campfire_character[chicken].y = round(temp_y);
+
+            //do the rest after
+            for (int i = 4; i < 14; i++) {
+                if (i == chicken) {
+                    i++;
+                }
+                collided = true;
+                while (collided) {
+                    collided = false;
+                    temp_x = x_min + random_float(x_width);
+                    temp_y = y_min + random_float(y_height);
+                    int grid_x = int(temp_x / 16.0f);
+                    int grid_y = int(temp_y / 16.0f);
+
+                    //check if walls nearby
+                    for (int i__ = -2; i__ < 3; i__++) {
+                        for (int j__ = -2; j__ < 3; j__++) {
+                            if (game_area[grid_x + i__][grid_y + j__].my_grid_type == wall) {
+                                collided = true;
+                            }
+                        }
+                    }
+
+                    for (int other = 0; other < 14; other++) {
+                        if (other != i) {
+                            if (is_within_circle(campfire_character[other], sf::Vector2f(temp_x, temp_y), 16 + 16 - size_reduction) || (other == chicken && is_within_circle(campfire_character[other] + sf::Vector2f(0, -40)/*chickens tv*/, sf::Vector2f(temp_x, temp_y), 32 + 16 - size_reduction))) {
+                                collided = true;
+                            }
+                        }
+                    }
+                    if (is_within_circle(sf::Vector2f(temp_x, temp_y), campfire, 16 + 48 - size_reduction) || !is_within_circle(sf::Vector2f(temp_x, temp_y), campfire, 16 + 128 + size_reduction * 1000)) {
+                        collided = true;
+                    }
+                    size_reduction += 0.001f;
+                }
+                campfire_character[i].x = round(temp_x);
+                campfire_character[i].y = round(temp_y);
+            }
 
             campfire_log.x = campfire.x;
             campfire_log.y = campfire.y - 30;
@@ -17315,81 +17409,81 @@ int main(int argc, char* argv[])
 
         sf::Texture campfire_character_crystal_tex;
         campfire_character_crystal_tex.loadFromFile("res/player/characters/campfire/campfire_characters_crystal.png");
-        campfire_character_sprite[0].setTexture(campfire_character_crystal_tex);
-        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
-        campfire_character_sprite[0].setOrigin(12, 12);
+        campfire_character_sprite[1].setTexture(campfire_character_crystal_tex);
+        campfire_character_sprite[1].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[1].setOrigin(12, 12);
 
         sf::Texture campfire_character_eyes_tex;
         campfire_character_eyes_tex.loadFromFile("res/player/characters/campfire/campfire_characters_eyes.png");
-        campfire_character_sprite[0].setTexture(campfire_character_eyes_tex);
-        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
-        campfire_character_sprite[0].setOrigin(12, 12);
+        campfire_character_sprite[2].setTexture(campfire_character_eyes_tex);
+        campfire_character_sprite[2].setTextureRect({ 0, 0, 72, 32 });
+        campfire_character_sprite[2].setOrigin(16, 16);
 
         sf::Texture campfire_character_melting_tex;
         campfire_character_melting_tex.loadFromFile("res/player/characters/campfire/campfire_characters_melting.png");
-        campfire_character_sprite[0].setTexture(campfire_character_melting_tex);
-        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
-        campfire_character_sprite[0].setOrigin(12, 12);
+        campfire_character_sprite[3].setTexture(campfire_character_melting_tex);
+        campfire_character_sprite[3].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[3].setOrigin(12, 12);
 
         sf::Texture campfire_character_plant_tex;
         campfire_character_plant_tex.loadFromFile("res/player/characters/campfire/campfire_characters_plant.png");
-        campfire_character_sprite[0].setTexture(campfire_character_plant_tex);
-        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
-        campfire_character_sprite[0].setOrigin(12, 12);
+        campfire_character_sprite[4].setTexture(campfire_character_plant_tex);
+        campfire_character_sprite[4].setTextureRect({ 0, 0, 32, 32 });
+        campfire_character_sprite[4].setOrigin(16, 16);
 
         sf::Texture campfire_character_YV_tex;
         campfire_character_YV_tex.loadFromFile("res/player/characters/campfire/campfire_characters_YV.png");
-        campfire_character_sprite[0].setTexture(campfire_character_YV_tex);
-        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
-        campfire_character_sprite[0].setOrigin(12, 12);
+        campfire_character_sprite[5].setTexture(campfire_character_YV_tex);
+        campfire_character_sprite[5].setTextureRect({ 0, 0, 48, 48 });
+        campfire_character_sprite[5].setOrigin(24, 24);
 
         sf::Texture campfire_character_steroids_tex;
         campfire_character_steroids_tex.loadFromFile("res/player/characters/campfire/campfire_characters_steroids.png");
-        campfire_character_sprite[0].setTexture(campfire_character_steroids_tex);
-        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
-        campfire_character_sprite[0].setOrigin(12, 12);
+        campfire_character_sprite[6].setTexture(campfire_character_steroids_tex);
+        campfire_character_sprite[6].setTextureRect({ 0, 0, 32, 32 });
+        campfire_character_sprite[6].setOrigin(16, 16);
 
         sf::Texture campfire_character_robot_tex;
         campfire_character_robot_tex.loadFromFile("res/player/characters/campfire/campfire_characters_robot.png");
-        campfire_character_sprite[0].setTexture(campfire_character_robot_tex);
-        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
-        campfire_character_sprite[0].setOrigin(12, 12);
+        campfire_character_sprite[7].setTexture(campfire_character_robot_tex);
+        campfire_character_sprite[7].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[7].setOrigin(12, 12);
 
         sf::Texture campfire_character_chicken_tex;
         campfire_character_chicken_tex.loadFromFile("res/player/characters/campfire/campfire_characters_chicken.png");
-        campfire_character_sprite[0].setTexture(campfire_character_chicken_tex);
-        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
-        campfire_character_sprite[0].setOrigin(12, 12);
+        campfire_character_sprite[8].setTexture(campfire_character_chicken_tex);
+        campfire_character_sprite[8].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[8].setOrigin(12, 12);
 
         sf::Texture campfire_character_rebel_tex;
         campfire_character_rebel_tex.loadFromFile("res/player/characters/campfire/campfire_characters_rebel.png");
-        campfire_character_sprite[0].setTexture(campfire_character_rebel_tex);
-        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
-        campfire_character_sprite[0].setOrigin(12, 12);
+        campfire_character_sprite[9].setTexture(campfire_character_rebel_tex);
+        campfire_character_sprite[9].setTextureRect({ 0, 0, 32, 32 });
+        campfire_character_sprite[9].setOrigin(16, 16);
 
         sf::Texture campfire_character_horror_tex;
         campfire_character_horror_tex.loadFromFile("res/player/characters/campfire/campfire_characters_horror.png");
-        campfire_character_sprite[0].setTexture(campfire_character_horror_tex);
-        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
-        campfire_character_sprite[0].setOrigin(12, 12);
+        campfire_character_sprite[10].setTexture(campfire_character_horror_tex);
+        campfire_character_sprite[10].setTextureRect({ 0, 0, 48, 48 });
+        campfire_character_sprite[10].setOrigin(24, 24);
 
         sf::Texture campfire_character_rogue_tex;
         campfire_character_rogue_tex.loadFromFile("res/player/characters/campfire/campfire_characters_rogue.png");
-        campfire_character_sprite[0].setTexture(campfire_character_rogue_tex);
-        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
-        campfire_character_sprite[0].setOrigin(12, 12);
+        campfire_character_sprite[11].setTexture(campfire_character_rogue_tex);
+        campfire_character_sprite[11].setTextureRect({ 0, 0, 32, 32 });
+        campfire_character_sprite[11].setOrigin(16, 16);
 
         sf::Texture campfire_character_frog_tex;
         campfire_character_frog_tex.loadFromFile("res/player/characters/campfire/campfire_characters_frog.png");
-        campfire_character_sprite[0].setTexture(campfire_character_frog_tex);
-        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
-        campfire_character_sprite[0].setOrigin(12, 12);
+        campfire_character_sprite[12].setTexture(campfire_character_frog_tex);
+        campfire_character_sprite[12].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[12].setOrigin(12, 12);
 
         sf::Texture campfire_character_YC_tex;
         campfire_character_YC_tex.loadFromFile("res/player/characters/campfire/campfire_characters_YC.png");
-        campfire_character_sprite[0].setTexture(campfire_character_YC_tex);
-        campfire_character_sprite[0].setTextureRect({ 0, 0, 24, 24 });
-        campfire_character_sprite[0].setOrigin(12, 12);
+        campfire_character_sprite[13].setTexture(campfire_character_YC_tex);
+        campfire_character_sprite[13].setTextureRect({ 0, 0, 24, 24 });
+        campfire_character_sprite[13].setOrigin(12, 12);
        
 
     //initialize the area, this should be reset every level to regenerate the next level
@@ -18404,8 +18498,8 @@ int main(int argc, char* argv[])
                     else {
                         camera_want_x = (campfire_character[character_selected].x - 160);
                         camera_want_y = (campfire_character[character_selected].y - 120);
-                        cameraPos_campfire.x = ((camera_want_x - cameraPos_campfire.x) / 16.0f + cameraPos_campfire.x);
-                        cameraPos_campfire.y = ((camera_want_y - cameraPos_campfire.y) / 16.0f + cameraPos_campfire.y);
+                        cameraPos_campfire.x = ((camera_want_x - cameraPos_campfire.x) / 10.0f + cameraPos_campfire.x);
+                        cameraPos_campfire.y = ((camera_want_y - cameraPos_campfire.y) / 10.0f + cameraPos_campfire.y);
                     }
                     cameraPos.x = floor(cameraPos_campfire.x);
                     cameraPos.y = floor(cameraPos_campfire.y);
@@ -23073,8 +23167,21 @@ int main(int argc, char* argv[])
                         camp_char_offset = sf::Vector2f(0, 3);
                         break;
                     default:
-                    case crystal:
                         camp_char_offset = sf::Vector2f(0, 1);
+                        break;
+                    case crystal:
+                        camp_char_offset = sf::Vector2f(-1, 1);
+                        break;
+                    case plant:
+                        camp_char_offset = sf::Vector2f(0, 0);
+                        break;
+                    case chicken:
+                    case YC:
+                    case skeleton:
+                        camp_char_offset = sf::Vector2f(0, -1);
+                        break;
+                    case steroids:
+                        camp_char_offset = sf::Vector2f(0, 3);
                         break;
                     }
                     add_sprite_24(shadow24_ArrayIndex, campfire_character[i] - cameraPos + offset24 + camp_char_offset, draw_shadow24s);
@@ -24033,10 +24140,11 @@ int main(int argc, char* argv[])
                 int select_frames = 16 * 2.5f;
                 int selected_frames = 24 * 2.5f;
                 int deselect_frames = 16 * 2.5f;
-                int character_width = 24;
-                int character_height = 24;
 
                 for (int i = 0; i < 14; i++) {//enumerate through characters
+
+                    int character_width = 24;
+                    int character_height = 24;
 
                     campfire_character_anim_frame[i]++;
 
@@ -24055,76 +24163,91 @@ int main(int argc, char* argv[])
                         deselect_frames = 2;
                         break;
                     case eyes:
-                        idle_frames = 3;
-                        select_frames = 5;
-                        selected_frames = 36;
-                        deselect_frames = 2;
+                        idle_frames = 24;
+                        select_frames = 4;
+                        selected_frames = 15;
+                        deselect_frames = 3;
+                        character_width = 72;
+                        character_height = 32;
                         break;
-                    case :
-                        idle_frames = 3;
-                        select_frames = 5;
-                        selected_frames = 36;
-                        deselect_frames = 2;
+                    case melting:
+                        idle_frames = 17;
+                        select_frames = 9;
+                        selected_frames = 18;
+                        deselect_frames = 7;
                         break;
-                    case crystal:
-                        idle_frames = 3;
-                        select_frames = 5;
-                        selected_frames = 36;
-                        deselect_frames = 2;
+                    case plant:
+                        idle_frames = 22;
+                        select_frames = 3;
+                        selected_frames = 3;
+                        deselect_frames = 5;
+                        character_width = 32;
+                        character_height = 32;
                         break;
-                    case crystal:
-                        idle_frames = 3;
-                        select_frames = 5;
-                        selected_frames = 36;
-                        deselect_frames = 2;
+                    case YV:
+                        idle_frames = 33;
+                        select_frames = 30;
+                        selected_frames = 18;
+                        deselect_frames = 5;
+                        character_width = 48;
+                        character_height = 48;
                         break;
-                    case crystal:
-                        idle_frames = 3;
-                        select_frames = 5;
-                        selected_frames = 36;
-                        deselect_frames = 2;
+                    case steroids:
+                        idle_frames = 38;
+                        select_frames = 6;
+                        selected_frames = 24;
+                        deselect_frames = 6;
+                        character_width = 32;
+                        character_height = 32;
                         break;
-                    case crystal:
-                        idle_frames = 3;
-                        select_frames = 5;
-                        selected_frames = 36;
-                        deselect_frames = 2;
+                    case robot:
+                        idle_frames = 8;
+                        select_frames = 8;
+                        selected_frames = 26;
+                        deselect_frames = 5;
                         break;
-                    case crystal:
-                        idle_frames = 3;
-                        select_frames = 5;
-                        selected_frames = 36;
-                        deselect_frames = 2;
+                    case chicken:
+                        idle_frames = 2;
+                        select_frames = 4;
+                        selected_frames = 2;
+                        deselect_frames = 4;
                         break;
-                    case crystal:
-                        idle_frames = 3;
-                        select_frames = 5;
-                        selected_frames = 36;
-                        deselect_frames = 2;
+                    case rebel:
+                        idle_frames = 30;
+                        select_frames = 7;
+                        selected_frames = 6;
+                        deselect_frames = 7;
+                        character_width = 32;
+                        character_height = 32;
                         break;
-                    case crystal:
-                        idle_frames = 3;
-                        select_frames = 5;
-                        selected_frames = 36;
-                        deselect_frames = 2;
+                    case horror:
+                        idle_frames = 6;
+                        select_frames = 9;
+                        selected_frames = 6;
+                        deselect_frames = 6;
+                        character_width = 48;
+                        character_height = 48;
                         break;
-                    case crystal:
-                        idle_frames = 3;
-                        select_frames = 5;
-                        selected_frames = 36;
-                        deselect_frames = 2;
+                    case rogue:
+                        idle_frames = 48;
+                        select_frames = 11;
+                        selected_frames = 21;
+                        deselect_frames = 10;
+                        character_width = 32;
+                        character_height = 32;
                         break;
-                    case crystal:
-                        idle_frames = 3;
-                        select_frames = 5;
-                        selected_frames = 36;
-                        deselect_frames = 2;
+                    case frog:
+                        idle_frames = 6;
+                        select_frames = 6;
+                        selected_frames = 6;
+                        deselect_frames = 6;
                         break;
-                    case crystal:
-                        idle_frames = 3;
-                        select_frames = 5;
-                        selected_frames = 36;
-                        deselect_frames = 2;
+                    case YC:
+                    case skeleton:
+                        idle_frames = 23;
+                        select_frames = 4;
+                        selected_frames = 15;
+                        deselect_frames = 4;
                         break;
                     }
 
@@ -24169,11 +24292,13 @@ int main(int argc, char* argv[])
                             campfire_character_state[i] = deselect;
                         }
                     }
-                }
 
-                for (int i = 0; i < 14; i++) {
-                    campfire_character_sprite[i].setPosition(campfire_character[i] - cameraPos);
-                    campfire_character_sprite[i].setTextureRect({ int(campfire_character_anim_frame[i] * 0.4f) * character_width, (int)campfire_character_state[i] * character_height, character_width, character_height});
+                    sf::Vector2f extra_offset = { 0.0f, 0.0f };
+
+                    if (i == eyes) { extra_offset = { 0.0f, -2.0f }; }
+
+                    campfire_character_sprite[i].setPosition(campfire_character[i] - cameraPos + extra_offset);
+                    campfire_character_sprite[i].setTextureRect({ int(campfire_character_anim_frame[i] * 0.4f) * character_width, (int)campfire_character_state[i] * character_height, character_width, character_height });
 
                     buffer_over.draw(campfire_character_sprite[i]);
                 }
