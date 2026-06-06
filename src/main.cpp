@@ -93,6 +93,12 @@ sf::Sprite campfire_character_sprite[14];
 int campfire_character_anim_frame[14] = {0};
 campfire_character_state_ campfire_character_state[14] = {idle};
 
+sf::Sprite TV_sprite;
+sf::Sprite TV_screen_sprite;
+sf::Sprite TV_static;
+int TV_CHANNEL = 0;
+int TV_CHANNEL_TIMER = 0;
+
 gamestate CURRENT_GAME_STATE = gs_character_selection;
 bool has_generated_character_selection_screen = false;
 bool on_title_screen = true;    //everything before the character selection screen
@@ -591,6 +597,10 @@ mutation_icon current_mutation_pool[5];
 //title screen
 sf::Sprite character_tile_sprite;
 character character_hovered_over = none_character;
+int character_hovered_over_offset = 2;
+character character_hovered_over_prev_frame = none_character;
+
+sf::RectangleShape gray_name_box;
 
 sf::Sprite character_text_sprite;
 sf::Sprite character_portrait_sprite;
@@ -13835,7 +13845,7 @@ void check_character_selection_screen(bool clicked) {
     if (character_hovered_over != go_button) {
         go_button_hover_frames = 0;
     }
-    
+    character_hovered_over_prev_frame = character_hovered_over;
     //hover over
     character_hovered_over = none_character;
     if (current_frame > 30) {
@@ -15218,6 +15228,54 @@ std::string get_character_passive_description_text_2() {
     default:
     case melting:   return "LESS MAX @rHP@w"; break;
     case steroids:  return "INACCURATE"; break;
+    }
+}
+
+std::string get_character_name_text() {
+    switch (character_hovered_over) {
+    default:
+    case fish:
+        return "FISH";
+        break;
+    case crystal:
+        return "CRYSTAL";
+        break;
+    case eyes:
+        return "EYES";
+        break;
+    case melting:
+        return "MELTING";
+        break;
+    case plant:
+        return "PLANT";
+        break;
+    case YV:
+        return "Y.V.";
+        break;
+    case steroids:
+        return "STEROIDS";
+        break;
+    case robot:
+        return "ROBOT";
+        break;
+    case chicken:
+        return "CHICKEN";
+        break;
+    case rebel:
+        return "REBEL";
+        break;
+    case horror:
+        return "HORROR";
+        break;
+    case rogue:
+        return "ROGUE";
+        break;
+    case frog:
+        return "FROG";
+        break;
+    case skeleton:
+        return "CUZ";//YC
+        break;
     }
 }
 
@@ -17485,6 +17543,23 @@ int main(int argc, char* argv[])
         campfire_character_sprite[13].setTextureRect({ 0, 0, 24, 24 });
         campfire_character_sprite[13].setOrigin(12, 12);
        
+        sf::Texture TV_tex;
+        TV_tex.loadFromFile("res/TV.png");
+        TV_sprite.setTexture(TV_tex);
+        TV_sprite.setTextureRect({ 0, 0, 48, 32 });
+        TV_sprite.setOrigin(24, 16);
+
+        sf::Texture TV_screen_tex;
+        TV_screen_tex.loadFromFile("res/TV_screen.png");
+        TV_screen_sprite.setTexture(TV_screen_tex);
+        TV_screen_sprite.setTextureRect({ 0, 0, 10, 8 });
+        TV_screen_sprite.setOrigin(0, 0);
+
+        sf::Texture TV_static_tex;
+        TV_static_tex.loadFromFile("res/TV_static.png");
+        TV_static.setTexture(TV_static_tex);
+        TV_static.setTextureRect({ 0, 0, 10, 8 });
+        TV_static.setOrigin(0, 0);
 
     //initialize the area, this should be reset every level to regenerate the next level
     for (int i = 0; i < gridSize; i++) {
@@ -23176,6 +23251,10 @@ int main(int argc, char* argv[])
                         camp_char_offset = sf::Vector2f(0, 0);
                         break;
                     case chicken:
+                        camp_char_offset = sf::Vector2f(0, -1);
+                        add_sprite_24(shadow24_ArrayIndex, campfire_character[i] - cameraPos + offset24 + camp_char_offset + sf::Vector2f(1, -32), draw_shadow24s);
+                        shadow24_ArrayIndex++;      //shadow
+                        break;
                     case YC:
                     case skeleton:
                         camp_char_offset = sf::Vector2f(0, -1);
@@ -24303,6 +24382,28 @@ int main(int argc, char* argv[])
                     buffer_over.draw(campfire_character_sprite[i]);
                 }
 
+                TV_sprite.setPosition(campfire_character[chicken] + sf::Vector2f(0, -34) - cameraPos);
+                buffer_over.draw(TV_sprite);
+
+                TV_screen_sprite.setTextureRect({ (int(current_frame * 0.4f) % 2) * 10, TV_CHANNEL * 8, 10, 8 });
+                TV_screen_sprite.setPosition(campfire_character[chicken] + sf::Vector2f(-5, -39) - cameraPos);
+                buffer_over.draw(TV_screen_sprite);
+                
+                if (character_selected != chicken) {
+                    TV_CHANNEL_TIMER++;
+                    if (TV_CHANNEL_TIMER > 100) {
+                        if (rand() % 2) {
+                            TV_CHANNEL = rand() % 13;
+                        }
+                        TV_CHANNEL_TIMER = 0;
+                    }
+                }
+                else {//paused screen
+                    TV_static.setTextureRect({ (int(current_frame * 0.4f) % 3) * 10, 0, 10, 8 });
+                    TV_static.setPosition(campfire_character[chicken] + sf::Vector2f(-5, -39) - cameraPos);
+                    buffer_over.draw(TV_static);
+                }
+
                 //draw character selection screen
                 //character tiles
                 for (int i = 0; i < 14; i++) {
@@ -24315,7 +24416,7 @@ int main(int argc, char* argv[])
                     if (character_selected == i) {
                         brightness = 255;
                     }
-                    character_tile_sprite.setColor({ brightness, brightness, brightness, 255});
+                    character_tile_sprite.setColor({ brightness, brightness, brightness, 255 });
                     buffer_UI.draw(character_tile_sprite);
                 }
                 //go button
@@ -24407,6 +24508,56 @@ int main(int argc, char* argv[])
                     character_text_sprite.setColor({ 255, 255, 255, 255 });
                     character_text_sprite.setPosition(-1, 135);
                     buffer_UI.draw(character_text_sprite);
+                }
+                //character name if hovered over
+                if (character_hovered_over != none_character && character_hovered_over != go_button && character_hovered_over != character_selected) {
+
+                    //extra little thing
+                    if (character_hovered_over != character_hovered_over_prev_frame) {
+                        character_hovered_over_offset = 2;
+                    }
+
+                    character_hovered_over_offset -= 1;
+                    if (character_hovered_over_offset < 0) {
+                        character_hovered_over_offset = 0;
+                    }
+
+                    sf::Text character_name;
+                    character_name.setString(get_character_name_text());
+                    character_name.setFont(font);
+                    character_name.setCharacterSize(8);
+
+                    int text_box_width = character_name.getString().getSize() * 8 + 2;
+
+                    int box_center = 14 + 19 * character_hovered_over;
+
+                    gray_name_box.setPosition(14 + 19 * character_hovered_over - text_box_width / 2 + (character_hovered_over == fish) * 7, 240 - 46 + character_hovered_over_offset);
+                    gray_name_box.setFillColor({ 49, 41, 61, 255 });
+                    gray_name_box.setSize(sf::Vector2f(text_box_width, 13));
+                    buffer_UI.draw(gray_name_box);
+
+                    gray_name_box.setPosition(gray_name_box.getPosition() + sf::Vector2f(-1, 1));
+                    gray_name_box.setFillColor({ 49, 41, 61, 255 });
+                    gray_name_box.setSize(sf::Vector2f(text_box_width + 2, 11));
+                    buffer_UI.draw(gray_name_box);
+
+                    character_name.setPosition(gray_name_box.getPosition() + sf::Vector2f(2, 2));
+
+                    draw_text_NT(character_name, buffer_UI);
+
+                    //arrow
+                    sf::ConvexShape triangle;
+                    triangle.setFillColor({ 49, 41, 61, 255 });
+                    triangle.setPosition(box_center - 3, 240 - 46 + character_hovered_over_offset + 13);
+                    triangle.setPointCount(3);
+                    triangle.setPoint(0, {0.0f, 0.0f});
+                    triangle.setPoint(1, {7.0f, 0.0f});
+                    triangle.setPoint(2, {3.5f, 4.0f});
+
+                    buffer_UI.draw(triangle);
+                }
+                else {
+                    character_hovered_over_offset = 2;
                 }
             }
 
