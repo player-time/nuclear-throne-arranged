@@ -50,7 +50,7 @@ int fps_samples_idx = 0;
 
 bool global_debug = false;
 
-bool debug_invincibility = true;
+bool debug_invincibility = false;
 
 int EXIT_PROGRAM_NOW = 0;
 
@@ -98,6 +98,11 @@ sf::Sprite TV_screen_sprite;
 sf::Sprite TV_static;
 int TV_CHANNEL = 0;
 int TV_CHANNEL_TIMER = 0;
+
+//frog campfire moving
+float frog_campfire_angle = 0.0f;
+float frog_x_spd = cos(frog_campfire_angle);
+float frog_y_spd = sin(frog_campfire_angle);
 
 gamestate CURRENT_GAME_STATE = gs_character_selection;
 bool has_generated_character_selection_screen = false;
@@ -816,8 +821,10 @@ void get_rhino_skin() {
     play_sound_on_player(snd_get_rhino_skin_ID);
     has_rhino_skin = 1;
     player_max_hp += 4;
+    player_hp += 4;
     if (player_character == melting) {
         player_max_hp += 1;
+        player_hp += 1;
     }
 }
 void get_extra_feet() {
@@ -4388,6 +4395,42 @@ bool has_line_of_sight(float x, float y, float playerX = allObjects[0].position.
     return true;
 }
 
+
+void motion_add_dir(float direction, float speed, int index) {
+
+    //direction in radians
+    float spd_add_x = cos(direction) * speed;
+    float spd_add_y = sin(direction) * speed;
+
+    float spd_curr_x = cos(allObjects[index].direction) * allObjects[index].speeddir;
+    float spd_curr_y = sin(allObjects[index].direction) * allObjects[index].speeddir;
+
+    spd_curr_x += spd_add_x;
+    spd_curr_y += spd_add_y;
+
+    float new_angle = atan2f(spd_curr_y, spd_curr_x);
+    float new_speed = sqrt((spd_curr_y * spd_curr_y) + (spd_curr_x * spd_curr_x));
+
+    allObjects[index].speeddir = new_speed;
+    allObjects[index].direction = new_angle;
+}
+
+void motion_add_XY_speed(float xspd, float yspd, int index) {
+
+    float spd_curr_x = cos(allObjects[index].direction) * allObjects[index].speeddir;
+    float spd_curr_y = sin(allObjects[index].direction) * allObjects[index].speeddir;
+
+    spd_curr_x += xspd;
+    spd_curr_y += yspd;
+
+    float new_angle = atan2f(spd_curr_y, spd_curr_x);
+    float new_speed = sqrt((spd_curr_y * spd_curr_y) + (spd_curr_x * spd_curr_x));
+
+    allObjects[index].speeddir = new_speed;
+    allObjects[index].direction = new_angle;
+}
+
+
 void bounce_in_wall(int currOBJ) {
     bool bouncedV = false;
     bool bouncedH = false;
@@ -4500,6 +4543,65 @@ void player_bounce_wall(int O, int h, int w, int width, int height, int i, int j
 
     if (bounced) {
         frog_hit_wall = true;
+    }
+}
+
+void frog_bounce_wall() {//campfire frog
+    int h = int(campfire_character[frog].y / 16.0f);
+    int w = int(campfire_character[frog].x / 16.0f);
+
+    int xspd = (frog_x_spd > 0) * 2 - 1;
+    int yspd = (frog_y_spd > 0) * 2 - 1;
+
+    bool collided = false;
+
+    for (int i = -1; i < 2; i++) {
+        for (int j = -1; j < 2; j++) {
+            float wallx = (w + i) * 16.0f + 8.0f;
+            float wally = (h + j) * 16.0f + 8.0f;
+            if (game_area[w + i][h + j].my_grid_type == wall && abs(campfire_character[frog].x - wallx) < 8 + 4 && abs(campfire_character[frog].y - wally) < 8 + 4) {
+                collided = true;
+            }
+        }
+    }
+
+    int h_next = int((campfire_character[frog].y + yspd * 5) / 16.0f);
+    int w_next = int((campfire_character[frog].x + xspd * 5) / 16.0f);
+
+    if (collided) {
+        if (game_area[w_next][h].my_grid_type == wall) {
+            //mirror xspd
+            frog_x_spd = -frog_x_spd;
+        }
+        if (game_area[w][h_next].my_grid_type == wall) {
+            //mirror yspd
+            frog_y_spd = -frog_y_spd;
+        }
+        if (game_area[w][h_next].my_grid_type != wall && game_area[w_next][h].my_grid_type != wall && game_area[w_next][h_next].my_grid_type == wall) {
+            frog_x_spd = -frog_x_spd;
+            frog_y_spd = -frog_y_spd;
+        }
+    }
+    frog_campfire_angle = atan2f(frog_y_spd, frog_x_spd);
+
+    if (is_within_circle(campfire_character[frog], campfire, 4 + 28)) {
+        
+        //direction in radians
+        float direction = atan2f(campfire.y - campfire_character[frog].y, campfire.x - campfire_character[frog].x);
+        float spd_add_x = cos(direction) * -3;
+        float spd_add_y = sin(direction) * -3;
+
+        float spd_curr_x = cos(frog_campfire_angle) * 2;
+        float spd_curr_y = sin(frog_campfire_angle) * 2;
+
+        spd_curr_x += spd_add_x;
+        spd_curr_y += spd_add_y;
+
+        float new_angle = atan2f(spd_curr_y, spd_curr_x);
+        float new_speed = sqrt((spd_curr_y * spd_curr_y) + (spd_curr_x * spd_curr_x));
+
+        //allObjects[index].speeddir = new_speed;
+        frog_campfire_angle = new_angle;
     }
 }
 
@@ -4722,40 +4824,6 @@ bool is_within_throne_2(sf::Vector2f T2_pos, sf::Vector2f otherpos, int other_si
         return true;
     }
     return false;
-}
-
-void motion_add_dir(float direction, float speed, int index) {
-
-    //direction in radians
-    float spd_add_x = cos(direction) * speed;
-    float spd_add_y = sin(direction) * speed;
-
-    float spd_curr_x = cos(allObjects[index].direction) * allObjects[index].speeddir;
-    float spd_curr_y = sin(allObjects[index].direction) * allObjects[index].speeddir;
-
-    spd_curr_x += spd_add_x;
-    spd_curr_y += spd_add_y;
-
-    float new_angle = atan2f(spd_curr_y, spd_curr_x);
-    float new_speed = sqrt((spd_curr_y * spd_curr_y) + (spd_curr_x * spd_curr_x));
-
-    allObjects[index].speeddir = new_speed;
-    allObjects[index].direction = new_angle;
-}
-
-void motion_add_XY_speed(float xspd, float yspd, int index) {
-
-    float spd_curr_x = cos(allObjects[index].direction) * allObjects[index].speeddir;
-    float spd_curr_y = sin(allObjects[index].direction) * allObjects[index].speeddir;
-
-    spd_curr_x += xspd;
-    spd_curr_y += yspd;
-
-    float new_angle = atan2f(spd_curr_y, spd_curr_x);
-    float new_speed = sqrt((spd_curr_y * spd_curr_y) + (spd_curr_x * spd_curr_x));
-
-    allObjects[index].speeddir = new_speed;
-    allObjects[index].direction = new_angle;
 }
 
 void ammo_drop_function(int ENEMY, int base_chance) {
@@ -13840,6 +13908,48 @@ void randomize_mutation_pool() {
     }
 }
 
+void play_character_confirm_sound() {
+    switch (character_selected) {
+    default:
+    case fish:play_sound_on_player(snd_fish_confirm_ID);break;
+    case crystal:play_sound_on_player(snd_crystal_confirm_ID);break;
+    case eyes:play_sound_on_player(snd_eyes_confirm_ID);break;
+    case melting:play_sound_on_player(snd_melting_confirm_ID);break;
+    case plant:play_sound_on_player(snd_plant_confirm_ID);break;
+    case YV:play_sound_on_player(snd_YV_confirm_ID);break;
+    case steroids:play_sound_on_player(snd_steroids_confirm_ID);break;
+    case robot:play_sound_on_player(snd_robot_confirm_ID);break;
+    case chicken:play_sound_on_player(snd_chicken_confirm_ID);break;
+    case rebel:play_sound_on_player(snd_rebel_confirm_ID);break;
+    case horror:play_sound_on_player(snd_horror_confirm_ID);break;
+    case rogue:play_sound_on_player(snd_rogue_confirm_ID);break;
+    case frog:play_sound_on_player(snd_frog_confirm_ID);break;
+    case skeleton:play_sound_on_player(snd_YC_confirm_ID);break;
+    case YC:play_sound_on_player(snd_YC_confirm_ID);break;
+    }
+}
+
+void play_character_select_sound() {
+    switch (character_selected) {
+    default:
+    case fish:play_sound_on_player(snd_fish_select_ID); break;
+    case crystal:play_sound_on_player(snd_crystal_select_ID); break;
+    case eyes:play_sound_on_player(snd_eyes_select_ID); break;
+    case melting:play_sound_on_player(snd_melting_select_ID); break;
+    case plant:play_sound_on_player(snd_plant_select_ID); break;
+    case YV:play_sound_on_player(snd_YV_select_ID); break;
+    case steroids:play_sound_on_player(snd_steroids_select_ID); break;
+    case robot:play_sound_on_player(snd_robot_select_ID); break;
+    case chicken:play_sound_on_player(snd_chicken_select_ID); break;
+    case rebel:play_sound_on_player(snd_rebel_select_ID); break;
+    case horror:play_sound_on_player(snd_horror_select_ID); break;
+    case rogue:play_sound_on_player(snd_rogue_select_ID); break;
+    case frog:play_sound_on_player(snd_frog_select_ID); break;
+    case skeleton:play_sound_on_player(snd_YC_select_ID); break;
+    case YC:play_sound_on_player(snd_YC_select_ID); break;
+    }
+}
+
 void check_character_selection_screen(bool clicked) {
     
     if (character_hovered_over != go_button) {
@@ -13871,10 +13981,13 @@ void check_character_selection_screen(bool clicked) {
             if ((character_selected == character_hovered_over || (character_hovered_over == go_button && character_selected != none_character)) && character_hovered_over != none_character) {
                 START_RUN = true;
                 go_button_appear_frame = 0;
+                play_character_confirm_sound();
+                
             }
             if (character_hovered_over != none_character && character_hovered_over != go_button) {
                 character_selected = character_hovered_over;
                 character_text_desc_offset = 3;
+                play_character_select_sound();
             }
         }
 
@@ -13959,11 +14072,14 @@ void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[], sf
     muts_want[7] = true;//debug
     muts_want[11] = true;//debug
     muts_want[13] = true;//debug
+    muts_want[15] = true;//debug
     muts_want[17] = true;//debug
     muts_want[18] = true;//debug
     muts_want[20] = true;//debug
 
-    LOOPS = 30;
+    LOOPS = 20;
+    area = 7;
+    sub_area = 2;
 
     wep = 0;   //revolver 29
     bwep = 11;
@@ -13972,6 +14088,8 @@ void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[], sf
     player_shells = 0;
     player_explosives = 0;
     player_energy = 55;
+
+    player_rads = 100000;
 
     player_max_speed = 4.0f;
     player_alive = true;
@@ -14389,6 +14507,7 @@ void generate_level(sf::SoundBuffer all_sounds[], sf::Music& current_music) {
             //campfire in center
             //campfire.x = (right_physics + left_physics) / 2 * 16;
             //campfire.y = (top_physics + bottom_physics) / 2 * 16;
+            frog_campfire_angle = random_360_radians();
 
             for (int i = 0; i < 14; i++) {
                 campfire_character[i] = {0, 0};//out of bounds so cant be collided with
@@ -15402,6 +15521,55 @@ std::string get_what_mut_text_description(mutation_icon mut) {
     }
 }
 
+void play_ultra_A_sound() {
+    switch (player_character) {
+    default:
+    case fish:play_sound_on_player(snd_fish_ultra_A_ID); break;
+    case crystal:play_sound_on_player(snd_crystal_ultra_A_ID); break;
+    case eyes:play_sound_on_player(snd_eyes_ultra_A_ID); break;
+    case melting:play_sound_on_player(snd_melting_ultra_A_ID); break;
+    case plant:play_sound_on_player(snd_plant_ultra_A_ID); break;
+    case YV:play_sound_on_player(snd_YV_ultra_A_ID); break;
+    case steroids:play_sound_on_player(snd_steroids_ultra_A_ID); break;
+    case robot:play_sound_on_player(snd_robot_ultra_A_ID); break;
+    case chicken:play_sound_on_player(snd_chicken_ultra_A_ID); break;
+    case rebel:play_sound_on_player(snd_rebel_ultra_A_ID); break;
+    case horror:play_sound_on_player(snd_horror_ultra_A_ID); break;
+    case rogue:play_sound_on_player(snd_rogue_ultra_A_ID); break;
+    case frog:play_sound_on_player(snd_frog_ultra_A_ID); break;
+    case skeleton:play_sound_on_player(snd_skeleton_ultra_A_ID); break;
+    case YC:play_sound_on_player(snd_YC_ultra_A_ID); break;
+    }
+    return;
+}
+
+void play_ultra_B_sound() {
+    switch (player_character) {
+    default:
+    case fish:play_sound_on_player(snd_fish_ultra_B_ID); break;
+    case crystal:play_sound_on_player(snd_crystal_ultra_B_ID); break;
+    case eyes:play_sound_on_player(snd_eyes_ultra_B_ID); break;
+    case melting:play_sound_on_player(snd_melting_ultra_B_ID); break;
+    case plant:play_sound_on_player(snd_plant_ultra_B_ID); break;
+    case YV:play_sound_on_player(snd_YV_ultra_B_ID); break;
+    case steroids:play_sound_on_player(snd_steroids_ultra_B_ID); break;
+    case robot:play_sound_on_player(snd_robot_ultra_B_ID); break;
+    case chicken:play_sound_on_player(snd_chicken_ultra_B_ID); break;
+    case rebel:play_sound_on_player(snd_rebel_ultra_B_ID); break;
+    case horror:play_sound_on_player(snd_horror_ultra_B_ID); break;
+    case rogue:play_sound_on_player(snd_rogue_ultra_B_ID); break;
+    case frog:play_sound_on_player(snd_frog_ultra_B_ID); break;
+    case skeleton:play_sound_on_player(snd_skeleton_ultra_B_ID); break;
+    case YC:play_sound_on_player(snd_YC_ultra_B_ID); break;
+    }
+    return;
+}
+
+void play_ultra_C_sound() {
+    play_sound_on_player(snd_horror_ultra_C_ID);
+    return;
+}
+
 void pick_ultra(int num) {
     mutation_icon temp_icon = none_mut_icon;
     mutation_icon mut = none_mut_icon;
@@ -15445,6 +15613,7 @@ void player_pick_ultra_A() {
     if (player_character == melting) {
         skill_points++;
     }
+    play_ultra_A_sound();
 }
 
 void player_pick_ultra_B() {
@@ -15462,12 +15631,14 @@ void player_pick_ultra_B() {
             player_hp = player_max_hp;
         }
     }
+    play_ultra_B_sound();
 }
 
 void player_pick_ultra_C() {
     ultra_picked = 3;
     ultra_points = 0;
     pick_ultra(2);
+    play_ultra_C_sound();
 }
 
 void set_ultra_mutation_sprites() {
@@ -15946,6 +16117,7 @@ int main(int argc, char* argv[])
     add_new_sound(snd_rogue_hurt_ID, "snd/rogue_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
     add_new_sound(snd_frog_hurt_ID, "snd/frog_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
     add_new_sound(snd_skeleton_hurt_ID, "snd/skeleton_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_YC_hurt_ID, "snd/YC_hurt.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
 
     //death snds
     add_new_sound(snd_horror_die_ID, "snd/horror_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
@@ -15962,6 +16134,7 @@ int main(int argc, char* argv[])
     add_new_sound(snd_rogue_die_ID, "snd/rogue_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
     add_new_sound(snd_frog_die_ID, "snd/frog_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
     add_new_sound(snd_skeleton_die_ID, "snd/skeleton_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
+    add_new_sound(snd_YC_die_ID, "snd/YC_dead.wav", all_sounds, all_sounds_mirror, 0.05f, 0.0f);
 
     //player abilities
     //fish
@@ -16243,6 +16416,74 @@ int main(int argc, char* argv[])
     add_new_sound(snd_get_scarier_face_ID, "snd/get_scarier_face.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
     add_new_sound(snd_get_throne_butt_ID, "snd/get_throne_butt.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
     add_new_sound(snd_get_back_muscle_ID, "snd/get_back_muscle.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+
+    //ultra mutation sfx
+    add_new_sound(snd_fish_ultra_A_ID, "snd/ultras/sndFishUltraA.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_crystal_ultra_A_ID, "snd/ultras/sndCrystalUltraA.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_eyes_ultra_A_ID, "snd/ultras/sndEyesUltraA.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_melting_ultra_A_ID, "snd/ultras/sndMeltingUltraA.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_plant_ultra_A_ID, "snd/ultras/sndPlantUltraA.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_YV_ultra_A_ID, "snd/ultras/sndYVUltraA.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_steroids_ultra_A_ID, "snd/ultras/sndSteroidsUltraA.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_robot_ultra_A_ID, "snd/ultras/sndRobotUltraA.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_chicken_ultra_A_ID, "snd/ultras/sndChickenUltraA.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_rebel_ultra_A_ID, "snd/ultras/sndRebelUltraA.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_horror_ultra_A_ID, "snd/ultras/sndHorrorUltraA.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_rogue_ultra_A_ID, "snd/ultras/sndRogueUltraA.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_frog_ultra_A_ID, "snd/ultras/sndFrogUltraA.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_skeleton_ultra_A_ID, "snd/ultras/sndSkeletonUltraA.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_YC_ultra_A_ID, "snd/ultras/sndYCUltraA.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+
+    add_new_sound(snd_fish_ultra_B_ID, "snd/ultras/sndFishUltraB.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_crystal_ultra_B_ID, "snd/ultras/sndCrystalUltraB.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_eyes_ultra_B_ID, "snd/ultras/sndEyesUltraB.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_melting_ultra_B_ID, "snd/ultras/sndMeltingUltraB.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_plant_ultra_B_ID, "snd/ultras/sndPlantUltraB.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_YV_ultra_B_ID, "snd/ultras/sndYVUltraB.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_steroids_ultra_B_ID, "snd/ultras/sndSteroidsUltraB.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_robot_ultra_B_ID, "snd/ultras/sndRobotUltraB.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_chicken_ultra_B_ID, "snd/ultras/sndChickenUltraB.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_rebel_ultra_B_ID, "snd/ultras/sndRebelUltraB.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_horror_ultra_B_ID, "snd/ultras/sndHorrorUltraB.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_rogue_ultra_B_ID, "snd/ultras/sndRogueUltraB.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_frog_ultra_B_ID, "snd/ultras/sndFrogUltraB.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_skeleton_ultra_B_ID, "snd/ultras/sndSkeletonUltraB.ogg", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_YC_ultra_B_ID, "snd/ultras/sndYCUltraB.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+
+    add_new_sound(snd_horror_ultra_C_ID, "snd/ultras/sndHorrorUltraC.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+
+    //campfire menu stuff
+    add_new_sound(snd_fish_select_ID, "snd/fish_select.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_crystal_select_ID, "snd/crystal_select.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_eyes_select_ID, "snd/eyes_select.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_melting_select_ID, "snd/melting_select.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_plant_select_ID, "snd/plant_select.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_YV_select_ID, "snd/YV_select.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_steroids_select_ID, "snd/steroids_select.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_robot_select_ID, "snd/robot_select.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_chicken_select_ID, "snd/chicken_select.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_rebel_select_ID, "snd/rebel_select.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_horror_select_ID, "snd/horror_select.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_rogue_select_ID, "snd/rogue_select.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_frog_select_ID, "snd/frog_select.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    //add_new_sound(snd_skeleton_select_ID, "snd/skeleton_select.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_YC_select_ID, "snd/YC_select.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+
+    add_new_sound(snd_fish_confirm_ID, "snd/fish_confirm.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_crystal_confirm_ID, "snd/crystal_confirm.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_eyes_confirm_ID, "snd/eyes_confirm.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_melting_confirm_ID, "snd/melting_confirm.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_plant_confirm_ID, "snd/plant_confirm.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_YV_confirm_ID, "snd/YV_confirm.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_steroids_confirm_ID, "snd/steroids_confirm.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_robot_confirm_ID, "snd/robot_confirm.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_chicken_confirm_ID, "snd/chicken_confirm.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_rebel_confirm_ID, "snd/rebel_confirm.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_horror_confirm_ID, "snd/horror_confirm.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_rogue_confirm_ID, "snd/rogue_confirm.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_frog_confirm_ID, "snd/frog_confirm.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    //add_new_sound(snd_skeleton_confirm_ID, "snd/skeleton_confirm.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
+    add_new_sound(snd_YC_confirm_ID, "snd/YC_confirm.wav", all_sounds, all_sounds_mirror, 0.0f, 0.0f);
 
     //footsteps
     float foot_step_vol = 11.0f;
@@ -19961,6 +20202,22 @@ int main(int argc, char* argv[])
         else {
             add_object_indexs_to_2Dvector(0, max_objects);
             //so they still get drawn
+            //set hp bar
+            int player_health_bar_scale = 84.0f * (float(player_hp) / float(player_max_hp));
+            if (player_health_bar_scale < 0) {
+                player_health_bar_scale = 0;
+            }
+            health_bar_spr.setScale(player_health_bar_scale, 1);
+            chicken_health_bar_spr.setScale(int(ceil(float(chicken_headless_timer) / (150.0f * ((ultra_picked == 1) + 1)) * 84.0f)), 1);
+            if (player_hp < 0) {
+                player_hp = 0;
+            }
+            hp_text.setString(std::to_string(player_hp) + "/" + std::to_string(player_max_hp));
+            std::string tmpstr1 = hp_text.getString();
+            int tmp_dist = (tmpstr1.length()) * 8;
+            tmp_dist = 84 / 2 - tmp_dist / 2;
+
+            hp_text.setPosition(tmp_dist + 22, 7);
         }
 
         //play sounds
@@ -20771,7 +21028,10 @@ int main(int argc, char* argv[])
                             if (allObjects[idx].alarm3 <= 0) {
                                 if (allObjects[idx].alarm1 == 2) {
                                     portal_sprite.setTexture(portalBigDisappearTex);
-                                    choice = int(allObjects[idx].image_index * 0.4f) % 12;
+                                    choice = int(allObjects[idx].image_index * 0.4f);//% 12;
+                                    if (choice > 11) {
+                                        choice = 11;
+                                    }
                                 }
                                 else {
                                     portal_sprite.setTexture(portalBigIdleTex);
@@ -23791,25 +24051,25 @@ int main(int argc, char* argv[])
 
             //player
             //buffer_over.draw(c);
-
-            //wall boarder under wall tops
-            for (sf::Sprite spr : wall_boarder_textures) {
-                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
-                    break;
+            
+            if (CURRENT_GAME_STATE == gs_in_game) {
+                //wall boarder under wall tops
+                for (sf::Sprite spr : wall_boarder_textures) {
+                    if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                        break;
+                    }
+                    buffer_over.draw(spr);
                 }
-                buffer_over.draw(spr);
-            }
-            reset_rotateable_sprites(wall_boarder_textures, wallBoardeArrayIndex);
-
-
-
-            for (sf::Sprite spr : wall_textures) {
-                if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
-                    break;
+                reset_rotateable_sprites(wall_boarder_textures, wallBoardeArrayIndex);
+            
+                for (sf::Sprite spr : wall_textures) {
+                    if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                        break;
+                    }
+                    buffer_over.draw(spr);
                 }
-                buffer_over.draw(spr);
+                reset_rotateable_sprites(wall_textures, wall_texturesArrayIndex);
             }
-            reset_rotateable_sprites(wall_textures, wall_texturesArrayIndex);
 
             buffer_over.draw(strong_spirit_sprite);
 
@@ -24376,11 +24636,28 @@ int main(int argc, char* argv[])
 
                     if (i == eyes) { extra_offset = { 0.0f, -2.0f }; }
 
+                    sf::Vector2f temp_vec = campfire_character[i] - cameraPos + extra_offset;
+                    temp_vec.x = round(temp_vec.x);
+                    temp_vec.y = round(temp_vec.y);
+
                     campfire_character_sprite[i].setPosition(campfire_character[i] - cameraPos + extra_offset);
                     campfire_character_sprite[i].setTextureRect({ int(campfire_character_anim_frame[i] * 0.4f) * character_width, (int)campfire_character_state[i] * character_height, character_width, character_height });
 
+                    if (i == frog) {
+                        campfire_character_sprite[i].setScale((frog_x_spd > 0) * 2 - 1, 1);
+                    }
+
                     buffer_over.draw(campfire_character_sprite[i]);
                 }
+
+                //frog movement and collision
+                frog_x_spd = cos(frog_campfire_angle) * 2;
+                frog_y_spd = sin(frog_campfire_angle) * 2;
+
+                campfire_character[frog].x += frog_x_spd;
+                campfire_character[frog].y += frog_y_spd;
+
+                frog_bounce_wall();
 
                 TV_sprite.setPosition(campfire_character[chicken] + sf::Vector2f(0, -34) - cameraPos);
                 buffer_over.draw(TV_sprite);
@@ -24559,6 +24836,25 @@ int main(int argc, char* argv[])
                 else {
                     character_hovered_over_offset = 2;
                 }
+            }
+
+            if (CURRENT_GAME_STATE != gs_in_game) {
+                //wall boarder under wall tops
+                for (sf::Sprite spr : wall_boarder_textures) {
+                    if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                        break;
+                    }
+                    buffer_over.draw(spr);
+                }
+                reset_rotateable_sprites(wall_boarder_textures, wallBoardeArrayIndex);
+
+                for (sf::Sprite spr : wall_textures) {
+                    if (spr.getColor() == sf::Color{ 0, 0, 0, 0 }) {
+                        break;
+                    }
+                    buffer_over.draw(spr);
+                }
+                reset_rotateable_sprites(wall_textures, wall_texturesArrayIndex);
             }
 
             buffer_UI.display();
