@@ -615,6 +615,9 @@ sf::Sprite go_button_sprite;
 int go_button_hover_frames = 0;
 int go_button_appear_frame = 0;
 
+//options stuff
+option_bar option_hovered_over = none_option;
+
 const int total_mut_count = 20 + 1;
 bool muts_want[total_mut_count];    //20 total muts + 1 nothing mut
 bool muts_has[total_mut_count];    //20 total muts + 1 nothing mut
@@ -10409,8 +10412,10 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                     if (is_within_circle(allObjects[i].position, allObjects[0].position, 48) || (allObjects[i].alarm1 != 0) || area == 0) {
                         tmpdir = atan2f(allObjects[i].position.y - allObjects[0].position.y, allObjects[i].position.x - allObjects[0].position.x);
 
-                        allObjects[0].position.x += cos(tmpdir) * 3;
-                        allObjects[0].position.y += sin(tmpdir) * 3;
+                        if (!crystal_is_shielding) {
+                            allObjects[0].position.x += cos(tmpdir) * 3;
+                            allObjects[0].position.y += sin(tmpdir) * 3;
+                        }
 
                         allObjects[0].image_index = 3;
                         allObjects[0].gun_angle += 30;
@@ -10427,8 +10432,10 @@ void do_object_logic(int start, int end, sf::SoundBuffer all_sounds[], sf::Music
                     }
                     if (is_within_circle(allObjects[i].position, allObjects[0].position, 96) || area == 0) {
                         tmpdir = atan2f(allObjects[i].position.y - allObjects[0].position.y, allObjects[i].position.x - allObjects[0].position.x);
-                        allObjects[0].position.x += cos(tmpdir) * 2;
-                        allObjects[0].position.y += sin(tmpdir) * 2;
+                        if (!crystal_is_shielding) {
+                            allObjects[0].position.x += cos(tmpdir) * 2;
+                            allObjects[0].position.y += sin(tmpdir) * 2;
+                        }
                     }
                 }
             }
@@ -13958,7 +13965,13 @@ void check_character_selection_screen(bool clicked) {
     character_hovered_over_prev_frame = character_hovered_over;
     //hover over
     character_hovered_over = none_character;
-    if (current_frame > 30) {
+    option_hovered_over = none_option;
+    if (current_frame > 5) {
+        //options selection
+        if (mousepos.y > 4 && mousepos.y < 4 + 18) {
+            option_hovered_over = none_option;
+        }
+        //character selection
         if (mousepos.y > 240 - 31 && mousepos.y < 240 - 7) {
             int x_off = mousepos.x - 6;
             if (x_off < 0) {
@@ -14088,6 +14101,8 @@ void start_new_run(character chararcter_choice, sf::SoundBuffer all_sounds[], sf
     player_shells = 0;
     player_explosives = 0;
     player_energy = 55;
+
+    crystal_is_shielding = false;
 
     player_rads = 100000;
 
@@ -16703,6 +16718,10 @@ int main(int argc, char* argv[])
     the_darkness.create(320, 240);
     sf::Sprite bufferthe_darkness(the_darkness.getTexture());
 
+    //settings background mask
+    sf::RenderTexture buffer_settings;
+    buffer_settings.create(320, 240);
+    sf::Sprite buffer_settingsSprite(buffer_settings.getTexture());
 
     //sprites drawn over shadows
     sf::RenderTexture buffer_over;
@@ -16772,6 +16791,14 @@ int main(int argc, char* argv[])
     player_level_up_crown.setOrigin(32, 32);
     player_level_up_crown.setTextureRect({ 0, 0, 64, 64 });
     player_level_up_crown.setTexture(level_up_texture);
+
+    //mask for settings
+    sf::Texture settings_mask;
+    settings_mask.loadFromFile("res/settings_portal_mask.png");
+    sf::Sprite settings_mask_sprite;
+    settings_mask_sprite.setTexture(settings_mask);
+    settings_mask_sprite.setTextureRect({320 * 4, 0, 320, 240});
+
     //load sprites
         sf::Texture allEnemySprites;
         allEnemySprites.loadFromFile("res/enemies/all_enemies.png");
@@ -18429,6 +18456,13 @@ int main(int argc, char* argv[])
                 CURRENT_GAME_STATE = gs_in_game;
                 player_character = character_selected;
 
+                time_since_generated = 0;
+                //initalize portal spirals
+                for (int i = 0; i < 200; i++) {
+                    spiral_cont_step();
+                    portal_spiral_step();
+                }
+
                 start_new_run(player_character, all_sounds, current_music, map_textrue);
 
                 switch (player_character) {
@@ -18593,20 +18627,20 @@ int main(int argc, char* argv[])
             }
         }
 
-        if (time_since_generated == 30) {
-            //initalize portal spirals
-            for (int i = 0; i < 200; i++) {
-                spiral_cont_step();
-                portal_spiral_step();
-            }
-        }
-
         global_hover_over_mut = 0;
 
         if (want_gen) {
             if (!changed_music) {
                 change_music(current_music);
                 changed_music = true;
+            }
+            if (time_since_generated != 0) {
+                time_since_generated = 0;
+                //initalize portal spirals
+                for (int i = 0; i < 200; i++) {
+                    spiral_cont_step();
+                    portal_spiral_step();
+                }
             }
             time_since_generated = 0;
             GAME_PAUSED = true;
@@ -18633,6 +18667,7 @@ int main(int argc, char* argv[])
 
 
         if (GENERATE_LEVEL) {
+
             changed_music = false;
             gen_percent = 0.0f;
             want_gen = false;
@@ -18672,6 +18707,7 @@ int main(int argc, char* argv[])
         //debug to see where the background bleeds through
         window.clear(sf::Color::Black);
         buffer_over.clear(sf::Color::Transparent);
+        buffer_settings.clear(sf::Color::Transparent);
         buffer_UI.clear(sf::Color::Transparent);
         buffer_under.clear(sf::Color::Transparent);
         shadows.clear(sf::Color::Transparent);
@@ -24789,6 +24825,33 @@ int main(int argc, char* argv[])
                 //character name if hovered over
                 if (character_hovered_over != none_character && character_hovered_over != go_button && character_hovered_over != character_selected) {
 
+                    //debug
+                    sf::RenderStates multiply;
+                    multiply.blendMode = sf::BlendMultiply;
+                    int portals_amount_left = all_portal_spirals_count;
+                    int portals_sprital_position = all_portal_spirals_start;
+
+                    while (portals_amount_left > 0) {
+                        portal_spiral_spr.setPosition(all_portal_spirals[portals_sprital_position].position);
+                        portal_spiral_spr.setRotation(all_portal_spirals[portals_sprital_position].image_angle + 45);
+                        portal_spiral_spr.setScale(all_portal_spirals[portals_sprital_position].image_scale / 2.0f, all_portal_spirals[portals_sprital_position].image_scale / 2.0f);
+                        portal_spiral_spr.setTexture(portal_spiral_tex);
+                        int darkness = 255 * (all_portal_spirals[portals_sprital_position].image_scale + 0.2f);
+                        if (darkness > 255) {
+                            darkness = 255;
+                        }
+                        sf::Uint8 color_darkness = darkness;
+                        portal_spiral_spr.setColor({ color_darkness, color_darkness, color_darkness });
+                        buffer_settings.draw(portal_spiral_spr);
+                        portals_amount_left--;
+                        portals_sprital_position--;
+                        if (portals_sprital_position < 0) {
+                            portals_sprital_position = all_portal_spirals_max - 1;
+                        }
+                    }
+                    buffer_settings.draw(settings_mask_sprite, multiply);
+                    //debug
+
                     //extra little thing
                     if (character_hovered_over != character_hovered_over_prev_frame) {
                         character_hovered_over_offset = 2;
@@ -24865,7 +24928,10 @@ int main(int argc, char* argv[])
             buffer_over.display();
             //draw all sprites that are over shadows
             //window.draw(buffer_overSprite);
-
+            
+            buffer_settings.display();
+            buffer_settingsSprite.setTexture(buffer_settings.getTexture());
+            buffer_over.draw(buffer_settingsSprite);
         }
 
 

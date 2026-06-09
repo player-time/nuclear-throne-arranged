@@ -833,7 +833,7 @@ enum sound_ID {
 	snd_horror_select_ID,
 	snd_rogue_select_ID,
 	snd_frog_select_ID,
-	snd_skeleton_select_ID,
+	//snd_skeleton_select_ID,
 	snd_YC_select_ID,
 
 	snd_fish_confirm_ID,
@@ -849,7 +849,7 @@ enum sound_ID {
 	snd_horror_confirm_ID,
 	snd_rogue_confirm_ID,
 	snd_frog_confirm_ID,
-	snd_skeleton_confirm_ID,
+	//snd_skeleton_confirm_ID,
 	snd_YC_confirm_ID,
 
 
@@ -950,6 +950,8 @@ enum gridType : uint8_t { out_of_bounds, wall, exlpo_tile, boarder , floor_tile,
 enum subWallType{upLeft, up, upRight, right, downRight, down, downLeft, left, middle };	//which sprite to use for a wall
 
 enum character{ fish, crystal, eyes, melting, plant, YV, steroids, robot, chicken, rebel, horror, rogue, frog, skeleton, YC, none_character, go_button };
+
+enum option_bar{ none_option, };
 
 enum weapon_types {		//cutoffs for weapon types
 	melee_weps = 8,
