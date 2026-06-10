@@ -951,7 +951,9 @@ enum subWallType{upLeft, up, upRight, right, downRight, down, downLeft, left, mi
 
 enum character{ fish, crystal, eyes, melting, plant, YV, steroids, robot, chicken, rebel, horror, rogue, frog, skeleton, YC, none_character, go_button };
 
-enum option_bar{ none_option, };
+enum option_bar{ none_option, settings_option, stats_option, leaderboard_option, credits_option };
+
+enum options_menu{ none_options_menu, pick_settings, audio_settings, video_settings, controls_settings };
 
 enum weapon_types {		//cutoffs for weapon types
 	melee_weps = 8,

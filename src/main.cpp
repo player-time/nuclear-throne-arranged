@@ -617,6 +617,13 @@ int go_button_appear_frame = 0;
 
 //options stuff
 option_bar option_hovered_over = none_option;
+option_bar option_in = none_option;
+
+options_menu options_menu_IN = none_options_menu;   //what options menu you are in
+int options_menu_frame = 0;     //controls the animation of the options menu background
+
+int option_hovered_over_offset = 2;
+option_bar option_hovered_over_prev_frame = none_option;
 
 const int total_mut_count = 20 + 1;
 bool muts_want[total_mut_count];    //20 total muts + 1 nothing mut
@@ -13957,19 +13964,52 @@ void play_character_select_sound() {
     }
 }
 
-void check_character_selection_screen(bool clicked) {
+void check_character_selection_screen(bool clicked, bool right_clicked) {
     
     if (character_hovered_over != go_button) {
         go_button_hover_frames = 0;
     }
     character_hovered_over_prev_frame = character_hovered_over;
+    option_hovered_over_prev_frame = option_hovered_over;
     //hover over
     character_hovered_over = none_character;
     option_hovered_over = none_option;
     if (current_frame > 5) {
+        //right click logic
+        if (right_clicked) {
+            options_menu_IN = none_options_menu;
+            option_in = none_option;
+        }
         //options selection
-        if (mousepos.y > 4 && mousepos.y < 4 + 18) {
-            option_hovered_over = none_option;
+        if (mousepos.y > 4 && mousepos.y < 4 + 26) {
+            if (mousepos.x > 320 - 23 && mousepos.x < 320 - 5) {
+                option_hovered_over = settings_option;
+                if (clicked) {
+                    options_menu_IN = pick_settings;
+                    option_in = settings_option;
+                }
+            }
+            if (mousepos.x > 320 - 23 * 2 && mousepos.x < 320 - 5 - 23) {
+                option_hovered_over = stats_option;
+                if (clicked) {
+                    options_menu_IN = pick_settings;
+                    option_in = stats_option;
+                }
+            }
+            if (mousepos.x > 320 - 23 * 3 && mousepos.x < 320 - 5 - 23 * 2) {
+                option_hovered_over = leaderboard_option;
+                if (clicked) {
+                    options_menu_IN = pick_settings;
+                    option_in = leaderboard_option;
+                }
+            }
+            if (mousepos.x > 320 - 23 * 4 && mousepos.x < 320 - 5 - 23 * 3) {
+                option_hovered_over = credits_option;
+                if (clicked) {
+                    options_menu_IN = pick_settings;
+                    option_in = credits_option;
+                }
+            }
         }
         //character selection
         if (mousepos.y > 240 - 31 && mousepos.y < 240 - 7) {
@@ -15362,6 +15402,24 @@ std::string get_character_passive_description_text_2() {
     default:
     case melting:   return "LESS MAX @rHP@w"; break;
     case steroids:  return "INACCURATE"; break;
+    }
+}
+
+std::string get_setting_name_text() {
+    switch (option_hovered_over) {
+    default:
+    case settings_option:
+        return "SETTINGS";
+        break;
+    case stats_option:
+        return "STATS";
+        break;
+    case leaderboard_option:
+        return "LEADERBOARD";
+        break;
+    case credits_option:
+        return "CREDITS";
+        break;
     }
 }
 
@@ -16798,6 +16856,12 @@ int main(int argc, char* argv[])
     sf::Sprite settings_mask_sprite;
     settings_mask_sprite.setTexture(settings_mask);
     settings_mask_sprite.setTextureRect({320 * 4, 0, 320, 240});
+
+    sf::Texture settings_icons_tex;
+    settings_icons_tex.loadFromFile("res/settings_icons.png");
+    sf::Sprite settings_icons_sprite;
+    settings_icons_sprite.setTexture(settings_icons_tex);
+    settings_icons_sprite.setTextureRect({ 0, 0, 18, 26 });
 
     //load sprites
         sf::Texture allEnemySprites;
@@ -18432,8 +18496,9 @@ int main(int argc, char* argv[])
             player_rads = 0;
 
             bool LMB_pressed_tenp = LMB_pressed;
+            bool RMB_pressed_tenp = RMB_pressed;
 
-            check_character_selection_screen(LMB_pressed_tenp);
+            check_character_selection_screen(LMB_pressed_tenp, RMB_pressed_tenp);
 
             //clear all inputs so player character cant move
             player_move_up = false;
@@ -24762,6 +24827,10 @@ int main(int argc, char* argv[])
                 splat_left_sprite.setTextureRect({ 154 * choice, 0, 154, 64 });
                 buffer_UI.draw(splat_left_sprite);
 
+                choice -= options_menu_frame;
+                if (choice < 0) {
+                    choice = 0;
+                }
                 splat_right_sprite.setTextureRect({ 109 * choice, 0, 109, 69 });
                 buffer_UI.draw(splat_right_sprite);
 
@@ -24822,9 +24891,8 @@ int main(int argc, char* argv[])
                     character_text_sprite.setPosition(-1, 135);
                     buffer_UI.draw(character_text_sprite);
                 }
-                //character name if hovered over
-                if (character_hovered_over != none_character && character_hovered_over != go_button && character_hovered_over != character_selected) {
 
+                if (options_menu_IN != none_options_menu || options_menu_frame > 0) {
                     //debug
                     sf::RenderStates multiply;
                     multiply.blendMode = sf::BlendMultiply;
@@ -24849,8 +24917,87 @@ int main(int argc, char* argv[])
                             portals_sprital_position = all_portal_spirals_max - 1;
                         }
                     }
+                    settings_mask_sprite.setTextureRect({ 320 * options_menu_frame, 0, 320, 240 });
+                    options_menu_frame++;
+                    if (options_menu_frame > 4) {
+                        options_menu_frame = 4;
+                    }
+
                     buffer_settings.draw(settings_mask_sprite, multiply);
                     //debug
+                }
+                if (options_menu_IN == none_options_menu) {
+                    options_menu_frame -= 2;
+                    if (options_menu_frame < 0) {
+                        options_menu_frame = 0;
+                    }
+                }
+                
+
+                for (int i = 0; i < 4; i++) {
+                    settings_icons_sprite.setTextureRect({ i * 18, 0, 18, 26 });
+                    uint8_t temp_col = 128 + (86 * (i == (option_hovered_over - 1)));
+                    if (i == (option_in - 1)) {
+                        temp_col = 255;
+                    }
+                    settings_icons_sprite.setColor({ temp_col, temp_col, temp_col, 255 });
+
+                    settings_icons_sprite.setPosition(320 - i * 23 - 23, 5);
+
+                    buffer_UI.draw(settings_icons_sprite);
+                }
+                if (option_hovered_over != none_option && option_hovered_over != option_in) {
+                    //draw name of option
+                    //extra little thing
+                    if (option_hovered_over != option_hovered_over_prev_frame) {
+                        option_hovered_over_offset = 2;
+                    }
+
+                    option_hovered_over_offset -= 1;
+                    if (option_hovered_over_offset < 0) {
+                        option_hovered_over_offset = 0;
+                    }
+
+                    sf::Text option_name;
+                    option_name.setString(get_setting_name_text());
+                    option_name.setFont(font);
+                    option_name.setCharacterSize(8);
+
+                    int text_box_width = option_name.getString().getSize() * 8 + 2;
+
+                    int box_center = 320 + 8 - 23 * option_hovered_over;
+
+                    gray_name_box.setPosition(box_center - text_box_width / 2 + (option_hovered_over == settings_option) * -20, 33 - option_hovered_over_offset);
+                    gray_name_box.setFillColor({ 49, 41, 61, 255 });
+                    gray_name_box.setSize(sf::Vector2f(text_box_width, 13));
+                    buffer_UI.draw(gray_name_box);
+
+                    gray_name_box.setPosition(gray_name_box.getPosition() + sf::Vector2f(-1, 1));
+                    gray_name_box.setFillColor({ 49, 41, 61, 255 });
+                    gray_name_box.setSize(sf::Vector2f(text_box_width + 2, 11));
+                    buffer_UI.draw(gray_name_box);
+
+                    option_name.setPosition(gray_name_box.getPosition() + sf::Vector2f(2, 2));
+
+                    draw_text_NT(option_name, buffer_UI);
+
+                    //arrow
+                    sf::ConvexShape triangle;
+                    triangle.setFillColor({ 49, 41, 61, 255 });
+                    triangle.setPosition(box_center - 3, 33 - option_hovered_over_offset );
+                    triangle.setPointCount(3);
+                    triangle.setPoint(0, { 0.0f, 0.0f });
+                    triangle.setPoint(1, { 7.0f, 0.0f });
+                    triangle.setPoint(2, { 3.5f, -4.0f });
+
+                    buffer_UI.draw(triangle);
+                }
+                else {
+                    option_hovered_over_offset = 2;
+                }
+
+                //character name if hovered over
+                if (character_hovered_over != none_character && character_hovered_over != go_button && character_hovered_over != character_selected) {
 
                     //extra little thing
                     if (character_hovered_over != character_hovered_over_prev_frame) {
@@ -24920,6 +25067,10 @@ int main(int argc, char* argv[])
                 reset_rotateable_sprites(wall_textures, wall_texturesArrayIndex);
             }
 
+            buffer_settings.display();
+            buffer_settingsSprite.setTexture(buffer_settings.getTexture());
+            buffer_over.draw(buffer_settingsSprite);
+
             buffer_UI.display();
 
             buffer_UISprite.setTexture(buffer_UI.getTexture());
@@ -24929,9 +25080,6 @@ int main(int argc, char* argv[])
             //draw all sprites that are over shadows
             //window.draw(buffer_overSprite);
             
-            buffer_settings.display();
-            buffer_settingsSprite.setTexture(buffer_settings.getTexture());
-            buffer_over.draw(buffer_settingsSprite);
         }
 
 
