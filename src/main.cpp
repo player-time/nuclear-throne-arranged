@@ -626,15 +626,23 @@ int options_text_frame = 0;     //controls the animation of the options text tha
 int options_menu_splat_frame = 0;     //controls the animation of the options menu background
 
 sf::Sprite options_choices_sprite;
+;
 int setting_hovered_over = 0;
 int setting_hovered_over_prev = 0;
 int setting_hovered_over_time = 0;
+sf::Sprite options_slider_sprite;
 
 sf::Sprite menu_splat;
 sf::Sprite boss_splat;
 
 int option_hovered_over_offset = 2;
 option_bar option_hovered_over_prev_frame = none_option;
+
+//GLOBAL AUDIO SETTINGS
+int GLOBAL_MASTER_VOLUME  = 50;
+int GLOBAL_MUSIC_VOLUME   = 100;
+int GLOBAL_ABIENCE_VOLUME = 100;
+int GLOBAL_SFX_VOLUME     = 100;
 
 const int total_mut_count = 20 + 1;
 bool muts_want[total_mut_count];    //20 total muts + 1 nothing mut
@@ -14179,6 +14187,35 @@ void check_character_selection_screen(bool clicked, bool right_clicked) {
                 }
             }
         }
+
+        if (options_menu_IN == audio_settings) {
+            if (mousepos.x > 182 && mousepos.x < 182 + 124) {
+                if (mousepos.y > 77 && mousepos.y < 77 + 24) {
+                    setting_hovered_over = 1;
+                    if (clicked) {
+
+                    }
+                }
+                else if (mousepos.y > 77 + 32 && mousepos.y < 77 + 24 + 32) {
+                    setting_hovered_over = 2;
+                    if (clicked) {
+
+                    }
+                }
+                else if (mousepos.y > 77 + 32 * 2 && mousepos.y < 77 + 24 + 32 * 2) {
+                    setting_hovered_over = 3;
+                    if (clicked) {
+
+                    }
+                }
+                else if (mousepos.y > 77 + 32 * 3 && mousepos.y < 77 + 24 + 32 * 3) {
+                    setting_hovered_over = 4;
+                    if (clicked) {
+
+                    }
+                }
+            }
+        }
         
         //character selection
         if (mousepos.y > 240 - 31 && mousepos.y < 240 - 7) {
@@ -17041,6 +17078,11 @@ int main(int argc, char* argv[])
     options_choices_tex.loadFromFile("res/options_choices.png");
     options_choices_sprite.setTexture(options_choices_tex);
     options_choices_sprite.setTextureRect({ 0, 0, 115, 25 });
+
+    sf::Texture options_slider_tex;
+    options_slider_tex.loadFromFile("res/options_slider.png");
+    options_slider_sprite.setTexture(options_slider_tex);
+    options_slider_sprite.setTextureRect({ 0, 0, 112, 19 });
 
     sf::Texture menu_splat_tex;
     menu_splat_tex.loadFromFile("res/menu_splat.png");
@@ -25153,7 +25195,7 @@ int main(int argc, char* argv[])
                     switch (options_menu_IN) {
                     default:
                         break;
-                    case pick_settings:case audio_settings:case video_settings:case controls_settings:
+                    case pick_settings:
                         //const splat
                         boss_splat.setPosition(152, 40 - 22 + 91);
                         options_menu_splat_frame++;
@@ -25164,6 +25206,18 @@ int main(int argc, char* argv[])
                         boss_splat.setScale(1, -1);
                         buffer_UI.draw(boss_splat);
                         boss_splat.setScale(1, 1);
+                        break;
+                    case audio_settings:case video_settings:case controls_settings:
+                        //const splat
+                        menu_splat.setPosition(172, 6 - 22 + 91);
+                        options_menu_splat_frame++;
+                        if (options_menu_splat_frame > 3) {
+                            options_menu_splat_frame = 3;
+                        }
+                        menu_splat.setTextureRect({ 155 * options_menu_splat_frame, 0, 155, 53 });
+                        menu_splat.setScale(1, -1);
+                        buffer_UI.draw(menu_splat);
+                        menu_splat.setScale(1, 1);
                         break;
                     }
                     //constant splat stuff
@@ -25187,6 +25241,48 @@ int main(int argc, char* argv[])
                             uint8_t col = 153 + ((setting_hovered_over == i + 1) * 102);
                             options_choices_sprite.setColor({ col, col, col, 255 });
                             buffer_UI.draw(options_choices_sprite);
+
+                        }
+                    }
+
+                    if (options_menu_IN == audio_settings) {
+
+                        options_choices_sprite.setPosition(180, 37);
+                        options_choices_sprite.setTextureRect({ 0, 0, 115, 25 });
+                        options_choices_sprite.setColor({ 153, 153, 153, 255 });
+                        buffer_UI.draw(options_choices_sprite);
+
+                        int num_of_options = options_text_frame;
+                        if (num_of_options > 4) {
+                            num_of_options = 4;
+                        }
+                        for (int i = 0; i < num_of_options; i++) {
+                            int temp_y_off = (options_text_frame - i) < 2;
+                            //options_choices_sprite.setPosition(180, 100 + i * 25 + temp_y_off - (setting_hovered_over == i + 1));
+                            //options_choices_sprite.setTextureRect({ 0, 25 * i, 115, 25 });
+                            uint8_t col = 153 + ((setting_hovered_over == i + 1) * 102);
+                            sf::Color COL = { col, col, col, 255 };
+                            sf::Text temp_text;
+                            temp_text.setFont(font);
+                            temp_text.setCharacterSize(8);
+                            switch (i) {
+                            case 0:temp_text.setString("MASTER VOLUME"); break;
+                            case 1:temp_text.setString("MUSIC VOLUME"); break;
+                            case 2:temp_text.setString("AMBIENCE VOLUME"); break;
+                            case 3:temp_text.setString("SFX VOLUME"); break;
+                            }
+                            temp_text.setPosition(158, 72 + i * 32 + temp_y_off - (setting_hovered_over == i + 1));
+                            draw_text_NT(temp_text, buffer_UI, COL);
+
+                            options_slider_sprite.setPosition(188, 82 + i * 32 + temp_y_off - (setting_hovered_over == i + 1));
+                            options_slider_sprite.setTextureRect({ 0, 0, 112, 19 });
+                            buffer_UI.draw(options_slider_sprite);
+                            options_slider_sprite.setPosition(188 + 6 - 4, 82 + i * 32 + temp_y_off - (setting_hovered_over == i + 1));
+                            options_slider_sprite.setTextureRect({ 118, 0, GLOBAL_MASTER_VOLUME, 19 });
+                            buffer_UI.draw(options_slider_sprite);
+
+                            //options_choices_sprite.setColor({ col, col, col, 255 });
+                            //buffer_UI.draw(options_choices_sprite);
 
                         }
                     }
