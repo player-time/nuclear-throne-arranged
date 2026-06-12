@@ -621,6 +621,17 @@ option_bar option_in = none_option;
 
 options_menu options_menu_IN = none_options_menu;   //what options menu you are in
 int options_menu_frame = 0;     //controls the animation of the options menu background
+int options_text_frame = 0;     //controls the animation of the options text that appear on each options screen
+
+int options_menu_splat_frame = 0;     //controls the animation of the options menu background
+
+sf::Sprite options_choices_sprite;
+int setting_hovered_over = 0;
+int setting_hovered_over_prev = 0;
+int setting_hovered_over_time = 0;
+
+sf::Sprite menu_splat;
+sf::Sprite boss_splat;
 
 int option_hovered_over_offset = 2;
 option_bar option_hovered_over_prev_frame = none_option;
@@ -906,6 +917,11 @@ int all_portal_spirals_count = 0;
 const int all_portal_spirals_max = 500;
 portal_spiral all_portal_spirals[all_portal_spirals_max];
 
+int all_portal_spirals_OPTIONS_start = 0;   //determines which portal spiral is drawn first
+int all_portal_spirals_OPTIONS_count = 0;
+const int all_portal_spirals_OPTIONS_max = 500;
+portal_spiral all_portal_spirals_OPTIONS[all_portal_spirals_OPTIONS_max];
+
 //center of screen
 const float center_of_screen_X = 160.0f;
 const float center_of_screen_Y = 120.0f;
@@ -923,6 +939,22 @@ bool portal_spiral_active = 0;
 int portal_spiral_type = 1;
 int portal_spiral_time = 0;
 int portal_spiral_wave = 0;
+
+//portal spiral stuff for OPTIONS menu
+float portal_spiral_OPTIONS_X = center_of_screen_X;
+float portal_spiral_OPTIONS_Y = center_of_screen_Y;
+
+float portal_spiral_OPTIONS_player_X = 160.0f;
+float portal_spiral_OPTIONS_player_Y = 120.0f;
+
+float portal_spiral_OPTIONS_angle = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1000.0f)));
+
+bool portal_spiral_OPTIONS_active = 0;
+
+int portal_spiral_OPTIONS_type = 1;
+int portal_spiral_OPTIONS_time = 0;
+int portal_spiral_OPTIONS_wave = 0;
+//portal spiral stuff for OPTIONS menu
 
 debug_timer debug_timer_;
 debug_timer debug_timer_startup;
@@ -998,6 +1030,57 @@ void spiral_cont_step(bool circular = false) {
     }
 }
 
+/////////////////////////////////////////////////////////
+
+void create_portal_spiral_OPTIONS(bool is_circle) {
+    all_portal_spirals_OPTIONS_start++;
+    all_portal_spirals_OPTIONS_count++;
+    if (all_portal_spirals_OPTIONS_start > all_portal_spirals_OPTIONS_max - 1) {
+        all_portal_spirals_OPTIONS_start = 0;
+    }
+    all_portal_spirals_OPTIONS[all_portal_spirals_OPTIONS_start].grow = 0;
+    all_portal_spirals_OPTIONS[all_portal_spirals_OPTIONS_start].circle = is_circle;
+    all_portal_spirals_OPTIONS[all_portal_spirals_OPTIONS_start].image_scale = 0.0f;
+    all_portal_spirals_OPTIONS[all_portal_spirals_OPTIONS_start].image_angle = portal_spiral_OPTIONS_angle;
+    all_portal_spirals_OPTIONS[all_portal_spirals_OPTIONS_start].active = true;
+
+    all_portal_spirals_OPTIONS[all_portal_spirals_OPTIONS_start].position = { portal_spiral_OPTIONS_X, portal_spiral_OPTIONS_Y };
+}
+
+void portal_spiral_step_OPTIONS() {
+    for (int i = 0; i < all_portal_spirals_OPTIONS_max; i++) {
+        if (all_portal_spirals_OPTIONS[i].active == true) {
+            all_portal_spirals_OPTIONS[i].grow += 0.0002;
+            all_portal_spirals_OPTIONS[i].image_scale += all_portal_spirals_OPTIONS[i].grow;
+            all_portal_spirals_OPTIONS[i].grow = (all_portal_spirals_OPTIONS[i].grow + 1) * (1 + 0.0005f * all_portal_spirals_OPTIONS[i].image_scale) - 1;
+
+            if (all_portal_spirals_OPTIONS[i].image_scale > 2.5f) {
+                all_portal_spirals_OPTIONS_count--;
+                all_portal_spirals_OPTIONS[i].active = false;
+                all_portal_spirals_OPTIONS[i].image_scale = 0;
+                all_portal_spirals_OPTIONS[i].grow = 0;
+            }
+        }
+    }
+}
+
+void spiral_cont_step_OPTIONS(bool circular = false) {
+    portal_spiral_OPTIONS_angle += (8 + (sin(portal_spiral_OPTIONS_angle / 300)));
+
+    portal_spiral_OPTIONS_time++;
+
+    portal_spiral_OPTIONS_X = center_of_screen_X + 70 + (sin(portal_spiral_OPTIONS_angle / 921)) * (sin(portal_spiral_OPTIONS_angle / 500)) * 80;
+    portal_spiral_OPTIONS_Y = center_of_screen_Y + (cos(portal_spiral_OPTIONS_angle / 583)) * (sin(portal_spiral_OPTIONS_angle / 500)) * 50;
+
+    portal_spiral_OPTIONS_wave++;
+    if (portal_spiral_OPTIONS_wave == 1) {
+        portal_spiral_OPTIONS_wave = 0;
+
+        create_portal_spiral_OPTIONS(circular);
+    }
+}
+
+/////////////////////////////////////////////////////////////////////
 
 void draw_text_NT(sf::Text text, sf::RenderTexture &renderer, sf::Color col = sf::Color::White) {
     text.setColor(sf::Color::Black);
@@ -13974,11 +14057,30 @@ void check_character_selection_screen(bool clicked, bool right_clicked) {
     //hover over
     character_hovered_over = none_character;
     option_hovered_over = none_option;
+    setting_hovered_over = 0;
     if (current_frame > 5) {
         //right click logic
         if (right_clicked) {
-            options_menu_IN = none_options_menu;
-            option_in = none_option;
+            if (option_in != settings_option || options_menu_IN == pick_settings || options_menu_IN == none_options_menu) {
+                options_menu_IN = none_options_menu;
+                option_in = none_option;
+                options_text_frame = 0;
+
+                setting_hovered_over = 0;
+                setting_hovered_over_prev = 0;
+                setting_hovered_over_time = 0;
+                options_menu_splat_frame = 0;
+            }
+            else if (options_menu_IN == audio_settings || options_menu_IN == video_settings || options_menu_IN == controls_settings) {
+                options_menu_IN = pick_settings;
+                option_in = settings_option;
+                options_text_frame = 0;
+
+                setting_hovered_over = 0;
+                setting_hovered_over_prev = 0;
+                setting_hovered_over_time = 0;
+                options_menu_splat_frame = 0;
+            }
         }
         //options selection
         if (mousepos.y > 4 && mousepos.y < 4 + 26) {
@@ -13987,30 +14089,97 @@ void check_character_selection_screen(bool clicked, bool right_clicked) {
                 if (clicked) {
                     options_menu_IN = pick_settings;
                     option_in = settings_option;
+                    options_text_frame = 0;
+
+                    setting_hovered_over = 0;
+                    setting_hovered_over_prev = 0;
+                    setting_hovered_over_time = 0;
+                    options_menu_splat_frame = 0;
                 }
             }
             if (mousepos.x > 320 - 23 * 2 && mousepos.x < 320 - 5 - 23) {
                 option_hovered_over = stats_option;
                 if (clicked) {
-                    options_menu_IN = pick_settings;
+                    options_menu_IN = stats_settings;
                     option_in = stats_option;
+                    options_text_frame = 0;
+
+                    setting_hovered_over = 0;
+                    setting_hovered_over_prev = 0;
+                    setting_hovered_over_time = 0;
+                    options_menu_splat_frame = 0;
                 }
             }
             if (mousepos.x > 320 - 23 * 3 && mousepos.x < 320 - 5 - 23 * 2) {
                 option_hovered_over = leaderboard_option;
                 if (clicked) {
-                    options_menu_IN = pick_settings;
+                    options_menu_IN = leaderboard_settings;
                     option_in = leaderboard_option;
+                    options_text_frame = 0;
+
+                    setting_hovered_over = 0;
+                    setting_hovered_over_prev = 0;
+                    setting_hovered_over_time = 0;
+                    options_menu_splat_frame = 0;
                 }
             }
             if (mousepos.x > 320 - 23 * 4 && mousepos.x < 320 - 5 - 23 * 3) {
                 option_hovered_over = credits_option;
                 if (clicked) {
-                    options_menu_IN = pick_settings;
+                    options_menu_IN = credits_settings;
                     option_in = credits_option;
+                    options_text_frame = 0;
+
+                    setting_hovered_over = 0;
+                    setting_hovered_over_prev = 0;
+                    setting_hovered_over_time = 0;
+                    options_menu_splat_frame = 0;
                 }
             }
         }
+        //different options menus
+        
+        if (options_menu_IN == pick_settings) {
+            if (mousepos.x > 180 && mousepos.x < 180 + 115) {
+                if (mousepos.y > 100 && mousepos.y < 100 + 25) {
+                    setting_hovered_over = 1;
+                    if (clicked) {
+                        options_menu_IN = audio_settings;
+                        options_text_frame = 0;
+
+                        setting_hovered_over = 0;
+                        setting_hovered_over_prev = 0;
+                        setting_hovered_over_time = 0;
+                        options_menu_splat_frame = 0;
+                    }
+                }
+                else if (mousepos.y > 100 + 25 && mousepos.y < 100 + 50) {
+                    setting_hovered_over = 2;
+                    if (clicked) {
+                        options_menu_IN = video_settings;
+                        options_text_frame = 0;
+
+                        setting_hovered_over = 0;
+                        setting_hovered_over_prev = 0;
+                        setting_hovered_over_time = 0;
+                        options_menu_splat_frame = 0;
+                    }
+                }
+                else if (mousepos.y > 100 + 50 && mousepos.y < 100 + 75) {
+                    setting_hovered_over = 3;
+                    if (clicked) {
+                        options_menu_IN = controls_settings;
+                        options_text_frame = 0;
+
+                        setting_hovered_over = 0;
+                        setting_hovered_over_prev = 0;
+                        setting_hovered_over_time = 0;
+                        options_menu_splat_frame = 0;
+                    }
+                }
+            }
+        }
+        
         //character selection
         if (mousepos.y > 240 - 31 && mousepos.y < 240 - 7) {
             int x_off = mousepos.x - 6;
@@ -15390,7 +15559,7 @@ std::string get_character_passive_description_text() {
     case robot:     return "LESS @sKNOCKBACK";break;
     case chicken:   return "HARD TO KILL";break;
     case rebel:     return "PORTALS @rHEAL@w";break;
-    case horror:    return "EXTRA @gMUTATION@w CHOICE";break;
+    case horror:    return "EXTRA @gMUTATION@w";break;
     case rogue:     return "BLAST ARMOR, @bHEAT@w";break;
     case frog:      return "CAN'T STAND STILL";break;
     case skeleton:  return "3 WEAPONS";break;
@@ -15907,6 +16076,11 @@ int main(int argc, char* argv[])
     for (int i = 0; i < 200; i++) {
         spiral_cont_step();
         portal_spiral_step();
+    }
+
+    for (int i = 0; i < 200; i++) {
+        spiral_cont_step_OPTIONS();
+        portal_spiral_step_OPTIONS();
     }
 
     GLOBAL_DEBUG_INT = sizeof(game_area);
@@ -16862,6 +17036,21 @@ int main(int argc, char* argv[])
     sf::Sprite settings_icons_sprite;
     settings_icons_sprite.setTexture(settings_icons_tex);
     settings_icons_sprite.setTextureRect({ 0, 0, 18, 26 });
+
+    sf::Texture options_choices_tex;
+    options_choices_tex.loadFromFile("res/options_choices.png");
+    options_choices_sprite.setTexture(options_choices_tex);
+    options_choices_sprite.setTextureRect({ 0, 0, 115, 25 });
+
+    sf::Texture menu_splat_tex;
+    menu_splat_tex.loadFromFile("res/menu_splat.png");
+    menu_splat.setTexture(menu_splat_tex);
+    menu_splat.setTextureRect({ 0, 0, 155, 53 });
+
+    sf::Texture boss_splat_tex;
+    boss_splat_tex.loadFromFile("res/boss_splat.png");
+    boss_splat.setTexture(boss_splat_tex);
+    boss_splat.setTextureRect({ 0, 0, 196, 96 });
 
     //load sprites
         sf::Texture allEnemySprites;
@@ -24892,19 +25081,22 @@ int main(int argc, char* argv[])
                     buffer_UI.draw(character_text_sprite);
                 }
 
+                spiral_cont_step_OPTIONS();
+                portal_spiral_step_OPTIONS();
+
                 if (options_menu_IN != none_options_menu || options_menu_frame > 0) {
                     //debug
                     sf::RenderStates multiply;
                     multiply.blendMode = sf::BlendMultiply;
-                    int portals_amount_left = all_portal_spirals_count;
-                    int portals_sprital_position = all_portal_spirals_start;
+                    int portals_amount_left = all_portal_spirals_OPTIONS_count;
+                    int portals_sprital_position = all_portal_spirals_OPTIONS_start;
 
                     while (portals_amount_left > 0) {
-                        portal_spiral_spr.setPosition(all_portal_spirals[portals_sprital_position].position);
-                        portal_spiral_spr.setRotation(all_portal_spirals[portals_sprital_position].image_angle + 45);
-                        portal_spiral_spr.setScale(all_portal_spirals[portals_sprital_position].image_scale / 2.0f, all_portal_spirals[portals_sprital_position].image_scale / 2.0f);
+                        portal_spiral_spr.setPosition(all_portal_spirals_OPTIONS[portals_sprital_position].position);
+                        portal_spiral_spr.setRotation(all_portal_spirals_OPTIONS[portals_sprital_position].image_angle + 45);
+                        portal_spiral_spr.setScale(all_portal_spirals_OPTIONS[portals_sprital_position].image_scale / 2.0f, all_portal_spirals_OPTIONS[portals_sprital_position].image_scale / 2.0f);
                         portal_spiral_spr.setTexture(portal_spiral_tex);
-                        int darkness = 255 * (all_portal_spirals[portals_sprital_position].image_scale + 0.2f);
+                        int darkness = 255 * (all_portal_spirals_OPTIONS[portals_sprital_position].image_scale + 0.2f);
                         if (darkness > 255) {
                             darkness = 255;
                         }
@@ -24914,7 +25106,7 @@ int main(int argc, char* argv[])
                         portals_amount_left--;
                         portals_sprital_position--;
                         if (portals_sprital_position < 0) {
-                            portals_sprital_position = all_portal_spirals_max - 1;
+                            portals_sprital_position = all_portal_spirals_OPTIONS_max - 1;
                         }
                     }
                     settings_mask_sprite.setTextureRect({ 320 * options_menu_frame, 0, 320, 240 });
@@ -24925,6 +25117,79 @@ int main(int argc, char* argv[])
 
                     buffer_settings.draw(settings_mask_sprite, multiply);
                     //debug
+
+                    if (setting_hovered_over_prev == setting_hovered_over) {
+                        setting_hovered_over_time++;
+                    }
+                    else {
+                        setting_hovered_over_time = 0;
+                    }
+
+                    //draw splat under hovered over text
+                    if (setting_hovered_over != 0) {
+                        switch (options_menu_IN) {
+                        default:
+                            break;
+                        case pick_settings:
+                            menu_splat.setPosition(177, 100 + (setting_hovered_over - 1) * 25 - 22);
+                            if (setting_hovered_over_time > 3) {
+                                setting_hovered_over_time = 3;
+                            }
+                            menu_splat.setTextureRect({155 * setting_hovered_over_time, 0, 155, 53});
+                            buffer_UI.draw(menu_splat);
+
+                            break;
+                        case audio_settings:
+                            break;
+                        case video_settings:
+                            break;
+                        case controls_settings:
+                            break;
+                        }
+                    }
+                    setting_hovered_over_prev = setting_hovered_over;
+
+                    //constant splat stuff
+                    switch (options_menu_IN) {
+                    default:
+                        break;
+                    case pick_settings:case audio_settings:case video_settings:case controls_settings:
+                        //const splat
+                        boss_splat.setPosition(152, 40 - 22 + 91);
+                        options_menu_splat_frame++;
+                        if (options_menu_splat_frame > 3) {
+                            options_menu_splat_frame = 3;
+                        }
+                        boss_splat.setTextureRect({ 196 * options_menu_splat_frame, 0, 196, 96 });
+                        boss_splat.setScale(1, -1);
+                        buffer_UI.draw(boss_splat);
+                        boss_splat.setScale(1, 1);
+                        break;
+                    }
+                    //constant splat stuff
+
+                    options_text_frame++;
+                    if (options_menu_IN == pick_settings) {
+
+                        options_choices_sprite.setPosition(180, 40);
+                        options_choices_sprite.setTextureRect({ 0, 75, 115, 25 });
+                        options_choices_sprite.setColor({ 153, 153, 153, 255 });
+                        buffer_UI.draw(options_choices_sprite);
+
+                        int num_of_options = options_text_frame;
+                        if (num_of_options > 3) {
+                            num_of_options = 3;
+                        }
+                        for (int i = 0; i < num_of_options; i++) {
+                            int temp_y_off = (options_text_frame - i) < 2;
+                            options_choices_sprite.setPosition(180, 100 + i * 25 + temp_y_off - (setting_hovered_over == i + 1));
+                            options_choices_sprite.setTextureRect({0, 25 * i, 115, 25});
+                            uint8_t col = 153 + ((setting_hovered_over == i + 1) * 102);
+                            options_choices_sprite.setColor({ col, col, col, 255 });
+                            buffer_UI.draw(options_choices_sprite);
+
+                        }
+                    }
                 }
                 if (options_menu_IN == none_options_menu) {
                     options_menu_frame -= 2;

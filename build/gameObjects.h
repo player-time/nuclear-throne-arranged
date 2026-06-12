@@ -953,7 +953,10 @@ enum character{ fish, crystal, eyes, melting, plant, YV, steroids, robot, chicke
 
 enum option_bar{ none_option, settings_option, stats_option, leaderboard_option, credits_option };
 
-enum options_menu{ none_options_menu, pick_settings, audio_settings, video_settings, controls_settings };
+enum options_menu{
+	none_options_menu, pick_settings, audio_settings, video_settings, controls_settings,
+	stats_settings, leaderboard_settings, credits_settings 
+};
 
 enum weapon_types {		//cutoffs for weapon types
 	melee_weps = 8,
