@@ -1,6 +1,6 @@
 ﻿  Copy OpenAL DLL
   main.cpp
-C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\main.cpp(14600,1): warning C4715: 'get_map_pos': not all control paths return a value
-C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\main.cpp(15736,1): warning C4715: 'get_what_mut_text': not all control paths return a value
-C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\main.cpp(15801,1): warning C4715: 'get_what_mut_text_description': not all control paths return a value
+C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\main.cpp(14657,1): warning C4715: 'get_map_pos': not all control paths return a value
+C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\main.cpp(15793,1): warning C4715: 'get_what_mut_text': not all control paths return a value
+C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\src\main.cpp(15858,1): warning C4715: 'get_what_mut_text_description': not all control paths return a value
   CMakeSFMLProject.vcxproj -> C:\Users\svt16\Desktop\Nuclear Throne Arranged\cmake-sfml-project\build\bin\Release\nuclear throne arranged.exe

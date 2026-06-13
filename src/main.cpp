@@ -631,6 +631,8 @@ int setting_hovered_over = 0;
 int setting_hovered_over_prev = 0;
 int setting_hovered_over_time = 0;
 sf::Sprite options_slider_sprite;
+sf::Sprite slider_end_sprite;
+int audio_slider_held = 0;
 
 sf::Sprite menu_splat;
 sf::Sprite boss_splat;
@@ -641,7 +643,7 @@ option_bar option_hovered_over_prev_frame = none_option;
 //GLOBAL AUDIO SETTINGS
 int GLOBAL_MASTER_VOLUME  = 50;
 int GLOBAL_MUSIC_VOLUME   = 100;
-int GLOBAL_ABIENCE_VOLUME = 100;
+int GLOBAL_AMBIENCE_VOLUME = 100;
 int GLOBAL_SFX_VOLUME     = 100;
 
 const int total_mut_count = 20 + 1;
@@ -14055,7 +14057,7 @@ void play_character_select_sound() {
     }
 }
 
-void check_character_selection_screen(bool clicked, bool right_clicked) {
+void check_character_selection_screen(bool clicked, bool right_clicked, bool released_LMB) {
     
     if (character_hovered_over != go_button) {
         go_button_hover_frames = 0;
@@ -14078,6 +14080,7 @@ void check_character_selection_screen(bool clicked, bool right_clicked) {
                 setting_hovered_over_prev = 0;
                 setting_hovered_over_time = 0;
                 options_menu_splat_frame = 0;
+                audio_slider_held = 0;
             }
             else if (options_menu_IN == audio_settings || options_menu_IN == video_settings || options_menu_IN == controls_settings) {
                 options_menu_IN = pick_settings;
@@ -14088,6 +14091,7 @@ void check_character_selection_screen(bool clicked, bool right_clicked) {
                 setting_hovered_over_prev = 0;
                 setting_hovered_over_time = 0;
                 options_menu_splat_frame = 0;
+                audio_slider_held = 0;
             }
         }
         //options selection
@@ -14103,6 +14107,7 @@ void check_character_selection_screen(bool clicked, bool right_clicked) {
                     setting_hovered_over_prev = 0;
                     setting_hovered_over_time = 0;
                     options_menu_splat_frame = 0;
+                    audio_slider_held = 0;
                 }
             }
             if (mousepos.x > 320 - 23 * 2 && mousepos.x < 320 - 5 - 23) {
@@ -14116,6 +14121,7 @@ void check_character_selection_screen(bool clicked, bool right_clicked) {
                     setting_hovered_over_prev = 0;
                     setting_hovered_over_time = 0;
                     options_menu_splat_frame = 0;
+                    audio_slider_held = 0;
                 }
             }
             if (mousepos.x > 320 - 23 * 3 && mousepos.x < 320 - 5 - 23 * 2) {
@@ -14129,6 +14135,7 @@ void check_character_selection_screen(bool clicked, bool right_clicked) {
                     setting_hovered_over_prev = 0;
                     setting_hovered_over_time = 0;
                     options_menu_splat_frame = 0;
+                    audio_slider_held = 0;
                 }
             }
             if (mousepos.x > 320 - 23 * 4 && mousepos.x < 320 - 5 - 23 * 3) {
@@ -14142,11 +14149,12 @@ void check_character_selection_screen(bool clicked, bool right_clicked) {
                     setting_hovered_over_prev = 0;
                     setting_hovered_over_time = 0;
                     options_menu_splat_frame = 0;
+                    audio_slider_held = 0;
                 }
             }
         }
         //different options menus
-        
+
         if (options_menu_IN == pick_settings) {
             if (mousepos.x > 180 && mousepos.x < 180 + 115) {
                 if (mousepos.y > 100 && mousepos.y < 100 + 25) {
@@ -14159,6 +14167,7 @@ void check_character_selection_screen(bool clicked, bool right_clicked) {
                         setting_hovered_over_prev = 0;
                         setting_hovered_over_time = 0;
                         options_menu_splat_frame = 0;
+                        audio_slider_held = 0;
                     }
                 }
                 else if (mousepos.y > 100 + 25 && mousepos.y < 100 + 50) {
@@ -14171,6 +14180,7 @@ void check_character_selection_screen(bool clicked, bool right_clicked) {
                         setting_hovered_over_prev = 0;
                         setting_hovered_over_time = 0;
                         options_menu_splat_frame = 0;
+                        audio_slider_held = 0;
                     }
                 }
                 else if (mousepos.y > 100 + 50 && mousepos.y < 100 + 75) {
@@ -14183,37 +14193,84 @@ void check_character_selection_screen(bool clicked, bool right_clicked) {
                         setting_hovered_over_prev = 0;
                         setting_hovered_over_time = 0;
                         options_menu_splat_frame = 0;
+                        audio_slider_held = 0;
                     }
                 }
             }
         }
 
-        if (options_menu_IN == audio_settings) {
-            if (mousepos.x > 182 && mousepos.x < 182 + 124) {
+        else if (options_menu_IN == audio_settings) {
+            if (mousepos.x > 194 && mousepos.x < 194 + 124) {
                 if (mousepos.y > 77 && mousepos.y < 77 + 24) {
                     setting_hovered_over = 1;
                     if (clicked) {
-
+                        audio_slider_held = 1;
                     }
                 }
                 else if (mousepos.y > 77 + 32 && mousepos.y < 77 + 24 + 32) {
                     setting_hovered_over = 2;
                     if (clicked) {
-
+                        audio_slider_held = 2;
                     }
                 }
                 else if (mousepos.y > 77 + 32 * 2 && mousepos.y < 77 + 24 + 32 * 2) {
                     setting_hovered_over = 3;
                     if (clicked) {
-
+                        audio_slider_held = 3;
                     }
                 }
                 else if (mousepos.y > 77 + 32 * 3 && mousepos.y < 77 + 24 + 32 * 3) {
                     setting_hovered_over = 4;
                     if (clicked) {
-
+                        audio_slider_held = 4;
                     }
                 }
+            }
+        }
+
+        if (released_LMB) {
+            audio_slider_held = 0;
+        }
+        else {
+            switch (audio_slider_held) {
+            default:
+                break;
+            case 1:
+                GLOBAL_MASTER_VOLUME = mousepos.x - 202 - 3;
+                if (GLOBAL_MASTER_VOLUME < 0) {
+                    GLOBAL_MASTER_VOLUME = 0;
+                }
+                if (GLOBAL_MASTER_VOLUME > 100) {
+                    GLOBAL_MASTER_VOLUME = 100;
+                }
+                break;
+            case 2:
+                GLOBAL_MUSIC_VOLUME = mousepos.x - 202 - 3;
+                if (GLOBAL_MUSIC_VOLUME < 0) {
+                    GLOBAL_MUSIC_VOLUME = 0;
+                }
+                if (GLOBAL_MUSIC_VOLUME > 100) {
+                    GLOBAL_MUSIC_VOLUME = 100;
+                }
+                break;
+            case 3:
+                GLOBAL_AMBIENCE_VOLUME = mousepos.x - 202 - 3;
+                if (GLOBAL_AMBIENCE_VOLUME < 0) {
+                    GLOBAL_AMBIENCE_VOLUME = 0;
+                }
+                if (GLOBAL_AMBIENCE_VOLUME > 100) {
+                    GLOBAL_AMBIENCE_VOLUME = 100;
+                }
+                break;
+            case 4:
+                GLOBAL_SFX_VOLUME = mousepos.x - 202 - 3;
+                if (GLOBAL_SFX_VOLUME < 0) {
+                    GLOBAL_SFX_VOLUME = 0;
+                }
+                if (GLOBAL_SFX_VOLUME > 100) {
+                    GLOBAL_SFX_VOLUME = 100;
+                }
+                break;
             }
         }
         
@@ -17084,6 +17141,11 @@ int main(int argc, char* argv[])
     options_slider_sprite.setTexture(options_slider_tex);
     options_slider_sprite.setTextureRect({ 0, 0, 112, 19 });
 
+    sf::Texture slider_end_tex;
+    slider_end_tex.loadFromFile("res/slider_end.png");
+    slider_end_sprite.setTexture(slider_end_tex);
+    slider_end_sprite.setTextureRect({ 0, 0, 8, 17 });
+
     sf::Texture menu_splat_tex;
     menu_splat_tex.loadFromFile("res/menu_splat.png");
     menu_splat.setTexture(menu_splat_tex);
@@ -18729,7 +18791,7 @@ int main(int argc, char* argv[])
             bool LMB_pressed_tenp = LMB_pressed;
             bool RMB_pressed_tenp = RMB_pressed;
 
-            check_character_selection_screen(LMB_pressed_tenp, RMB_pressed_tenp);
+            check_character_selection_screen(LMB_pressed_tenp, RMB_pressed_tenp, LMB_released);
 
             //clear all inputs so player character cant move
             player_move_up = false;
@@ -20554,6 +20616,11 @@ int main(int argc, char* argv[])
 
         //play sounds
         float pitch_offset = 0.0f;
+        float SFX_VOLUME_MULT = ((float)GLOBAL_MASTER_VOLUME / 100.0f) * ((float)GLOBAL_SFX_VOLUME / 100.0f);
+        float MUSIC_VOLUME_MULT = ((float)GLOBAL_MASTER_VOLUME / 100.0f) * ((float)GLOBAL_MUSIC_VOLUME / 100.0f);
+
+        current_music.setVolume(MUSIC_VOLUME_MULT * 100.0f);
+
         for (int i = 0; i < 1000; i++) {
             if (is_looping_sound(i)) {
                 if (play_sounds_this_frame_count[i] > 0) {
@@ -20565,6 +20632,7 @@ int main(int argc, char* argv[])
                             //float PV = all_sounds_mirror[i].pitch_variance;
                             //sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
                             //sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
+                            sound_pool[snd__].setVolume(all_sounds_mirror[i].volume * SFX_VOLUME_MULT);
                             sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
                             //sound_pool[snd__].setLoop(true);
                             //sound_pool[snd__].play();
@@ -20578,7 +20646,7 @@ int main(int argc, char* argv[])
                             if (sound_pool[snd__].getStatus() != sf::Sound::Playing) {
                                 float PV = all_sounds_mirror[i].pitch_variance;
                                 sound_pool[snd__].setBuffer(all_sounds[i]);
-                                sound_pool[snd__].setVolume(all_sounds_mirror[i].volume);
+                                sound_pool[snd__].setVolume(all_sounds_mirror[i].volume * SFX_VOLUME_MULT);
                                 sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
                                 sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
                                 sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
@@ -20608,6 +20676,7 @@ int main(int argc, char* argv[])
                     for (int snd__ = 0; snd__ < sound_pool_max; snd__++) {
                         if (sound_pool_ids_mirror[snd__] == sound_ID(i)) {
                             float PV = all_sounds_mirror[i].pitch_variance;
+                            sound_pool[snd__].setVolume(all_sounds_mirror[i].volume * SFX_VOLUME_MULT);
                             sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
                             sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
                             sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
@@ -20623,7 +20692,7 @@ int main(int argc, char* argv[])
                             if (sound_pool[snd__].getStatus() != sf::Sound::Playing) {
                                 float PV = all_sounds_mirror[i].pitch_variance;
                                 sound_pool[snd__].setBuffer(all_sounds[i]);
-                                sound_pool[snd__].setVolume(all_sounds_mirror[i].volume);
+                                sound_pool[snd__].setVolume(all_sounds_mirror[i].volume * SFX_VOLUME_MULT);
                                 sound_pool[snd__].setPitch(1.0f + random_float(2.0f * PV) - PV);
                                 sound_pool[snd__].setAttenuation(all_sounds_mirror[i].attenuation);
                                 sound_pool[snd__].setPosition(play_sounds_this_frame_pos[i].x / play_sounds_this_frame_count[i], 0, play_sounds_this_frame_pos[i].y / play_sounds_this_frame_count[i]);
@@ -25260,26 +25329,46 @@ int main(int argc, char* argv[])
                             int temp_y_off = (options_text_frame - i) < 2;
                             //options_choices_sprite.setPosition(180, 100 + i * 25 + temp_y_off - (setting_hovered_over == i + 1));
                             //options_choices_sprite.setTextureRect({ 0, 25 * i, 115, 25 });
+                            
+                            if (audio_slider_held != 0) {
+                                setting_hovered_over = audio_slider_held;
+                            }
+
                             uint8_t col = 153 + ((setting_hovered_over == i + 1) * 102);
                             sf::Color COL = { col, col, col, 255 };
                             sf::Text temp_text;
                             temp_text.setFont(font);
                             temp_text.setCharacterSize(8);
+
+                            int temp_volume = 0;
                             switch (i) {
-                            case 0:temp_text.setString("MASTER VOLUME"); break;
-                            case 1:temp_text.setString("MUSIC VOLUME"); break;
-                            case 2:temp_text.setString("AMBIENCE VOLUME"); break;
-                            case 3:temp_text.setString("SFX VOLUME"); break;
+                            case 0:temp_text.setString("MASTER VOLUME"); temp_volume = GLOBAL_MASTER_VOLUME;        break;
+                            case 1:temp_text.setString("MUSIC VOLUME"); temp_volume = GLOBAL_MUSIC_VOLUME;          break;
+                            case 2:temp_text.setString("AMBIENCE VOLUME"); temp_volume = GLOBAL_AMBIENCE_VOLUME;    break;
+                            case 3:temp_text.setString("SFX VOLUME"); temp_volume = GLOBAL_SFX_VOLUME;              break;
                             }
                             temp_text.setPosition(158, 72 + i * 32 + temp_y_off - (setting_hovered_over == i + 1));
                             draw_text_NT(temp_text, buffer_UI, COL);
 
-                            options_slider_sprite.setPosition(188, 82 + i * 32 + temp_y_off - (setting_hovered_over == i + 1));
+                            std::string temp_string = "";
+                            if (temp_volume < 100) {temp_string.append(" ");}
+                            if (temp_volume < 10) {temp_string.append(" ");}
+
+                            temp_string.append(std::to_string(temp_volume) + "%");
+
+                            temp_text.setString(temp_string);
+                            temp_text.setPosition(168, 88 + i * 32 + temp_y_off - (setting_hovered_over == i + 1));
+                            draw_text_NT(temp_text, buffer_UI, COL);
+
+                            options_slider_sprite.setPosition(200, 82 + i * 32 + temp_y_off - (setting_hovered_over == i + 1));
                             options_slider_sprite.setTextureRect({ 0, 0, 112, 19 });
                             buffer_UI.draw(options_slider_sprite);
-                            options_slider_sprite.setPosition(188 + 6 - 4, 82 + i * 32 + temp_y_off - (setting_hovered_over == i + 1));
-                            options_slider_sprite.setTextureRect({ 118, 0, GLOBAL_MASTER_VOLUME, 19 });
+                            options_slider_sprite.setPosition(200 + 6 - 4, 82 + i * 32 + temp_y_off - (setting_hovered_over == i + 1));
+                            options_slider_sprite.setTextureRect({ 118, 0, temp_volume, 19 });
                             buffer_UI.draw(options_slider_sprite);
+
+                            slider_end_sprite.setPosition(200 + 6 - 5 + temp_volume, 82 + i * 32 + temp_y_off - (setting_hovered_over == i + 1));
+                            buffer_UI.draw(slider_end_sprite);
 
                             //options_choices_sprite.setColor({ col, col, col, 255 });
                             //buffer_UI.draw(options_choices_sprite);
