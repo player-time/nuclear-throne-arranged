@@ -255,6 +255,7 @@ sf::Vector2f cameraPos_campfire = { 24000.0f, 24000.0f };
 sf::Image game_icon;
 
 bool fullscreen_mode = true;
+bool vsync_on = false;
 
 sf::VideoMode startup_fullscreen_size = sf::VideoMode::getDesktopMode();
 
@@ -316,6 +317,10 @@ int boss_taunt_delay = 0;
 std::vector<int> weapons_in_portal;
 
 unsigned int MAXFPS = 30;
+
+
+int max_window_scale = 1;
+float max_window_scale_float = 1.0f;
 
 //contants
 float e_constant = 2.71828f;
@@ -449,6 +454,8 @@ float game_logo_wave = 0.0f;
 bool GAME_OPTION_naitive_cursor_active = true;
 bool GAME_OPTION_hide_cursor_on_loading = true;
 
+bool GAME_OPTION_compatible_cursor_active = false;
+
 int crosshair_selected = 0;
 
 //held main weapon stuff
@@ -524,6 +531,13 @@ float window_size_x = 640.0f;
 float window_size_y = 480.0f;
 int window_scale = 2;
 sf::Vector2f cameraOffset = { -window_size_x / (window_scale * 2), -window_size_y / (window_scale * 2) };
+
+int side_art = 0;   //0 == NONE, then 1-9
+int crosshair_art = 1;//1-9
+
+bool show_area = false;
+bool show_timer = true;
+bool lock_mouse_to_window = true;
 
 sf::Vector2f fullscreen_window_offset = {0, 0};  //how much the drawn area of the game is offset from the top left
 
@@ -626,7 +640,9 @@ int options_text_frame = 0;     //controls the animation of the options text tha
 int options_menu_splat_frame = 0;     //controls the animation of the options menu background
 
 sf::Sprite options_choices_sprite;
-;
+
+int setting_arrow_direction = 1;
+
 int setting_hovered_over = 0;
 int setting_hovered_over_prev = 0;
 int setting_hovered_over_time = 0;
@@ -6264,30 +6280,34 @@ void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = 
         fullscreen_mode = !fullscreen_mode;
     }
 
-    window_size_x += 320 * change;
-    window_size_y += 240 * change;
+    float temp_window_scale = window_scale;
+    if (window_scale > max_window_scale_float) { temp_window_scale = max_window_scale_float; }
+
+    window_size_x = 320 * temp_window_scale;
+    window_size_y = 240 * temp_window_scale;
     
-    cameraOffset = { -window_size_x / (window_scale * 2), -window_size_y / (window_scale * 2) };
+    cameraOffset = { -window_size_x / (temp_window_scale * 2), -window_size_y / (temp_window_scale * 2) };
 
     sf::Image cursor_pixels;
 
     sf::Texture cursor_tex;
-    cursor_tex.loadFromFile("res/player/sprCrosshair_1_16.png");
+    cursor_tex.loadFromFile("res/player/sprCrosshair.png");
 
     sf::Sprite cursor_sprite(cursor_tex);
+    cursor_sprite.setTextureRect({(crosshair_art - 1) * 16, 0, 16, 16});
     //cursor_sprite.setTexture(cursor_tex);
-    cursor_sprite.setScale(window_scale, window_scale);
+    cursor_sprite.setScale(temp_window_scale, temp_window_scale);
 
     //cursor_pixels = cursor_tex.copyToImage();
 
     sf::RenderTexture cursor_render_tex;
-    cursor_render_tex.create(16 * window_scale, 16 * window_scale);
+    cursor_render_tex.create(16 * temp_window_scale, 16 * temp_window_scale);
 
     cursor_render_tex.draw(cursor_sprite);
     cursor_render_tex.display();
     cursor_pixels = cursor_render_tex.getTexture().copyToImage();
 
-    naitive_cursor_sprite.loadFromPixels(cursor_pixels.getPixelsPtr(), sf::Vector2u(16 * window_scale, 16 * window_scale), sf::Vector2u(8 * window_scale, 8 * window_scale));
+    naitive_cursor_sprite.loadFromPixels(cursor_pixels.getPixelsPtr(), sf::Vector2u(16 * temp_window_scale, 16 * temp_window_scale), sf::Vector2u(8 * temp_window_scale, 8 * temp_window_scale));
 
     //TODO make it work with any screen size
 
@@ -6316,7 +6336,7 @@ void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = 
 
         window.setMouseCursor(naitive_cursor_sprite);
 
-        window.setVerticalSyncEnabled(false);
+        window.setVerticalSyncEnabled(vsync_on);
 
         window.setFramerateLimit(MAXFPS);
 
@@ -6337,7 +6357,7 @@ void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = 
         fullscreen_window_offset.x = (window.getSize().x - window_size_x) / 2;
         fullscreen_window_offset.y = (window.getSize().y - window_size_y) / 2;
     }
-    window.setMouseCursorGrabbed(false);
+    window.setMouseCursorGrabbed(lock_mouse_to_window);
     window.requestFocus();
 }
 
@@ -14057,7 +14077,7 @@ void play_character_select_sound() {
     }
 }
 
-void check_character_selection_screen(bool clicked, bool right_clicked, bool released_LMB) {
+void check_character_selection_screen(bool clicked, bool right_clicked, bool released_LMB, sf::RenderWindow& window) {
     
     if (character_hovered_over != go_button) {
         go_button_hover_frames = 0;
@@ -14227,6 +14247,128 @@ void check_character_selection_screen(bool clicked, bool right_clicked, bool rel
                 }
             }
         }
+
+        else if (options_menu_IN == video_settings) {
+            if (mousepos.x > 156 && mousepos.x < 156 + 155) {
+                if (mousepos.y > 70 && mousepos.y < 70 + 130) {
+                    setting_hovered_over = (mousepos.y - 70) / 13 + 1;
+                    if (clicked) {
+                        switch (setting_hovered_over) {
+                        default:
+                            break;
+                        case 1://fullscreen
+                            resize_window(0, window, true);
+                            break;
+                        case 2://vsync
+                            vsync_on = !vsync_on;
+                            window.setVerticalSyncEnabled(vsync_on);
+                            break;
+                        case 3://window scale
+                            if (mousepos.x > 267) {
+                                if (window_scale < max_window_scale + 1) {
+                                    window_scale++;
+                                    resize_window(1, window);
+                                }
+                            }
+                            else {
+                                if (window_scale > 1) {
+                                    window_scale--;
+                                    resize_window(-1, window);
+                                }
+                            }
+                            break;
+                        case 4://side art
+                            if (mousepos.x > 267) {
+                                if (side_art < 9) {
+                                    side_art++;
+                                }
+                                else {
+                                    side_art = 0;
+                                }
+                            }
+                            else {
+                                if (side_art > 0) {
+                                    side_art--;
+                                }
+                                else {
+                                    side_art = 9;
+                                }
+                            }
+                            break;
+                        case 5://cursor art
+                            if (mousepos.x > 267) {
+                                if (crosshair_art < 9) {
+                                    crosshair_art++;
+                                }
+                                else {
+                                    crosshair_art = 1;
+                                }
+                            }
+                            else {
+                                if (crosshair_art > 1) {
+                                    crosshair_art--;
+                                }
+                                else {
+                                    crosshair_art = 9;
+                                }
+                            }
+                            if (1) {
+                                float temp_window_scale = window_scale;
+                                if (window_scale > max_window_scale_float) { temp_window_scale = max_window_scale_float; }
+
+                                sf::Image cursor_pixels;
+
+                                sf::Texture cursor_tex;
+                                cursor_tex.loadFromFile("res/player/sprCrosshair.png");
+
+                                sf::Sprite cursor_sprite(cursor_tex);
+                                cursor_sprite.setTextureRect({ (crosshair_art - 1) * 16, 0, 16, 16 });
+                                //cursor_sprite.setTexture(cursor_tex);
+                                cursor_sprite.setScale(temp_window_scale, temp_window_scale);
+
+                                //cursor_pixels = cursor_tex.copyToImage();
+
+                                sf::RenderTexture cursor_render_tex;
+                                cursor_render_tex.create(16 * temp_window_scale, 16 * temp_window_scale);
+
+                                cursor_render_tex.draw(cursor_sprite);
+                                cursor_render_tex.display();
+                                cursor_pixels = cursor_render_tex.getTexture().copyToImage();
+
+                                naitive_cursor_sprite.loadFromPixels(cursor_pixels.getPixelsPtr(), sf::Vector2u(16 * temp_window_scale, 16 * temp_window_scale), sf::Vector2u(8 * temp_window_scale, 8 * temp_window_scale));
+
+                                window.setMouseCursor(naitive_cursor_sprite);
+                            }
+
+                            break; 
+                        case 6://cursor art
+                            GAME_OPTION_hide_cursor_on_loading = !GAME_OPTION_hide_cursor_on_loading;
+                            break;
+                        case 7://area
+                            show_area = !show_area;
+                            break;
+                        case 8://timer
+                            show_timer = !show_timer;
+                            break;
+                        case 9://mouselock
+                            lock_mouse_to_window= !lock_mouse_to_window;
+                            window.setMouseCursorGrabbed(lock_mouse_to_window);
+                            break;
+                        case 10:
+
+                            break;
+                        }
+                    }
+                    if (mousepos.x > 267) {
+                        setting_arrow_direction = 1;
+                    }
+                    else {
+                        setting_arrow_direction = -1;
+                    }
+                }
+            }
+        }
+
 
         if (released_LMB) {
             audio_slider_held = 0;
@@ -16933,14 +17075,19 @@ int main(int argc, char* argv[])
     int height_max_integer_scale = int(startup_fullscreen_size.height / 240);
     int width_max_integer_scale = int(startup_fullscreen_size.width / 320);
 
-    int max_window_scale = 1;
+    float height_max_float_scale = ((float)startup_fullscreen_size.height / 240.0f);
+    float width_max_float_scale  = ((float)startup_fullscreen_size.width  / 320.0f);
+
+    max_window_scale = 1;
     if (height_max_integer_scale < width_max_integer_scale) {
         window_scale = height_max_integer_scale;
         max_window_scale = height_max_integer_scale;
+        max_window_scale_float = height_max_float_scale;
     }
     else {
         window_scale = width_max_integer_scale;
         max_window_scale = width_max_integer_scale;
+        max_window_scale_float = width_max_float_scale;
     }
 
 
@@ -18502,7 +18649,7 @@ int main(int argc, char* argv[])
 
     portal_sprite.setOrigin(16, 16);
 
-    window.setVerticalSyncEnabled(false);
+    window.setVerticalSyncEnabled(vsync_on);
     window.setMouseCursorGrabbed(true);
 
     //window.setMouseCursorVisible(false);
@@ -18646,7 +18793,7 @@ int main(int argc, char* argv[])
                     }
                     //debug
                     if (event.key.code == sf::Keyboard::Add) {
-                        if (window_scale < max_window_scale) {
+                        if (window_scale < max_window_scale + 1) {
                             window_scale++;
                             resize_window(1, window);
                         }
@@ -18753,6 +18900,11 @@ int main(int argc, char* argv[])
         mousepos.x = (sf::Mouse::getPosition(window).x - fullscreen_window_offset.x) / window_scale;
         mousepos.y = (sf::Mouse::getPosition(window).y - fullscreen_window_offset.y) / window_scale;
 
+        if (window_scale > max_window_scale_float) {
+            mousepos.x = (sf::Mouse::getPosition(window).x - fullscreen_window_offset.x) / max_window_scale_float;
+            mousepos.y = (sf::Mouse::getPosition(window).y - fullscreen_window_offset.y) / max_window_scale_float;
+        }
+
 
         if (mousepos.x > 320) {
             mousepos.x = 320;
@@ -18791,7 +18943,7 @@ int main(int argc, char* argv[])
             bool LMB_pressed_tenp = LMB_pressed;
             bool RMB_pressed_tenp = RMB_pressed;
 
-            check_character_selection_screen(LMB_pressed_tenp, RMB_pressed_tenp, LMB_released);
+            check_character_selection_screen(LMB_pressed_tenp, RMB_pressed_tenp, LMB_released, window);
 
             //clear all inputs so player character cant move
             player_move_up = false;
@@ -19216,8 +19368,11 @@ int main(int argc, char* argv[])
                 }
                 else {
                     //calualte direction to mouse
-                    mouse_offset_window_center_x = (mousepos.x - window_size_x / (window_scale * 2)) / (6 - weapon_camera_type);
-                    mouse_offset_window_center_y = (mousepos.y - window_size_y / (window_scale * 2)) / (6 - weapon_camera_type);
+                    float temp_window_scale = window_scale;
+                    if (window_scale > max_window_scale_float) { temp_window_scale = max_window_scale_float; }
+
+                    mouse_offset_window_center_x = (mousepos.x - window_size_x / (temp_window_scale * 2)) / (6 - weapon_camera_type);
+                    mouse_offset_window_center_y = (mousepos.y - window_size_y / (temp_window_scale * 2)) / (6 - weapon_camera_type);
 
                     camera_want_x = floor(allObjects[0].position.x + cameraOffset.x + mouse_offset_window_center_x + portal_camera_offset.x - chicken_head_camera_offset.x);
                     camera_want_y = floor(allObjects[0].position.y + cameraOffset.y + mouse_offset_window_center_y + portal_camera_offset.y - chicken_head_camera_offset.y);
@@ -25253,6 +25408,12 @@ int main(int argc, char* argv[])
                         case audio_settings:
                             break;
                         case video_settings:
+                            menu_splat.setPosition(150, 62 + (setting_hovered_over - 1) * 13 - 22);
+                            if (setting_hovered_over_time > 3) {
+                                setting_hovered_over_time = 3;
+                            }
+                            menu_splat.setTextureRect({ 155 * setting_hovered_over_time, 0, 155, 53 });
+                            buffer_UI.draw(menu_splat);
                             break;
                         case controls_settings:
                             break;
@@ -25369,6 +25530,107 @@ int main(int argc, char* argv[])
 
                             slider_end_sprite.setPosition(200 + 6 - 5 + temp_volume, 82 + i * 32 + temp_y_off - (setting_hovered_over == i + 1));
                             buffer_UI.draw(slider_end_sprite);
+
+                            //options_choices_sprite.setColor({ col, col, col, 255 });
+                            //buffer_UI.draw(options_choices_sprite);
+
+                        }
+                    }
+                    if (options_menu_IN == video_settings) {
+
+                        options_choices_sprite.setPosition(180, 37);
+                        options_choices_sprite.setTextureRect({ 0, 25, 115, 25 });
+                        options_choices_sprite.setColor({ 153, 153, 153, 255 });
+                        buffer_UI.draw(options_choices_sprite);
+
+                        int num_of_options = options_text_frame;
+                        if (num_of_options > 10) {
+                            num_of_options = 10;
+                        }
+                        for (int i = 0; i < num_of_options; i++) {
+                            int temp_y_off = (options_text_frame - i) < 2;
+                            //options_choices_sprite.setPosition(180, 100 + i * 25 + temp_y_off - (setting_hovered_over == i + 1));
+                            //options_choices_sprite.setTextureRect({ 0, 25 * i, 115, 25 });
+
+                            uint8_t col = 153 + ((setting_hovered_over == i + 1) * 102);
+                            sf::Color COL = { col, col, col, 255 };
+                            sf::Text temp_text;
+                            temp_text.setFont(font);
+                            temp_text.setCharacterSize(8);
+
+                            int temp_volume = 0;
+                            std::string temp_string = "";
+                            switch (i) {
+                            case 0:temp_text.setString("FULLSCREEN      OFF");
+                                if (fullscreen_mode) {temp_text.setString("FULLSCREEN       ON");}
+                                break;
+                            case 1:temp_text.setString("VSYNC           OFF");
+                                if (vsync_on) { temp_text.setString("VSYNC            ON"); }
+                                break;
+                            case 2:
+                                temp_string = "WINDOW SCALE     ";
+                                temp_string.append(std::to_string(window_scale) + "X");
+                                if (window_scale > max_window_scale_float) {
+                                    temp_string = "WINDOW SCALE    MAX";
+                                }
+                                temp_text.setString(temp_string);
+                                
+                                break;
+                            case 3:
+                                temp_string = "SIDE ART        ";
+                                temp_string.append(std::to_string(side_art) + "/9");
+                                if (side_art == 0) {
+                                    temp_string = "SIDE ART       NONE";
+                                }
+                                temp_text.setString(temp_string);
+                                break;
+                            case 4:
+                                temp_string = "CROSSHAIR       ";
+                                temp_string.append(std::to_string(crosshair_art) + "/9");
+                                temp_text.setString(temp_string);
+                                break;
+                            case 5:temp_text.setString("HIDE CROSSHAIR  OFF");
+                                if (GAME_OPTION_hide_cursor_on_loading) {
+                                    temp_text.setString("HIDE CROSSHAIR   ON");
+                                }
+                                break;
+
+                            case 6:temp_text.setString("SHOW AREA       OFF");
+                                if (show_area) { 
+                                    temp_text.setString("SHOW AREA        ON");
+                                }
+                                break;
+                            case 7:temp_text.setString("SHOW TIMER      OFF");
+                                if (show_timer) {
+                                    temp_text.setString("SHOW TIMER       ON");
+                                }
+                                break;
+
+                            case 8:temp_text.setString("MOUSELOCK       OFF");
+                                if (lock_mouse_to_window) {
+                                    temp_text.setString("MOUSELOCK        ON");
+                                }
+                                break;
+                            case 9:temp_text.setString("CURSOR      DEFAULT");
+                                if (GAME_OPTION_naitive_cursor_active) {
+                                    temp_text.setString("CURSOR      NAITIVE");
+                                }
+                                if (GAME_OPTION_compatible_cursor_active) {
+                                    temp_text.setString("CURSOR   COMPATIBLE");
+                                }
+                                break;
+                            }
+                            temp_text.setPosition(158, 72 + i * 13 + temp_y_off - (setting_hovered_over == i + 1));
+                            draw_text_NT(temp_text, buffer_UI, COL);
+
+                            if ((i == 2 || i == 3 || i == 4) && setting_hovered_over == (i + 1)) {
+                                temp_text.setString(">");
+                                if (setting_arrow_direction == -1) {
+                                    temp_text.setString("<");
+                                }
+                                temp_text.setPosition(263, 72 + i * 13 + temp_y_off - (setting_hovered_over == i + 1));
+                                draw_text_NT(temp_text, buffer_UI, COL);
+                            }
 
                             //options_choices_sprite.setColor({ col, col, col, 255 });
                             //buffer_UI.draw(options_choices_sprite);
@@ -25581,7 +25843,9 @@ int main(int argc, char* argv[])
         current_frame_unpaused++;
 
         if (fullscreen_mode) {
-            buffer_overSprite.setScale(sf::Vector2f(window_scale, window_scale));
+            float temp_window_scale = window_scale;
+            if (window_scale > max_window_scale_float) { temp_window_scale = max_window_scale_float; }
+            buffer_overSprite.setScale(sf::Vector2f(temp_window_scale, temp_window_scale));
             buffer_overSprite.setPosition(fullscreen_window_offset);
         }
         else {
