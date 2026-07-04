@@ -6276,6 +6276,10 @@ void play_player_hurt_sound() {
 
 void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = false) {
 
+    sf::Vector2f game_mouse_pos;
+    game_mouse_pos.x = mousepos.x;
+    game_mouse_pos.y = mousepos.y;
+
     if (swap_fullscreen) {
         fullscreen_mode = !fullscreen_mode;
     }
@@ -6288,6 +6292,13 @@ void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = 
     
     cameraOffset = { -window_size_x / (temp_window_scale * 2), -window_size_y / (temp_window_scale * 2) };
 
+    cursor_sprite.setTextureRect({ (crosshair_art - 1) * 16, 0, 16, 16 });
+
+    float temp_cursor_scale = temp_window_scale;
+    if (GAME_OPTION_compatible_cursor_active && temp_cursor_scale > 4) {
+        temp_cursor_scale = 4;
+    }
+
     sf::Image cursor_pixels;
 
     sf::Texture cursor_tex;
@@ -6296,18 +6307,18 @@ void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = 
     sf::Sprite cursor_sprite(cursor_tex);
     cursor_sprite.setTextureRect({(crosshair_art - 1) * 16, 0, 16, 16});
     //cursor_sprite.setTexture(cursor_tex);
-    cursor_sprite.setScale(temp_window_scale, temp_window_scale);
+    cursor_sprite.setScale(temp_cursor_scale, temp_cursor_scale);
 
     //cursor_pixels = cursor_tex.copyToImage();
 
     sf::RenderTexture cursor_render_tex;
-    cursor_render_tex.create(16 * temp_window_scale, 16 * temp_window_scale);
+    cursor_render_tex.create(16 * temp_cursor_scale, 16 * temp_cursor_scale);
 
     cursor_render_tex.draw(cursor_sprite);
     cursor_render_tex.display();
     cursor_pixels = cursor_render_tex.getTexture().copyToImage();
 
-    naitive_cursor_sprite.loadFromPixels(cursor_pixels.getPixelsPtr(), sf::Vector2u(16 * temp_window_scale, 16 * temp_window_scale), sf::Vector2u(8 * temp_window_scale, 8 * temp_window_scale));
+    naitive_cursor_sprite.loadFromPixels(cursor_pixels.getPixelsPtr(), sf::Vector2u(16 * temp_cursor_scale, 16 * temp_cursor_scale), sf::Vector2u(8 * temp_cursor_scale, 8 * temp_cursor_scale));
 
     //TODO make it work with any screen size
 
@@ -6324,8 +6335,9 @@ void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = 
             window.setView(myView);
         }
         else {
+            
             //if not fullscreen
-            window.create({ (u_int)window_size_x, (u_int)window_size_y }, "Nuclear Throne Arranged", sf::Style::Default);
+            window.create({ (u_int)window_size_x, (u_int)window_size_y }, "Nuclear Throne Arranged", sf::Style::Titlebar);
             window.setPosition(window.getPosition() - sf::Vector2i(160 * change, 120 * change));
 
             sf::View myView(sf::Vector2f(160, 120), sf::Vector2f(320, 240));
@@ -6359,6 +6371,24 @@ void resize_window(int change, sf::RenderWindow &window, bool swap_fullscreen = 
     }
     window.setMouseCursorGrabbed(lock_mouse_to_window);
     window.requestFocus();
+
+    sf::Vector2i game_mouse_pos_i;
+    game_mouse_pos.x *= temp_window_scale;
+    game_mouse_pos.y *= temp_window_scale;
+    if (!fullscreen_mode) {
+
+        game_mouse_pos.x += window.getPosition().x;
+        game_mouse_pos.y += window.getPosition().y;
+
+        game_mouse_pos_i.x = game_mouse_pos.x + 8;  //idk
+        game_mouse_pos_i.y = game_mouse_pos.y + 31; //padding at top
+    }
+    if (fullscreen_mode) {
+        game_mouse_pos_i.x = fullscreen_window_offset.x + game_mouse_pos.x;
+        game_mouse_pos_i.y = fullscreen_window_offset.y + game_mouse_pos.y;
+    }
+
+    sf::Mouse::setPosition(game_mouse_pos_i);
 }
 
 void enemy_push(int currOBJ, int O) {
@@ -14312,9 +14342,17 @@ void check_character_selection_screen(bool clicked, bool right_clicked, bool rel
                                     crosshair_art = 9;
                                 }
                             }
+
+                            cursor_sprite.setTextureRect({ (crosshair_art - 1) * 16, 0, 16, 16 });
+
                             if (1) {
                                 float temp_window_scale = window_scale;
                                 if (window_scale > max_window_scale_float) { temp_window_scale = max_window_scale_float; }
+
+                                float temp_cursor_scale = temp_window_scale;
+                                if (GAME_OPTION_compatible_cursor_active && temp_cursor_scale > 4) {
+                                    temp_cursor_scale = 4;
+                                }
 
                                 sf::Image cursor_pixels;
 
@@ -14324,18 +14362,18 @@ void check_character_selection_screen(bool clicked, bool right_clicked, bool rel
                                 sf::Sprite cursor_sprite(cursor_tex);
                                 cursor_sprite.setTextureRect({ (crosshair_art - 1) * 16, 0, 16, 16 });
                                 //cursor_sprite.setTexture(cursor_tex);
-                                cursor_sprite.setScale(temp_window_scale, temp_window_scale);
+                                cursor_sprite.setScale(temp_cursor_scale, temp_cursor_scale);
 
                                 //cursor_pixels = cursor_tex.copyToImage();
 
                                 sf::RenderTexture cursor_render_tex;
-                                cursor_render_tex.create(16 * temp_window_scale, 16 * temp_window_scale);
+                                cursor_render_tex.create(16 * temp_cursor_scale, 16 * temp_cursor_scale);
 
                                 cursor_render_tex.draw(cursor_sprite);
                                 cursor_render_tex.display();
                                 cursor_pixels = cursor_render_tex.getTexture().copyToImage();
 
-                                naitive_cursor_sprite.loadFromPixels(cursor_pixels.getPixelsPtr(), sf::Vector2u(16 * temp_window_scale, 16 * temp_window_scale), sf::Vector2u(8 * temp_window_scale, 8 * temp_window_scale));
+                                naitive_cursor_sprite.loadFromPixels(cursor_pixels.getPixelsPtr(), sf::Vector2u(16 * temp_cursor_scale, 16 * temp_cursor_scale), sf::Vector2u(8 * temp_cursor_scale, 8 * temp_cursor_scale));
 
                                 window.setMouseCursor(naitive_cursor_sprite);
                             }
@@ -14354,7 +14392,54 @@ void check_character_selection_screen(bool clicked, bool right_clicked, bool rel
                             lock_mouse_to_window= !lock_mouse_to_window;
                             window.setMouseCursorGrabbed(lock_mouse_to_window);
                             break;
-                        case 10:
+                        case 10://cursor type
+                            if (GAME_OPTION_naitive_cursor_active && GAME_OPTION_compatible_cursor_active) {
+                                GAME_OPTION_naitive_cursor_active = false;
+                                GAME_OPTION_compatible_cursor_active = false;
+                            }
+                            else if (GAME_OPTION_naitive_cursor_active) {
+                                GAME_OPTION_naitive_cursor_active = true;
+                                GAME_OPTION_compatible_cursor_active = true;
+                            }
+                            else {
+                                GAME_OPTION_naitive_cursor_active = true;
+                                GAME_OPTION_compatible_cursor_active = false;
+                            }
+
+                            cursor_sprite.setTextureRect({ (crosshair_art - 1) * 16, 0, 16, 16 });
+
+                            if (1) {
+                                float temp_window_scale = window_scale;
+                                if (window_scale > max_window_scale_float) { temp_window_scale = max_window_scale_float; }
+
+                                float temp_cursor_scale = temp_window_scale;
+                                if (GAME_OPTION_compatible_cursor_active && temp_cursor_scale > 4) {
+                                    temp_cursor_scale = 4;
+                                }
+
+                                sf::Image cursor_pixels;
+
+                                sf::Texture cursor_tex;
+                                cursor_tex.loadFromFile("res/player/sprCrosshair.png");
+
+                                sf::Sprite cursor_sprite(cursor_tex);
+                                cursor_sprite.setTextureRect({ (crosshair_art - 1) * 16, 0, 16, 16 });
+                                //cursor_sprite.setTexture(cursor_tex);
+                                cursor_sprite.setScale(temp_cursor_scale, temp_cursor_scale);
+
+                                //cursor_pixels = cursor_tex.copyToImage();
+
+                                sf::RenderTexture cursor_render_tex;
+                                cursor_render_tex.create(16 * temp_cursor_scale, 16 * temp_cursor_scale);
+
+                                cursor_render_tex.draw(cursor_sprite);
+                                cursor_render_tex.display();
+                                cursor_pixels = cursor_render_tex.getTexture().copyToImage();
+
+                                naitive_cursor_sprite.loadFromPixels(cursor_pixels.getPixelsPtr(), sf::Vector2u(16 * temp_cursor_scale, 16 * temp_cursor_scale), sf::Vector2u(8 * temp_cursor_scale, 8 * temp_cursor_scale));
+
+                                window.setMouseCursor(naitive_cursor_sprite);
+                            }
 
                             break;
                         }
@@ -25823,6 +25908,7 @@ int main(int argc, char* argv[])
 
         bool hide_cursor_loading = GAME_OPTION_hide_cursor_on_loading && want_gen && skill_points <= 0 && ultra_points <= 0;
         if ((!GAME_OPTION_naitive_cursor_active || PLAY_REPLAY) && !hide_cursor_loading) {
+            cursor_sprite.setPosition(sf::Vector2f(mousepos));
             buffer_over.draw(cursor_sprite);
         }
         if (hide_cursor_loading) {
@@ -25835,6 +25921,9 @@ int main(int argc, char* argv[])
             window.setMouseCursorVisible(true);
         }
 
+        if (!GAME_OPTION_naitive_cursor_active) {
+            window.setMouseCursorVisible(false);
+        }
 
         //window.draw(bounding_defaul_res);
         if (!GAME_PAUSED) {
