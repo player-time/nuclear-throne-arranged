@@ -629,6 +629,8 @@ sf::Sprite go_button_sprite;
 int go_button_hover_frames = 0;
 int go_button_appear_frame = 0;
 
+
+
 //options stuff
 option_bar option_hovered_over = none_option;
 option_bar option_in = none_option;
@@ -655,6 +657,9 @@ sf::Sprite boss_splat;
 
 int option_hovered_over_offset = 2;
 option_bar option_hovered_over_prev_frame = none_option;
+
+sf::Sprite side_art_sprite;
+
 
 //GLOBAL AUDIO SETTINGS
 int GLOBAL_MASTER_VOLUME  = 50;
@@ -17260,6 +17265,11 @@ int main(int argc, char* argv[])
         DEBUG_SPRITE_MIN[i] = "none";
     }
 
+    //side art buffer
+    sf::RenderTexture buffer_side_art;
+    buffer_side_art.create(startup_fullscreen_size.width, startup_fullscreen_size.height);
+    sf::Sprite buffer_side_artSprite(buffer_side_art.getTexture());
+
      //sprites drawn over shadows
     sf::RenderTexture buffer_under;
     buffer_under.create(320, 240);
@@ -17387,6 +17397,20 @@ int main(int argc, char* argv[])
     boss_splat_tex.loadFromFile("res/boss_splat.png");
     boss_splat.setTexture(boss_splat_tex);
     boss_splat.setTextureRect({ 0, 0, 196, 96 });
+
+    sf::Texture side_art_tex[9];
+    for (int i = 0; i < 9; i++) {
+        std::string temp_str = "res/side_art_";
+        temp_str.append(std::to_string(i) + ".png");
+
+        side_art_tex[i].loadFromFile(temp_str);
+        side_art_tex[i].setRepeated(true);
+    }
+    side_art_sprite.setTexture(side_art_tex[0]);
+    side_art_sprite.setTextureRect({0, 0, 1920 / 4, 1080 / 4});
+    float temp_x_pos = ((64 * max_window_scale_float) - (startup_fullscreen_size.width - (floor(startup_fullscreen_size.width / (64 * max_window_scale_float)) * (64 * max_window_scale_float)))) / 2;
+    side_art_sprite.setPosition(-temp_x_pos + 1, 0);
+        
 
     //load sprites
         sf::Texture allEnemySprites;
@@ -19305,6 +19329,7 @@ int main(int argc, char* argv[])
         buffer_settings.clear(sf::Color::Transparent);
         buffer_UI.clear(sf::Color::Transparent);
         buffer_under.clear(sf::Color::Transparent);
+        buffer_side_art.clear(sf::Color::Transparent);
         shadows.clear(sf::Color::Transparent);
         if (player_character != eyes) {
             the_darkness.clear(sf::Color::Black);
@@ -23886,7 +23911,17 @@ int main(int argc, char* argv[])
         global_timer_text.setColor(sf::Color::White);
         global_timer_text.setPosition({ 2, 230 });
 
-        
+
+        //draw side art
+        if (side_art != 0 && fullscreen_mode) {
+            side_art_sprite.setTexture(side_art_tex[side_art - 1]);
+            side_art_sprite.setScale(max_window_scale_float, max_window_scale_float);
+            buffer_side_art.draw(side_art_sprite);
+
+            buffer_side_art.display();
+
+            window.draw(buffer_side_artSprite);
+        }
 
         //area in which physics happen
         vector2D_reset(top_physics - extra_physics, bottom_physics + extra_physics, left_physics - extra_physics, right_physics + extra_physics);       //make sure these dont go out of bounds
@@ -25491,6 +25526,12 @@ int main(int argc, char* argv[])
 
                             break;
                         case audio_settings:
+                            menu_splat.setPosition(150, 62 + (setting_hovered_over - 1) * 32 - 22);
+                            if (setting_hovered_over_time > 3) {
+                                setting_hovered_over_time = 3;
+                            }
+                            menu_splat.setTextureRect({ 155 * setting_hovered_over_time, 0, 155, 53 });
+                            buffer_UI.draw(menu_splat);
                             break;
                         case video_settings:
                             menu_splat.setPosition(150, 62 + (setting_hovered_over - 1) * 13 - 22);
